@@ -286,6 +286,11 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     break;
   }
 
+  //All the extra isotopes are going to have density from file (cannot
+  //be ignored or fixed.
+  tr->isodo=(enum isodo *)realloc(tr->isodo,tr->n_e*sizeof(enum isodo));
+  for(i=tr->n_i;i<tr->n_e;i++)
+    tr->isodo[i]=atmfile;
 
   //If one point is being used, then let user know values
   if(nrad==1)

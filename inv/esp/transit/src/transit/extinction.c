@@ -216,11 +216,13 @@ int extwn (struct transit *tr)
       densiso[i]=tr->isov[i].d[r];
       csiso[i]=tr->isov[i].c[r];
 
-      //Calculate lorentz
+      //Calculate lorentz with every isotope except those ignored
       alphal[i]=0;
       for(j=0;j<neiso;j++)
-	alphal[i]+=tr->isov[j].d[r]/tr->isof[j].m
-	  *sqrt(1/mass[i] + 1/tr->isof[j].m);
+	if(tr->isodo[j]!=ignore)
+	  alphal[i]+=tr->isov[j].d[r]/tr->isof[j].m
+	    *sqrt(1/mass[i] + 1/tr->isof[j].m);
+
       alphal[i]*=csiso[i]*propto_alor;
 
       //Following calculates doppler divided by central wavenumber.
@@ -259,9 +261,9 @@ int extwn (struct transit *tr)
 
     //Compute the spectra!, proceed for every line.
     for(ln=0;ln<tr->n_l;ln++){
+      /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
-      /*
       if(ln<9000||ln>11000)
 	continue;
       */
@@ -292,6 +294,11 @@ int extwn (struct transit *tr)
       subw=ex->vf*(wavn-w*dwn-iniwn)/dwn;
       i=line[ln].isoid;
       k=kiso[i];
+
+      //If this isotope is marked as ignore (no density info) continue
+      //with the next transition.
+      if(tr->isodo[i]==ignore)
+	continue;
 
       cp=ex->recalc[i];
 

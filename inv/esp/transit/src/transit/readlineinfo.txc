@@ -818,6 +818,7 @@ int readdatarng(struct transit *tr, /* General parameters and
   PREC_NREC nfields;
   char line[maxline+1],rc,*lp,*lp2;
 
+
   //Open data file 
   if((rn=fileexistopen(tr->f_line,&fp))!=1){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
