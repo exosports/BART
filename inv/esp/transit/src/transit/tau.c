@@ -83,7 +83,7 @@ tau(struct transit *tr)
   PREC_RES dt[wnn];
 
   //Need at least three radius to calculate a spline interpolation.
-  if(rnn<3)
+  if(inn<3)
     transiterror(TERR_SERIOUS,
 		 "tau(): At least three impact parameters points are required!.\n"
 		 );
@@ -95,7 +95,7 @@ tau(struct transit *tr)
 
     //For each resultant impact parameter
     for(ii=inn-1;ii>=0;ii--){
-      if((t[ii]=totaltau(bb[ii],r,n,e,dt,rnn,tau.iso,wi,acc))>tau.toomuch){
+      if((t[ii]=totaltau(bb[ii],r,n,e,dt,inn,tau.iso,wi,acc))>tau.toomuch){
 	tau.first[wi]=ii;
 	break;
       }
