@@ -1,7 +1,7 @@
     ********* TRANSIT *********
 
 
-     Readme files for any version
+     Readme files for last stable version 1
 
 ------------------------------------------------------------------------
 COMPILATION: to compile from scratch, execute one after the other the
@@ -10,7 +10,7 @@ following commands
    make clean
    make dep
    make proto
-   make transit
+   make CFLAGS=TRANSITv1 transit
 
 ------------------------------------------------------------------------
 EXECUTING: to get a help of all commands, run

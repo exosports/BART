@@ -15,6 +15,8 @@
 #include <util/iomisc.h>
 #include <strings.h>
 
+
+/*****   Flags   *****/
 /* Flags for hintable parameters. Its precense indicates that the
    parameter was changed or not accepted */
 #define TRH_FL          0x00000001 /* Line info file */
@@ -143,7 +145,8 @@
 #define TERR_NOPREAMBLE 0x000020
 #define TERR_ALLOC      0x000040
 
-/* Types */
+
+/*****   Types     *****/
 #define PREC_NSAMP int		/* Type for radius and wavelength
 				   indices */
 #define PREC_NREC long		/* Type for record indices */
@@ -163,6 +166,7 @@
 #endif
 
 
+/***** Constants  *****/
 /* units in cgs */
 #if defined(AMU) || defined(EC) || defined(LS) || defined(ME) || \
 defined(KB) || defined(H) || defined(PI) || defined (SIGCTE) ||  \
@@ -192,7 +196,7 @@ extern int transit_nowarn;
 extern int verblevel;
 extern int maxline;
 
-/* Macros */
+/*****   Macros   *****/
 #define stateeqnford(q,m,p,t) (AMU*(q)*(m)*(p)/(KB*(t)))
 
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
@@ -244,7 +248,7 @@ typedef struct {          	/* One item per isotope */
 
 typedef struct {		/* One item per atmospheric conditions
 				   in the atmosphere */
-  PREC_ATM *p;			/* Pressure [cgs=dyne/cm2] */
+  PREC_ATM *p;			/* Pressure (cgs=dyne/cm2) */
   PREC_ATM *t;			/* Temperature [radius] */
 } prop_atm;
 
@@ -298,16 +302,18 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
 				   [isoext] */
   prop_atm atm;			/* Atmospheric properties */
   int n_niso;			/* Number of new isotopes */
-  double mm;			/* Mean molecular mass */
+  double *mm;			/* Mean molecular mass [rad] */
   _Bool mass;			/* whether the abundances in 'isov' are
 				   mass abundances or not */
   char **n;			/* Name for isotopes in atmfile order */
-  PREC_ZREC *m;			/* Mass for isotopes in file order */
+  PREC_ZREC *m;			/* Mass for isotopes in file order [iso]
+				   */
   int *isoeq;			/* Isotope to which each atmosphere
-				   datafile column corresponds */
+				   datafile column corresponds [iso] */
   int n_aiso;			/* Number of isotopes in the atmosphere
 				   file */
 };
+
 
 struct extinction{
   PREC_RES ***k;		/* Extinciton value [rad][iso:][wav]*/
@@ -329,6 +335,7 @@ struct extinction{
 				   contained in the profile */
 };
 
+
 struct onept {
   double p,t;			/* pressure, temperature */
   double *q;			/* abundances for isotopes */
@@ -340,6 +347,7 @@ struct onept {
   int ne;			/* Number of extra isotopes */
 };
 
+
 struct transithint {		/* Structure with user hinted data that
 				   should go to the 'struct transit'
 				   upon approval */
@@ -348,6 +356,9 @@ struct transithint {		/* Structure with user hinted data that
 				   radius(planetary radius),
 				   wavelength(nanometers) and
 				   wavenumber(cm-1) */
+  float allowrq;		/* How much less than one is accepted,
+				   and no warning is issued if
+				   abundances don't ad up to that */
   PREC_RES t;			/* Telescope resolution */
   PREC_RES m;			/* Amount of nanometers not trusted at
 				   the boundaries, also how much out of
@@ -375,6 +386,9 @@ struct transithint {		/* Structure with user hinted data that
 struct transit {		/* Main data structure */
   char *f_atm,*f_line,*f_out;	/* Filenames */
   FILE *fp_atm,*fp_out,*fp_line;/* Filepointers */
+  float allowrq;		/* How much less than one is accepted,
+				   and no warning is issued if
+				   abundances don't ad up to that */
   PREC_RES telres;		/* Telescope resolution */
   PREC_RES m;			/* Amount of nanometers not trusted at
 				   the boundaries, also how much out of
@@ -412,6 +426,8 @@ struct transit {		/* Main data structure */
   }ds;
 };
 
+
+/***** Prototypes *****/
 #include <transit_proto.h>
 #include <readlineinfo_proto.h>
 #include <transitstd_proto.h>
