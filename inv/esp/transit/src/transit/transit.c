@@ -58,14 +58,7 @@ int main (int argc,		/* Number of variables */
 		 ,rn);
 
   //Presentation
-  char revname[20];
-  if(revision<0) snprintf(revname,20,"pre%i",-revision);
-  else snprintf(revname,20,".%i",revision);
-  transitprint(1,verblevel,
-	       "-----------------------------------------------\n"
-	       "                TRANSIT v%i%s\n"
-	       "-----------------------------------------------\n"
-	       ,version,revname);
+  printintro();
 
   //No program warnings if verblevel is 0 or 1
   if(verblevel<2)
