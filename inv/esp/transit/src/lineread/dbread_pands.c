@@ -166,14 +166,14 @@ PREC_NREC dbread_pands(char *filename,
   if(!Zfilename)
     Zfilename=defzfname;
 
-  if((fp=fopen(filename,"r"))==NULL){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Data file '%s' cannot be opened\nas stream in function "
-		 "dbread_pands(), stopping.\n"
-		 ,filename);
-    return -1;
-  }
+  /*
+    Following is to transform stored integer of gflog and ielow into their
+    real floating point values
+  */
+  for(i=0;i<PANDS_NCODIDX;i++)
+    tablog[i]=pow(10,(i-PANDS_NCODIDX/2)*0.001);
 
+  ratiolog=log((double)1.0+(double)1.0/(2e+6));
 
   if(stat(filename,&fs)==-1){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
@@ -195,19 +195,17 @@ PREC_NREC dbread_pands(char *filename,
   }
   nrec/=PANDS_RECLENGTH;
 
-  /*
-    Following is to transform stored integer of gflog and ielow into their
-    real floating point values
-  */
-  for(i=0;i<PANDS_NCODIDX;i++)
-    tablog[i]=pow(10,(i-PANDS_NCODIDX/2)*0.001);
-
-  ratiolog=log((double)1.0+(double)1.0/(2e+6));
-
+  if((fp=fopen(filename,"r"))==NULL){
+    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		 "Data file '%s' cannot be opened\nas stream in function "
+		 "dbread_pands(), stopping.\n"
+		 ,filename);
+    return -1;
+  }
   fread(&lnwl1,4,1,fp);
-  fseek(fp,-PANDS_RECLENGTH,SEEK_END);
   reversebytes(&lnwl1,4);
 
+  fseek(fp,-PANDS_RECLENGTH,SEEK_END);
   fread(&lnwl2,4,1,fp);
   reversebytes(&lnwl2,4);
 
