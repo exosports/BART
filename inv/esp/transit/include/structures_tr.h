@@ -319,8 +319,7 @@ struct transithint {		/* Structure with user hinted data that
   _Bool mass;			/* whether the abundances read by getatm
 				   are by mass or number */
   long fl;			/* flags */
-  long na;			/* flags of non-accepted or just changed
-				   hints */
+
   struct onept onept;		/* Parameters for onept atmosphere */
   double toomuch;		/* Optical depth values greater than
 				   this won't be calculated: the

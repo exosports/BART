@@ -72,9 +72,8 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 
   //Pass atmospheric flags into info struct
   transitacceptflag(tr->fl,th->fl,TRU_ATMBITS);
-  transitaccepthint(st_at.mass,th->mass,th->na,TRH_MASS);
-  transitaccepthint(tr->allowrq,th->allowrq,th->na,TRH_MASS);
-  allowq=1-tr->allowrq;
+  st_at.mass=th->mass;
+  allowq = 1 - (tr->allowrq=th->allowrq);
 
   //If --onept parameter was given, then force a given one point.
   if(onept->one){
@@ -86,7 +85,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   //otherwise if filename is not given or is "-", then use 1 point
   //default behavior
   else if(th->f_atm==NULL||strcmp(th->f_atm,"-")==0){
-    transitaccepthint(tr->f_atm,th->f_atm,th->na,TRH_FA);
+    tr->f_atm=th->f_atm;
     nrad=rads->n=1;
     rads->fct=1;
 
@@ -120,7 +119,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     //opened.
     if(verbfileopen(th->f_atm,&tr->fp_atm,"Atmospheric info ")!=1)
       exit(EXIT_FAILURE);
-    transitaccepthint(tr->f_atm,th->f_atm,th->na,TRH_FA);
+    tr->f_atm=th->f_atm;
     inp=file;
     fp=tr->fp_atm;
 
@@ -292,8 +291,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   //'tauiso' is the isotope index which tau() will calculate
   //afterward. Just check that it is between boundaries.
   tr->tauiso=0;
-  if(th->na&TRH_TAUISO&&
-     th->tauiso>=0&&
+  if(th->tauiso>=0&&
      th->tauiso<iso->n_i)
     tr->tauiso=th->tauiso;
 

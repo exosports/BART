@@ -516,18 +516,14 @@ int checkrange(struct transit *tr, /* General parameters and
 
   //Check that the margin value is reasonable. i.e. whether its
   //leaves a non-zero range if applied to the whole line dataset.
-  if(th->na&TRH_WM){
-    if(2*th->m > (li->wf - li->wi)){
-      transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		   "Margin value (%g) is too big for this dataset whose\n"
-		   "range is %g to %g nanometers\n"
-		   ,th->m,li->wi,li->wf);
-      return -4;
-    }
-    margin=tr->m=th->m;
+  if(2*th->m > (li->wf - li->wi)){
+    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		 "Margin value (%g) is too big for this dataset whose\n"
+		 "range is %g to %g nanometers\n"
+		 ,th->m,li->wi,li->wf);
+    return -4;
   }
-  else
-    margin=tr->m=0.0;
+  margin=tr->m=th->m;
  
   //If an TWII ascii file, then we'll be using limits twice the margin
   //from the minimum or maximum values in the dataset. This is because,
@@ -551,16 +547,14 @@ int checkrange(struct transit *tr, /* General parameters and
 	       "Databse max %g and min %g\n"
 	       ,hsamp->i,hsamp->f,li->wi,li->wf);
 
-  //If final wavelength was not hinted then default it to zero
-  if(!(th->na&TRH_WAV)||hsamp->f<0){
+  //If final wavelength was not hinted correctly then default it to zero
+  if(hsamp->f<0){
     hsamp->f=0;
-    th->na|=TRH_WAV;
     transiterror(TERR_WARNING,
 		 "Setting hinted upper wavelength limit before\n"
 		 "extraction as %g. It was not user-hinted.\n"
 		 ,hsamp->f);
   }
-
   //Check final wavelength. If it is 0, modify it. Do not return
   //special value, it is assumed that user knows what he is doing.
   //\linelabel{finalwav}
@@ -592,9 +586,8 @@ int checkrange(struct transit *tr, /* General parameters and
     msamp->f=hsamp->f;
   }
 
-  if(!(th->na&TRH_WAV)||hsamp->i<0){
+  if(hsamp->i<0){
     hsamp->i=0;
-    th->na|=TRH_WAV;
     transiterror(TERR_WARNING,
 		 "Setting hinted lower wavelength limit before\n"
 		 "extraction as %g. It was not user-hinted.\n"
@@ -702,7 +695,7 @@ int readinfo_twii(struct transit *tr,
 
   //Open info file and transport name into transit from hint (setting
   //corresponding flag) if the file opened succesfully
-  if(!(th->na&TRH_FL)){
+  if(!th->f_atm){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "File information name needs to be hinted...\n"
 		 " it was not\n"
@@ -717,7 +710,7 @@ int readinfo_twii(struct transit *tr,
     return -1;
   }
   tr->fp_line=fp;
-  transitaccepthint(tr->f_line,th->f_line,th->na,TRH_FL);
+  tr->f_line=th->f_line;
 
   //Read first two bytes, they should be either `(T<<4|W)(I<<4|I)' or
   //'\#T'. They are stored as integer, so this check also serves to check

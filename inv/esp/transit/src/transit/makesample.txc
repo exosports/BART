@@ -40,7 +40,6 @@ int
 makesample(prop_samp *samp,	/* Resulting sampled data */
 	   prop_samp *hint,	/* Proposed sampling */
 	   prop_samp *ref,	/* Reference values */
-	   const _Bool spec,
 	   const long fl,
 	   const float margini,
 	   const float marginf)
@@ -57,13 +56,13 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   const double okfinalexcess=1e-8;
 
   //Check multiplicative factor
-  if(!spec||hint->fct<=0)
+  if(hint->fct<=0)
     samp->fct=ref->fct;
   else
     samp->fct=hint->fct;
 
   //check initial value
-  if(!spec||hint->i<=0||hint->i<ref->i+margini){
+  if(hint->i<=0||hint->i<ref->i+margini){
     samp->i=ref->i+margini;
     res|=0x1;
   }
@@ -80,7 +79,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   si=samp->i;
 
   //check final value
-  if(!spec||hint->f<=0||hint->f>ref->f-marginf){
+  if(hint->f<=0||hint->f>ref->f-marginf){
     samp->f=ref->f-marginf;
     res|=0x2;
   }
@@ -105,8 +104,8 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
     return -3;
   }
 
-  nhint=spec&&hint->n>0;
-  dhint=spec&&hint->d>0;
+  nhint=hint->n>0;
+  dhint=hint->d>0;
 
   transitprint(21,verblevel,
 	       "Flags: 0x%lx    hint.d:%g   hint.n:%li\n"
@@ -196,7 +195,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   n=samp->n=((1.0+okfinalexcess)*samp->f - si)/samp->d+1;
 
   //if there is an oversampling, check whether a value is not hinted
-  if(!spec||hint->o<=0){
+  if(hint->o<=0){
     //if so, check if we have a valid ref or error
     if(ref->o<=0){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
@@ -244,14 +243,13 @@ int makewavsample(struct transit *tr)
 {
   //'res' will be the result status
   int res;
-  int fl=tr->ds.th->na;
   prop_samp *samp=&tr->ds.th->wavs;
   prop_samp *lin=&(tr->ds.li->wavs);
 
   transitcheckcalled(tr->pi,"makewavsample",1,
 		     "chkrange",TRPI_CHKRNG);
 
-  if(!(fl&TRH_WAV)||(samp->d<=0&&samp->n<=0)){
+  if(samp->d<=0&&samp->n<=0){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Spacing or number must be hinted for wavelength,\n"
 		 "cannot just guess them.\n"
@@ -261,7 +259,7 @@ int makewavsample(struct transit *tr)
 
   //make the sampling
   res=makesample(&tr->wavs,samp,lin,
-		 fl&TRH_WAV,TRH_WAV,tr->m,tr->m);
+		 TRH_WAV,tr->m,tr->m);
 
   //set progress indicator if sampling was successful and return status
   if(res>=0)
@@ -303,7 +301,7 @@ int makewnsample(struct transit *tr)
   fromwav.f=WNU_O_WLU/wsamp->i;
 
   //set margin. If not given take it from wavelength's (the bigger side)
-  if(trh->na&TRH_WNM && trh->wnm>0)
+  if(trh->wnm>0)
     tr->wnmf=tr->wnmi=trh->wnm;
   else{
     tr->wnmf=tr->m*fromwav.f*fromwav.f/WNU_O_WLU;
@@ -318,7 +316,7 @@ int makewnsample(struct transit *tr)
   fromwav.i-=tr->wnmi;
 
   //make the sampling
-  res=makesample(&tr->wns,nsamp,&fromwav,trh->na&TRH_WN,
+  res=makesample(&tr->wns,nsamp,&fromwav,
 		 TRH_WN,tr->wnmi,tr->wnmf);
 
   //set progress indicator if sampling was successful and return status
@@ -346,7 +344,7 @@ int makeipsample(struct transit *tr)
 		     "makeradsample",TRPI_MAKERAD);
 
   //make the sampling taking as reference the radius sampling
-  res=makesample(&tr->ips,usamp,rsamp,trh->na&TRH_IPRM,
+  res=makesample(&tr->ips,usamp,rsamp,
 		 TRH_IPRM,0,0);
 
   //set progress indicator if sampling was successful and return status
@@ -419,7 +417,7 @@ int makeradsample(struct transit *tr)
     //maximum.\par
     //do the sampling
     res=makesample(rad,&tr->ds.th->rads,rsamp,
-		   tr->ds.th->na&TRH_RAD,TRH_RAD,0,0);
+		   TRH_RAD,0,0);
   }
   nrad=rad->n;
 

@@ -257,7 +257,7 @@ int processparameters(int argc, /* number of command line arguments */
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
-    {"solution",'s',required_argument,"slant path",
+    {"solution",'s',required_argument,"Slant Path",
      "sol_name","Name of the kind of output solution ('slant path'\n"
      "is currently the only availabale alternative)"},
     {"toomuch",CLA_TOOMUCH,required_argument,"20",
@@ -631,15 +631,18 @@ acceptgenhints(struct transit *tr) /* transit structure */
 
 
   //Accept output file
-  if(th->na&TRH_FO)
-    transitaccepthint(tr->f_out,th->f_out,th->fl,TRH_FO);
+  if(tr->f_out)
+    tr->f_out=th->f_out;
+  else{
+    tr->f_out=(char *)calloc(2,sizeof(char));
+    tr->f_out[0]='-';
+  }
 
   //Accept toomuch output file
-  if(th->f_toomuch)
-    tr->f_toomuch=th->f_toomuch;
+  tr->f_toomuch=th->f_toomuch;
 
   //Accept hinted solution type if it exists
-  if(!(th->na&TRH_ST)||acceptsoltype(&tr->sol,th->solname)!=0){
+  if(acceptsoltype(&tr->sol,th->solname)!=0){
     transit_ray_solution **sol=(transit_ray_solution **)raysols;
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Solution kind '%s' is invalid!\n"

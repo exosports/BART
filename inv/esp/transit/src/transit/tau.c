@@ -60,7 +60,7 @@ tau(struct transit *tr)
 
   //set tau structures' value
   tau.toomuch=50;
-  if(tr->ds.th->na&TRH_TOOMUCH&&tr->ds.th->toomuch>0)
+  if(tr->ds.th->toomuch>0)
     tau.toomuch=tr->ds.th->toomuch;
   tau.first=(long *)calloc(wn->n,sizeof(long));
   tau.t=(PREC_RES **)calloc(wn->n,sizeof(PREC_RES *));

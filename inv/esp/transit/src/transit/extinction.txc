@@ -84,8 +84,7 @@ int extwn (struct transit *tr)
 		 ,tr->ds.th->voigtfine);
     return -6;
   }
-  transitaccepthint(ex->vf,tr->ds.th->voigtfine,
-		    tr->ds.th->na,TRH_VF);
+  ex->vf=tr->ds.th->voigtfine;
 
   //'.timesalpha' is the number of alphas from the maximum of either
   //doppler or lorenz that the profile calculation have to consider.
@@ -96,8 +95,7 @@ int extwn (struct transit *tr)
 		 ,tr->ds.th->voigtfine);
     return -7;
   }
-  transitaccepthint(ex->ta,tr->ds.th->timesalpha,
-		    tr->ds.th->na,TRH_TA);
+  ex->ta=tr->ds.th->timesalpha;
 
   //'.maxratio' is the maximum allowed ratio change before recalculating
   //profile array.
@@ -108,9 +106,7 @@ int extwn (struct transit *tr)
 		 ,tr->ds.th->maxratio_doppler);
     return -8;
   }
-  transitaccepthint(ex->maxratio,tr->ds.th->maxratio_doppler,
-		    tr->ds.th->na,TRH_DR);
-
+  ex->maxratio=tr->ds.th->maxratio_doppler;
 
   iniwn=tr->wns.i;
   wn=tr->wns.v;

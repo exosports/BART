@@ -65,8 +65,6 @@
   if(thislevel <= verblevel)  fprintf(stderr,__VA_ARGS__); }while(0)
 #define transitacceptflag(transit,hint,flag) do{                            \
         transit|=hint&flag;hint&=~(flag);}while(0)
-#define transitaccepthint(transit,hint,flags,flagvalue) do{                 \
-        transit=hint;                    }while(0)
 #define transitallocerror(nmb)                                              \
         transiterror(TERR_CRITICAL,                                         \
 	             "transit:: %s: Allocation failed for %i allocation\n"  \
