@@ -399,6 +399,8 @@ int extwn (struct transit *tr)
   //free memory that is no longer needed.
   freemem_extinction(&tr->lt,tr->ds.li,&tr->pi);
 
+   //save current status if requested.
+
 
   //Set porogress indicator and return
   tr->pi|=TRPI_EXTWN;

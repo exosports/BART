@@ -276,19 +276,24 @@ error (int exitstatus,
 
 
 /* \fcnfh
-   Frees array in prop_isov
+   Frees array in prop_isov, this should be called only once for all the
+   isotopes.
 */
 void
 free_isov(prop_isov *isov)
 {
   free(isov->z);
   free(isov->c);
-  free(isov->d);
-  free(isov->q);
+  if(isov->d)
+    free(isov->d);
+  if(isov->q)
+    free(isov->q);
 }
 
+
 /* \fcnfh
-   Frees array in prop_dbnoext
+   Frees array in prop_dbnoext, this should be called once per each
+   database.
 */
 void
 free_dbnoext(prop_dbnoext *db)

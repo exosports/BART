@@ -1180,8 +1180,7 @@ free_lineinfotrans(struct line_transition *lt,
   int i;
 
   //free isov, dbnoext and samp in li
-  for(i=0;i<li->ni;i++)
-    free_isov(li->isov+i);
+  free_isov(li->isov);
   free(li->isov);
 
   for(i=0;i<li->ndb;i++)
