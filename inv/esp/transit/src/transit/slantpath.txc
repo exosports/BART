@@ -328,9 +328,9 @@ modulation1 (PREC_RES *tau,
 
     rinteg[ipn1-i] = exp(-tau[i]) * ipv[ipn1-i];
   }
-  //fill two more lower part bins with 0. Only two to have a nice ending
+  //fill one more lower part bin with 0. Only two to have a nice ending
   //spline and not unnecessary values.
-  last+=2;
+  last+=1;
   if(last>ipn1) last=ipn1;
   for(;i<=last;i++){
     ipv[ipn1-i]    = ip->v[i] * ip->fct;
@@ -372,10 +372,14 @@ modulation1 (PREC_RES *tau,
   //          {\pi R_s^2}
   //\end{align}
   res = ipv[ipn1] * ipv[ipn1]
-    - 2.0 * res 
-    - exp(-maxtau) * ipv[ipn-last] * ipv[ipn-last];
+    - 2.0 * res ;
 
+  //If the planet is going to be transparent with its maximum optical
+  //depth given by toomuch then
+  if(sg->transpplanet)
+    res -= exp(-maxtau) * ipv[ipn-last] * ipv[ipn-last];
 
+  //normalize by the planet
   res *= 1.0 / srad / srad;
 
   return res;

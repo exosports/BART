@@ -280,6 +280,8 @@ struct geometry {
 				   star. 'fct' to convert to cgs is
 				   found in rads.fct. These fields are
 				   not hinted. */
+
+  _Bool transpplanet;		/* Planet is transparent? */
 };
 
 

@@ -37,6 +37,7 @@ setgeomhint(struct transit *tr)
   struct geometry *sg=tr->ds.sg=&st_sg;
   struct geometry *hg=&tr->ds.th->sg;
 
+  sg->transpplanet=hg->transpplanet;
 
   //If factor values are correctly hinted then use them, otherwise
   //assume hard coded values. If you change the following lines, don't
