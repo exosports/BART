@@ -265,13 +265,16 @@ void
 printv1(struct transit *tr)
 {
   int rn;
+
+  long rad=askforposl("choose radius to print(1 - %li): ",tr->rads.n);
+
   printf("#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
   for(rn=0;rn<tr->wns.n;rn++)
     /*    if(rn%tr->wns.o==0)*/
     printf("%10.4f%10.4f%15.5g%15.5g\n"
 	   ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
-	   tr->ds.ex->k[0][0][rn],
-	   AMU*tr->ds.ex->k[0][0][rn]*tr->isof[0].m/tr->isov[0].d[0]);
+	   tr->ds.ex->k[rad][0][rn],
+	   AMU*tr->ds.ex->k[rad][0][rn]*tr->isof[0].m/tr->isov[0].d[rad]);
 
   exit(EXIT_SUCCESS);
 }
@@ -333,7 +336,7 @@ int processparameters(int argc, /* number of command line arguments */
     {"output",required_argument,'o',
      "outfile","Change output file name, a dash (-)\n"
      "directs to standard output"},
-    {"atmosp",required_argument,CLA_ATMOSPHERE,
+    {"atm",required_argument,CLA_ATMOSPHERE,
      "atmfile","File containing atmospheric info (Radius,\n"
      "pressure, temperature). A dash (-) indicates alternative\n"
      "input"},
@@ -456,12 +459,12 @@ int processparameters(int argc, /* number of command line arguments */
   char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
   double rf;
 
-  procopt_debug=0;
+  procopt_debug=1;
   opterr=0;
   while(1){
     /* This is for old style
        rn=getopt(argc,argv,"f:Vhv:m:r:w:n:a:s:d:");*/
-    rn=getprocopt(argc,argv,var_docs,&var_cfg,NULL);
+    rn=getprocopt(argc,argv,"test",var_docs,&var_cfg,NULL);
     if (rn==-1)
       break;
 
@@ -506,9 +509,9 @@ int processparameters(int argc, /* number of command line arguments */
 	while(rn){
 	  fprintf(stderr,"- %s %s: ",sampv[i],name);
 	  samp->i=readd(stdin,&rc);
-	  switch(rc){
-	  case 0:
+	  if(!rc)
 	    break;
+	  switch(rc){
 	    /*
 	      case '?':
 	      fprintpad(stderr,1,"%s\n",var_docs[longidx].doc);
@@ -565,6 +568,11 @@ int processparameters(int argc, /* number of command line arguments */
 
     case CLA_ONEEXTRA:
       rn=ncharchg(optarg,',','\0')+1;
+      if(hints->onept.n){
+	free(hints->onept.n);
+	free(hints->onept.n[0]);
+	free(hints->onept.m);
+      }
       hints->onept.n=(char **)calloc(rn,sizeof(char *));
       hints->onept.n[0]=(char *)calloc(rn*maxeisoname,sizeof(char));
       hints->onept.m=(PREC_ZREC *)calloc(rn,sizeof(PREC_ZREC));

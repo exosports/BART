@@ -16,5 +16,8 @@ extern double readds P_((FILE *fp, char *c, char *string, int maxstring));
 extern double getds P_((char *in, char *c, char *string, int maxstring));
 extern long readl P_((FILE *fp, char *c));
 extern char *linepad P_((char *out, int nc, char *in));
+extern double askforposd P_((char *fmt, ...));
+extern long askforposl P_((char *fmt, ...));
+extern char *fgets_alloc P_((FILE *fp, int *max));
 
 #undef P_

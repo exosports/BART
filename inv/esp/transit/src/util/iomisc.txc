@@ -655,3 +655,126 @@ linepad(char *out,		/* output, it has to have a length of at
   return in;
 }
 
+
+
+
+/* \fcnfh
+   ask for a positive double value from stdin with the question 'fmt';
+   to stderr
+*/
+double
+askforposd(char *fmt,		/* Question asked */
+	   ...)			/* parameters for the question if any */
+{
+  va_list ap;
+  va_start(ap,fmt);
+  double val;
+  char rc;
+
+  while(1){
+    vfprintf(stderr,fmt,ap);
+    val=readd(stdin,&rc);
+    if(rc=='q'){
+      fprintf(stderr,"User interrupt!\n");
+      exit(EXIT_SUCCESS);
+    }
+    if(val<=0)
+      fprintf(stderr," Invalid value %g, it has to be positive\n",val);
+    else if(!rc)
+      break;
+    fprintf(stderr,"Try again!\n");
+  }
+  va_end(ap);
+
+  return val;
+}
+
+/* \fcnfh
+   ask for a positive long value from stdin with the question 'fmt';
+   to stderr
+*/
+long
+askforposl(char *fmt,		/* Question asked */
+	   ...)			/* parameters for the question if any */
+{
+  va_list ap;
+  va_start(ap,fmt);
+  long val;
+  char rc;
+
+  while(1){
+    vfprintf(stderr,fmt,ap);
+    val=readl(stdin,&rc);
+    if(rc=='q'){
+      fprintf(stderr,"User interrupt!\n");
+      exit(EXIT_SUCCESS);
+    }
+    if(val<=0)
+      fprintf(stderr," Invalid value %li, it has to be positive\n",val);
+    else if(!rc)
+      break;
+    fprintf(stderr,"Try again!\n");
+  }
+  va_end(ap);
+
+  return val;
+}
+
+/* \fcnfh
+   Read a new line and return it in a newly allocated 
+
+   @returns string newly allocated with with data read from fp
+            NULL if end of file was found
+ */
+char *
+fgets_alloc(FILE *fp, 		/* where to read from */
+	    int *max)		/* Number of lines read if pointer was
+				   given */
+{
+  static char *str;
+  char *rp;
+  int oldalloc,alloc=8;
+
+  //initial allocation
+  str=(char *)calloc(alloc,sizeof(char));
+  rp=str;
+  oldalloc=7;
+
+  //go until end of file or end of line.
+  while(1){
+    //Read the mext part of the line
+    if(fgets(rp,oldalloc+1,fp)==NULL&&rp==str){
+      free(str);
+      return NULL;
+    }
+    while(*rp) rp++;
+
+    //Check if we reached an end of line
+    if(rp[-1]=='\n'){
+      rp[-1]='\0';
+      if(max)
+	*max=rp-str;
+      str=(char *)realloc(str,(rp-str)*sizeof(char));
+      return str;
+    }
+
+    //Now see if the whole line was not read and there was no '\\n' (as
+    //checked by the previous conditional, in this case an end of file
+    //without a final newline should have ocurred
+    if(rp-str+1<alloc){
+      if(max)
+	*max=rp-str+1;
+      str=(char *)realloc(str,(rp-str+1)*sizeof(char));
+      return str;
+    }
+
+    //reallocate for new lecture. The whole allocated string wasa ready,
+    //but the last character is '\\0'
+    oldalloc=alloc;
+    str=(char *)realloc(str,sizeof(char)*(alloc<<=1));
+    rp=str+oldalloc-1;
+  }
+
+  //this never happens.
+  return NULL;
+}

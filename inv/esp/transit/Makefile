@@ -69,6 +69,10 @@ LIBS  = -lX11 -lP -lm
 # $? modified dependencies
 ################################
 
+dbgsample: $(UT_DEP) transitstd.c makesample.c
+	$(CC) $(STDFLAGS) -DDBGSAMPLE -o $@ $(filter %.c %.o,$^) $(LIBS)
+	cp -pf dbgsample $(BIN)
+
 dbgreadline: $(UT_DEP) transitstd.c readlineinfo.c
 	$(CC) $(STDFLAGS) -DDBGREADLINEINFO -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf dbgreadline $(BIN)

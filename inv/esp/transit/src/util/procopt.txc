@@ -25,15 +25,20 @@ static char *prgname=NULL;
 _Bool procopt_debug=1;
 int procopt_columns=__PADTO_COLUMNS;
 
+static int getoptfrom(char *line, struct option *getopts, int *longindex);
+
 
 /* \fcnfh
-   Process comand line parameters 
+   Process comand line parameters. It process paramfile parameters and
+   then the command line parameters. Changing name of parameter file
+   have to be arranged before this function
 */
 int
 getprocopt(int argc,		/* Number of command line arguments */
 	   char **argv,		/* Command line parameters */
+	   char *paramfile,	/* Parameters file */
 	   struct optdocs *opts, /* structure with information about
-					  parameter options and syntax */
+				    parameter options and syntax */
 	   struct optcfg *cfg,	/* various configuration parameters for
 				   procopt */
 	   int *longidxp)	/* return longindexp. Seems to be not
@@ -41,7 +46,13 @@ getprocopt(int argc,		/* Number of command line arguments */
 {
   static struct option *getopts;
   static char *shortopts;
+  static FILE *fp=NULL;
+  static _Bool eof=0;
+  static char *line=NULL;
   int ret;
+
+  if(!paramfile)
+    eof=1;
 
   //If first time then initialize
   if(!prgname){
@@ -124,7 +135,39 @@ getprocopt(int argc,		/* Number of command line arguments */
     shortopts=(char *)realloc(shortopts,(shortn-1)*sizeof(char));
   }
 
-  ret= getopt_long(argc,argv,shortopts,getopts,longidxp);
+  //process file if one is given and it was not finished
+  if(paramfile&&!eof){
+    //open file if it is first run.
+    if(!fp)
+      fp=fopen(paramfile,"r");
+    //if file is open then process next line
+    if(fp){
+      //skip empty lines and commented lines. If this is not the first
+      //line read, free the array
+      while(1){
+	if(line)
+	  free(line);
+	if((line=fgets_alloc(fp,NULL))==NULL){
+	  eof=1;
+	  fclose(fp);
+	  break;
+	}
+	if(*line&&*line!='#')
+	  break;
+      }
+      //If line was read succesfully, find if option exist and set optarg
+      if(!eof)
+	ret=getoptfrom(line,getopts,longidxp);
+    }
+    //if file was not opened then is because it doesn't exists.
+    else
+      eof=1;
+  }
+  //If file didn't exist, was not given or is finished processing then
+  //process command line parameters
+  if(eof)
+    ret= getopt_long(argc,argv,shortopts,getopts,longidxp);
+
   return ret;
 }
 
@@ -250,3 +293,68 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 
   exit(status);
 }
+
+/* \fcnfh
+   Mimics getopt_long (assuming always '.flags' equal to 0, but looking
+   in line for a field like as 'name value'
+
+   @returns 'val' from field in the struct option that contain the
+                  right name
+	    '?'   if name is an unknown option
+	    ':'   if there is a missing parameter
+*/
+static int
+getoptfrom(char *line,		/* line that should be of the form
+				   'name value' */
+	   struct option *getopt, /* array of the same form as the one
+				       required for getopt_long */
+	   int *longindex)	/* if not NULL, it points to a variable
+				   which is set to the index of the long
+				   option relative to longopts */
+{
+  char *opt;
+  int index=0,flen,ret;
+
+  opt=line;
+
+  while(*opt&&*opt!=' '&&*opt!='\t')
+    opt++;
+  flen=opt-line;
+  while(*opt==' '||*opt=='\t')
+    opt++;
+
+  ret='?';
+
+  //search for each parameter
+  while(getopt->name||getopt->has_arg||getopt->flag||getopt->val){
+    if(getopt->name&&strncmp(getopt->name,line,flen)==0){
+      if(longindex) 
+	*longindex=index;
+      switch(getopt->has_arg){
+      case required_argument:
+	if(*opt){
+	  optarg=opt;
+	  ret=getopt->val;
+	}
+	else
+	  ret=':';
+	break;
+      case no_argument:
+	ret=getopt->val;
+	break;
+      default:
+	if(procopt_debug){
+	  fprintf(stderr,
+		  "Error in option structure at function getprocopt\n");
+	  exit(EXIT_FAILURE);
+	}
+      }
+      break;
+    }
+    index++;
+    getopt++;
+  }
+
+  return ret;
+}
+
