@@ -408,7 +408,7 @@ interp(double refx,		/* Reference x point */
 
    @returns the interpolated y-value
  */
-double
+inline double
 lineinterp(double refx,		/* Reference x point */
 	   double *x,		/* x-axis */
 	   double *y,		/* y-axis */
@@ -419,10 +419,15 @@ lineinterp(double refx,		/* Reference x point */
   n--;
 
   //Initial range is correct?
-  if((ascend && *x>refx) || *x<refx){
+  if((ascend && (refx<*x || refx>x[n])) || (!ascend && (refx>*x || refx<x[n]))){
     fprintf(stderr,
-	    "interpline():: refx(%g) is outside x range (%g - %g)\n"
-	    ,refx,*x,x[n-1]);
+	    "ascend: %i, %i, %i; noascend %i, %i\n"
+	    "refx:%.10g  x: %.10g - %.10g\n"
+	    ,ascend,refx<*x,refx>x[n],refx>*x,refx<x[n]
+	    ,refx,x[0],x[n]);
+    fprintf(stderr,
+	    "interpline():: refx(%.8g) is outside x range (%.8g - %.8g)\n"
+	    ,refx,*x,x[n]);
     exit(EXIT_FAILURE);
   }
 
