@@ -56,6 +56,8 @@
 #define PREC_RES double     	/* Type for every partial result */
 #define PREC_ATM double		/* Type for atmospheric data */
 #define PREC_CS  double		/* Type for cross-section */
+#define PREC_CIA float       	/* Type for collision induced absorption
+				   */
 
 /*****   Macros   *****/
 static __inline__ void
@@ -127,5 +129,6 @@ extern const transit_ray_solution slantpath;
 #include <proto_argum.h>
 #include <proto_geometry.h>
 #include <proto_observable.h>
+#include <proto_cia.h>
 
 #endif /* _TRANSIT_H */

@@ -34,6 +34,7 @@ defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 #error Some of the preprocessor constants I wanted to use were already defined elsewhere!
 #endif
 
+#define RHOSTP (1.29e-3)	//Density at standard temp and press
 #define PI (3.141592653589793)	//PI!
 #define DEGREES (PI/180.0)	//to make degrees to radian
 #define GGRAV (6.673e-8)	//Gravitational constant (erg * cm / g / g)

@@ -127,6 +127,7 @@
 #define TRPI_GEOMETRY     0x000800 /* setgeom() completed */
 #define TRPI_GEOMETRYHINT 0x001000 /* setgeomhint() completed */
 #define TRPI_MODULATION   0x002000 /* modulation() completed */
+#define TRPI_CIA          0x004000 /* interpolatecia() completed */
 
 
 /* flags for transiterror */

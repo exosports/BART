@@ -13,3 +13,12 @@ with a infinity integrand near the closest approach point.
 
   Modulation integration was very precise for the test cases.
 
+
+===============================================================
+Monotonous Temperature
+======================
+
+  Temperature is assumed increasing monotonous inwards. Otherwise CIA
+calculations are in mistake. This is necesary for GSL spline.
+  Changes to correct this would have to be made at the begging of
+interpolatecia function ion cia.txc.

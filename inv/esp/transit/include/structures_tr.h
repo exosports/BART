@@ -63,6 +63,7 @@ typedef struct {          	/* One item per isotope */
 
 typedef struct {		/* One item per atmospheric conditions
 				   in the atmosphere */
+  double *mm;			/* Mean molecular mass [rad] */
   PREC_ATM *p;			/* Pressure (cgs=dyne/cm2) */
   PREC_ATM *t;			/* Temperature [radius] */
   PREC_ATM pfct;		/* Pressure factor to convert to cgs. */
@@ -328,8 +329,15 @@ struct detailfld {
 
 
 struct detailout {
-  struct detailfld ext;
-  struct detailfld tau;
+  struct detailfld ext,tau,cia;
+};
+
+
+struct cia {
+  PREC_CIA **e;			/* Extinction from all CIA sources
+				   [wn][tmp] */
+  char **file;
+  int n;
 };
 
 
@@ -396,6 +404,9 @@ struct transithint {		/* Structure with user hinted data that
 
   struct detailout det;
 
+  char **ciafile;
+  int ncia;
+
 };
 
 
@@ -461,6 +472,7 @@ struct transit {		/* Main data structure */
     struct extcloud *cl;
     struct extscat *sc;
     struct detailout *det;
+    struct cia *cia;
   }ds;
 };
 
