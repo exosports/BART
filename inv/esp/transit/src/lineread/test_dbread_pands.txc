@@ -173,11 +173,11 @@ int main(int argc,
 
   printf("\nWanna know the value of a single record?\n"
 	  "If so, write record number (range 0 - %li), else "
-	    "press ^D twice: "
+	    "press 'enter'"
 	  ,n-1);
 
 
-  while((ans=readl(stdin,&rc))!=0||rc==-1){
+  while((ans=readl(stdin,&rc))>=0&&rc==-1){
     if(ans<n&&ans>=0){
       lp=lines+ans;
       printf("Record Position: %li\nWavelength: %.10g [%s]\n"
@@ -192,7 +192,7 @@ int main(int argc,
 
     printf("\nWanna know the value of another single record?\n"
 	    "If so, write the record number (range 0 - %li), else just "
-	    "press ^D: "
+	    "press 'enter': "
 	    ,n-1);
   }
 
