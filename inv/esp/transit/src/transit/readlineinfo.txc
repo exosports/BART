@@ -1146,12 +1146,12 @@ int readlineinfo(struct transit *tr) /* General parameters and
 	       ,fct*tr->m);
 
   //read data file
-  transitprint(1,verblevel, "\nReading data... ");
+  transitprint(1,verblevel, "\nReading data...\n");
   if((rn=readdatarng(tr,&st_li))<1)
     transiterror(TERR_SERIOUS,
 		 "readdatarng() returned an error code %li\n"
 		 ,rn);
-  transitprint(1,verblevel, " done%c\n",'.');
+  transitprint(1,verblevel, " done.\n");
 
   //Status so far
   transitprint(2,verblevel,
