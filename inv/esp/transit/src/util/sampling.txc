@@ -118,25 +118,36 @@ resample(const int getingx, /* Flag indicating which axis we
 
     //'i' is the initial index to look for in the binary search. It is
     //initialized to zero, but then we just use the value previously
-    //found.
+    //found, unless is not in strictly ascendent order. \lin{nonascend}
     i=0;
     f=nrefx;
     for(j=0;j<nout;j++){
       val=outx[j];
 
-      transitASSERT(val<refx[i],
-		    "Hey!, looking for a value(%g) prior to current\n"
-		    "index %i: %g. Maybe output array is disordered in"
-		    "resample()"
-		    ,val,i,refx[i]);
+      if(val<refx[0]||val>refx[nrefx-1])
+	transiterror(TERR_CRITICAL,
+		     "resample():: Looking for a value (%g) that is outside\n"
+		     "reference axis (%g - %g)\n"
+		     ,val,refx[0],refx[nrefx-1]);
 
-      if(val==refx[f]){
+      //In case the next output element is not bigger than the previous,
+      //then start looking from the beginning
+      //\linelabel{nonascend}
+      if(val<refx[i])
+	i=0;
+      else if(val==refx[f]){
 	i=indx[j]=f++;
 	t[j]=0;
 	continue;
       }
 
-      if(!j||val>refx[f]){
+      //Do binary search only if the value is bigger than the the bin
+      //one position bigger than the previous find or the last element
+      //was the first one. The latter happens when either this is the
+      //first time the loop is tried or every time that the previous
+      //result is the first element, this has a small efficiency loss,
+      //but is the best alternative I think.
+      if(!i||val>refx[f]){
 	f=nrefx;
 	while(f-i>1){
 	  m=(f+i)>>1;
