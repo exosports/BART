@@ -71,7 +71,7 @@ modulation(struct transit *tr)	/* Main structure */
     out[w]=sol->obsperwn(tau->t[w],tau->first[w],tau->toomuch,
 			 ip,sg,acc);
 
-    if((w&0x1f)==0x1ff)
+    if((w&0x1ff)==0x1ff)
       transitdot(1,verblevel);
   }
   gsl_interp_accel_free(acc);
