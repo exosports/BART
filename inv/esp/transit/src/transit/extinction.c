@@ -191,7 +191,7 @@ int extwn (struct transit *tr)
     //\frac{\sqrt{2k_B T \ln 2}}{c}}_{\mathrm{propto\_adop}}
     //\label{dopbr}
     //\]
-    propto_adop=sqrt(2*KB*temp)*SQRTLN2/LS;
+    propto_adop=sqrt(2*KB*temp/AMU)*SQRTLN2/LS;
 
     //'propto\_alor' is proportional to the Lorenz width, which in its
     //total splendor is
@@ -203,7 +203,7 @@ int extwn (struct transit *tr)
     //+\frac{1}{m_i}\right)}.
     //\label{lorwidth}
     //\]
-    propto_alor=sqrt(temp*2*KB/PI)/LS/PI;
+    propto_alor=sqrt(temp*2*KB/PI/AMU)/AMU/LS/PI;
 
     //Initialize a voigt profile for every isotope as well for the
     //mass, ziso, densiso and csiso arrays
@@ -339,16 +339,18 @@ int extwn (struct transit *tr)
 
       transitDEBUG(20,verblevel,
 		   "i=%i   temp=%g   Elow=%g\n"
+		   "aD=%.7g   aL=%.7g\n"
 		   "wl=%.10g  wn=%.10g\n"
-		   "k= %10.3g  //densiso[i] \n"
-		   "  *%10.3g  //SIGCTE\n"
-		   "  *%10.3g  //line[ln].gf\n"
-		   "  *%10.3g  //exp(-EXPCTE*line[ln].elow/temp)\n"
-		   "  *%10.3g  //(1-exp(-EXPCTE*wavn/temp))\n"
-		   "  /%10.3g  //mass[i]\n"
-		   "  /%10.3g  //ziso[i]\n"
-		   " = %10.3g   //extinction\n"
+		   "k= %12.5g  //densiso[i] \n"
+		   "  *%12.5g  //SIGCTE\n"
+		   "  *%12.5g  //line[ln].gf\n"
+		   "  *%12.5g  //exp(-EXPCTE*line[ln].elow/temp)\n"
+		   "  *%12.5g  //(1-exp(-EXPCTE*wavn/temp))\n"
+		   "  /%12.5g  //mass[i]\n"
+		   "  /%12.5g  //ziso[i]\n"
+		   " = %12.5g   //extinction\n\n"
 		   ,i,temp,line[ln].elow
+		   ,alphad[i]*wn[w],alphal[i]
 		   ,line[ln].wl,WNU_O_WLU/line[ln].wl
 		   ,densiso[i]
 		   ,SIGCTE

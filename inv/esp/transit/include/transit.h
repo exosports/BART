@@ -13,6 +13,7 @@
 #include <util/sampling.h>
 #include <util/profile.h>
 #include <util/iomisc.h>
+#include <strings.h>
 
 /* Flags for hintable parameters. Its precense indicates that the
    parameter was changed or not accepted */
@@ -177,7 +178,7 @@ defined(EXPCTE) || defined(WNU_O_WLU)
 #define RWATER (3.2e-8/2.0)                 //water molecule radius
 #define HC (H*LS)                           //for lower energy conversion
 #define SIGWATER (PI*RWATER*RWATER)         //water cross section
-#define SIGCTE (PI*EC*EC/LS/LS/ME)          //Cross-sec constant
+#define SIGCTE (PI*EC*EC/LS/LS/ME/AMU)      //Cross-sec constant
 #define EXPCTE (H*LS/KB)                    //Exponent constant
 
 #define WNU_O_WLU (1e7)              //Waven(cm) over wavel(nm) (units)
@@ -188,7 +189,7 @@ extern int transit_nowarn;
 extern int verblevel;
 
 /* Macros */
-#define stateeqnford(q,m,p,t) ((q)*(m)*(p)/(KB)/(t));
+#define stateeqnford(q,m,p,t) (AMU*(q)*(m)*(p)/(KB)/(t));
 
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitacceptflag(transit,hint,flag) do{                            \

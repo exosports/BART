@@ -187,12 +187,11 @@ readtwii_bin(FILE *fp,
 
     //read mass
     fread(&tr->isof[i].m,sizeof(PREC_ZREC),1,fp);
-    tr->isof[i].m*=AMU;
 
     transitDEBUG(21,verblevel,
 		 "Mass read: %g * %g = %g\n"
 		 "position: %li, size %i\n"
-		 ,tr->isof[i].m/AMU,AMU,tr->isof[i].m
+		 ,tr->isof[i].m,AMU,tr->isof[i].m*AMU
 		 ,ftell(fp),sizeof(tr->isof[i].m));
 
     //allocate and read isotope names
@@ -220,6 +219,7 @@ readtwii_bin(FILE *fp,
 
   //update structure values
   tr->n_db=ndb;
+  li->endinfo=ftell(fp);
 
   li->wi=iniw;
   li->wf=finw;
@@ -324,10 +324,6 @@ readtwii_ascii(FILE *fp,
     isov+=(acumiso=tr->db[db].s);
     isov->z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
     isov->c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
-    for(i=1;i<nIso;i++){
-      isov[i].z=isov->z+nT*i;
-      isov[i].c=isov->c+nT*i;
-    }
 
     //get isotope name and mass
     while((rc=fgetupto(lp2=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
@@ -335,17 +331,19 @@ readtwii_ascii(FILE *fp,
     if(!rc) notyet(li->asciiline,tr->f_line);
     //for each isotope
     for(i=0;i<nIso;i++){
+      isov[i].z=isov->z+nT*i;
+      isov[i].c=isov->c+nT*i;
       //get name
       if((tr->isof[acumiso+i].n=readstr_sp(lp2,&lp,'_'))==NULL)
 	transitallocerror(0);
       //get mass and convert to cgs
-      tr->isof[acumiso+i].m=strtod(lp,&lp2)*AMU;
+      tr->isof[acumiso+i].m=strtod(lp,&lp2);
 
       if(i!=nIso-1)
-	checkprepost(lp2,lp!=lp2,*lp==' '||*lp=='\t',*lp=='\0');
+	checkprepost(lp2,lp==lp2,*lp2==' '||*lp2=='\t',*lp2=='\0');
     }
     //Last isotope has to be followed by an end of string
-    checkprepost(lp2,0,*lp==' '||*lp=='\t',*lp!='\0');
+    checkprepost(lp2,0,*lp2==' '||*lp2=='\t',*lp2!='\0');
 
     //get for each temperature
     for(rn=0;rn<nT;rn++){
@@ -375,7 +373,9 @@ readtwii_ascii(FILE *fp,
     }
   }
 
+  //store number of database and beginning of data
   tr->n_db=ndb;
+  li->endinfo=ftell(fp);
 
   //We don't know beforehand what is the range in ascii storage, it has
   //to be looked for
@@ -435,7 +435,7 @@ getinifinasctwii(double *ini,	/* where initial value would be stored */
   line[maxline-1]='\0';
 
   lplast=NULL;
-  while(!*lp){
+  while(*lp){
     lp++;
     if(*lp!='\0'&&lp[-1]=='\n')
       lplast=lp;
@@ -715,18 +715,19 @@ int readinfo_twii(struct transit *tr,
   //is it a binary TWII
   if(sign.s[0]!=sign.s[1]){
     //does it look like being a Ascii TWII?, if so check it.
-    rn=strncmp((char *)&sign.s,"#T",2);
+    rn=strncasecmp((char *)(sign.s+1),"#T",2);
     if(!rn){
       strcpy(line,"#T");
       fread(line+2,sizeof(char),9,fp);
-      rn=strncmp(line,"#TWII-ascii",11);
+      rn=strncasecmp(line,"#TWII-ascii",11);
     }
     //If it wasn't any valid TWII, then error and exit
     if(rn){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		   "The file '%s' has not a valid TWII format. It may\n"
-		   " also be because the machine were it was created have\n"
-		   " different endian order, which is incompatible"
+		   "The file '%s' has not a valid TWII\n"
+		   " format. It may also be because the machine were it\n"
+		   " was created have different endian order, which is\n"
+		   " incompatible"
 		   ,tr->f_line);
       return -3;
     }
@@ -752,10 +753,6 @@ int readinfo_twii(struct transit *tr,
 		   ,rn);
       return -6;
     }
-
-  //Now for either kind of format, do the closure steps.\par
-  //update structure values
-  li->endinfo=ftell(fp);
 
   //close file, set progres indicator and return success.
   fclose(fp);
@@ -851,6 +848,7 @@ int readdatarng(struct transit *tr, /* General parameters and
     fseek(fp,li->endinfo,SEEK_SET);
     while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
 	  =='#'||rc=='\n');
+    li->endinfo=ftell(fp)-strlen(line)-1;
 
     //'offs' is the number of lines since the first transition.
     offs=0;
@@ -876,6 +874,7 @@ int readdatarng(struct transit *tr, /* General parameters and
 			 li->asciiline+offs++))
 	    =='#'||rc=='\n');
     }
+    fseek(fp,li->endinfo,SEEK_SET);
   }
   //if is a binary file then we can look through binary search
   else{
