@@ -477,9 +477,12 @@ double readds(FILE *fp,
    @returns 0 on success
             first character read if it was not appropiate
 */
-double getds(char *in,
-	     char *c,
-	     char *string,
+double getds(char *in,		/* input field */
+	     char *c,		/* 0 if there is a valid number at the
+				   beggining of the field, otherwie
+				   return here the first character of
+				   the field. Optional  */
+	     char *string,	/* return string here. Optional */
 	     int maxstring)	/* includes '\\0' */
 {
   char *cur,car;
