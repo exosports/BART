@@ -1,6 +1,7 @@
 /*
- * extinction.c - Computes extinction coefficient. Component of the
- *                Transit program.
+ * extinction.c 
+ * extinction.txc - Computes extinction coefficient. Component of the
+ *                  Transit program.
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -134,9 +135,9 @@ int extwn (struct transit *tr)
 
   //following to store isotope dens
   densiso=(PREC_ATM *) calloc(niso,sizeof(PREC_ATM ));
-  csiso=(PREC_CS *) calloc(niso,sizeof(PREC_CS));
-  ziso=(PREC_ZREC *) calloc(niso,sizeof(PREC_ZREC));
-  mass=(PREC_ZREC *) calloc(niso,sizeof(PREC_ZREC));
+  csiso=  (PREC_CS *)  calloc(niso,sizeof(PREC_CS  ));
+  ziso=   (PREC_ZREC *)calloc(niso,sizeof(PREC_ZREC));
+  mass=   (PREC_ZREC *)calloc(niso,sizeof(PREC_ZREC));
   nwnh=(int *) calloc(niso,sizeof(int));
 
   //allocate array for the voigt profile
@@ -183,22 +184,23 @@ int extwn (struct transit *tr)
     //set some auxiliary variables.
     temp=tr->atm.t[r];
 
-    //'propto\_adop' is proportional to the doppler width, which in its
+    //'propto\_adop' is proportional to the Doppler width, which in its
     //total splendor is
     //\[
-    //\alpha_D=\frac{\Wn}{\sqrt{m}}\underbrace{\frac{\sqrt{2k_BT}}{c}}
-    //_{\mathrm{propto\_adop}}
+    //\alpha_D = \frac{\Wn}{\sqrt{m}}\underbrace{
+    //\frac{\sqrt{2k_B T \ln 2}}{c}}_{\mathrm{propto\_adop}}
     //\label{dopbr}
     //\]
-    propto_adop=sqrt(2*KB*temp)/LS;
+    propto_adop=sqrt(2*KB*temp)*SQRTLN2/LS;
 
     //'propto\_alor' is proportional to the Lorenz width, which in its
     //total splendor is
     //\[
-    //\alpha_L=\frac{\sigma_c}{\pi c}
-    //\sqrt{\frac{2\kb T}{\pi}} \sum_{\mathrm{collisioners}}n_i
-    //\sqrt{\left(\frac{1}{m_r}
-    //+\frac{1}{m_i}\right)}
+    //\alpha_L = \underbrace{\Gamma_{nat}}_{\mathrm{ignored}}
+    //+\underbrace{\frac{1}{\pi c}\sqrt{\frac{2\kb T}{\pi}}}
+    //_{\mathrm{propto\_alor}}
+    //\sigma_c\sum_{\mathrm{collisioners}}n_i \sqrt{\left(\frac{1}{m_r}
+    //+\frac{1}{m_i}\right)}.
     //\label{lorwidth}
     //\]
     propto_alor=sqrt(temp*2*KB/PI)/LS/PI;
@@ -217,13 +219,16 @@ int extwn (struct transit *tr)
       //Calculate lorentz
       alphal[i]=0;
       for(j=0;j<neiso;j++)
-	alphal[i]+=densiso[i]*csiso[i]/mass[i]
+	alphal[i]+=csiso[i]*tr->isov[j].d[r]/tr->isof[j].m
 	  *sqrt(1/mass[i] + 1/tr->isof[j].m);
       alphal[i]*=propto_alor;
 
       //Following calculates doppler divided by central wavenumber.
       alphad[i]=propto_adop/sqrt(mass[i]);
 
+      //Now get a new profile, 'profile[i]' has dimensions
+      //'ex->vf'x'ex->lw[0]'. The latter is calculated by newprofile,
+      //though.
       if((nwnh[i]=newprofile(profile[i],ex->vf,&ex->lw[0],dwn,
 			     wn[0]*alphad[i],alphal[i],ex->ta)
 	  )<1)
@@ -231,17 +236,28 @@ int extwn (struct transit *tr)
 		     "newprofile() returned error code %i on its\n"
 		     "first try for isotope %i.\n"
 		     ,nwnh[i],i);
+      //set 'w' to the last wavenumber index (because the lines are
+      //sorted by wavelength.
+      //And set 'cp[w]' to how many other wavenumbers bins to
+      //recalculate the Voigt profile, it has to be at least 1.
+      //verbline{voigtrec}
       w=nwn-1;
       cp=ex->recalc[i];
       cp[w]=(int)(ex->maxratio*wn[w]/dwn+0.5);
       if(!cp[w])
 	cp[w]=1;
+
+      //now set 'wrc[i]' to the next wavenumber that Voigt needs to be
+      //recalculated, and put a 1 in that position in the 'cp[]' array.
       wrc[i]=w-cp[w];
       if(wrc[i]>=0)
 	cp[wrc[i]]=1;
+
+      //initialize 'wa[i]' to last wavenumber
       wa[i]=w;
     }
 
+    //Compute the spectra!, proceed for every line.
     for(ln=0;ln<tr->n_l;ln++){
       /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
@@ -252,20 +268,24 @@ int extwn (struct transit *tr)
 
       wavn=WNU_O_WLU/line[ln].wl;
       /* 
-       if(wavn<wni||wavn>wnf)
-       continue;
+	 when out of borders enabled
+	 if(wavn<wni||wavn>wnf)
+	 continue;
       */
       //if it is beyond lower limit
       if(wavn<iniwn)
 	continue;
-      //      w=-(long)((iniwn-wavn)/dwn+1)
+      /* 
+	 This is when out of borders is enabled
+	 w=-(long)((iniwn-wavn)/dwn+1)
+      */
       else
 	w=(wavn-iniwn)/dwn;
       transitDEBUG(20,verblevel,
 		   "wavn:%g lgf:%g\n"
 		   ,wavn,line[ln].lgf);
-      //If it is beyond the last then just
-      //skip that line
+      //If it is beyond the last then just skip that line
+      /* out of borders enabled =>change following */
       if(w>=nwn)
 	continue;
 
@@ -279,8 +299,10 @@ int extwn (struct transit *tr)
 		    "Database is not ordered!, previous wavenumber was\n"
 		    "at index %i, new one at %i (it should have been smaller)\n"
 		    ,wa,w);
+      //if $'w'<='wrc'$ then recalcute Voigt
       if(w<=wrc[i]){
-	//Find number of wavenumbers until the next recalculation
+	//Find number of wavenumbers until the next recalculation, and
+	//store as in \lin{voigtrec}
 	cp[wrc[i]]=0;
 	cp[w]=(int)(ex->maxratio*wn[w]/dwn+0.5);
 	if(!cp[w])
@@ -293,8 +315,8 @@ int extwn (struct transit *tr)
 		     "wavenumber %i, next wavenumber %i/%i\n"
 		     ,i,w,wrc[i],nwn);
 
+	//free old profile and recalculate voigt
 	free(profile[i][0]);
-
 	if((nwnh[i]=newprofile(profile[i],ex->vf,&ex->lw[w],dwn,
 			       wn[w]*alphad[i],alphal[i],ex->ta)
 	    )<1)
@@ -304,6 +326,7 @@ int extwn (struct transit *tr)
 		       ,nwnh[i],i);
       }
 
+      //Calculate opacity coefficient less the voigt spread
       /* CAVEATS: _mass_ densitty 
                   _log_ gf */
       propto_k=densiso[i]	         //mass density
@@ -337,7 +360,7 @@ int extwn (struct transit *tr)
       //set 'profwn' such that the index mimic wavenumber's array
       profwn=profile[i][subw]+nwnh[i]-w;
 
-      //set upper and lower limits.
+      //set upper and lower limits for Voigt spread
       minj=w-nwnh[i];
       if(minj<0)
 	minj=0;
@@ -351,7 +374,7 @@ int extwn (struct transit *tr)
 	k[j]+=propto_k
 	  *profwn[j];
 
-
+      //'wa[i]' is just the last wavelength per isotope.
       wa[i]=w;
     }
     for(i=0;i<niso;i++)

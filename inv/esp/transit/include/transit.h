@@ -182,6 +182,7 @@ defined(EXPCTE) || defined(WNU_O_WLU)
 
 #define WNU_O_WLU (1e7)              //Waven(cm) over wavel(nm) (units)
 #define ONEOSQRT2PI (0.3989422804)   // 1.0/sqrt(2pi)
+#define SQRTLN2  0.83255461115769775635 //sqrt(ln(2))
 
 extern int transit_nowarn;
 extern int verblevel;
