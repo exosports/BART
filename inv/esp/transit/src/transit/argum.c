@@ -104,6 +104,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_MODLEVEL,
     CLA_BLOWEX,
     CLA_TAUISO,
+    CLA_MINELOW,
   };
 
   //General help-option structure
@@ -259,6 +260,9 @@ int processparameters(int argc, /* number of command line arguments */
     {"blowex",CLA_BLOWEX,required_argument,"1",
      "factor","Blow extinction by factor before computing tau. No\n"
      "physical significance of this variable, but only debugging"},
+    {"minelow",CLA_MINELOW,required_argument,"0",
+     "low-energy","Only use transitions with this minimum low energy\n"
+     "(in cm-1)"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
@@ -335,6 +339,9 @@ int processparameters(int argc, /* number of command line arguments */
 		 ,rn,optarg);
 
     switch(rn){
+    case CLA_MINELOW:
+      hints->minelow=atof(optarg);
+      break;
     case 's':
       hints->solname=(char *)realloc(hints->solname,strlen(optarg)+1);
       strcpy(hints->solname,optarg);
