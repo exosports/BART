@@ -58,7 +58,7 @@ tau_now(double ip,
 
   result=totaltau(ip,rad,refr,ex,nrad,type);
   err=fabs(1-result/res);
-  test_result("        %25s: observed %13.10g (error %g)\n"
+  test_result("        %-25s: observed %13.10g (error %g)\n"
 	      ,desc,result,err);
   if(err>maxerr)
     status++;
@@ -190,6 +190,233 @@ tau_ex(double *rmax,
 }
 
 
+double *mod_ctau(double prm, double *res, double star, double ipmax, double first, long nip, double toomuch)
+{
+  //return result if that is what user wanted.
+  if(res){
+    double rath=ipmax/star;
+    double ratl=first*ipmax/star;
+    *res=exp(-prm)*(rath*rath-ratl*ratl) + 
+      exp(-toomuch)*ratl*ratl +
+      (1-rath*rath);
+    return NULL;
+  }
+
+  static double *tau;
+  tau=(double *)calloc(nip,sizeof(double));
+
+  while(--nip)
+    tau[nip]=prm;
+  tau[0]=prm;
+
+  return tau;
+}
+
+
+int
+mod_now(double *tau,
+	long last,
+	double toomuch,
+	prop_samp *ip,
+	struct geometry *sg,
+	double res,
+	int type,
+	char *desc)
+{
+  double result,err;
+  int status=0;
+
+  result=modulationperwn(tau,last,toomuch,ip,sg,type);
+  err=fabs(1-result/res);
+  test_result("          %-25s: observed %13.10g (error %g)\n"
+	      ,desc,result,err);
+  if(err>maxerr)
+    status++;
+  test++;
+
+  return status;
+}
+
+
+int
+mod_nip(struct geometry *sg,
+	double ipmax,
+	double first,
+	long nip,
+	double toomuch,
+	double res,
+	double *(*tauf)(),
+	double tprm)
+{
+  int status=0,i;
+  double delt=ipmax*(1-first)/(nip-1);
+
+  test_result("        Using %li radial layers. Spacing is %g\n"
+	      ,nip,delt);
+
+  double *tau=tauf(tprm, NULL, sg->starrad*sg->starradfct,
+		   ipmax, first, nip, toomuch);
+  if(!tau){
+    fprintf(stderr, 
+	    "Somehow, Tau was not allocated by the (tauf)(). Aborting\n");
+    exit(EXIT_FAILURE);
+  }
+
+  prop_samp ip;
+  ip.v=(PREC_RES *)calloc(nip,sizeof(double));
+  ip.n=nip;
+  ip.o=1;
+  ip.fct=1;
+  ip.i=ipmax;
+  ip.f=first * ipmax;
+  for(i=0;i<nip;i++)
+    ip.v[i] = first * ipmax + (nip - 1 - i) * delt;
+
+  status+=mod_now(tau, nip-1, toomuch, &ip, sg, res, 1, "Full eclipse, no LD");
+
+  free(tau);
+
+  return status;
+}
+
+
+int
+mod_first(struct geometry *sg,
+	  double ipmax,
+	  double first,
+	  long *nip,
+	  int nnip,
+	  double toomuch,
+	  double *(*tauf)(),
+	  double tprm)
+{
+  int status=0,i;
+  double result;
+
+  tauf(tprm, &result, sg->starrad*sg->starradfct, ipmax, first, 0, toomuch);
+  test_result("      Atmosphere starting at %g. Expected result is %g\n"
+	      ,first*ipmax,result);
+  for(i=0;i<nnip;i++)
+    status+=mod_nip(sg, ipmax, first, nip[i], toomuch, result, tauf, tprm);
+
+  return status;
+}
+
+
+int
+mod_ip(struct geometry *sg,
+       double ipmax,
+       double *first,
+       int nfirst,
+       long *nip,
+       int nnip,
+       double toomuch,
+       double *(*tauf)(),
+       double tprm)
+{
+  int status=0,i;
+
+  if(ipmax>sg->starrad)
+    return 0;
+  test_result("    For a planet of radius %g\n",ipmax);
+  for(i=0;i<nfirst;i++)
+    status+=mod_first(sg, ipmax, first[i], nip, nnip, toomuch, tauf, tprm);
+
+  return status;
+}
+
+
+int
+mod_star(double star,
+	 double *ipmax,
+	 int nipmax,
+	 double *first,
+	 int nfirst,
+	 long *nip,
+	 int nnip,
+	 double toomuch,
+	 double *(*tauf)(),
+	 double tprm)
+{
+  int status=0,i;
+
+  test_result("  For a star of radius %g\n",star);
+
+  struct geometry sg;
+  sg.smaxis=1;
+  sg.smaxisfct=1;
+  sg.time=0;
+  sg.timefct=1;
+  sg.incl=90;
+  sg.inclfct=PI/180.0;
+  sg.ecc=0;
+  sg.eccfct=1;
+  sg.lnode=0;
+  sg.lnodefct=1;
+  sg.aper=1;
+  sg.aperfct=1;
+  sg.starmass=1;
+  sg.starmassfct=1;
+  sg.starrad=star;
+  sg.starradfct=1;
+  sg.x=0;
+  sg.y=0;
+
+  for(i=0;i<nipmax;i++)
+    status+=mod_ip(&sg, ipmax[i], first, nfirst, nip, nnip, toomuch, 
+		   tauf, tprm);
+
+  return status;
+}
+
+
+int
+mod_tau(double *star,
+	int nstar,
+	double *ipmax,
+	int nipmax,
+	double *first,
+	int nfirst,
+	long *nip,
+	int nnip,
+	double toomuch,
+	double *(*tauf)(),
+	char *desc,
+	double tprm)
+{
+  int status=0,i;
+
+  test_result("\nTesting MODULATION for %s\n",desc);
+  for(i=0;i<nstar;i++)
+    status+=mod_star(star[i], ipmax, nipmax, first, nfirst, nip, nnip,
+		     toomuch, tauf, tprm);
+
+  return status;
+}
+
+int
+test_mod()
+{
+  int status=0;
+  double ipmax[]={10, 100, 1000};
+  long nip[]=    {10, 100, 1000};
+  double first[]={.9, .75, .5, .1};
+  double star[]= {10,100,1000};
+  double toomuch=30;
+
+  int n_ipmax=sizeof(ipmax)/sizeof(double);
+  int n_nip=sizeof(nip)/sizeof(long);
+  int n_first=sizeof(first)/sizeof(double);
+  int n_star=sizeof(star)/sizeof(double);
+
+  status+=mod_tau(star, n_star, ipmax, n_ipmax, first, n_first, nip, n_nip,
+		  toomuch, &mod_ctau, "Constant Tau", .01);
+
+  return status;
+}
+
+
+
 int
 test_tau()
 {
@@ -217,6 +444,7 @@ main(int argc, char *argv[])
     outp=fopen(argv[1],"w");
 
   status += test_tau( );
+  status += test_mod( );
 
   if(outp)
     fclose(outp);
@@ -237,170 +465,3 @@ main(int argc, char *argv[])
 
   exit(EXIT_SUCCESS);
 }
-
-
-double *mod_ctau(double prm, double *res, double star, double ipmax, double first, long nip, double toomuch)
-{
-  //return result if that is what user wanted.
-  if(*res){
-    double rath=ipmax/star;
-    double ratl=first*ipmax/star;
-    *res=exp(-prm)*(rath*rath-ratl*ratl) + 
-      exp(-toomuch)*ratl*ratl +
-      (1-rath*rath);
-    return NULL;
-  }
-
-  static double tau[nip];
-
-  while(--nip)
-    tau[nip]=prm;
-  tau[0]=prm;
-
-  return tau;
-}
-
-
-int
-mod_nip(double star,
-	double ipmax,
-	double first,
-	long nip,
-	double toomuch,
-	double res,
-	double *(*tauf)(),
-	double tprm)
-{
-  int status=0,i;
-
-  double *tau=tauf(tprm,NULL,star,ipmax,first,nip,toomuch);
-  if(!tau){
-    fprintf(stderr, 
-	    "Somehow, Tau was not allocated by the (tauf)(). Aborting\n");
-    exit(EXIT_FAILURE);
-  }
-  test_result("        Using %li radial layers. Spacing is %g\n"
-	      ,nip,ipmax*(1-first)/nip);
-	      ,first*ipmax,result);
-  for(i=0;i<nnip;i++)
-    status+=mod_nip(star, ipmax, first, nip[i], toomuch, result, tauf, tprm);
-
-  return status;
-}
-
-
-int
-mod_first(double star,
-	  double ipmax,
-	  double first,
-	  long *nip,
-	  int nnip,
-	  double toomuch,
-	  double *(*tauf)(),
-	  double tprm)
-{
-  int status=0,i;
-  double result;
-
-  tauf(tprm,&result,star,ipmax,first,0,toomuch);
-  test_result("      Atmosphere starting at %g. Expected result is %g\n"
-	      ,first*ipmax,result);
-  for(i=0;i<nnip;i++)
-    status+=mod_nip(star, ipmax, first, nip[i], toomuch, result, tauf, tprm);
-
-  return status;
-}
-
-
-int
-mod_ip(double star,
-       double ipmax,
-       double *first,
-       int nfirst,
-       long *nip,
-       int nnip,
-       double toomuch,
-       double *(*tauf)(),
-       double tprm)
-{
-  int status=0,i;
-
-  test_result("    For a planet of radius %g\n",ipmax);
-  for(i=0;i<nnip;i++)
-    status+=mod_first(star,ipmax,first[i],nip,nnip,toomuch,tauf, tprm);
-
-  return status;
-}
-
-
-int
-mod_star(double star,
-	 double *ipmax,
-	 int nipmax,
-	 double *first,
-	 int nfirst,
-	 long *nip,
-	 int nnip,
-	 double toomuch,
-	 double *(*tauf)(),
-	 double tprm)
-{
-  int status=0,i;
-
-  test_result("  Star of radius %g\n",star);
-  for(i=0;i<nip;i++)
-    status+=mod_ip(star,ipmax[i],first,nfirst,nip,nnip,toomuch,tauf, tprm);
-
-  return status;
-}
-
-
-int
-mod_tau(double *star,
-	int nstar,
-	double *ipmax,
-	int nipmax,
-	double *first,
-	int nfirst,
-	long *nip,
-	int nnip,
-	double toomuch,
-	double *(*tauf)()
-	char *desc,
-	double tprm)
-{
-  int status=0,i;
-
-  test_result("\nTesting MODULATION for %s\n",desc);
-  for(i=0;i<nip;i++)
-    status+=mod_star(star[i],ipmax,nipmax,nip,nnip,first,nfirst,toomuch,tauf, tprm);
-
-  return status;
-}
-
-int
-test_mod()
-{
-  int status=0;
-  double ipmax[]={10, 100, 1000};
-  long nip[]=    {10, 100, 1000};
-  double first[]={.9, .75, .5, .1};
-  double star[]= {10,100,1000};
-  double toomuch=30;
-
-  int n_ipmax=sizeof(ipmax)/sizeof(double);
-  int n_nip=sizeof(nip)/sizeof(long);
-  int n_first=sizeof(first)/sizeof(double);
-  int n_star=sizeof(star)/sizeof(double);
-
-  status+=mod_tau(star,n_star,ipmax,n_ipmax,first,n_first,nip,n_nip,toomuch,&mod_ctau,"Constant Tau",.01);
-
-  return status;
-}
-
-
-
-
-
-
-

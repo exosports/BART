@@ -23,8 +23,8 @@
 #ifndef _TEST_COMMON_H
 #define _TEST_COMMON_H
 
-#define test_result(fmt,...)        do{                 \
-         fprintf(stdout,fmt,__VA_ARGS__);  \
+#define test_result(...)        do{                 \
+         fprintf(stdout,__VA_ARGS__);  \
                                        }while(0)
 
 #endif

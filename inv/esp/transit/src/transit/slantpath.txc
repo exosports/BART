@@ -264,47 +264,44 @@ static inline PREC_RES
 modulation1 (PREC_RES *tau,
 	     long last,
 	     double toomuch,
-	     prop_samp *ip,
+	     prop_samp *ip,	/* Order is descending */
 	     struct geometry *sg)
 {
   //general variables
   PREC_RES res;
   double srad=sg->starrad*sg->starradfct;
-  double *rinteg;
 
   //Impact parameter variables
   long ipn=ip->n;
-  PREC_RES *ipv;
   long i;
 
-  rinteg=(double *)alloca(ipn*sizeof(double));
-  ipv=(double *)alloca(ipn*sizeof(double));
+  PREC_RES rinteg[ipn],ipv[ipn];
 
   //this function calculates 1 minus the ratio of in-transit over out-of-transit
-  //expresion for the simplest case, which is given by
+  //expresion for the simplest case, which is given by (INVALID EXPRESSION!!)
   //\[
   //M_{\lambda}^{(0)}=
   //\frac{1}{\pi R_M^2}\int_{R<R_M}\ee^{-\tau( b,\xi)} R \dd R\dd\phi
   //\]\par
   //Let's integrate; for each of the planet's layer starting from the
   //outermost until the closest layer
-  last++;
-  for(i=0;i<last;i++){
-    ipv[i]=ip->v[i]*ip->fct;
+  for(i=0;i<=last;i++){
+    ipv[last-i] = ip->v[i] * ip->fct;
 
-    rinteg[i]=exp(-tau[i])*ipv[i]*2.0*PI;
+    rinteg[last-i] = exp(-tau[i]) * ipv[last-i];
   }
   //fill two more lower part bins with 0. Only two to have a nice ending
   //spline and not unnecessary values.
   last+=2;
-  if(last>ipn) last=ipn;
+  if(last>ipn-1) last=ipn-1;
   for(;i<last;i++){
-    ipv[i]=ip->v[i]*ip->fct;
-    rinteg[i]=0;
+    ipv[last-i] = ip->v[i] * ip->fct;
+    rinteg[last-i]=0;
   }
 
-  //Reduce last so that it has the number of elements to integrate
-  last--;
+  //increment last to represent number of elements now, check that we
+  //have enough.
+  last++;
   if(last<3)
     transiterror(TERR_CRITICAL,
 		 "Condition failed, less than 3 items (only %i) for radial\n"
@@ -314,10 +311,10 @@ modulation1 (PREC_RES *tau,
   //integrate in radii
 #ifdef _USE_GSL
   gsl_interp_accel acc={0,0,0};
-  gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,last);
-  gsl_spline_init(spl,ipv,rinteg,last);
-  res=gsl_spline_eval_integ(spl,ipv[0],ipv[last-1],&acc);
-  gsl_spline_free(spl);
+  gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,last);
+  gsl_interp_init(spl,ipv,rinteg,last);
+  res=gsl_interp_eval_integ(spl,ipv,rinteg,ipv[0],ipv[last-1],&acc);
+  gsl_interp_free(spl);
 
   //or err without GSL
 #else
@@ -335,10 +332,11 @@ modulation1 (PREC_RES *tau,
   //           -Area_{planet}}
   //          {\pi R_s^2}
   //\end{align}
-  res=PI*ipv[0]*ipv[0]-res;
+  res = 2.0 * res 
+    + srad * srad - ipv[last-1] * ipv[last-1]
+    + exp(-toomuch) * ipv[0] * ipv[0];
 
-  //divide by area of the star
-  res/=PI*srad*srad;
+  res *= 1.0 / srad / srad;
 
   return res;
 }
