@@ -34,13 +34,14 @@
                defaults are allowed
 	    -2 Default handling mode inexistent
 	    -3 Something really bad happened!
+	    -4 sum of abundances add up to more than 1
 */
 int getatm(struct transit *tr) /* Containing filename of atmosphere
 				       info file */
 {
   //'nmb' auxiliar variable for a number.
   int nmb,i;
-  double val;
+  double val,sumq;
   char rc;
   //'at' and 'hints' are the atmospheric and hint's structure,
   //respectively
@@ -104,47 +105,12 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       break;
 
     case TRU_ATMGIVEN1P:	/* Wants to get it from hints->onept */
-      st_at.n_niso=onept->ne;
-      nmb=tr->n_e=tr->n_i+st_at.n_niso;
-      st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
-      //allocate room for 'tr->isov(f)'
-      tr->isof=(prop_isof *)realloc(tr->isof,nmb*sizeof(prop_isof));
-      tr->isov=(prop_isov *)realloc(tr->isov,nmb*sizeof(prop_isov));
-      tr->isof[tr->n_i].n=(char *)calloc(st_at.n_niso*maxeisoname,sizeof(char));
-
       onept=&th->onept;
+
+      st_at.n_niso=onept->ne;
       st_at.atm.t[0]=onept->t;
       st_at.atm.p[0]=onept->p;
 
-      //if there were given an exact number of masses and names for the
-      //extra isotopes.
-      if(onept->nm==onept->ne){
-	for(i=0;i<st_at.n_niso;i++){
-	  strcpy(tr->isof[i+tr->n_i].n,onept->n[i]);
-	  tr->isof[i+tr->n_i].m=onept->m[i];
-	}
-  /*
-    TD from here: calculate mean average and store it in st_at.mm
-   */
-      }
-      else if(onept->nm>0){
-	free(onept->m);
-	free(onept->n[0]);
-	free(onept->n);
-      }
-
-      //if there were given an exact number of isotopes.
-      if(onept->nq==nmb){
-	for(i=0;i<nmb;i++){
-	  st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
-	  st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
-	  st_at.isov[i].q[0]=onept->q[i];
-	  st_at.isov[i].d[0]=stateeqnford(onept->q[i],st_at.mm,
-					  onept->p,onept->t);
-	}
-      }
-      else if(onept->nq>0)
-	free(onept->q);
 
     case TRU_ATMASK1P:		/* Wants to get values from standard input */
       onept=&th->onept;
@@ -162,12 +128,6 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	  }
 	  fprintf(stderr,"Try again!\n");
 	}
-	nmb=tr->n_e=tr->n_i+st_at.n_niso;
-	st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
-	//Allocate room in 'tr->isov(f)'
-	tr->isof=(prop_isof *)realloc(tr->isof,nmb*sizeof(prop_isof));
-	tr->isov=(prop_isov *)realloc(tr->isov,nmb*sizeof(prop_isov));
-	tr->isof[tr->n_i].n=(char *)calloc(st_at.n_niso*maxeisoname,sizeof(char));
 
 	while(1){
 	  fprintf(stderr," Atmospheric pressure, cgs units (1e-3cgs=1atm): ");
@@ -188,6 +148,33 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	    exit(EXIT_SUCCESS);
 	  }
 	  fprintf(stderr,"Try again!\n");
+	}
+      }
+
+      nmb=tr->n_e=tr->n_i+st_at.n_niso;
+      st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
+      //Allocate room in 'tr->isov(f)'
+      tr->isof=(prop_isof *)realloc(tr->isof,nmb*sizeof(prop_isof));
+      tr->isov=(prop_isov *)realloc(tr->isov,nmb*sizeof(prop_isov));
+      tr->isof[tr->n_i].n=(char *)calloc(st_at.n_niso*maxeisoname,sizeof(char));
+      for(i=0;i<nmb;i++){
+	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+	st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+      }
+
+      //if there were given an exact number of masses and names for the
+      //extra isotopes.
+      if((tr->fl&TRU_ATMGIVEN1P)==TRU_ATMGIVEN1P){
+	if(onept->nm==onept->ne){
+	  for(i=0;i<st_at.n_niso;i++){
+	    strcpy(tr->isof[i+tr->n_i].n,onept->n[i]);
+	    tr->isof[i+tr->n_i].m=onept->m[i];
+	  }
+	}
+	else if(onept->nm>0){
+	  free(onept->m);
+	  free(onept->n[0]);
+	  free(onept->n);
 	}
       }
 
@@ -218,17 +205,26 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	    fprintf(stderr,"Try again!\n");
 	  }
 	}
-  /*
-    TD from here: calculate mean average and store it in st_at.mm
-   */
       }
 
+      //if there were given an exact number of isotopes.
+      if((tr->fl&TRU_ATMGIVEN1P)==TRU_ATMGIVEN1P){
+	if(onept->nq==nmb){
+	  sumq=st_at.mm=0;
+	  for(i=0;i<nmb;i++){
+	    st_at.isov[i].q[0]=onept->q[i];
+	    st_at.mm+=onept->q[i]*tr->isof[i].m;
+	    sumq+=onept->q[i];
+	  }
+	}
+	else if(onept->nq>0)
+	  free(onept->q);
+      }
       //If abundances were not given exactly for each isotope
       if(onept->nq!=nmb){
 	onept->q=(PREC_ATM *)calloc(nmb,sizeof(PREC_ATM));
+	sumq=st_at.mm=0;
 	for(i=0;i<nmb;i++){
-	  st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
-	  st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
 	  while(1){
 	    fprintf(stderr," Mass abundance for isotope %s: "
 		    ,tr->isof[i].n);
@@ -240,15 +236,32 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	    }
 	    fprintf(stderr,"Try again!\n");
 	  }
-	  st_at.isov[i].q[0]=val;
-	  st_at.isov[i].d[0]=stateeqnford(val,st_at.mm,
-					  st_at.atm.p[0],
-					  st_at.atm.t[0]);
+	  st_at.mm+=onept->q[i]*tr->isof[i].m;
+	  sumq+=(st_at.isov[i].q[0]=val);
 	}
       }
 
-      break;
+      //Check that abundances make sense
+      if(val>1){
+	transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		     "Sum of abundances of isotopes adds up to more\n"
+		     "than 1: %g\n"
+		     ,sumq);
+	return -4;
+      }
+      if(val<1)
+	transiterror(TERR_WARNING,
+		     "Sum of all abundances add up to less than 1: %.9g\n"
+		     ,sumq);
 
+      //Calculate denisities
+      for(i=0;i<nmb;i++)
+	st_at.isov[i].d[0]=stateeqnford(st_at.isov[i].q[0],
+					st_at.mm,
+					st_at.atm.p[0],
+					st_at.atm.t[0]);
+
+      break;
     default:			/* Oops */
       transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
 		   "getatm():: Unexistent default handling mode (0x%x)\n"
