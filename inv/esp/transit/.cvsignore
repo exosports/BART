@@ -5,3 +5,4 @@ dbg*
 .depen
 test_*
 .smhist
+a.out
