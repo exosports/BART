@@ -168,6 +168,10 @@ extradius(PREC_NREC r,		/* Radius index */
   //\]
   double propto_alor=sqrt(temp*2*KB/PI/AMU)/AMU/LS/PI;
 
+  if (r==43&&verblevel==21)
+    printf("#rad: %-20.9g%-9i%-20.9g\n",rad,5763,wn[5763]);
+
+
   //Initialize a voigt profile for every isotope as well for the
   //mass, ziso, densiso and csiso arrays
   for(i=0;i<niso;i++){
@@ -350,11 +354,18 @@ extradius(PREC_NREC r,		/* Radius index */
     if(maxj>nwn)
       maxj=nwn;
 
+    if(ln==403631||ln==403688){
+      j=10;
+    }
+
     //distribute the oscillator strength according to the voigt
     //profile
     for(j=minj;j<maxj;j++)
       k[j]+=propto_k
 	*profwn[j];
+
+    if (r==43&&verblevel==21)
+      printf("%-9li%-20.9g%-20.9g%-20.9g\n",ln,wavn,ltgf[ln],k[5763]);
 
 #if 0
     if(ltwl[ln]>1696.8267){
