@@ -73,9 +73,12 @@ LIBS  = -lX11 -lm $(GSLLIB)
 
 default: transit lineread
 
+install:
+	cp -pf dbgsample $(BIN)
+	cp -pf transit $(BIN)
+
 dbgsample: $(UT_OBJ) transitstd.c makesample.c
 	$(CC) $(STDFLAGS) -DDBGSAMPLE -o $@ $(filter %.c %.o,$^) $(LIBS)
-	cp -pf dbgsample $(BIN)
 
 dbgreadline: $(UT_OBJ) transitstd.c readlineinfo.c
 	$(CC) $(STDFLAGS) -DDBGREADLINEINFO -o $@ $(filter %.c %.o,$^) $(LIBS)
@@ -83,7 +86,6 @@ dbgreadline: $(UT_OBJ) transitstd.c readlineinfo.c
 
 transit: $(UT_OBJ) $(TR_OBJ)
 	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
-	cp -pf transit $(BIN)
 
 lineread: $(UT_OBJ) $(LR_OBJ)
 	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
