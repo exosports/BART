@@ -67,15 +67,21 @@ computeextcloud(double *e,
     transiterror(TERR_SERIOUS,
 		 "Radius needs to be equispaced for clouds prescription\n"
 		 " to work. Stopping\n");
-  double slp = cl->maxe / (cl->rfin - cl->rini);
+  double slp = cl->maxe / (rfin - rini);
 
-  for(i=0;i<n;i++){
-    if(r[i] * rfct > rini)
-      e[i] = 0;
-    else if(r[i] * rfct < rfin)
-      e[i] = slp * (r[i]*rfct - rini);
-    else
-      e[i] = cl->maxe;
+  for(i=n-1;i>=0;i--){
+    if(r[i] * rfct <= rini)
+      break;
+    e[i] = 0;
   }
+
+  for(;i>=0;i--){
+    if(r[i] * rfct <= rfin)
+      break;
+    e[i] = slp * (r[i]*rfct - rini);
+  }
+
+  for(;i>=0;i--)
+      e[i] = cl->maxe;
 
 }

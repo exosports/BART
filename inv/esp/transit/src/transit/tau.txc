@@ -84,14 +84,15 @@ tau(struct transit *tr)
     tau.t[ii]=tau.t[0]+ii*ip->n;
 
   //set cloud structure
-  struct extcloud *cl=tr->ds.cl;
-  cl->maxe=tr->ds.th->cl.maxe;
-  cl->rini=tr->ds.th->cl.rini;
-  cl->rfin=tr->ds.th->cl.rfin;
+  static struct extcloud cl;
+  cl.maxe=tr->ds.th->cl.maxe;
+  cl.rini=tr->ds.th->cl.rini;
+  cl.rfin=tr->ds.th->cl.rfin;
   if(tr->ds.th->cl.rfct==0)
-    cl->rfct=rad->fct;
+    cl.rfct=rad->fct;
   else
-    cl->rfct=tr->ds.th->cl.rfct;
+    cl.rfct=tr->ds.th->cl.rfct;
+  tr->ds.cl=&cl;
 
   //to temporarily store a per radius info, and the ratio of the ip and
   //rad units
@@ -141,7 +142,7 @@ tau(struct transit *tr)
     //level
     computeextscat(e_s, rnn, sc, rad->v, rad->fct, 
 		   temp, tfct, wn->v[wi]*wfct);
-    computeextcloud(e_c, rnn, cl, rad,
+    computeextcloud(e_c, rnn, &cl, rad,
 		    temp, tfct, wn->v[wi]*wfct);
 
     //Put the extinction values in a new array, the values may be
@@ -175,7 +176,7 @@ tau(struct transit *tr)
 	    //otherwise, update the value of the extinction at the right
 	    //place.
 	    else
-	      er[lastr]=e[lastr][wi]*blowex;
+	      er[lastr]=e[lastr][wi]*blowex+e_s[lastr]+e_c[lastr];
 	  }
 	}while(bb[ri]*ip->fct<r[lastr]*rfct);
       }
