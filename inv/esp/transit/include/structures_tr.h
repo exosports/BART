@@ -204,6 +204,8 @@ struct extinction{
   _Bool periso;			/* Extinction per isotope */
   _Bool *computed;		/* Whether the extinction at the given
 				   radius was computed */
+  double minelow;		/* Only use transitions with this
+				   minimum low energy (in cm-1) */
 };
 
 
@@ -366,6 +368,9 @@ struct transithint {		/* Structure with user hinted data that
   struct geometry sg;		/* System geometry */
   struct onept onept;		/* Parameters for onept atmosphere */
   struct saves save;		/* Saves indicator of program stats */
+
+  double minelow;		/* Only use transitions with this
+				   minimum low energy (in cm-1) */
 
 };
 

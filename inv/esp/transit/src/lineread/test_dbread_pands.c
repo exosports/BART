@@ -48,6 +48,11 @@ int main(int argc,
 
   wl1=1748.5;
   wl2=1828.5;
+  if(argc>1){
+    wl1=atof(argv[1]);
+    if(argc>2)
+      wl2=atof(argv[2]);
+  }
   nbins=20;
   nbinsgf=10;
 
@@ -67,6 +72,16 @@ int main(int argc,
   fprintf(stderr,"Number of GF bins[%i]?: ",nbinsgf);
   if((tf1=readl(stdin,&rc))!=0||rc==-1)
     nbinsgf=ti1;
+
+  char namelow[30];
+  memset(namelow,0,30);
+  fprintf(stderr,"Name of low energy output file(%s): ",namelow);
+  fgets(namelow,29,stdin);
+  ti1=0;
+  while(namelow[ti1]!='\0')
+    ti1++;
+  if(ti1&&namelow[ti1-1]=='\n')
+    namelow[ti1-1]='\0';
 
   fprintf(stderr,"Reading '%s'\n--------------------------------\n",file);
 
@@ -89,8 +104,9 @@ int main(int argc,
   szb=(wl2-wl1)/nbins;
   lp=lines;
   double maxgf=0,mingf=1;
-  long maxgfi,mingfi,maxgfei,mingfei;
+  long maxgfi,mingfi,maxgfei,mingfei,maxeli,mineli;
   double mingfe=10000,maxgfe=0;
+  double minel=1e10,maxel=0;
   double gfe;
   if(!nbins)
     fprintf(stderr,"  hmmm, you chose 0 bins!\n");
@@ -99,6 +115,14 @@ int main(int argc,
     endb=wl1+(i+1)*szb;
     //    fprintf(stderr,"KK %g %f\n",lp->wl,endb);
     while((lp->wl)<endb&&lp-lines<n){
+      if(lp->elow>maxel){
+	maxel=lp->elow;
+	maxeli=lp-lines;
+      }
+      else if(lp->elow<minel){
+	minel=lp->elow;
+	mineli=lp-lines;
+      }
       if(lp->gf>maxgf){
 	maxgf=lp->gf;
 	maxgfi=lp-lines;
@@ -129,12 +153,18 @@ int main(int argc,
 	  "min GF: %.8g (position %li)\n"
 	  "max GF*exp(-E/2500): %.5g (%li)\n"
 	  "min GF*exp(-E/2500): %.5g (%li)\n"
-	  ,maxgf,maxgfi,mingf,mingfi,maxgfe,maxgfei,mingfe,mingfei);
+	  "max Elow: %.8g (%li)\n"
+	  "min Elow: %.8g (%li)\n"
+	  ,maxgf,maxgfi,mingf,mingfi
+	  ,maxgfe,maxgfei,mingfe,mingfei
+	  ,maxel,maxeli,minel,mineli);
 
+  //logarithmic binning of GF
   long gfb[nbinsgf];
   long bin;
   lp=lines;
-  printf("Bin beggining at: ");
+  printf("     Logarithmic binning result of GF\n"
+	 "Bin beggining at: ");
   for(bin=0;bin<nbinsgf;bin++)
     printf("%10.4g",mingf * ( pow(maxgf/mingf,(float)bin/nbinsgf) ));
   printf("\n");
@@ -149,11 +179,57 @@ int main(int argc,
       lp++;
     }
 
-    printf(" [%5.1f, %5.1f] = "
-	   ,endb-szb-wl1,endb-wl1);
+    printf("[%6.1f,%6.1f] = "
+	   ,endb-szb,endb);
     for(bin=0;bin<nbinsgf;bin++)
       printf("%10li",gfb[bin]);
     printf("\n");
+  }
+
+
+  //Binning low energy
+  long elb[nbinsgf];
+  lp=lines;
+  printf("      Binning result of lower energy\n"
+	 "Bin beggining at: ");
+  for(bin=0;bin<nbinsgf;bin++)
+    printf("%10.4g",minel + bin*(maxel-minel)/(nbinsgf-1));
+  printf("\n");
+  for(i=0;i<nbins;i++){
+    memset(elb,0,sizeof(elb));
+    endb=wl1+(i+1)*szb;
+    //    fprintf(stderr,"KK %g %f\n",lp->wl,endb);
+    while((lp->wl)<endb&&lp-lines<n){
+      bin=(lp->elow-minel)*(nbinsgf-1)/(maxel-minel);
+      if(bin==nbinsgf) bin--;
+      elb[bin]++;
+      lp++;
+    }
+
+    printf("[%6.1f,%6.1f] = "
+	   ,endb-szb,endb);
+    for(bin=0;bin<nbinsgf;bin++)
+      printf("%10li",elb[bin]);
+    printf("\n");
+  }
+
+  //Counting 10000 lowest energy values
+  if(namelow){
+    long nlow[10001],tmpl;
+    memset(nlow,0,10001*sizeof(long));
+    lp=lines;
+    while(lp-lines<n){
+      tmpl=lp->elow>10000?10000:lp->elow;
+      nlow[tmpl]++;
+      lp++;
+    }
+    FILE *out=fopen(namelow,"w");
+    long acum=0;
+    for(bin=0;bin<10000;bin++){
+      acum+=nlow[bin];
+      fprintf(out,"%-18li%-18li\n",bin,acum);
+    }
+    fclose(out);
   }
 
 
@@ -181,7 +257,8 @@ int main(int argc,
     if(ans<n&&ans>=0){
       lp=lines+ans;
       printf("Record Position: %li\nWavelength: %.10g [%s]\n"
-	      ,lp->recpos,lp->wl,tli_fct_name);
+	     "Wavenumber: %.10g [cm]\n"
+	     ,lp->recpos,lp->wl,tli_fct_name,1/lp->wl/tli_fct);
       printf("Lower Energy Level: %.10g [cm-1]\ngf: %.10g\n"
 	      , lp->elow, lp->gf);
       printf("Isotope Name: %s\nFreq: %.10g"
