@@ -24,7 +24,7 @@
 #include <transit.h>
 #include <version_tr.h>
 #include <math.h>
-#include <util/procopt.h>
+#include <pu/procopt.h>
 #ifdef _USE_GSL
 # include <gsl/gsl_version.h>
 #endif /* _USE_GSL */
