@@ -98,12 +98,13 @@ int databasename(char **name)
   in 'resultp'(PREC_NREC *). Records are of length 'reclength'(int) and
   the first item of each of them is of type PREC_BREC.
 */
-static inline void dbreadBSf(FILE *fp, 	  /* File pointer */
-			     PREC_NREC initial,  /* initial index */
-			     PREC_NREC final,	  /* last index */
-			     double lookfor,  	  /* target value */
-			     PREC_NREC *resultp, /* result index */
-			     int reclength) /* Total length of record */
+static inline void
+dbreadBSf(FILE *fp,		/* File pointer */
+	  PREC_NREC initial,	/* initial index */
+	  PREC_NREC final,	/* last index */
+	  double lookfor,	/* target value */
+	  PREC_NREC *resultp,	/* result index */
+	  int reclength)	/* Total length of record */
 {
   int irec1,irec2;
   PREC_BREC temp;

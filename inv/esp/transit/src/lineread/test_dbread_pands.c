@@ -231,8 +231,6 @@ int main(int argc,
     }
     fclose(out);
   }
-
-
   /*
   printf("\nTemperature points:");
   for(ti1=0;ti1<nT;ti1++)
