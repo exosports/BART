@@ -52,10 +52,10 @@ UT_OBJ    = sampling.o voigt.o iomisc.o procopt.o \
 	    numerical.o xmalloc.o
 TEST_FCN  = slantpath dbread_pands
 
-TEST_OBJ  = $(patsubst %,test_%.o,$(TEST_FCN))
-TEST_BIN  = $(TEST_OBJ:.o=)
-PROTO_FILES = $(UT_OBJ:.o=.c) $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c)
-DEP_FILES = $(PROTO_FILES) $(TEST_OBJ:.o=.c)
+TEST_BIN    = $(patsubst %,test_%,$(TEST_FCN))
+PROTO_FILES = $(UT_OBJ:.o=.c) $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) \
+	      $(patsubst %,%.c,$(TEST_BIN))
+DEP_FILES   = $(PROTO_FILES) $(TEST_OBJ:.o=.c)
 
 #make specials
 .PHONY=clean dep proto
@@ -127,6 +127,9 @@ quiet_cmd_txc_c = Clatexing to $@
 quiet_cmd_exec  = Building executable "$@"
       cmd_exec  = $(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
 
+quiet_cmd_test  = Building for testing executable "$@"
+      cmd_test  = $(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
+
 quiet_cmd_proto = Making prototypes for $<
       cmd_proto = $(CPROTO) $(CPROTOFLAGS) -o $(INCL)/proto_$*.h $<
 
@@ -168,8 +171,8 @@ install: default
 
 #compile test programs
 test:	$(TEST_BIN)
-$(TEST_BIN): % : %.c transitstd.o $(UT_OBJ)
-	$(call cmd,exec)
+$(TEST_BIN): % : %.o transitstd.o $(UT_OBJ)
+	$(call cmd,test)
 
 
 #compile debugging executables
