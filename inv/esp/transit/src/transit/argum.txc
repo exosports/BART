@@ -109,8 +109,6 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_CLOUDFCT,
     CLA_CLOUDE,
     CLA_TRANSPARENT,
-    CLA_DETEXT,
-    CLA_DETTAU,
   };
 
   //General help-option structure
@@ -278,9 +276,6 @@ int processparameters(int argc, /* number of command line arguments */
     {"cloudext",CLA_CLOUDE,required_argument,"0",
      "extinction","Maximum extinction of the cloud, which opacity will\n"
      "linearly increase from 'radup' to 'raddown'\n"},
-    {"detailext",CLA_DETEXT,required_argument,NULL,
-     "wavn[-]filename","Save extinction at the particular wavenumber in the\n"
-     "specified filename"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
@@ -303,9 +298,6 @@ int processparameters(int argc, /* number of command line arguments */
     {"modlevel",CLA_MODLEVEL,required_argument,"1",
      "integer","Do a level integer integration to compute modulation\n"
      "1 doesn't consider limb darkening.\n"},
-    {"detailtau",CLA_DETTAU,required_argument,NULL,
-     "wavn[-]filename","Save optical depth at the particular wavenumber\n"
-     "in the specified filename"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"OBSERVATIONAL OPTIONS:"},
@@ -363,9 +355,6 @@ int processparameters(int argc, /* number of command line arguments */
 		 ,rn,optarg);
 
     switch(rn){
-    case CLA_DETTAU:
-    case CLA_DETEXT:
-      
     case CLA_MINELOW:
       hints->minelow=atof(optarg);
       break;
