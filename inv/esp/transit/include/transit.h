@@ -175,7 +175,7 @@ defined(EXPCTE) || defined(WNU_O_WLU)
 #define RWATER (3.2e-8/2.0)                 //water molecule radius
 #define HC (H*LS)                           //for lower energy conversion
 #define SIGWATER (PI*RWATER*RWATER)         //water cross section
-#define SIGCTE (PI*EC*EC/LS/ME)             //Cross-sec constant
+#define SIGCTE (PI*EC*EC/LS/LS/ME)          //Cross-sec constant
 #define EXPCTE (H*LS/KB)                    //Exponent constant
 
 #define WNU_O_WLU (1e7)              //Waven(cm) over wavel(nm) (units)

@@ -60,20 +60,14 @@ LIBS  = -lX11 -lP -lm
 ################################
 
 
-$(BIN)/transit: $(OBJ_TR) $(OBJ_UT) transit.c
+transit: $(OBJ_TR) $(OBJ_UT) transit.c
 	$(CC) $(STDFLAGS) -o $@ $^ $(LIBS)
-
-transit: $(BIN)/transit
-	@touch $<
+	cp -p transit $(BIN)
 
 #$(OBJ_UT): %.o: %.c
 #	$(CC) -c $(STDFLAGS) -o $@ $<
 
 %.o: %.c
-	if (!-e $(INC)/$*_proto.h)
-		echo "You must run 'make proto' manually first"
-		exit 1;
-	endif
 	$(CC) -c $(STDFLAGS) -o $@ $<
 
 %.c: %.txc
@@ -83,7 +77,7 @@ clean:
 	rm -f $(OBJ_TR) $(OBJ_UT) $(DEP_FILES)
 
 dep: $(DEP_FILES)
-	makedepend -Y -- $(STDFLAGS) -- $^
+	makedepend -Y -f .depen -- $(STDFLAGS) -- $^
 
 proto: $(PROTO_FILES:.c=.proto)
 
@@ -94,42 +88,5 @@ proto: $(PROTO_FILES:.c=.proto)
 #/ast/plume/src/plume/libplume
 #~/hacking/C   #templates
 #-i -m -U __GNUC__
-# DO NOT DELETE
 
-sampling.o: ./include/transit.h /home/devel/include/P/Putil.h
-sampling.o: ./include/util/sampling.h ./include/sampling_proto.h
-sampling.o: ./include/util/profile.h ./include/voigt_proto.h
-sampling.o: ./include/transit_proto.h ./include/readlineinfo_proto.h
-sampling.o: ./include/transitstd_proto.h
-voigt.o: ./include/util/profile.h /home/devel/include/P/Putil.h
-voigt.o: ./include/transit.h ./include/util/sampling.h
-voigt.o: ./include/sampling_proto.h ./include/transit_proto.h
-voigt.o: ./include/readlineinfo_proto.h ./include/transitstd_proto.h
-voigt.o: ./include/voigt_proto.h
-lineread.o: ./include/transit.h /home/devel/include/P/Putil.h
-lineread.o: ./include/util/sampling.h ./include/sampling_proto.h
-lineread.o: ./include/util/profile.h ./include/voigt_proto.h
-lineread.o: ./include/transit_proto.h ./include/readlineinfo_proto.h
-lineread.o: ./include/transitstd_proto.h ./include/lineread.h
-lineread.o: ./include/lineread_proto.h dbread_pands.c
-dbread_pands.o: ./include/transit.h /home/devel/include/P/Putil.h
-dbread_pands.o: ./include/util/sampling.h ./include/sampling_proto.h
-dbread_pands.o: ./include/util/profile.h ./include/voigt_proto.h
-dbread_pands.o: ./include/transit_proto.h ./include/readlineinfo_proto.h
-dbread_pands.o: ./include/transitstd_proto.h ./include/lineread.h
-dbread_pands.o: ./include/lineread_proto.h
-readlineinfo.o: ./include/transit.h /home/devel/include/P/Putil.h
-readlineinfo.o: ./include/util/sampling.h ./include/sampling_proto.h
-readlineinfo.o: ./include/util/profile.h ./include/voigt_proto.h
-readlineinfo.o: ./include/transit_proto.h ./include/readlineinfo_proto.h
-readlineinfo.o: ./include/transitstd_proto.h
-transitstd.o: ./include/transit.h /home/devel/include/P/Putil.h
-transitstd.o: ./include/util/sampling.h ./include/sampling_proto.h
-transitstd.o: ./include/util/profile.h ./include/voigt_proto.h
-transitstd.o: ./include/transit_proto.h ./include/readlineinfo_proto.h
-transitstd.o: ./include/transitstd_proto.h
-transit.o: ./include/transit.h /home/devel/include/P/Putil.h
-transit.o: ./include/util/sampling.h ./include/sampling_proto.h
-transit.o: ./include/util/profile.h ./include/voigt_proto.h
-transit.o: ./include/transit_proto.h ./include/readlineinfo_proto.h
-transit.o: ./include/transitstd_proto.h
+include .depen

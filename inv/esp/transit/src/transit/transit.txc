@@ -1155,7 +1155,8 @@ int extwn (struct transit *tr)
     for(ln=0;ln<tr->n_l;ln++){
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
-      /*      if(ln<9000||ln>11000)
+      /*
+      if(ln<9000||ln>11000)
 	continue;
       */
 
@@ -1215,13 +1216,13 @@ int extwn (struct transit *tr)
 
       /* CAVEATS: _mass_ densitty 
                   _log_ gf */
-      propto_k=densiso[i]	//mass density
-	*SIGCTE			//Constant in sigma
-	*line[ln].lgf		//Log(gf)
+      propto_k=densiso[i]	         //mass density
+	*SIGCTE			         //Constant in sigma
+	*line[ln].lgf		         //Log(gf)
 	*exp(-EXPCTE*line[ln].elow/temp) //Level population
-	*(1-exp(-EXPCTE*wavn/temp)) ///induced emission
-	/mass[i]		//mass
-	/ziso[i];		//Partition function
+	*(1-exp(-EXPCTE*wavn/temp))      //induced emission
+	/mass[i]	        	 //mass
+	/ziso[i];		         //Partition function
 
       transitDEBUG(20,verblevel,
 		   "i=%i   temp=%g   Elow=%g\n"
