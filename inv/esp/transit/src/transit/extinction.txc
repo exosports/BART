@@ -95,7 +95,8 @@ newprofile(PREC_VOIGT **pr,	/* output 2d profile */
     pr[j]=pr[0]+j*nvgt;
 
   //calculate voigt
-  if((j=voigtn(vf, nvgt, wvgt, lor,dop,pr, -1, 0))!=1)
+  if((j=voigtn(vf, nvgt, wvgt, lor,dop,pr, -1, 
+	       nvgt>_voigt_maxelements?VOIGT_QUICK:0))!=1)
     transiterror(TERR_CRITICAL,
 		 "voigtn() returned error code %i\n"
 		 ,j);
@@ -439,7 +440,7 @@ extwn (struct transit *tr)
   nlines=tr->ds.li->n_l;
   nrad=tr->rads.n;
 
-  //various variable independent of radius
+  //some radius-independent variables
   iso=tr->ds.iso;
   neiso=iso->n_e;
   niso=iso->n_i;

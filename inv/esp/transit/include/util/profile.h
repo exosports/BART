@@ -31,6 +31,7 @@
 #include <stdio.h>
 
 #define VOIGT_QUICK 0x00001   //Quick integration.
+extern int _voigt_maxelements;
 
 #include <proto_voigt.h>
 
