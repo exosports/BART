@@ -34,11 +34,11 @@
    2.0: Modulation is fully working, not much debugging chase done,
         though. 051804. PMR
    2.1: Tau seems to be completely debugged, spline integration works
-   2.1: Modulation seems to be completely debugged, spline integration
+   2.2: Modulation seems to be completely debugged, spline integration
         works 
  */
 int version=2;
-int revision=2;
+int revision=3;
 
 
 #endif /* _VERSION_TR_H */
