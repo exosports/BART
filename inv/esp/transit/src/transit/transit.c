@@ -38,8 +38,8 @@
         command line or atmopshere file. 032504. PMR
    1.1: Multi radius working for extinction calculation. 032804. PMR
  */
-static int version=1;
-static int revision=1;
+static int version=2;
+static int revision=-1;
 extern int verblevel;              /* verbose level, greater than 10 
 				      is only for debuging */
 
@@ -182,12 +182,6 @@ int main (int argc,		/* Number of variables */
   trh.maxratio_doppler=0.001;
   trh.na|=TRH_VF|TRH_TA|TRH_DR;
 
-  //Presentation
-  transitprint(1,verblevel,
-	       "                TRANSIT v%i.%i\n"
-	       "-----------------------------------------------\n"
-	       ,version,revision);
-
   //Command line parameters' processing
   if((rn=processparameters(argc,argv,&trh))!=0)
     transiterror(TERR_SERIOUS,
@@ -195,6 +189,15 @@ int main (int argc,		/* Number of variables */
 		 ,rn);
   if(trh.fl&TRH_FO)
     transitaccepthint(transit.f_out,trh.f_out,trh.fl,TRH_FO);
+
+  //Presentation
+  char revname[20];
+  if(revision<0) snprintf(revname,20,"pre%i",-revision);
+  else snprintf(revname,20,".%i",revision);
+  transitprint(1,verblevel,
+	       "                TRANSIT v%i%s\n"
+	       "-----------------------------------------------\n"
+	       ,version,revname);
 
   //No program warnings if verblevel is 0 or 1
   if(verblevel<2)
@@ -256,6 +259,12 @@ int main (int argc,		/* Number of variables */
 #ifdef TRANSITv1
   printv1(&transit);
 #endif
+
+  //Calculates optical depth
+  if((rn=tau(&transit))!=0)
+    transiterror(TERR_SERIOUS,
+		 "tau() returned error code %i\n"
+		 ,rn);
 
 
   return EXIT_SUCCESS;
@@ -477,7 +486,7 @@ int processparameters(int argc, /* number of command line arguments */
   char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
   double rf;
 
-  procopt_debug=1;
+  procopt_debug=0;
   opterr=0;
   while(1){
     /* This is for old style
@@ -695,7 +704,9 @@ int processparameters(int argc, /* number of command line arguments */
       break;
 
     case 'V':			//Print version number and exit
-      printf("This is 'transit' version %i.%i\n\n",version,revision);
+      if(revision<0) snprintf(name,20,"pre%i",-revision);
+      else snprintf(name,20,".%i",revision);
+      printf("This is 'transit' version %i%s\n\n",version,name);
       exit(EXIT_SUCCESS);
       break;
 
