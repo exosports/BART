@@ -411,7 +411,7 @@ const transit_ray_solution slantpath =
   {
     "Slant Path",		/* Name of the solution */
     "slantpath.c",		/* This file name */
-    "1.4",			/* GSL version */
+    "1.5",			/* GSL version */
     1,				/* Equispaced impact parameter requested? */
     &totaltau,			/* per impact parameter and per
 				   wavenumber value computation */
