@@ -20,8 +20,10 @@
  */
 
 
+#include <transit.h>
+#include <lineread.h>
+#include <math.h>
 #include "dbread_pands.c"
-
 
 /*\fcnfh 
   Routine for testing
@@ -32,7 +34,7 @@ int main(int argc,
   struct linedb *lines,*lp;
   PREC_NREC n;
   float wl1,wl2,szb,endb,tf1;
-  int i,nbins,qb[NUM_ISOT],ti1;
+  int i,nbins,qb[NUM_ISOT],ti1,nbinsgf;
   char *file="../oth/pands/h2ofast.bin";
   char *zfile="../oth/pands/h2opartfn.dat";
   int ans;
@@ -43,6 +45,7 @@ int main(int argc,
   wl1=1748.5;
   wl2=1828.5;
   nbins=20;
+  nbinsgf=10;
 
   printf("Welcome!\n");
   fprintf(stderr,"Lower wavelength (nm)[%g]?: ",wl1);
@@ -53,9 +56,13 @@ int main(int argc,
   if((tf1=readds(stdin,&rc,NULL,0))!=0||rc==-1)
     wl2=tf1;
 
-  fprintf(stderr,"Number of bins[%i]?: ",nbins);
+  fprintf(stderr,"Number of wavelength bins[%i]?: ",nbins);
   if((tf1=readl(stdin,&rc))!=0||rc==-1)
     nbins=ti1;
+
+  fprintf(stderr,"Number of GF bins[%i]?: ",nbinsgf);
+  if((tf1=readl(stdin,&rc))!=0||rc==-1)
+    nbinsgf=ti1;
 
   fprintf(stderr,"Reading '%s'\n--------------------------------\n",file);
 
@@ -77,13 +84,23 @@ int main(int argc,
 
   szb=(wl2-wl1)/nbins;
   lp=lines;
+  double maxgf=0,mingf=1;
+  long maxgfi,mingfi;
   if(!nbins)
-    printf("  hmmm, you chose 0 bins!\n");
+    fprintf(stderr,"  hmmm, you chose 0 bins!\n");
   for(i=0;i<nbins;i++){
     memset(qb,0,sizeof(*qb)*4);
     endb=wl1+(i+1)*szb;
     //    fprintf(stderr,"KK %g %f\n",lp->wl,endb);
     while((lp->wl)<endb&&lp-lines<n){
+      if(lp->lgf>maxgf){
+	maxgf=lp->lgf;
+	maxgfi=lp-lines;
+      }
+      else if(lp->lgf<mingf){
+	mingf=lp->lgf;
+	mingfi=lp-lines;
+      }
       qb[lp->isoid]++;
       lp++;
     }
@@ -91,6 +108,37 @@ int main(int argc,
     printf(" %*i = %i + %i + %i + %i lines shorter than %.3f\n"
 	   ,ti1,qb[0]+qb[1]+qb[2]+qb[3],qb[0],qb[1],qb[2],qb[3],endb);
   }
+
+  fprintf(stderr,
+	  "\nmax GF: %.8g (position %li)\n"
+	  "min GF: %.8g (position %li)\n"
+	  ,maxgf,maxgfi,mingf,mingfi);
+
+  long gfb[nbinsgf];
+  long bin;
+  lp=lines;
+  printf("Bin beggining at: ");
+  for(bin=0;bin<nbinsgf;bin++)
+    printf("%10.4g",mingf * ( pow(maxgf/mingf,(float)bin/nbinsgf) ));
+  printf("\n");
+  for(i=0;i<nbins;i++){
+    memset(gfb,0,sizeof(gfb));
+    endb=wl1+(i+1)*szb;
+    //    fprintf(stderr,"KK %g %f\n",lp->wl,endb);
+    while((lp->wl)<endb&&lp-lines<n){
+      bin=nbinsgf*log(lp->lgf/mingf)/log(maxgf/mingf);
+      if(bin==nbinsgf) bin--;
+      gfb[bin]++;
+      lp++;
+    }
+
+    printf(" [%5.1f, %5.1f] = "
+	   ,endb-szb-wl1,endb-wl1);
+    for(bin=0;bin<nbinsgf;bin++)
+      printf("%10li",gfb[bin]);
+    printf("\n");
+  }
+
 
   /*
   printf("\nTemperature points:");
