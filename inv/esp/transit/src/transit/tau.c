@@ -51,8 +51,8 @@ tau(struct transit *tr)
      parameter, 'r' is the radius */
   PREC_RES b,*bb=ip->v;
   PREC_RES *n=tr->ds.ir->n;
-  PREC_RES *w=wn->v;
-  PREC_RES *t,*r;
+  PREC_RES *w=wn->v,*r=rad->v;
+  PREC_RES *t;
   PREC_RES r0,r0a;
 
   transitcheckcalled(tr->pi,"tau",2,
@@ -104,6 +104,9 @@ tau(struct transit *tr)
       //\tau_{\wn}(\rho)=2\int_{r_0}^{\infty}
       //\frac{\extc_{\wn}~n~r}{\sqrt{n^2r^2-\rho^2}}\dd r
       //\]
+      binsearch(r,0,rnn,r0);
+
+
     }
   }
 

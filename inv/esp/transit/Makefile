@@ -26,7 +26,8 @@ TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 	    readatminfo.o extinction.o transit.o \
 	    tau.o idxrefraction.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
-UT_OBJ    = sampling.o voigt.o procopt.o iomisc.o
+UT_OBJ    = sampling.o voigt.o procopt.o iomisc.o \
+	    numerical.o
 
 DEP_FILES = $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) $(UT_OBJ:.o=.c)
 PROTO_FILES = $(DEP_FILES)
@@ -51,7 +52,8 @@ STDFLAGS    = $(NODBGFLAGS)
 else
 STDFLAGS    = $(DBGFLAGS)
 endif
-STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic -std=c99 $(EXTPRM) $(CFLAGS) $(CPUOPTION)
+STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic \
+	      -std=c99 $(EXTPRM) $(CFLAGS) $(CPUOPTION)
 
 #libraries to link
 LIBS  = -lX11 -lm
