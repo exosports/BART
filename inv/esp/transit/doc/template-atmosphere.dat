@@ -3,20 +3,51 @@
 #first of such lines will be stored
 n <source of this info>
 
-#An optional radius unit factor can also be specified in a line
-#starting with u. If the radius specified below is multiplied by this
-#factor, then it will be in cgs units.
-u <factor to cgs>
+
+#indication whether abundances below are by mass or number. Only one
+#such line should exist indicating abundances by mass or by number.
+q mass
+#or
+q number
+
+
+#Unit conversion. Optional factors can also be specified in a line
+#starting with u<variable>, where <variable> can be either 'r', 't',
+#or 'p' for Radius, temperature or pressure, quantities that after
+#being multiplied by such factors are gonna be in cgs units
+ur <factor to convert radius to cm>
+ut <factor to convert temperature to K>
+ur <factor to convert pressure to dynes/cm2>
+
 
 #lines starting with i contain isotope information
 i <mass1-name1>           <mass2-name2>
 i <mass3name3>
-i    <mass4-name4> <mass5name5> <mass6-name6>
-#an isotope starting with '!' is ignored, even if it is found in the
-#line database
-i !<massi7-namei7>
+i    <mass4-name4> <mass5-name5>
 
-#From the first non-isotope line everything is assumed to be
+#an isotope starting with '!' is ignored but has to have a column
+#below. This can be used for reference to isotopes specified in lines
+#with 'f'.
+i !<massi6-namei6>
+
+
+#lines starting with f contain isotopes that are going to be obtained
+#from other isotopes abundances. Equal sign is optional.
+
+#In the following example the 7th isotope will have <fct> times the
+#abundance of the 3rd isotope.
+f <massi7-namei7> = <fct> <namei3>
+
+#You can use the special keyword 'other' as the reference isotope to
+#indicate that the reference abundance will be whathever is needed to
+#complete a total abundance of 1.
+#The line below sets the abundance of the 8th isotope to <fct> of the
+#non-accounted atmosphere (typically used for Helium and Hydrogen
+#abundances)
+f <massi8-namei8> <fct> other
+
+
+#From the first non-keyworded line everything is assumed to be
 #atmosphere info
 <radius1> <pressure1> <temperature1> <abund1,iso1> ... <abund1,iso6>
 <radius2> <pressure2> <temperature2> <abund2,iso1> ... <abund2,iso6>

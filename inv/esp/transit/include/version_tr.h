@@ -33,12 +33,16 @@
    1.2: (1.1 patch) Exportable and fixes on one P,T point. 033104. PMR
    2.0: Modulation is fully working, not much debugging chase done,
         though. 051804. PMR
-   2.1: Tau seems to be completely debugged, spline integration works
+   2.1: Tau seems to be completely debugged, spline integration
+        works. 070804. PMR
    2.2: Modulation seems to be completely debugged, spline integration
-        works 
+        works. 071504. PMR
+   2.3: NEVER COMPLETED. Only rc1 was out when important changes in
+        reading atmospheric file were done, hence I decided to jump
+        straight into version 3.0. 072204. PMR
  */
-int version=2;
-int revision=3;
+int version=3;
+int revision=0;
 int version_rc=1;
 
 

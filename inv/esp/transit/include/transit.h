@@ -44,6 +44,8 @@
 #define compattwiiversion 2
 
 #include <flags_tr.h>
+#include <constants_tr.h>
+
 
 /*****   Types     *****/
 #define PREC_NSAMP int		/* Type for radius and wavelength
@@ -56,7 +58,20 @@
 #define PREC_CS  double		/* Type for cross-section */
 
 /*****   Macros   *****/
-#define stateeqnford(q,m,p,t) (AMU*(q)*(m)*(p)/(KB*(t)))
+static __inline__ double
+stateeqnford(_Bool mass,	/* Mass abundance? (as opposed to
+				   abundance by number. */
+	     double q,		/* abundance */
+	     double ma,		/* Average molecular weight */
+	     double mi,		/* Molecular weight of the particular
+				   specie */
+	     double p,		/* Pressure */
+	     double t)		/* Temperature */
+{
+ if(mass)
+   return AMU * q * ma * p / KB / t;
+ return AMU * q * mi * p / KB / t;
+}
 
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitprint(thislevel, verblevel, ...) do{                         \
@@ -79,9 +94,8 @@
 #define transitDEBUG(...) transitprint(__VA_ARGS__)
 #endif
 
-#include <constants_tr.h>
+#define maxeisoname 20
 
-extern const int maxeisoname;
 extern int transit_nowarn;
 extern int verblevel;              /* verbose level, greater than 10 
 				      is only for debuging */
@@ -89,7 +103,7 @@ extern int maxline;
 extern int version;
 extern int revision;
 
-enum isodo {unclear=0,atmfile,ignore,fixed};
+enum isodo {unclear=0,atmfile,ignore,fixed,factor};
 
 #include <structures_tr.h>
 
@@ -99,8 +113,8 @@ extern const transit_ray_solution slantpath;
 /***** Prototypes *****/
 #include <proto_transit.h>
 #include <proto_readlineinfo.h>
+#include <proto_readatm.h>
 #include <proto_transitstd.h>
-#include <proto_readatminfo.h>
 #include <proto_makesample.h>
 #include <proto_extinction.h>
 #include <proto_idxrefraction.h>

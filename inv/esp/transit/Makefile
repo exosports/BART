@@ -31,7 +31,8 @@ INCL_UT = $(INCL)/util/
 
 #paths for dependencies
 vpath %.h include
-vpath %.txc $(SRC)/transit:$(SRC)/lineread:$(SRC)/util
+vpath %.txc $(SRC)/transit:$(SRC)/transit/atmosphere:\
+	    $(SRC)/lineread:$(SRC)/util
 
 #programs
 CPROTO  = /usr/bin/cproto
@@ -42,9 +43,10 @@ CLATEX  = $(HOME)/bin/clatex.pl
 
 #objects and headers
 TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
-	    readatminfo.o extinction.o transit.o \
+	    extinction.o transit.o \
 	    tau.o idxrefraction.o argum.o \
-	    slantpath.o geometry.o observable.o
+	    slantpath.o geometry.o observable.o \
+	    at_file.o readatm.o at_onept.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o iomisc.o procopt.o \
 	    numerical.o xmalloc.o

@@ -31,4 +31,6 @@ transit_2-1  : Tau calculation is working after a thorough testing and
                debugging. 071004. PMR.
 transit_2-2  : Modulation integration is working now after a thorough
                testing and debugging. 071404. PMR 
-transit_2-3-rc1
+transit_2-3-rc1 : Never completed. Major changes in atmospheres make
+                  change of version to 3.0. 072304. PMR
+transit_3-0-rc1

@@ -114,6 +114,15 @@ typedef struct {
 } transit_ray_solution;
 
 
+struct atm_isoprop {
+  double f;
+  PREC_ZREC m;
+  int eq;
+  char n[maxeisoname];
+  char t[maxeisoname];
+};
+
+
 struct line_transition {	/* One item per transition for the
 				   following arrays */
   PREC_LNDATA *wl;		//Wavelength
@@ -153,6 +162,9 @@ struct lineinfo {		/* Used to keep parameters in
 
 
 struct atm_data{		/* Keeps parameters in readatminfo() */
+  struct atm_isoprop *isoprop;	/* Store info about molecules with
+				   abundances proportional to other */
+  int ipa;			/* number of elements in above array */
   prop_samp rads;		/* radius sampling */
   prop_isov *isov;		/* variable isotope info [isoext] */
   prop_atm atm;			/* Atmospheric properties */
@@ -167,6 +179,7 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
 				   datafile column corresponds [iso] */
   enum isodo *isodo;		/* What is required from each isotope,
 				   it can be given, ignore, or fixed */
+  int n_nonignored;		/* Number of non ignored isotopes */
   int n_aiso;			/* Number of isotopes in the atmosphere
 				   file */
   char *info;			/* Optional atmosphere file information
@@ -274,8 +287,7 @@ struct isotopes {
 				   [isoextended] */
   prop_db *db;			/* Database's info [DB] */
   int n_db,n_i,n_e;		/* Number of databases, of regular
-				   isotopes, of extended isotopes, and
-				   of lines in database */
+				   isotopes, of extended isotopes */
 };
 
 
