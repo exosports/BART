@@ -1,0 +1,396 @@
+This is TeX, Version 3.14159 (Web2C 7.4.5) (format=latex 2003.11.17)  20 JAN 2004 13:25
+**\documentclass[twoside]{report}
+
+*
+(/usr/share/texmf/tex/latex/base/report.cls
+Document Class: report 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/size10.clo
+File: size10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(Please type a command or say `\end')
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+*%to process clatex.pl output: this should be saved as a .sty
+
+*%file and included in output
+
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+*
+(Please type a command or say `\end')
+*\newcommand\vdec[4]{%
+
+*\expandafter\ifnum\title = 0%
+
+*\item {\it #1}%
+
+*\fi%
+
+*\ \mbox{{\bf #2}}%
+
+*\expandafter\ifnum\title = 0%
+
+*{\it#3}%
+
+*: #4%
+
+*\else%
+
+*,%
+
+*\fi%
+
+*}
+
+*
+(Please type a command or say `\end')
+*
+(Please type a command or say `\end')
+*\newcommand\fcn[5][]{%
+
+*\global\def\title{1}%
+
+*\function{ #3()#1 }%
+
+*#4\\[.3cm]%
+
+*%\cline%
+
+*\mbox{{\large {\it #2}}\ {\Large {\bf #3}}}%
+
+*\ (#5\!\rule[-0.5ex]{1ex}{1ex})\par\vspace{.5cm}%
+
+*\global\def\title{0}%
+
+*{\bf Variables:}
+
+*\begin{itemize}
+
+*#5
+
+*\end{itemize}
+
+*}
+
+*
+(Please type a command or say `\end')
+*\newcommand\descfcn[1]{%
+
+*{\it #1}%
+
+*}
+
+*
+(Please type a command or say `\end')
+*\newcommand\retfcn[1]{% %Note that #1 is coming tab-formatted!
+
+*\par{\bf Returns} {\it \fbox{\begin{tabular}{cp{0.6
+
+*\textwidth}}%
+
+*#1%
+
+*\end{tabular}}}%
+
+*}
+
+*
+(Please type a command or say `\end')
+*\newcommand\binomtn[1]{\left\{\parbox{1em}{\tiny #1}\!\!\!\!\!\right\}}
+
+*\newcommand\binomsm[1]{\left\{\parbox{1em}{\scriptsize #1}\right\}}
+
+*
+(Please type a command or say `\end')
+*\newcommand\linerange[2]{%
+
+*\descfcn{Declaration in lines from #1 to #2.}%
+
+*}
+
+*
+(Please type a command or say `\end')
+*\newcommand\vr[1]{%
+
+*{\bf #1}%
+
+*}
+
+*
+(Please type a command or say `\end')
+*\newcommand\vrm[1]{%
+
+*\mathbf{#1}%
+
+*}
+
+*
+(Please type a command or say `\end')
+*\newcommand\lin[1]{%
+
+*Line \ref{#1}%
+
+*}
+
+*
+(Please type a command or say `\end')
+*\newcommand\function[1]{%
+
+*\renewcommand{\thesection}{Function \arabic{section}:}%
+
+*\newpage%
+
+*\section{#1}
+
+*}
+
+*
+(Please type a command or say `\end')
+*%\newcommand\cline{%
+
+*%\begin{center}%
+
+*%\hrule%
+
+*%\rule{.8\textwidth}{.2ex}%
+
+*%\end{center}%
+
+*%}
+
+*
+(Please type a command or say `\end')
+*\newcommand\noshowfcn[1]{}
+
+*
+(Please type a command or say `\end')
+*\makeatletter
+
+*\newcommand\verblabel[2]{%
+
+*  \def\@currentlabel{#2}%
+
+*  \label{#1}%
+
+*}
+
+*\makeatother
+
+*
+(Please type a command or say `\end')
+*
+(Please type a command or say `\end')
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+*%End of clatex.tex extra definitions
+
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+*\usepackage{ms/dis/diss_abbrev}
+
+*\begin{document}
+
+! LaTeX Error: File `ms/dis/diss_abbrev.sty' not found.
+
+Type X to quit or <RETURN> to proceed,
+or enter new name. (Default extension: sty)
+
+Enter file name: \fcn{ int}{main}{\linerange{56}{57} }{%
+\vdec{int}{argc}{}{Number of variables }%
+\vdec{char **}{argv}{}{Variables}%
+}
+! Undefined control sequence.
+\filename@simple ...#2\\}\fi \edef \filename@base 
+                                                  {#1}
+<*> \begin
+          {document}
+? \begin{verbatim}
+Type <return> to proceed, S to scroll future error messages,
+R to run without stopping, Q to run quietly,
+I to insert something, 
+1 or ... or 9 to ignore the next 1 to 9 tokens of input,
+H for help, X to quit.
+? 59   int rc;
+<argument> ...vdec {int}{argc}{}{Number of variabl
+                                                  es }\vdec {char **}{argv}{...
+<*> \begin
+          {document}
+? 62   PREC_ZREC ***dbZ,**dbT,**mass; //Z, T and mass per database, isotope
+<argument> \fcn { int}{main}
+                            {\linerange {56}{57} }{\vdec {int}{argc}{}{Numbe...
+<*> \begin
+          {document}
+? 63   int *ndbT,*nIso;            //Number of T and Isotopes per database.
+<argument> ...er of variables }\vdec {char **}{arg
+                                                  v}{}{Variables}}
+<*> \begin
+          {document}
+? 64   int ndb;
+<argument> ...ons \csname \@currname .\@currext -h
+                                                  @@k\endcsname \expandafter...
+<*> \begin
+          {document}
+? 65   double iniw,finw;
+
+\reserved@a ...@warning@no@line {You have requeste
+                                                  d,\on@line , version\Messa...
+<*> \begin
+          {document}
+? 66   float margin,minrange;
+
+\reserved@a ...ersion\MessageBreak `\csname ver@ms
+                                                  /dis/diss_abbrev.\@currext...
+<*> \begin
+          {document}
+? 67   struct linetran *line;
+
+*68   int nlines;
+<*> 68   int nli
+                nes;
+? 69   char **dbname,***isonames;
+
+*70   char *datafile,*infofile;
+
+*74   PREC_ATM **A_dens, *A_temp, *A_height;
+<*> 74   PREC_ATM **A_dens, *A_temp, *A_h
+                                         eight;
+? 75   int A_n;
+
+*76   char *atmfile;
+
+*79   PREC_RES *wl,dwl;
+
+*80   int nwl,osw;
+
+*84   PREC_ZREC **Zisorad,*mmass;
+<*> 84   PREC_ZREC 
+                   **Zisorad,*mmass;
+? 86   PREC_ATM **densisorad,*Trad;
+
+*87   int nmiso;     //number of isotopes after merging.
+
+*88   PREC_RES *rad,drad;
+<*> 88   PREC_RES *rad,d
+                        rad;
+? 89   int nrad;
+
+*93   PREC_RES **kap;
+
+*96   PREC_RES *spectra;
+
+*97   double telresol;
+
+*100   verblevel=20;
+
+*103   infofile=(char *)calloc(19,sizeof(char));
+<*> 103   i
+           nfofile=(char *)calloc(19,sizeof(char));
+? 104   strcpy(infofile,"./res/lineread.inf");
+<*> 103   infofile=(c
+                     har *)calloc(19,sizeof(char));
+? 105   margin=0.001;                 /* Allow calls for wavelengths only this
+<*> 103   infofile=(char *)call
+                               oc(19,sizeof(char));
+? 106                                    much far away from borders. */
+<*> 103   infofile=(char *)calloc(19,size
+                                         of(char));
+? 107   minrange=0;
+<*> ...  infofile=(char *)calloc(19,sizeof(char));
+                                                  
+? 108   iniw=0;           //To use database minimum and maximum
+
+*109   finw=0;           // put 0 and 0
+<*> 109   finw=
+               0;           // put 0 and 0
+? 116   atmfile=NULL;
+<*> 109   finw=0;           // put 0
+                                     and 0
+? 119   dwl=0.188;                    //Seager's value at VLT's
+
+*121   osw=1;
+<*> 121 
+          osw=1;
+? 124   drad=0.1;
+
+*128   telresol=0;
+<*> 128   t
+           elresol=0;
+? 131   if(verblevel<2)
+
+*132     transit_nowarn=1;
+<*> 13
+      2     transit_nowarn=1;
+? \end{verbatim}\par
+Type <return> to proceed, S to scroll future error messages,
+R to run without stopping, Q to run quietly,
+I to insert something, 
+1 or ... or 9 to ignore the next 1 to 9 tokens of input,
+H for help, X to quit.
+? Presentation
+Type <return> to proceed, S to scroll future error messages,
+R to run without stopping, Q to run quietly,
+I to insert something, 
+1 or ... or 9 to ignore the next 1 to 9 tokens of input,
+H for help, X to quit.
+? \begin{verbatim}
+Type <return> to proceed, S to scroll future error messages,
+R to run without stopping, Q to run quietly,
+I to insert something, 
+1 or ... or 9 to ignore the next 1 to 9 tokens of input,
+H for help, X to quit.
+? 134   transitprint(1,verblevel,
+<*> 132     transit_now
+                       arn=1;
+? 135                "                TRANSIT v%i.%i\n"
+
+*136                "-----------------------------------------------\n"
+<*> 136                "-
+                         ----------------------------------------------\n"
+? 137                ,version,revision);
+<*> 136                "--------------
+                                      ---------------------------------\n"
+? \end{verbatim}\par
+Type <return> to proceed, S to scroll future error messages,
+R to run without stopping, Q to run quietly,
+I to insert something, 
+1 or ... or 9 to ignore the next 1 to 9 tokens of input,
+H for help, X to quit.
+? Read line database
+OK, entering \nonstopmode...
+! Undefined control sequence.
+<*> ...-----------------------------------------\n
+                                                  "
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Emergency stop.
+<*> ...----------------------------------------\n"
+                                                  
+*** (job aborted, no legal \end found)
+
+ 
+Here is how much of TeX's memory you used:
+ 229 strings out of 95850
+ 2281 string characters out of 1195993
+ 46576 words of memory out of 1000001
+ 3248 multiletter control sequences out of 10000+50000
+ 3640 words of font info for 14 fonts, out of 500000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 22i,0n,19p,126b,40s stack positions out of 1500i,500n,5000p,200000b,5000s
+No pages of output.
