@@ -134,7 +134,7 @@ dep: $(DEP_FILES)
 proto: $(PROTO_FILES:.c=.proto)
 
 %.proto: %.c
-	$(CPROTO) $(CPROTOFLAGS) -o $(INCL)/$*_proto.h $<
+	$(CPROTO) $(CPROTOFLAGS) -o $(INCL)/proto_$*.h $<
 
 
 #/ast/plume/src/plume/libplume

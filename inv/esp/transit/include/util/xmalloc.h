@@ -25,4 +25,4 @@
 #define calloc(n,s) xcalloc(n,s)
 #define strdup(p) xstrdup(p)
 
-#include <xmalloc_proto.h>
+#include <proto_xmalloc.h>

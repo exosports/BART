@@ -34,4 +34,4 @@ extern int printpad_columns;
 
 #define readd(fp,cp) readds(fp,cp,NULL,0)
 
-#include <iomisc_proto.h>
+#include <proto_iomisc.h>

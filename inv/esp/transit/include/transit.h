@@ -97,14 +97,14 @@ enum isodo {unclear=0,atmfile,ignore,fixed};
 #include <structures_tr.h>
 
 /***** Prototypes *****/
-#include <transit_proto.h>
-#include <readlineinfo_proto.h>
-#include <transitstd_proto.h>
-#include <readatminfo_proto.h>
-#include <makesample_proto.h>
-#include <extinction_proto.h>
-#include <idxrefraction_proto.h>
-#include <tau_proto.h>
-#include <argum_proto.h>
+#include <proto_transit.h>
+#include <proto_readlineinfo.h>
+#include <proto_transitstd.h>
+#include <proto_readatminfo.h>
+#include <proto_makesample.h>
+#include <proto_extinction.h>
+#include <proto_idxrefraction.h>
+#include <proto_tau.h>
+#include <proto_argum.h>
 
 #endif /* _TRANSIT_H */

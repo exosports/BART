@@ -40,8 +40,8 @@ extern struct linedb{
 
 extern short gabby_dbread;
 
-#include <lineread_proto.h>
-#include <dbread_pands_proto.h>
+#include <proto_lineread.h>
+#include <proto_dbread_pands.h>
 
 /*
   dbread_*: Reading of different line databases.

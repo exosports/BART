@@ -31,6 +31,6 @@
 
 #define VOIGT_QUICK 0x00001   //Quick integration.
 
-#include <voigt_proto.h>
+#include <proto_voigt.h>
 
 #endif /* _PROFILE_H */

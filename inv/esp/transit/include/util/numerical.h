@@ -19,4 +19,4 @@
  * 02111-1307, USA.
  */
 
-#include <numerical_proto.h>
+#include <proto_numerical.h>

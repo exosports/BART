@@ -59,6 +59,6 @@ struct optcfg {
   int columns;
 };
 
-#include <procopt_proto.h>
+#include <proto_procopt.h>
 
 #endif /* _PROCOPT_H */

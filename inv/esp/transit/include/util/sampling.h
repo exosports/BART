@@ -20,7 +20,7 @@
           resample(0,fl,0,NULL,0,NULL,ny,__VA_ARGS__)
 
 
-#include <sampling_proto.h>
+#include <proto_sampling.h>
 
 
 #endif
