@@ -109,9 +109,9 @@ int extwn (struct transit *tr)
 
   iniwn=tr->wns.i;
   wn=tr->wns.v;
+  nwn=tr->wns.n;
   wni=wn[0]-tr->wnmi;
   wnf=wn[nwn-1]+tr->wnmf;
-  nwn=tr->wns.n;
   dwn=tr->wns.d/tr->wns.o;
   nrad=rad->n;
   neiso=tr->n_e;
