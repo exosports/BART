@@ -47,7 +47,7 @@ modulation(struct transit *tr)	/* Main structure */
   prop_samp *ip=&tr->ips;
   prop_samp *wn=&tr->wns;
   transit_ray_solution *sol=tr->sol;
-  if(ip->d<=0&&sol->monoip){
+  if(ip->d==0&&sol->monoip){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "To compute %s modulation, the impact parameter has to\n"
 		 "be an equispaced array\n"

@@ -53,7 +53,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
 
   //The ratio of what is acceptable to exceed as upper value and not
   //removing the last bin.
-  const double okfinalexcess=1e-8;
+  double okfinalexcess=1e-8;
 
   //Check multiplicative factor
   if(hint->fct<=0)
@@ -192,6 +192,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
 
   //At this points make the sampling if it was not given as an
   //array.
+  if(samp->d<0) okfinalexcess = -okfinalexcess;
   samp->n=((1.0+okfinalexcess)*samp->f - si)/samp->d+1;
   if(samp->n<0) samp->n=-samp->n;
 
