@@ -12,5 +12,6 @@ extern void outdebtau P_((char *name, prop_samp *ip, double **t, long wi, long w
 extern void printtoomuch P_((char *file, struct optdepth *tau, prop_samp *wn, prop_samp *rad));
 extern void printtau P_((struct transit *tr));
 extern int freemem_tau P_((struct optdepth *tau, long *pi));
+extern int detailout P_((prop_samp *wn, prop_samp *rad, struct detailfld *det, double **arr, _Bool radfirst));
 
 #undef P_

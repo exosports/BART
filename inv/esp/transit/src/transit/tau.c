@@ -133,8 +133,8 @@ tau(struct transit *tr)
     //print output every 10\% that is ready
     if(wi>wnextout){
       transitprint(2,verblevel,
-		   "%li%%\r"
-		   ,100*wi/wnn);
+		   "%i%%\r"
+		   ,(int)(100*(float)wi/wnn+0.5));
       wnextout+=(long)(wnn/10.0);
     }
 
@@ -194,12 +194,19 @@ tau(struct transit *tr)
 
   }
 
-  if(tr->save.tau)
-    savefile_exsofar(tr);
-
   transitprint(1,verblevel,
 	       " done\nOptical depth calculated up to %g\n"
 	       ,tr->ds.tau->toomuch);
+
+  //print detailed output if appropiate
+  if(tr->ds.det->tau.n)
+    detailout(&tr->wns,&tr->ips,&tr->ds.det->tau,tau.t,0);
+  if(tr->ds.det->ext.n)
+    detailout(&tr->wns,&tr->rads,&tr->ds.det->ext,e,1);
+
+  //save current state
+  if(tr->save.tau)
+    savefile_exsofar(tr);
 
   //Print lowest impact parameter before optical gets too big
   if(tr->f_toomuch)
@@ -354,10 +361,10 @@ printtau(struct transit *tr)
     rad=tr->ot;
 
   transitprint(1,verblevel,
-	       "\nPrinting optical depth for radius %li (at %gcm) in\n"
-	       " '%s'\n"
-	       ,rad+1,rads->fct*rads->v[rad]
-	       ,tr->f_out?tr->f_out:"standard output");
+	       "\nPrinting in '%s'\n"
+	       " optical depth for radius %li (at %gcm)\n"
+	       ,tr->f_out?tr->f_out:"standard output"
+	       ,rad+1,rads->fct*rads->v[rad]);
 
   transitprint(2,verblevel,
 	       "Optical depth calculated up to %g[cm-1]\n"
@@ -395,3 +402,75 @@ freemem_tau(struct optdepth *tau,
   return 0;
 
 }
+
+/* \fcnfh
+   Output detailed optical depth info
+
+   @returns 0 on success
+ */
+int 
+detailout(prop_samp *wn,
+	     prop_samp *rad,
+	     struct detailfld *det,
+	     PREC_RES **arr,
+	     _Bool radfirst)
+{
+  long i,u,d,m;
+
+  long idx[det->n];
+  double val;
+  FILE *out=fopen(det->file,"w");
+  if(!out)
+    transiterror(TERR_SERIOUS,
+		 "Cannot open '%s' for writing fine detail\n"
+		 ,det->file);
+
+  transitprint(1,verblevel,
+	       "\nPrinting in '%s'\n"
+	       " fine detail of %s at selected wavenumbers\n"
+	       ,det->file,det->name);
+
+  fprintf(out,"#Radius        ");
+  for(i=0;i<det->n;i++){
+    val=det->ref[i];
+    u=wn->n-1;
+    if(val==det->ref[u])
+      d=u;
+    else{
+      d=0;
+      while(u-d>1){
+	m=(u+d)/2;
+	if(wn->v[m]>val)
+	  u=m;
+	else
+	  d=m;
+      }
+    }
+
+    idx[i]=d;
+    fprintf(out,"w=%-13.5g",wn->v[idx[i]]);
+  }
+  fprintf(out,"\n");
+
+  if(radfirst){
+    for(m=0;m<rad->n;m++){
+      fprintf(out,"%-15.7g",rad->v[m]);
+      for(i=0;i<det->n;i++)
+	fprintf(out,"%-15.7g",arr[m][idx[i]]);
+      fprintf(out,"\n");
+    }
+  }
+  else{
+    for(m=0;m<rad->n;m++){
+      fprintf(out,"%-15.7g",rad->v[m]);
+      for(i=0;i<det->n;i++)
+	fprintf(out,"%-15.7g",arr[idx[i]][m]);
+      fprintf(out,"\n");
+    }
+  }
+
+  fclose(out);
+
+  return 0;
+}
+

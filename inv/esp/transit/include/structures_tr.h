@@ -319,6 +319,19 @@ struct saves {
   char *tau;			/* Save after finalizing tau */
 };
 
+struct detailfld {
+  int n;
+  PREC_RES *ref;
+  char file[80];
+  char name[30];
+};
+
+
+struct detailout {
+  struct detailfld ext;
+  struct detailfld tau;
+};
+
 
 struct transithint {		/* Structure with user hinted data that
 				   should go to the 'struct transit'
@@ -380,6 +393,8 @@ struct transithint {		/* Structure with user hinted data that
 				   minimum low energy (in cm-1) */
 
   struct extcloud cl;
+
+  struct detailout det;
 
 };
 
@@ -445,6 +460,7 @@ struct transit {		/* Main data structure */
     struct outputray *out;
     struct extcloud *cl;
     struct extscat *sc;
+    struct detailout *det;
   }ds;
 };
 
