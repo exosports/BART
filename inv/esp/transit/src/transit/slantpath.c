@@ -28,8 +28,8 @@ modulation1 (PREC_RES *tau,
 	     long last,
 	     double toomuch,
 	     prop_samp *ip,
-	     struct geometry *sg,
-	     gsl_interp_accel *acc) __attribute__((always_inline));
+	     struct geometry *sg)
+     __attribute__((always_inline));
 
 /***** Warning:
        To speed up, slantpath.txc assumed version 1.4 of gsl
@@ -53,10 +53,9 @@ totaltau(PREC_RES b,		/* differential impact parameter with
 	 PREC_RES *refr,	/* refractivity index */
 	 PREC_RES **ex,		/* extinction[rad][nwn] */
 	 long nrad,		/* number of radii elements */
-	 long wn,		/* wavenumber looked */
-	 gsl_interp_accel *acc)	/* accelerating pointer. Auxiliary array
-				   */
+	 long wn)		/* wavenumber looked */
 {
+  gsl_interp_accel acc={0,0,0};
   PREC_RES dt[nrad];
   PREC_RES r0a=b;
   PREC_RES r0=0;
@@ -128,11 +127,9 @@ totaltau(PREC_RES b,		/* differential impact parameter with
   //Use spline if GSL is available along with at least 3 points
 #ifdef _USE_GSL
   if(nrad-rs>2){
-    if(acc)
-      acc->cache = 0;
     gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
     gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
-    res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],acc);
+    res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],&acc);
     gsl_spline_free(spl);
   }
   //Only integrate Trapezium if there is only two points available.
@@ -161,14 +158,13 @@ modulationperwn (PREC_RES *tau,
 		 double toomuch,
 		 prop_samp *ip,
 		 struct geometry *sg,
-		 int exprlevel,
-		 gsl_interp_accel *acc)
+		 int exprlevel)
 {
   PREC_RES res;
 
   switch(exprlevel){
   case 1:
-    res=modulation1(tau,last,toomuch,ip,sg,acc);
+    res=modulation1(tau,last,toomuch,ip,sg);
     break;
   default:
     res=0;
@@ -192,10 +188,10 @@ modulation1 (PREC_RES *tau,
 	     long last,
 	     double toomuch,
 	     prop_samp *ip,
-	     struct geometry *sg,
-	     gsl_interp_accel *acc)
+	     struct geometry *sg)
 {
   //general variables
+  gsl_interp_accel acc={0,0,0};
   PREC_RES res;
   double srad=sg->starrad*sg->starradfct;
   double *rinteg;
@@ -241,12 +237,9 @@ modulation1 (PREC_RES *tau,
 
   //integrate in radii
 #ifdef _USE_GSL
-  acc->cache = 0;
-  acc->hit_count = 0;
-  acc->miss_count = 0;
   gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,last);
   gsl_spline_init(spl,ipv,rinteg,last);
-  res=gsl_spline_eval_integ(spl,ipv[0],ipv[last-1],acc);
+  res=gsl_spline_eval_integ(spl,ipv[0],ipv[last-1],&acc);
   gsl_spline_free(spl);
 
   //or err without GSL

@@ -40,8 +40,7 @@ tau(struct transit *tr)
   prop_samp *ip=&tr->ips;
   PREC_RES **e=tr->ds.ex->e[tr->tauiso];
   PREC_RES (*fcn)(PREC_RES b,PREC_RES *rad,PREC_RES *refr,
-		  PREC_RES **ex,long nrad,long wn,
-		  gsl_interp_accel *acc)
+		  PREC_RES **ex,long nrad,long wn)
     =tr->sol->tauperb;
 
 
@@ -100,16 +99,13 @@ tau(struct transit *tr)
 		 ,tr->ds.iso->isof[tr->tauiso].n);
 
 
-#ifdef _USE_GSL
-  gsl_interp_accel *acc=gsl_interp_accel_alloc();
-#endif
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
     t=tau.t[wi];
 
     //For each resultant impact parameter
     for(ii=0;ii<inn;ii++){
-      if((t[ii]=rfct*fcn(bb[ii]*riw,r,n,e,rnn,wi,acc))
+      if((t[ii]=rfct*fcn(bb[ii]*riw,r,n,e,rnn,wi))
 	 >tau.toomuch){
 	tau.last[wi]=ii;
 	break;
@@ -117,9 +113,6 @@ tau(struct transit *tr)
     }
 
   }
-#ifdef _USE_GSL
-  gsl_interp_accel_free(acc);
-#endif
 
   transitprint(1,verblevel,
 	       "Optical depth calculated up to %g[cm-1]\n"

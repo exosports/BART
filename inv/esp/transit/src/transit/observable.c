@@ -68,19 +68,13 @@ modulation(struct transit *tr)	/* Main structure */
 	       "Integrating for each wavelength. Expect %li dots below...\n"
 	       ,wn->n/512);
 
-#ifdef _USE_GSL
-  gsl_interp_accel *acc=gsl_interp_accel_alloc();
-#endif
   for(w=0;w<wn->n;w++){
     out[w]=sol->obsperwn(tau->t[w],tau->last[w],tau->toomuch,
-			 ip,sg,1,acc);
+			 ip,sg,1);
 
     if((w&0x1ff)==0x1ff)
       transitdot(1,verblevel);
   }
-#ifdef _USE_GSL
-  gsl_interp_accel_free(acc);
-#endif
   transitprint(1,verblevel,"\n");
 
   //frees no longer needed memory.

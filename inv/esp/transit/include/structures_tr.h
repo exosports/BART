@@ -95,9 +95,7 @@ typedef struct {
 	PREC_RES *refr,		/* refractivity index */
 	PREC_RES **ex,		/* extinction[rad][iso][nwn] */
 	long nrad,		/* number of radii elements */
-	long wn,		/* wavenumber looked */
-	gsl_interp_accel *acc);	/* accelerating pointer. Auxiliary array
-				 */
+	long wn);		/* wavenumber looked */
   PREC_RES (*obsperwn)		/* Quantity obtained from
 				   integration of optical depth
 				*/ 
@@ -106,8 +104,7 @@ typedef struct {
 	PREC_RES toomuch,
 	prop_samp *ip,
 	struct geometry *star,
-	int exprlevel,
-	gsl_interp_accel *acc);
+	int exprlevel);
 
   const int nobs;		/* Number of levels of details as it can
 				   be handled by the above function */
