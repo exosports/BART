@@ -12,9 +12,13 @@
 #include <util/sampling.h>
 #include <util/profile.h>
 #include <util/iomisc.h>
+#include <util/numerical.h>
 #include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef _USE_GSL
+#include <gsl/gsl_spline.h>
+#endif
 
 #define compattwiiversion 2
 
@@ -36,6 +40,10 @@
 #define TRH_MASS        0x00000200 /* mass abundance? */
 #define TRH_TOOMUCH     0x00000400 /* Limit optical depth, above this is
 				      just set to this value. */
+#define TRH_TAUISO      0x00000800 /* Optical depth is going to be for
+				      only this isotope. To show all of
+				      them, is it either -1, or 0 if
+				      TRU_EXTINPERISO disabled */
 
 #define TRH_WAVO        0x01000000 /* Wavelength oversampling */
 #define TRH_WNO         0x02000000 /* Wavenumber oversampling */
@@ -301,21 +309,13 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
 
 
 struct extinction{
-  PREC_RES ***k;		/* Extinciton value [rad][iso:][wav]*/
-  PREC_VOIGTP **al;		/* Lorentz width [rad][iso] */
-  PREC_VOIGTP **ad;		/* Doppler width/central wavenumber
-				   [rad][iso] */
-  int *lw;			/* number of bins calculated per
-				   wavelength [wav] */
-  int **recalc;			/* Indicates in how many wavenumbers it
-				   have to change profile again, if 0
-				   means that it kept profile from
-				   previous wavenumber */
+  PREC_RES ***e;		/* Extinction value [rad][iso:][wav]*/
   float maxratio;		/* Maximum Doppler width ratio between
 				   current and last calculated profile.
 				   If the value is greater than this,
 				   then recalculate */
-  int vf;			/* Fine binning of Voigt function */
+  int vf;			/* Number of fine-bins of the Voigt
+				   function */
   float ta;			/* number of alphas that have to be
 				   contained in the profile */
 };
@@ -340,6 +340,8 @@ struct onept {
 
 struct optdepth {
   PREC_RES **t;			/* Optical depth [wn][ip] */
+  short iso;			/* Isotope from which to calculate the
+				   optical depth */
   long *first;			/* Index of the lowest impact parameter
 				   value, lower than this the optical
 				   depth is greater than '.toomuch'. It
@@ -390,6 +392,10 @@ struct transithint {		/* Structure with user hinted data that
   double toomuch;		/* Optical depth values greater than
 				   this won't be calculated: the
 				   extinction is assumed to be zero. */
+  short tauiso;			/* Whether user want to calculate
+				   optical depth for all or some
+				   isotopes, TRU_EXTPERISO has to be
+				   on. */
 };
 
 
