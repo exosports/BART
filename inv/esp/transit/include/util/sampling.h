@@ -6,8 +6,8 @@
 #include <stdarg.h>
 #include <string.h>
 
-//Make sure to include transit.h before include this header
 #ifdef TRANSIT
+#include <transit.h>
 #define SAMP_BITS   TRU_SAMPBITS
 #define SAMP_LINEAR TRU_SAMPLIN
 #define SAMP_SPLINE TRU_SAMPSPL

@@ -22,8 +22,6 @@
 #ifndef _TRANSIT_H
 #define _TRANSIT_H
 
-#define TRANSIT
-
 #include <stdarg.h>
 #include <math.h>
 #include <errno.h>

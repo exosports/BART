@@ -58,7 +58,7 @@ PROTO_FILES = $(DEP_FILES)
 #parameters
 CPUOPTION   = -mcpu=athlon-tbird
 #CPUOPTION   = -mcpu=pentium3
-EXTPRM      =
+EXTPRM      = -DTRANSIT
 WARNFLAGS   = -Wall -Winline
 GSLPRM      = -D_USE_GSL
 GSLLIB      = -lgsl -lblas
@@ -147,6 +147,12 @@ quiet_cmd_clean_proto = Deleting prototypes ...
 #make main executable
 default: transit lineread
 
+
+#explain makefile options regarding printing
+help:
+	@echo "Make option OUTP specifies output presented: if it is not"
+	@echo "specified, then use nice printing, if 1 then no output (only "
+	@echo "errors and warnings), and if 2 do a full call"
 
 #install executables in target directory
 install: default
