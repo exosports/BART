@@ -179,7 +179,7 @@ int extwn (struct transit *tr)
 
   //For each radius (index 'r')
   transitprint(1,verblevel,
-	       "Computing extinction for %i radius...\n"
+	       "Computing extinction for %i radii...\n"
 	       ,nrad);
   for(r=0;r<nrad;r++){
 
