@@ -28,9 +28,9 @@
    blank, keep it to 'const' otherwise */
 #define EXTINCTION_Q const
 
-static _Bool extinctperiso,  extwncalledonce=0;
+static _Bool extinctperiso,  extwncalledonce=0,gominelow;
 static PREC_VOIGT ***profile;
-static PREC_RES ***kalt;
+static PREC_RES ***kalt,minelow;
 
 //Line info content
 static EXTINCTION_Q PREC_LNDATA *ltwl;
@@ -216,9 +216,28 @@ extradius(PREC_NREC r,		/* Radius index */
     //initialize 'wa[i]' to last wavenumber
     wa[i]=w;
   }
+#if 0
+  long omitw[]={ 1699616,1697169,1897579};
+  long omite[]={1360,1294,757};
+  long nomit=3;
+#endif
 
   //Compute the spectra!, proceed for every line.
   for(ln=0;ln<nlines;ln++){
+    if(gominelow&&minelow>ltelow[ln])
+      continue;
+#if 0
+    for(i=0;i<nomit;i++)
+      if((long)(ltwl[ln]*1000)==omitw[i] &&
+	 (long)(ltelow[ln])==omite[i]){
+	if(r==129)
+	  fprintf(stderr,
+		  "\nOmitting %6li, wav: %7g, wn: %7g, en %7g, gf: %7g, iso: %i"
+		  ,ln,ltwl[ln],1e7/ltwl[ln],ltelow[ln],ltgf[ln]
+		  ,ltisoid[ln]);
+	continue;
+      }
+#endif
     /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
       continue;
@@ -335,6 +354,16 @@ extradius(PREC_NREC r,		/* Radius index */
       k[j]+=propto_k
 	*profwn[j];
 
+    if(ltwl[w]>1.6968){
+      k=5;
+    }
+    else if(ln==2594618){
+      k=5;
+    }
+    else if(ln==2595091){
+      k=5;
+    }
+
     //'wa[i]' is just the last wavelength per isotope.
     wa[i]=w;
   }
@@ -346,6 +375,106 @@ extradius(PREC_NREC r,		/* Radius index */
   transitprint(2,verblevel,"done\n");
 
   return 0;
+}
+
+
+/* \fcnfh
+   Output info to file regarding extinction computation. Designed to be
+   called from the debugger only
+
+   @example calling from inside computeextradius():
+              outputinfo("out",w,5,ln,500,kiso,timesalpha,fbinvoigt,temp,rad);
+*/
+void
+outputinfo(char *outfile,
+	   long w,
+	   long dw,
+	   long ln,
+	   long dln,
+	   double **kiso,
+	   double timesalpha,
+	   int fbinvoigt,
+	   double temp,
+	   double rad)
+{
+  long i;
+
+  FILE *out=fopen(outfile,"w");
+  if(!out){
+    fprintf(stderr,
+	    "Cannot write to file '%s'\n"
+	    ,outfile);
+    return;
+  }
+
+  dw+=w;
+  fprintf(out,
+	  "Debuging output.\n"
+	  "Radius: %g\n"
+	  "Temperature: %g\n"
+	  "Number_of_extinction_points: %li\n"
+	  "Number_of_line_info: %li\n"
+	  "timesalpha: %.9g\n"
+	  "number_of_finebins: %i\n"
+	  ,rad,temp,dw-w,dln
+	  ,timesalpha,fbinvoigt);
+  fprintf(out,
+	  "--------------------------------------------------\n"
+	  "Procesed info from index %li to %li, for each isotope"
+	  ,w,dw-1);
+  int j;
+  for(i=w;i<dw;i++){
+    fprintf(out,"\n%-15.9g" ,wn[i]);
+    for(j=0;j<niso;j++)
+      fprintf(out,"%-15.9g",kiso[j][i]);
+  }
+
+  fprintf(out,
+	  "\n--------------------------------------------------\n"
+	  "Info from Doppler, next recalculation will occur at\n"
+	  "the following wavelengths for the %i different\n"
+	  "isotopes   "
+	  ,niso);
+  for(i=0;i<niso;i++)
+    fprintf(out,
+	    "%15.9g(%li)  "
+	    ,wn[wrc[i]],wrc[i]);
+  fprintf(out,
+	  "\nApprox_Doppler    Lorentz     #elem_width\n");
+  long maxnwn=0;
+  for(i=0;i<niso;i++){
+    fprintf(out,
+	    " %-18.9g%-15.9g%-15li\n"
+	    ,wn[w]*alphad[i],alphal[i],nwnh[i]*2+1);
+    if(maxnwn<nwnh[i])
+      maxnwn=nwnh[i];
+  }
+  fprintf(out,
+	  "Doppler profile (shown by finebinning and then by isotope):\n");
+  int k;
+  for(i=0;i<=maxnwn;i++){
+    for(j=0;j<niso;j++){
+      if(i<=nwnh[j])
+	for(k=0;k<fbinvoigt;k++)
+	  fprintf(out,
+		  "%-15.9g"
+		  ,profile[j][k][i]);
+      fprintf(out," | ");
+    }
+    fprintf(out,"\n");
+  }
+  fprintf(out,
+	  "---------------------------------------------------\n"
+	  "Line information, showing %li lines\n"
+	  "index       Wavenumber-cm    Wavelength-nm    GF             Elow         Iso\n"
+	  ,dln);
+  for(i=ln;i<ln+dln;i++)
+    fprintf(out,
+	    "%-11li%-15.9g%-15.9g%-15.9g%-15.9g%2i\n"
+	    ,i,1e7/ltwl[i],ltwl[i],ltgf[i],ltelow[i],ltisoid[i]);
+
+  fclose(out);
+
 }
 
 
@@ -419,6 +548,10 @@ extwn (struct transit *tr)
     return -7;
   }
   ex->ta=tr->ds.th->timesalpha;
+
+  gominelow=tr->ds.th->minelow>0;
+  if(gominelow)
+    minelow=ex->minelow=tr->ds.th->minelow;
 
   //'.maxratio' is the maximum allowed ratio change before recalculating
   //profile array.
