@@ -305,7 +305,7 @@ modulation1 (PREC_RES *tau,
   //           -Area_{planet}}
   //          {\pi R_s^2}
   //\end{align}
-  res-=PI*ipv[first+ipn-1]*ipv[first+ipn-1];
+  res=PI*ipv[first+ipn-1]*ipv[first+ipn-1]-res;
 
   //divide by area of the star
   res/=PI*srad*srad;
