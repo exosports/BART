@@ -28,11 +28,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <util/sampling.h>
-#include <util/profile.h>
-#include <util/iomisc.h>
-#include <util/numerical.h>
-#include <util/xmalloc.h>
+#include <pu/sampling.h>
+#include <pu/profile.h>
+#include <pu/iomisc.h>
+#include <pu/numerical.h>
+#include <pu/xmalloc.h>
 #include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>

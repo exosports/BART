@@ -27,12 +27,11 @@ endif
 SRC     = ./src/
 BIN     = $(PREFIX)/bin/
 INCL    = ./include/
-INCL_UT = $(INCL)/util/
 
 #paths for dependencies
 vpath %.h include
 vpath %.txc $(SRC)/transit:$(SRC)/transit/atmosphere:\
-	    $(SRC)/lineread:$(SRC)/util
+	    $(SRC)/lineread
 
 #programs
 CPROTO  = /usr/bin/cproto
@@ -48,12 +47,10 @@ TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 	    slantpath.o geometry.o observable.o \
 	    at_file.o readatm.o at_onept.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
-UT_OBJ    = sampling.o voigt.o iomisc.o procopt.o \
-	    numerical.o xmalloc.o
-TEST_FCN  = slantpath dbread_pands voigt
+TEST_FCN  = slantpath dbread_pands
 
 TEST_BIN    = $(patsubst %,test_%,$(TEST_FCN))
-PROTO_FILES = $(UT_OBJ:.o=.c) $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) \
+PROTO_FILES = $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) \
 	      $(patsubst %,%.c,$(TEST_BIN))
 DEP_FILES   = $(PROTO_FILES) $(TEST_OBJ:.o=.c)
 
@@ -84,7 +81,7 @@ STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic \
 	      -std=c99 $(EXTPRM) $(CPUOPTION) $(GSLPRM) $(CFLAGS)
 
 #libraries to link
-LIBS  = -lX11 -lm $(GSLLIB)
+LIBS  = -lX11 -lpu -lm $(GSLLIB)
 
 
 ######################
@@ -172,14 +169,14 @@ install: default
 
 #compile test programs
 test:	$(TEST_BIN)
-$(TEST_BIN): % : %.o transitstd.o $(UT_OBJ)
+$(TEST_BIN): % : %.o transitstd.o
 	$(call cmd,test)
 
 
 #compile debugging executables
-dbgsample: $(UT_OBJ) transitstd.c makesample.c
+dbgsample: transitstd.c makesample.c
 	$(CC) $(STDFLAGS) -DDBGSAMPLE -o $@ $(filter %.c %.o,$^) $(LIBS)
-dbgreadline: $(UT_OBJ) transitstd.c readlineinfo.c
+dbgreadline: transitstd.c readlineinfo.c
 	$(CC) $(STDFLAGS) -DDBGREADLINEINFO -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf dbgreadline $(BIN)
 
@@ -187,7 +184,7 @@ dbgreadline: $(UT_OBJ) transitstd.c readlineinfo.c
 #make executables
 transit : $(TR_OBJ)
 lineread: $(LR_OBJ)
-transit lineread: $(UT_OBJ)
+transit lineread:
 	$(call cmd,exec)
 
 
