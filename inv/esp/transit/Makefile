@@ -50,8 +50,9 @@ TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o iomisc.o procopt.o \
 	    numerical.o xmalloc.o
-TEST_OBJ  = test_slantpath.o
+TEST_FCN  = slantpath dbread_pands
 
+TEST_OBJ  = $(patsubst %,test_%.o,$(TEST_FCN))
 TEST_BIN  = $(TEST_OBJ:.o=)
 PROTO_FILES = $(UT_OBJ:.o=.c) $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c)
 DEP_FILES = $(PROTO_FILES) $(TEST_OBJ:.o=.c)
@@ -167,7 +168,7 @@ install: default
 
 #compile test programs
 test:	$(TEST_BIN)
-$(TEST_BIN):	$(TEST_OBJ) transitstd.o $(UT_OBJ)
+$(TEST_BIN): % : %.c transitstd.o $(UT_OBJ)
 	$(call cmd,exec)
 
 
@@ -233,3 +234,4 @@ check_cproto:
 
 #include dependencies
 -include .depen
+
