@@ -73,6 +73,23 @@ modulation(struct transit *tr)	/* Main structure */
   for(w=0;w<wn->n;w++){
     out[w]=sol->obsperwn(tau->t[w],tau->last[w],tau->toomuch,
 			 ip,sg,modlevel);
+    if(out[w]<0){
+      switch(-(int)out[w]){
+      case 1:
+	if(modlevel==-1)
+	  transiterror(TERR_SERIOUS,
+		       "Optical depth didn't reach %g at wavenumber %g[cm-1].\n"
+		       " Cannot use critical radius technique (-1)\n"
+		       ,tau->toomuch,wn->v[w]*wn->fct);
+      default:
+	transiterror(TERR_SERIOUS,
+		     "There was a problem while calculating modulation\n"
+		     " at wavenumber %g[cm-1]. Error code %i\n"
+		     ,wn->v[w]*wn->fct,(int)out[w]);
+	break;
+      }
+      exit(EXIT_FAILURE);
+    }
 
     if(w==nextw){
       nextw+=wn->n/10;
@@ -118,7 +135,7 @@ printmod(struct transit *tr)
   fprintf(outf,
 	  "#wavenumber[%gcm-1]\twavelength[nm]\tmodulation\n",tr->wns.fct);
   for(rn=0;rn<tr->wns.n;rn++)
-    fprintf(outf,"%12.6f%14.6f%17.7g\n"
+    fprintf(outf,"%12.6f%14.6f%18.9g\n"
 	    ,tr->wns.v[rn]/tr->wns.fct,WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
 	    outray->o[rn]);
 
