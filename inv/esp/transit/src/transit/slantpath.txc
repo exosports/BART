@@ -23,6 +23,13 @@
 
 #include <transit.h>
 
+static inline PREC_RES
+modulation1 (PREC_RES *tau,
+	     long first,
+	     double toomuch,
+	     prop_samp *ip,
+	     struct geometry *sg,
+	     gsl_interp_accel *acc) __attribute__((always_inline));
 
 /***** Warning:
        To speed up, slantpath.txc assumed version 1.4 of gsl
@@ -139,59 +146,101 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
 
 }
 
+
+
 /* \fcnfh 
    observable information as it would be seen before any telescope
-   interaction
+   interaction. Calculates ratio in-transit over out-transit for the
+   simplest expression of modulation.
 
    @returns modulation obtained
 */
-static inline PREC_RES
+static PREC_RES
 modulationperwn (PREC_RES *tau,
 		 long first,
 		 double toomuch,
 		 prop_samp *ip,
 		 struct geometry *sg,
+		 int exprlevel,
 		 gsl_interp_accel *acc)
 {
-  //general variables
-  double srad=sg->starrad*sg->starradfct;
-  double *integ,tt;
   PREC_RES res;
+
+  switch(exprlevel){
+  case 1:
+    res=modulation1(tau,first,toomuch,ip,sg,acc);
+    break;
+  default:
+    res=0;
+    transiterror(TERR_CRITICAL,
+		 "slantpath:: modulationperwn:: Level %i of detail\n"
+		 "has not been implemented to compute modulation\n"
+		 ,exprlevel);
+  }
+  return res;
+}
+
+
+/* \fcnfh
+   Computes most basic modulation scheme, obtained when there is no limb
+   darkening or emitted flux 
+
+   @returns modulation obtained
+*/
+static inline PREC_RES
+modulation1 (PREC_RES *tau,
+	     long first,
+	     double toomuch,
+	     prop_samp *ip,
+	     struct geometry *sg,
+	     gsl_interp_accel *acc)
+{
+  //general variables
+  PREC_RES res;
+  double srad=sg->starrad*sg->starradfct;
+  double *rinteg,*azinteg,tt;
 
   //Impact parameter and azimuth variables
   long ipn=ip->n,azn;
-  PREC_RES ipd=ip->d*ip->fct,ipv;
+  PREC_RES ipd=ip->d*ip->fct,*ipv,ipvv;
   PREC_RES azz,*az,azd;
 
   //star centered coordinates and counters
   double starx,stary;
   long i,j;
-  
+
   //allocate enough azimuthal bins for the outermost (biggest) radii,
   //others will necessarily be smaller.
   azd=2*PI*ip->v[ipn-1]*ip->fct/ipd;
   azn=(long)azd+1;
-  integ=(double *)alloca(azn*sizeof(double));
+  azinteg=(double *)alloca(azn*sizeof(double));
+  rinteg=(double *)alloca(ipn*sizeof(double));
+  ipv=(double *)alloca(ipn*sizeof(double));
   az=(double *)alloca(azn*sizeof(double));
 
-  //for each of the planet's layer starting from the outermost until the
-  //closest layer
+  //this function calculates 1 minus the ratio of in-transit over out-of-transit
+  //expresion for the simplest case, which is given by
+  //\[
+  //M_{\lambda}^{(0)}=
+  //\frac{1}{\pi R_M^2}\int_{R<R_M}\ee^{-\tau( b,\xi)} R \dd R\dd\phi
+  //\]\par
+  //Let's integrate; for each of the planet's layer starting from the
+  //outermost until the closest layer
   first--;
   for(i=ipn-1;i>first;i--){
     //take azimuthal spacing equal to the radial spacing. Add one bin so
-    //that integration can be done until 2PI
-    ipv=ip->v[i]*ip->fct;
-    azd=ipd/ipv;
+    //that integration can be done until $2\pi$
+    ipvv=ipv[i]=ip->v[i]*ip->fct;
+    azd=ipd/ipvv;
     azn=2*PI/azd +1;
     tt=tau[i];
 
     //fill azimuthal integrand
     for(j=0;j<azn;j++){
       azz=az[j]=j*azd;
-      starx=(sg->x+ipv*sin(azz))/sg->starrad;
-      stary=(sg->y+ipv*cos(azz))/sg->starrad;
-      integ[j]=starvariation(starx,stary,srad)*
-	exp(-tt)*ipv;
+      starx=(sg->x+ipvv*sin(azz))/sg->starrad;
+      stary=(sg->y+ipvv*cos(azz))/sg->starrad;
+      azinteg[j]=exp(-tt)*ipvv;
     }
 
     //feed gsl.
@@ -200,23 +249,70 @@ modulationperwn (PREC_RES *tau,
     acc->hit_count = 0;
     acc->miss_count = 0;
     gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,azn);
-    gsl_spline_init(spl,az,integ,azn);
-    res=gsl_spline_eval_integ(spl,0,2*PI,acc);
+    gsl_spline_init(spl,az,azinteg,azn);
+    rinteg[i]=gsl_spline_eval_integ(spl,0,2*PI,acc);
     gsl_spline_free(spl);
 
-#else
     //Without {\bf GSL} is currently not implemented. Output is dependent in an
     //appropiate installation of those libraries
+#else
+# error computation of modulation() without GSL is not implemented
+#endif
+  }
+  //fill two more lower part bins with 0. Only two to have a nice ending
+  //spline and not unnecessary values.
+  first-=2;
+  if(first<-1) first=-1;
+  for(;i>first;i--){
+    ipv[i]=ip->v[i]*ip->fct;
+    rinteg[i]=0;
+  }
+
+  //set right position from the array beginning and number of items,
+  //check that we have enough layers to integrate, I can't imagine now
+  //how can that check be failed at this point.
+  first++;
+  ipn-=first;
+  if(ipn<3)
+    transiterror(TERR_CRITICAL,
+		 "Condition failed, less than 3 items (only %i) for radial\n"
+		 "integration.\n"
+		 ,first);
+
+  //integrate in radii
+#ifdef _USE_GSL
+  acc->cache = 0;
+  acc->hit_count = 0;
+  acc->miss_count = 0;
+  gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,ipn);
+  gsl_spline_init(spl,ipv+first,rinteg+first,ipn);
+  res=gsl_spline_eval_integ(spl,ipv[first],ipv[first+ipn-1],acc);
+  gsl_spline_free(spl);
+
+  //or err without GSL
+#else
 # error computation of modulation() without GSL is not implemented
 #endif
 
-  }
+  /* TD: Add  unblocked area of the star */
+  //substract the total area blocked by the planet. This is from the
+  //following
+  //\begin{align}
+  //1-M=&1-\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
+  //             +\int_{r_p}^{R_s}\dd A}
+  //            {\pi R_s^2}\\
+  //   =&\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
+  //           -Area_{planet}}
+  //          {\pi R_s^2}
+  //\end{align}
+  res-=PI*ipv[first+ipn-1]*ipv[first+ipn-1];
 
-  /* TD: Add normalized unblocked area of the star */
-  res+=0;
+  //divide by area of the star
+  res/=PI*srad*srad;
 
-  return 0;
+  return res;
 }
+
 
 
 const transit_ray_solution slantpath =
@@ -227,5 +323,9 @@ const transit_ray_solution slantpath =
     1,				/* Equispaced impact parameter requested? */
     &totaltau,			/* per impact parameter and per
 				   wavenumber value computation */
-    &modulationperwn		/* per wavenumber value computation */
+    &modulationperwn,		/* per wavenumber value computation in
+				   its simplest expression */
+    1				/* Number of levels of modulation detail
+				   as it can be handled by the above
+				   fucntion */
   };

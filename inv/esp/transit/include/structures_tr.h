@@ -108,7 +108,11 @@ typedef struct {
 	PREC_RES toomuch,
 	prop_samp *ip,
 	struct geometry *star,
+	int exprlevel,
 	gsl_interp_accel *acc);
+
+  const int nobs;		/* Number of levels of details as it can
+				   be handled by the above function */
 } transit_ray_solution;
 
 
