@@ -286,17 +286,17 @@ modulation1 (PREC_RES *tau,
   //Let's integrate; for each of the planet's layer starting from the
   //outermost until the closest layer
   for(i=0;i<=last;i++){
-    ipv[last-i] = ip->v[i] * ip->fct;
+    ipv[i] = ip->v[last-i] * ip->fct;
 
-    rinteg[last-i] = exp(-tau[i]) * ipv[last-i];
+    rinteg[i] = exp(-tau[i]) * ipv[i];
   }
   //fill two more lower part bins with 0. Only two to have a nice ending
   //spline and not unnecessary values.
   last+=2;
   if(last>ipn-1) last=ipn-1;
   for(;i<last;i++){
-    ipv[last-i] = ip->v[i] * ip->fct;
-    rinteg[last-i]=0;
+    ipv[i]    = ip->v[last-i] * ip->fct;
+    rinteg[i] = 0;
   }
 
   //increment last to represent number of elements now, check that we

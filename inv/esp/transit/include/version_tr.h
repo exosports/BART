@@ -33,10 +33,12 @@
    1.2: (1.1 patch) Exportable and fixes on one P,T point. 033104. PMR
    2.0: Modulation is fully working, not much debugging chase done,
         though. 051804. PMR
-   2.1: Tau seems to be completely debugging, spline integration works
+   2.1: Tau seems to be completely debugged, spline integration works
+   2.1: Modulation seems to be completely debugged, spline integration
+        works 
  */
 int version=2;
-int revision=1;
+int revision=2;
 
 
 #endif /* _VERSION_TR_H */

@@ -246,6 +246,35 @@ double *mod_itau(double prm, double *res, double star, double ipmax, double firs
 }
 
 
+/* \fcnfh
+   This function gives the expect result or the value of tau for an
+   atmosphere where tau increasing inwards.
+*/
+double *mod_dtau(double prm, double *res, double star, double ipmax, double first, long nip, double toomuch)
+{
+  //return result if that is what user wanted.
+  if(res){
+    double rath=ipmax/star;
+    double ratl=first*ipmax/star;
+    *res = 2 * ( (ipmax-1/prm) - exp(-prm*ipmax*(1-first))*(ipmax*first-1/prm) )
+      / star / star / prm;
+    *res+= exp(-toomuch)*ratl*ratl;
+    *res+= (1-rath*rath);
+    return NULL;
+  }
+
+  static double *tau;
+  tau=(double *)calloc(nip,sizeof(double));
+
+  double delt = (1-first) / --nip;
+  while(nip--)
+    tau[nip] =  prm * ipmax * (1 - first - nip * delt);
+  tau[0]=prm * ipmax * (1 - first);
+
+  return tau;
+}
+
+
 int
 mod_now(double *tau,
 	long last,
@@ -432,7 +461,7 @@ test_mod()
 {
   int status=0;
   double ipmax[]={10, 100, 1000};
-  long nip[]=    {10, 100, 1000};
+  long nip[]=    {10, 100, 1000, 10000};
   double first[]={.9, .75, .5, .1};
   double star[]= {10,100,1000};
   double toomuch=30;
@@ -446,6 +475,8 @@ test_mod()
 		  toomuch, &mod_ctau, "Constant Tau", .01);
   status+=mod_tau(star, n_star, ipmax, n_ipmax, first, n_first, nip, n_nip,
 		  toomuch, &mod_itau, "Increasing Tau", .01);
+  status+=mod_tau(star, n_star, ipmax, n_ipmax, first, n_first, nip, n_nip,
+		  toomuch, &mod_dtau, "Decreasing Tau", .01);
 
   return status;
 }
