@@ -20,6 +20,19 @@
  * 02111-1307, USA.
  */
 
+/*\fcnfh
+  binsearch() defaults to an inclusive, exclusive search
+
+  @return binsearchie findings.
+*/
+inline int 
+binsearch(double *arr,
+	  long i,
+	  long f,
+	  double val)
+{
+  return binsearchie(arr,i,f,val);
+}
 
 /* \fcnfh
    Search for index such that val is between arr[index] inclusive and
@@ -34,12 +47,12 @@
 	       0 
 */
 inline int
-binsearch(double *arr, 		/* Array of length of at least 'f' */
-	  long i,		/* initial search index, cannot be
+binsearchie(double *arr,	/* Array of length of at least 'f' */
+	    long i,		/* initial search index, cannot be
 				   negative */
-	  long f,		/* final search index (or array
+	    long f,		/* final search index (or array
 				   length minus 1) */
-	  double val)		/* number to look for in the array */
+	    double val)		/* number to look for in the array */
 {
   long m;
 
@@ -62,3 +75,48 @@ binsearch(double *arr, 		/* Array of length of at least 'f' */
 
   return i;
 }
+
+
+/* \fcnfh
+   Search for index such that val is between arr[index] exclusive and
+   arr[index+1] inclusive.
+
+   @returns index that is looked for
+            -1 if value is before first element 'i' of array
+	    -2 if value is after last element 'f' of array
+	    -3 if only one element in array and it was not the looked
+               one 
+	    -4 if 'f' is equal or smaller than 'i', or 'i' is less than
+	       0 
+*/
+inline int
+binsearchei(double *arr,	/* Array of length of at least 'f' */
+	    long i,		/* initial search index, cannot be
+				   negative */
+	    long f,		/* final search index (or array
+				   length minus 1) */
+	    double val)		/* number to look for in the array */
+{
+  long m;
+
+  if(arr[i]>val)
+    return -1;
+  if(arr[f]<val)
+    return -2;
+  if(i==f&&arr[i]!=val)
+    return -3;
+  if(f<i&&i<0)
+    return -4;
+
+  while(f-i>1){
+    m=(f+i)>>1;
+    if(arr[m]<val)
+      i=m;
+    else
+      f=m;
+  }
+
+  return i;
+}
+
+
