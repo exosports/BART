@@ -36,8 +36,10 @@ tau(struct transit *tr)
   prop_isof *isof=tr->isof;
   prop_samp *rad=&tr->rads;
   prop_samp *wn=&tr->wns;
+  prop_samp *iprm=&tr->ips;
 
 
 
+  tr->pi|=TRPI_TAU;
   return 0;
 }

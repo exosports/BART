@@ -265,6 +265,12 @@ int main (int argc,		/* Number of variables */
   if(transit.rads.n==1)
     printone(&transit);
 
+  //Computes sampling of impact parameter
+  if((rn=makeipsample(&transit))!=0)
+    transiterror(TERR_SERIOUS,
+		 "makeipsampling() returned error code %i\n"
+		 ,rn);
+
   //Calculates optical depth
   if((rn=tau(&transit))!=0)
     transiterror(TERR_SERIOUS,

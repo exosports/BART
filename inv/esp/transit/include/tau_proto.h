@@ -5,6 +5,6 @@
 #endif
 
 /* tau.c */
-extern int tau P_((struct transit *tau));
+extern int tau P_((struct transit *tr));
 
 #undef P_

@@ -40,6 +40,9 @@
 /* According to the current value of TRH\_RADSFT, there are 15 bits used
    for sampling flags, that leaves 17 bits for other purposes (i.e. the
    lower half plus one */
+#define TRH_IPSFT                0 /* All of this reference are going to
+				      dissapear, only one flag per
+				      sampling */
 #define TRH_RADSFT         (32-15) /* Number of bits to shift for radius
 				      sample flags */
 #define TRH_WAVSFT         (32-10) /* Number of bits to shift for
@@ -133,6 +136,8 @@
 #define TRPI_MAKERAD    0x000010 /* makeradsample() completed */
 #define TRPI_MAKEWAV    0x000020 /* makewavsample() completed */
 #define TRPI_MAKEWN     0x000040 /* makewnsample() completed */
+#define TRPI_MAKEIP     0x000080 /* makeipsample() completed */
+#define TRPI_TAU        0x000100 /* tau() completed */
 
 
 /* flags for transiterror */
@@ -368,9 +373,11 @@ struct transithint {		/* Structure with user hinted data that
 				   upon approval */
   char *f_atm,*f_line,*f_out;	/* Filenames */
   prop_samp rads,wavs,wns;	/* Sampling properties of
-				   radius(planetary radius),
-				   wavelength(nanometers) and
-				   wavenumber(cm-1) */
+				   radius, wavelength and
+				   wavenumber */
+  prop_samp ips;		/* Impact parameter sampling, at what
+				   radius sampling does the user wants
+				   ray optical depth to be calculated */
   float allowrq;		/* How much less than one is accepted,
 				   and no warning is issued if
 				   abundances don't ad up to that */
@@ -415,6 +422,9 @@ struct transit {		/* Main data structure */
 				   */
   prop_samp rads,wavs,wns;	/* Sampling properties of radius,
 				   wavelength and wavenumber */
+  prop_samp ips;		/* Impact parameter sampling, at what
+				   radius sampling does the user wants
+				   ray optical depth to be calculated */
   prop_atm atm;			/* Sampled atmospheric data. Height in
 				   kilometers. */
   prop_isof *isof;		/* Fixed isotope information
@@ -439,8 +449,8 @@ struct transit {		/* Main data structure */
 				   final computation */
     struct iso_noext *in;
     struct atm_data *at;
-    struct transithint *th;	/*  */
-    struct lineinfo *li;	/*  */
+    struct transithint *th;
+    struct lineinfo *li;
     struct extinction *ex;
   }ds;
 };

@@ -272,7 +272,8 @@ int makewavsample(struct transit *tr)
 
 
 /* \fcnfh
- Calls makesample with the appropiate parameters and set the flags
+ Calls makesample with the appropiate parameters and set the flags for a
+ wavenumber sampling
 
  @returns makesample() output
 */
@@ -326,6 +327,34 @@ int makewnsample(struct transit *tr)
   //set progress indicator if sampling was successful and return status
   if(res>=0)
     tr->pi|=TRPI_MAKEWN;
+  return res;
+}
+
+
+/* \fcnfh
+ Calls makesample with the appropiate parameters and set the flags for
+ an impact parameter sampling
+
+ @returns makesample() output
+*/
+int makeipsample(struct transit *tr)
+{
+  //'res' will be the result status
+  int res;
+  struct transithint *trh=tr->ds.th;
+  prop_samp *usamp=&trh->ips;
+  prop_samp *rsamp=&tr->wavs;
+
+  transitcheckcalled(tr->pi,"makeipsample",1,
+		     "makeradsample",TRPI_MAKERAD);
+
+  //make the sampling taking as reference the radius sampling
+  res=makesample(&tr->ips,usamp,rsamp,trh->na,
+		 TRH_IPSFT,0,0);
+
+  //set progress indicator if sampling was successful and return status
+  if(res>=0)
+    tr->pi|=TRPI_MAKEIP;
   return res;
 }
 
