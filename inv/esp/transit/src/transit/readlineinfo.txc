@@ -301,7 +301,7 @@ readtli_ascii(FILE *fp,
     while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
 	  =='#'||rc=='\n');
     if(!rc) notyet(li->asciiline,tr->f_line);
-    if((iso->db[db].n=readstr_sp(lp,&lp,'_'))==NULL)
+    if((iso->db[db].n=readstr_sp_alloc(lp,&lp,'_'))==NULL)
       transitallocerror(0);
 
     //go to next field and get number of temperatures and isotopes
@@ -349,7 +349,7 @@ readtli_ascii(FILE *fp,
       isov[i].z=isov->z+nT*i;
       isov[i].c=isov->c+nT*i;
       //get name
-      if((iso->isof[acumiso+i].n=readstr_sp(lp2,&lp,'_'))==NULL)
+      if((iso->isof[acumiso+i].n=readstr_sp_alloc(lp2,&lp,'_'))==NULL)
 	transitallocerror(0);
       //get mass and convert to cgs
       iso->isof[acumiso+i].m=strtod(lp,&lp2);
