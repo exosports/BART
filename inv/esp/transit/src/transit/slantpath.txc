@@ -274,33 +274,24 @@ modulationm1(PREC_RES *tau,
 	     prop_samp *ip,	/* Order is descending */
 	     struct geometry *sg)
 {
-  long i,ni=last+1;
-  double ipv[ni],itau[ni];
+  long i,ini;
+  double ipv[3];
   double muchrad;
   double srad=sg->starrad*sg->starradfct;
 
   if(tau[last]<toomuch)
     return -1;
 
-  for(i=0;i<ni;i++){
-    ipv[i]=ip->v[last-i];
-    tau[i]=tau[last-i];
-  }
+  //Fill the unnormalized impact parameter array
+  ini=++last-3;
+  if(ini<0) ini=0;
+  for(i=ini;i<last;i++)
+    ipv[i-ini]=ip->v[i]*ip->fct;
 
-#ifdef _USE_GSL
-  //Find the level at which toomuch is reached through a spline if there
-  //is enough points
-  if(last>1){
-    gsl_interp_accel acc={0,0,0};
-    gsl_interp *spl=gsl_interp_alloc( gsl_interp_cspline, ni );
-    gsl_interp_init( spl, ipv, itau, ni );
-    muchrad = gsl_interp_eval( spl, ipv, itau, toomuch, &acc );
-    gsl_interp_free(spl);
-  }
-  //use linear interpolation if not enough points or no GSL
-  else
-#endif
-    muchrad = interp_line(itau, ipv, toomuch);
+  //Find the level at which toomuch is reached through a paraboloid or
+  //linear interpolation, depending whether we have enough points.
+  if(last>2) muchrad = interp_parab (tau+ini, ipv, toomuch);
+  else       muchrad = interp_line  (tau,     ipv, toomuch);
 
   return muchrad*muchrad/srad/srad;
 }
