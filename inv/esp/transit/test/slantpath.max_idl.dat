@@ -70,3 +70,34 @@ print,res*2
 ;Confirmed, spline is not that perfect to integrate tau, errors
 ;seen in test_slantpath are real, although is not the same value in IDL
 ;and the code(?!)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;Checking iro's
+
+idl
+
+r=[100261.68999999999, 100361.68999999999, 100461.68999999999]
+ex=[4.6394242078581665e-08, 3.5814581652473816e-08, 2.5365211839073296e-08]
+b=r[0]
+s=sqrt(r*r-b*b)
+
+nsamp=10000
+rt = r[0] + dindgen(nsamp+1)*(r[n_elements(r)-1]-r[0])/nsamp
+st = s[0] + dindgen(nsamp+1)*(s[n_elements(s)-1]-s[0])/nsamp;
+
+secder=spl_init(r,ex)
+rspl=spl_interp(r,ex,secder,rt);
+plot,rt,rspl
+oplot,r,ex,psym=4
+
+secder=spl_init(s,ex)
+sspl=spl_interp(s,ex,secder,st);
+plot,st,sspl
+oplot,s,ex,psym=4
+
+res=int_tabulated(st,sspl)
+print,res
+
+print,res*1e5
+
