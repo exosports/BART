@@ -76,7 +76,8 @@ tau(struct transit *tr)
   //to temporarily store a per radius info, and the ratio of the ip and
   //rad units
   PREC_RES dt[wnn];
-  double riw=ip->fct/rad->fct;
+  double rfct=rad->fct;
+  double riw=ip->fct/rfct;
 
   //Need at least three radius to calculate a spline interpolation.
   if(inn<3)
@@ -87,6 +88,13 @@ tau(struct transit *tr)
   transitprint(1,verblevel,
 	       "Calculating optical depth at various radius...\n");
 
+  if(tr->ds.ex->periso)
+    transitprint(1,verblevel,
+		 " Note that I'm computing only for isotope '%s', others"
+		 "were ignored\n"
+		 ,tr->ds.iso->isof[tr->tauiso].n);
+
+
 #ifdef _USE_GSL
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
 #endif
@@ -96,7 +104,7 @@ tau(struct transit *tr)
 
     //For each resultant impact parameter
     for(ii=inn-1;ii>=0;ii--){
-      if((t[ii]=rad->fct*tr->sol->tauperb(bb[ii]*riw,r,n,e,inn
+      if((t[ii]=rfct*tr->sol->tauperb(bb[ii]*riw,r,n,e,inn
 					  ,tr->tauiso,wi,dt,acc))
 	 >tau.toomuch){
 	tau.first[wi]=ii;
