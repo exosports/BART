@@ -19,6 +19,7 @@ extern char *linepad P_((char *out, int nc, char *in));
 extern double askforposd P_((char *fmt, ...));
 extern long askforposl P_((char *fmt, ...));
 extern char *fgets_alloc P_((FILE *fp, int *max));
+extern void splitnzero_add P_((char ***array, char *string, char sep));
 extern char **splitnzero_alloc P_((char *string, char sep));
 extern void splitnzero_free P_((char **multi));
 

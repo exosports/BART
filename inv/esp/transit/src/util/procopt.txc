@@ -22,8 +22,19 @@
 
 #include <util/procopt.h>
 
+//variables that are going to have allocated a space
 static char *prgname=NULL;
-_Bool procopt_debug=1;
+static struct option *getopts;
+static char *shortopts;
+static char *line=NULL;
+static char **paramfiles=NULL;
+
+static struct optdocs *_opts;
+static struct optcfg *_cfg;
+
+unsigned short procopt_debug=1;
+static _Bool freed=0;
+static int givenparamf=-1;
 
 static int getoptfrom(char *line, struct option *getopts, int *longindex);
 
@@ -43,8 +54,15 @@ getprocopt(int argc,		/* Number of command line arguments */
 	   int *longidxp)	/* return longindexp. Seems to be not
 				   working in libraries!, though */
 {
-  static struct option *getopts;
-  static char *shortopts;
+  char *cfgfiles=NULL;
+
+  if(freed){
+    fprintf(stderr,
+	    "procopt:: getprocopt() was called after a call to\n"
+	    "getpropt_free(), which should be the very last {procopt}\n"
+	    "function called\n");
+    exit(EXIT_FAILURE);
+  }
 
   //If first time then initialize
   if(!prgname){
@@ -53,83 +71,116 @@ getprocopt(int argc,		/* Number of command line arguments */
     char *cs;
     int getn,shortn;
 
+    //save structures to later call by prochelp
+    _opts=opts;
+    _cfg=cfg;
+
     if((cs=rindex(*argv,'/')))
       cs++;
     else
       cs=*argv;
     prgname=(char *)calloc(strlen(cs)+1,sizeof(char));
     strcpy(prgname,cs);
-    co=getopts=(struct option *)calloc(getalloc,sizeof(struct option));
-    cs=shortopts=(char *)calloc(shortalloc,sizeof(char));
-    //getn starts at zero, but 'shortn' starts at 1 because it has to
-    //reserve a value for the final `\\0' and a possible colon `:'
-    getn=0;
-    shortn=2;
-    //Analize every element of the structure
-    while(1){
-      if(getn==getalloc){
-	getopts=(struct option *)realloc(getopts,
-					 (getalloc<<=1)*sizeof(struct option));
-	co=getopts+getn;
-      }
-      if(shortn>shortalloc){
-	shortopts=(char *)realloc(shortopts,(shortalloc<<=1)*sizeof(char));
-	memset(shortopts+shortn,0,shortn);
-      }
-      if(opts->name==NULL&&opts->val==0){
-	if(opts++->has_arg==HELPTITLE)
-	  continue;
-	break;
-      }
 
-      //save short options
-      if(opts->val>0x20 && opts->val<0x80){
-	cs=shortopts;
-	while(*cs){
-	  if(*cs++==(char)opts->val&&procopt_debug){
-	    fprintf(stderr,
-		   "procopt_debug error:: The short option '%c' appears more than\n"
-		   "once in the given 'struct optdocs'. Currently with %s\n"
-		   ,opts->val,opts->name);
-	    exit(EXIT_FAILURE);
+    //If there is no 'opts' structure then allocate an empty string as
+    //'shortopts' and an empty structure for 'getopts'
+    if(!opts){
+      getopts=(struct option *)calloc(1,sizeof(struct option));
+      shortopts=(char *)calloc(1,sizeof(char));
+    }
+
+    //otherwise look for the right values
+    else{
+      co=getopts=(struct option *)calloc(getalloc,sizeof(struct option));
+      cs=shortopts=(char *)calloc(shortalloc,sizeof(char));
+      //getn starts at zero, but 'shortn' starts at 1 because it has to
+      //reserve a value for the final `\\0' and a possible colon `:'
+      getn=0;
+      shortn=2;
+      //Analize every element of the structure
+      while(1){
+	if(getn==getalloc){
+	  getopts=(struct option *)realloc(getopts,
+					   (getalloc<<=1)*sizeof(struct option));
+	  co=getopts+getn;
+	}
+	if(shortn>shortalloc){
+	  shortopts=(char *)realloc(shortopts,(shortalloc<<=1)*sizeof(char));
+	  memset(shortopts+shortn,0,shortn);
+	}
+	if(opts->name==NULL&&opts->val==0){
+	  if(opts++->has_arg==HELPTITLE)
+	    continue;
+	  break;
+	}
+
+	//save short options
+	if(opts->val>0x20 && opts->val<0x80){
+	  cs=shortopts;
+	  while(*cs){
+	    if(*cs++==(char)opts->val&&procopt_debug){
+	      fprintf(stderr,
+		      "procopt_debug error:: The short option '%c' appears more than\n"
+		      "once in the given 'struct optdocs'. Currently with %s\n"
+		      ,opts->val,opts->name);
+	      exit(EXIT_FAILURE);
+	    }
+	  }
+	  *cs++=(char)opts->val;
+	  shortn++;
+	  if(opts->has_arg==required_argument||opts->has_arg==ADDPARAMFILE){
+	    *cs=':';
+	    shortn++;
 	  }
 	}
-	*cs++=(char)opts->val;
-	shortn++;
-	if(opts->has_arg==required_argument){
-	  *cs=':';
-	  shortn++;
+
+	//save long option
+	co->name=opts->name;
+	if(opts->has_arg==ADDPARAMFILE){
+	  if(givenparamf!=-1&&procopt_debug){
+	    fprintf(stderr,
+		    "procopt_debug error:: More than one option with the ADDPARAMFLAG\n"
+		    "mode, only the last will be taken into account\n"
+		    );
+	    exit(EXIT_FAILURE);
+	  }
+	  co->has_arg=required_argument;
+	  givenparamf=opts->val;
 	}
+	else
+	  co->has_arg=opts->has_arg;
+	co->flag=NULL;
+	co->val=opts->val;
+
+	//advance to next value
+	getn++;
+	opts++;
+	co++;
       }
-      //save long option
-      co->name=opts->name;
-      co->has_arg=opts->has_arg;
+      if(procopt_debug>2){
+	fprintf(stderr,
+		"----------------------------------------------\n"
+		"procopt_debug message:: Accepted short string '%s'\n"
+		"(set procopt_debug to less than 3 if you don't want to see this again).\n"
+		"----------------------------------------------\n"
+		,shortopts);
+      }
+      co->name=NULL;
+      co->has_arg=0;
       co->flag=NULL;
-      co->val=opts->val;
+      co->val=0;
       getn++;
-      opts++;
-      co++;
+      getopts=(struct option *)realloc(getopts,getn*sizeof(struct option));
+      shortopts=(char *)realloc(shortopts,(shortn-1)*sizeof(char));
     }
-    if(procopt_debug){
-      fprintf(stderr,
-	      "----------------------------------------------\n"
-	      "procopt_debug message:: Accepted short string '%s'\n"
-	      "   (set procopt_debug=0 if you don't want to see this again).\n"
-	      "----------------------------------------------\n"
-	      ,shortopts);
-    }
-    co->name=NULL;
-    co->has_arg=0;
-    co->flag=NULL;
-    co->val=0;
-    getn++;
-    getopts=(struct option *)realloc(getopts,getn*sizeof(struct option));
-    shortopts=(char *)realloc(shortopts,(shortn-1)*sizeof(char));
+    if(cfg)
+      cfgfiles=cfg->files;
   }
 
-  /* TD: Put the remainder of the function in the following function */
-  return getopt_long_def(argc,argv,shortopts,getopts,longidxp,cfg->files);
+  //Return the corresponding option.
+  return getopt_long_files(argc,argv,shortopts,getopts,longidxp,cfgfiles);
 }
+
 
 /* \fcnfh
  Works as getopt_long except by the extra parameter 'paramfile' which
@@ -142,7 +193,7 @@ getprocopt(int argc,		/* Number of command line arguments */
  getopt_long.
 */
 int 
-getopt_long_def(int argc,	/* number of arguments */
+getopt_long_files(int argc,	/* number of arguments */
 		char **argv,	/* agruments list */
 		char *shortopts, /* short options accepted, format is
 				    the same as getopt(). */
@@ -162,21 +213,26 @@ getopt_long_def(int argc,	/* number of arguments */
 					one that matters. */
 {
   static FILE *fp=NULL;
-  static char *line=NULL;
-  static char **parampointer,**paramfiles=NULL;
-  static char *paramfile=(char *)0x1;
+  static char **parampointer;
   int ret;
 
-  if(paramfile&&!paramfiles){
-    parampointer=paramfiles=splitnzero_alloc(paramfilelist,',');
-    paramfile=paramfiles[0];
+  if(freed){
+    fprintf(stderr,
+	    "procopt:: getopt_long_files() was called after a call to\n"
+	    "getpropt_free(), which should be the very last {procopt}\n"
+	    "function called\n");
+    exit(EXIT_FAILURE);
   }
 
+  //Allocate name storing array if it is first time this is called.
+  if(!paramfiles)
+    parampointer=paramfiles=splitnzero_alloc(paramfilelist,',');
+
   //process file if one is given and it was not finished
-  if(paramfile){
+  if(*parampointer){
     //open file if it is first run.
     if(!fp)
-      fp=fopen(paramfile,"r");
+      fp=fopen(*parampointer,"r");
     //if file is open then process next line
     if(fp){
       //skip empty lines and commented lines. If this is not the first
@@ -188,8 +244,9 @@ getopt_long_def(int argc,	/* number of arguments */
 	//go to command line values.
 	if((line=fgets_alloc(fp,NULL))==NULL){
 	  fclose(fp);
-	  paramfile=*++parampointer;
-	  return getopt_long_def(argc,argv,shortopts,getopts,longidxp,NULL);
+	  ++parampointer;
+	  return getopt_long_files(argc,argv,shortopts,getopts,
+				 longidxp,NULL);
 	}
 	if(*line&&*line!='#')
 	  break;
@@ -201,18 +258,31 @@ getopt_long_def(int argc,	/* number of arguments */
     //if file was not opened then is because it doesn't exists. So,
     //continue with next one.
     else{
-      paramfile=*++parampointer;
-      return getopt_long_def(argc,argv,shortopts,getopts,longidxp,NULL);
+      ++parampointer;
+      return getopt_long_files(argc,argv,shortopts,getopts,
+			       longidxp,NULL);
     }
   }
   //If file didn't exist, was not given or is finished processing then
   //process command line parameters
-  else{
-    if(paramfiles){
-      splitnzero_free(paramfiles);
-      paramfiles=NULL;
-    }
+  else
     ret= getopt_long(argc,argv,shortopts,getopts,longidxp);
+
+  //If the option was to process a new parameter file then do that. That
+  //option is hence never returned out of this function.
+  if(givenparamf>=0&&ret==givenparamf){
+    ret=parampointer-paramfiles;
+    splitnzero_add(&paramfiles,optarg,',');
+    parampointer+=ret;
+    if(*parampointer==NULL&&*optarg!='\0'){
+      fprintf(stderr,
+	      "procopt internal error: parampointer is null despite\n"
+	      "having added a new file.\n");
+      exit(EXIT_FAILURE);
+    }
+
+    return getopt_long_files(argc,argv,shortopts,getopts,
+			     longidxp,NULL);
   }
 
   return ret;
@@ -223,25 +293,38 @@ getopt_long_def(int argc,	/* number of arguments */
    Gives command line summary
 */
 void
-prochelp(int status,		/* either 'EXIT_FAILURE' or
+prochelp(int status)		/* either 'EXIT_FAILURE' or
 				   'EXIT_SUCCESS' */
-	 struct optdocs *opts, 	/* structure with information about
-				   parameter options and syntax */
-	 struct optcfg *cfg)	/* various configuration parameters for
-				   procopt */
 {
   char *options="[options]";
   char *intro=" Where [options] are...";
   char *contintro="----------------------------------\n"
     "Contact Information: %s\n";
   int indentdoc=21;
-  int procopt_columns=(cfg&&cfg->columns)?cfg->columns:__PADTO_COLUMNS;
+  int procopt_columns=(_cfg&&_cfg->columns)?_cfg->columns:__PADTO_COLUMNS;
   int currind,tmp;
   char *doc;
   int cols;
-  char *pretitle=(cfg&&cfg->pretitle)?(char *)cfg->pretitle:"\n";
-  char *posttitle=(cfg&&cfg->posttitle)?(char *)cfg->posttitle:"\n";
-  char *postoption=(cfg&&cfg->postoption)?(char *)cfg->postoption:".\n";
+  char *pretitle=(_cfg&&_cfg->pretitle)?(char *)_cfg->pretitle:"\n";
+  char *posttitle=(_cfg&&_cfg->posttitle)?(char *)_cfg->posttitle:"\n";
+  char *postoption=(_cfg&&_cfg->postoption)?(char *)_cfg->postoption:".\n";
+
+  if(freed){
+    fprintf(stderr,
+	    "procopt:: prochelp() was called after a call to\n"
+	    "getpropt_free(), which should be the very last {procopt}\n"
+	    "function called\n");
+    exit(EXIT_FAILURE);
+  }
+  if(!prgname&&procopt_debug>1){
+    fprintf(stderr,
+	    "----------------------------------------------\n"
+	    "procopt_debug warning:: Prochelp was called before getprocopt and\n"
+	    "hence there are no available help\n"
+	    "(set procopt_debug to less than 2 if you don't want to see this again).\n"
+	    "----------------------------------------------\n"
+	    );
+  }
 
   doc=getenv("COLUMNS");
   if(!doc||!(cols=atoi(doc)))
@@ -249,8 +332,8 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 
   char out[cols+1];
 
-  if(cfg&&cfg->indentdoc)
-    indentdoc=cfg->indentdoc;
+  if(_cfg&&_cfg->indentdoc)
+    indentdoc=_cfg->indentdoc;
 
   if(!prgname){
     fprintf(stderr,
@@ -260,65 +343,65 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
     exit(EXIT_FAILURE);
   }
 
-  if(cfg)
+  if(_cfg)
     fprintf(stderr,"Usage:\n\t%s %s"
-	    ,cfg->prg?cfg->prg:prgname
-	    ,cfg->options?cfg->options:options);
+	    ,_cfg->prg?_cfg->prg:prgname
+	    ,_cfg->options?_cfg->options:options);
   else
     fprintf(stderr,"Usage:\n\t%s %s"
 	    ,prgname,options);
 
-  if(cfg&&cfg->nonopt)
-    fprintf(stderr," %s",cfg->nonopt);
+  if(_cfg&&_cfg->nonopt)
+    fprintf(stderr," %s",_cfg->nonopt);
 
   fprintf(stderr,"\n\n");
-  if(opts){
+  if(_opts){
 
-    if(cfg&&cfg->intro)
-      fprintf(stderr," %s\n",cfg->intro);
+    if(_cfg&&_cfg->intro)
+      fprintf(stderr," %s\n",_cfg->intro);
     else
       fprintf(stderr," %s\n",intro);
 
     while(1){
       currind=0;
-      if(opts->has_arg==HELPTITLE)
-	fprintf(stderr,"%s%s%s",pretitle,opts->doc,posttitle);
-      else if(opts->name==NULL&&opts->val==0)
+      if(_opts->has_arg==HELPTITLE)
+	fprintf(stderr,"%s%s%s",pretitle,_opts->doc,posttitle);
+      else if(_opts->name==NULL&&_opts->val==0)
 	break;
       else{
-	if(opts->val>0x20 && opts->val<0x80){
-	  fprintf(stderr," -%c",opts->val);
-	  if(opts->has_arg==required_argument)
-	    fprintf(stderr," <%s>%n",opts->prm,&currind);
-	  else if(opts->has_arg!=no_argument){
+	if(_opts->val>0x20 && _opts->val<0x80){
+	  fprintf(stderr," -%c",_opts->val);
+	  if(_opts->has_arg==required_argument)
+	    fprintf(stderr," <%s>%n",_opts->prm,&currind);
+	  else if(_opts->has_arg!=no_argument){
 	    fprintf(stderr,
 		    "\n\nprocopt error:: a non-supported value (%i) was given\n"
 		    "in .has_arg field of parameter '%c'\n"
-		    ,opts->has_arg,opts->val);
+		    ,_opts->has_arg,_opts->val);
 	    exit(EXIT_FAILURE);
 	  }
 	  currind+=2;
 	}
-	else if(!opts->name){
+	else if(!_opts->name){
 	  fprintf(stderr,
 		  "\n\nprocopt error:: in prochelp() only a non displayable\n"
 		  "value was given (val: %i). Parameter name is '%s' and\n"
 		  "document help is:\n%s\n"
-		  ,opts->val,opts->prm,opts->doc);
+		  ,_opts->val,_opts->prm,_opts->doc);
 	  exit(EXIT_FAILURE);
 	}
-	if(opts->name){
+	if(_opts->name){
 	  if(currind)
 	    fprintf(stderr,"\n");
-	  fprintf(stderr," --%s%n",opts->name,&currind);
+	  fprintf(stderr," --%s%n",_opts->name,&currind);
 	  tmp=0;
-	  if(opts->has_arg==required_argument)
-	    fprintf(stderr," <%s>%n",opts->prm,&tmp);
-	  else if(opts->has_arg!=no_argument){
+	  if(_opts->has_arg==required_argument)
+	    fprintf(stderr," <%s>%n",_opts->prm,&tmp);
+	  else if(_opts->has_arg!=no_argument){
 	    fprintf(stderr,
 		    "\n\nprocopt error:: a non-supported value (%i) was given\n"
 		    "in .has_arg field of parameter '%s'\n"
-		    ,opts->has_arg,opts->name);
+		    ,_opts->has_arg,_opts->name);
 	    exit(EXIT_FAILURE);
 	  }
 	  currind+=tmp;
@@ -337,7 +420,7 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 	}
 
 	//print info if available
-	if((doc=opts->doc)){
+	if((doc=_opts->doc)){
 	  while((doc=linepad(out,cols-currind-tmp,doc))){
 	    tmp=0;
 	    fprintf(stderr,"%s\n",out);
@@ -346,8 +429,8 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 	  }
 	}
 	else{
-	  if(cfg&&cfg->noinfo){
-	    strncpy(out,cfg->noinfo,cols);
+	  if(_cfg&&_cfg->noinfo){
+	    strncpy(out,_cfg->noinfo,cols);
 	    out[cols]='\0';
 	  }
 	  else{
@@ -357,17 +440,18 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 	}
 	fprintf(stderr,"%s%s",out,postoption);
       }
-      opts++;
+      _opts++;
 
     }
   }
 
-  if(cfg&&cfg->contact)
-    fprintf(stderr,cfg->contintro?cfg->contintro:contintro
-	    ,cfg->contact);
+  if(_cfg&&_cfg->contact)
+    fprintf(stderr,_cfg->contintro?_cfg->contintro:contintro
+	    ,_cfg->contact);
 
   exit(status);
 }
+
 
 /* \fcnfh
    Mimics getopt_long (assuming always '.flags' equal to 0, but looking
@@ -418,11 +502,12 @@ getoptfrom(char *line,		/* line that should be of the form
 	ret=getopt->val;
 	break;
       default:
-	if(procopt_debug){
-	  fprintf(stderr,
-		  "Error in option structure at function getprocopt\n");
-	  exit(EXIT_FAILURE);
-	}
+	fprintf(stderr,
+		"procopt:: Error in has_arg option at function\n"
+		"getoptfrom(), which is called by getopt_long_files\n"
+		"or getprocopt. Only required_argument or no_argument\n"
+		"are accepted now\n");
+	exit(EXIT_FAILURE);
       }
       break;
     }
@@ -433,3 +518,25 @@ getoptfrom(char *line,		/* line that should be of the form
   return ret;
 }
 
+
+/* \fcnfh
+   Frees all the memory allocated. This have to be called after any
+   other call to getprocopt. Otherwise, because of the argv reordering
+   everything will be mixed up.
+ */
+void
+getprocopt_free()
+{
+  if(freed){
+    fprintf(stderr,
+	    "procopt:: getprocopt_free() was called twice\n");
+    exit(EXIT_FAILURE);
+  }
+
+  //variables that are going to have allocated a space
+  free(prgname);
+  free(getopts);
+  free(shortopts);
+  if(line) free(line);
+  splitnzero_free(paramfiles);
+}

@@ -781,6 +781,79 @@ fgets_alloc(FILE *fp, 		/* where to read from */
 
 
 /* \fcnfh
+   Add elements to an array already allocated by aplitnzero_alloc. It
+   can also initialize if the a pointer to NULL is given.
+
+*/
+void
+splitnzero_add(char ***array,	/* Pointer to the already allocated
+				   array. If it is null, then allocates
+				   a new array */
+	       char *string,	/* string to parse */
+	       char sep)	/* separator */
+{
+  if(!array){
+    fprintf(stderr,
+	    "iomisc:: there was no pointer address given to"
+	    " splitnzero_add!\n"
+	    );
+    exit(EXIT_FAILURE);
+  }
+
+  if(!*array){
+    *array=splitnzero_alloc(string,sep);
+    return;
+  }
+
+  long n=0,ns=0;
+  long len=0,lenold=0;
+  char **point=*array;
+  char *sp=string;
+
+  //find length and fields of the old array
+  while(*point){
+    n++;
+    lenold+=strlen(*point++)+1;
+  }
+  //find how many and length of the new strings.
+  while(*sp){
+    len++;
+    if(*sp==sep)
+      ns++;
+  }
+
+  //reallocate arrays
+  *array=(char **)realloc(*array,(n+ns+1)*sizeof(char *));
+  sp=**array=(char *)realloc(**array,(len+lenold+1)*sizeof(char));
+
+  //reassign old string pointers, at the end of the loop, sp points to
+  //the first space where the new data is going to go.
+  long na=1;
+  while(sp-(**array)<lenold){
+    if(!*sp)
+      array[0][na++]=sp+1;
+    sp++;
+  }
+
+  //now store the new strings
+  while(*string){
+    if(*string==sep){
+      array[0][na++]=sp+1;
+      *sp='\0';
+    }
+    else
+      *sp=*string;
+    string++;
+    sp++;
+  }
+  *sp='\0';
+
+  array[0][na]=NULL;
+
+}
+
+
+/* \fcnfh
    Split strings according to separators, allocating required space fot
    the 2D array. Last element is a null pointer.
 

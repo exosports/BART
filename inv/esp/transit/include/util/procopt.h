@@ -29,9 +29,10 @@
 #include <strings.h>
 #include <util/iomisc.h>
 
-#define HELPTITLE 0xff
+#define HELPTITLE    0xff
+#define ADDPARAMFILE 0xfe
 
-extern _Bool procopt_debug;
+extern unsigned short procopt_debug;
 
 struct optdocs {
   char *name;
