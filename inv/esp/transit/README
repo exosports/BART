@@ -30,8 +30,8 @@ DIRECTORIES:
 COMPILATION: 
   Edit Makefile to make sure that BIN is the directory where you want
 the binaries to be. Then, execute one after the other the following
-commands (do not run 'make proto' if you don't have at least version
-4.7b)
+commands (WARNING: do not run 'make proto' if you don't have at least
+version 4.7b of cproto, which supports inline functions)
 
    make clean
    make dep
