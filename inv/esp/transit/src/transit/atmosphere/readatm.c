@@ -276,6 +276,9 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     atmfilename=tr->f_atm=th->f_atm;
     inp=file;
     fp=tr->fp_atm;
+    transitprint(1,verblevel,
+		 "Reading atmosphere file '%s'...\n"
+		 ,atmfilename);
 
     //nrad willl be the amount of allocated radius so far.
     nrad=8;
@@ -427,6 +430,8 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     //    for(i=iso->n_i;i<iso->n_e;i++)
     //      iso->isodo[i]=atmfile;
     nrad=readatmfile(fp,tr,&st_at,rads,nrad);
+    transitprint(1,verblevel,
+		 " DONE\n");
     break;
   default:
     break;
