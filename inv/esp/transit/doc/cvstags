@@ -1,1 +1,7 @@
 transit-1pre0: All but Ascii TWII should be working
+transit-1pre1: ASCII should be working
+       	       Fixed voigt profile (now is an average rather than a
+                 sum in a bin)
+       	       Fixed total pressure (now uses mean molecular weight)
+           KB: Lorentz profile only includes one specie rather
+                 than an average 
