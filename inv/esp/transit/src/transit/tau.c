@@ -203,7 +203,7 @@ tau(struct transit *tr)
 
   //Print lowest impact parameter before optical gets too big
   if(tr->f_toomuch)
-    printtoomuch(tr->f_toomuch,tr->ds.tau, &tr->wns, &tr->rads);
+    printtoomuch(tr->f_toomuch,tr->ds.tau, &tr->wns, &tr->ips);
 
   //free memory that is no longer needed.
   freemem_lineinfotrans(tr->ds.li,&tr->pi);
@@ -307,7 +307,7 @@ printtoomuch(char *file, 	/* Filename to save to, a '-' is
 	       " layers.\n\n"
 	       ,file,tau->toomuch);
 
-  fprintf(out,"#Wavelength  Maximum_calculated_depth\n");
+  fprintf(out,"#Wvn[cm-1]  Maximum_calculated_depth\n");
   for(w=0;w<wn->n;w++)
     fprintf(out,"%-14.10g%16.12g\n",wn->v[w]*wn->fct,
 	    rad->v[tau->last[w]]*rad->fct);
