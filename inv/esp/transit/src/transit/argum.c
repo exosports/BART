@@ -256,17 +256,6 @@ int processparameters(int argc, /* number of command line arguments */
      "(this is the default)\n"},
 
     {NULL,0,HELPTITLE,NULL,
-     NULL,"GEOMETRY PARAMETERS"},
-    {"g-orbpar",CLA_GORBPAR,required_argument,NULL,
-     "smaxis,time,incl,ecc,long_node,arg_per","Orbital parameters, in"
-     " the above order, to use the default of any of these (1,0,0,0,0,0),"
-     " leave the corresponding field blank"},
-    {"g-orbparfct",CLA_GORBPARFCT,required_argument,NULL,
-     "unitsof:smaxis,time,incl,ecc,long_node,arg_per","Units of orbital"
-     " parameters, in the above order, to use the default of any of these"
-     " (AU,deg,hours,,deg,deg), leave the corresponding field blank"},
-
-    {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
     {"solution",'s',required_argument,"Slant Path",
      "sol_name","Name of the kind of output solution ('slant path'\n"
@@ -274,7 +263,7 @@ int processparameters(int argc, /* number of command line arguments */
     {"toomuch",CLA_TOOMUCH,required_argument,"20",
      "optdepth","If optical depth for a particular path is larger\n"
      "than optdepth, then do not proceed to lower radius"},
-    {"outtau",CLA_OUTTAU,no_argument,NULL,
+    {"outtau",CLA_OUTTAU,required_argument,"-1",
      NULL,"Output is optical depth instead of modulation. It will be\n"
      "asked which radius to plot\n"},
     {"taulevel",CLA_TAULEVEL,required_argument,"1",
@@ -289,6 +278,17 @@ int processparameters(int argc, /* number of command line arguments */
      NULL,"OBSERVATIONAL OPTIONS:"},
     {"telres",'t',required_argument,"1",
      "width","Gaussian width of telescope resolution in nm"},
+
+    {NULL,0,HELPTITLE,NULL,
+     NULL,"GEOMETRY PARAMETERS"},
+    {"g-orbpar",CLA_GORBPAR,required_argument,NULL,
+     "smaxis,time,incl,ecc,long_node,arg_per","Orbital parameters, in"
+     " the above order, to use the default of any of these (1,0,0,0,0,0),"
+     " leave the corresponding field blank"},
+    {"g-orbparfct",CLA_GORBPARFCT,required_argument,NULL,
+     "unitsof:smaxis,time,incl,ecc,long_node,arg_per","Units of orbital"
+     " parameters, in the above order, to use the default of any of these"
+     " (AU,deg,hours,,deg,deg), leave the corresponding field blank"},
 
     {NULL,0,0,NULL,NULL,NULL}
   };
@@ -339,6 +339,7 @@ int processparameters(int argc, /* number of command line arguments */
 	hints->f_line=(char *)realloc(hints->f_line,strlen(optarg)+1);
 	strcpy(hints->f_line,optarg);
 	break;
+
     case 'o':			//output file
       hints->f_out=(char *)realloc(hints->f_out,strlen(optarg)+1);
       strcpy(hints->f_out,optarg);
@@ -357,6 +358,7 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_OUTTAU:
       hints->fl|=TRU_OUTTAU;
+      hints->ot=atoi(optarg)-1;
       break;
 
     case 'r':
