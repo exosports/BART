@@ -190,6 +190,7 @@ defined(EXPCTE) || defined(WNU_O_WLU)
 extern const int maxeisoname;
 extern int transit_nowarn;
 extern int verblevel;
+extern int maxline;
 
 /* Macros */
 #define stateeqnford(q,m,p,t) (AMU*(q)*(m)*(p)/(KB*(t)))
@@ -207,8 +208,7 @@ extern int verblevel;
 	             "units in line %i. Impossible to continue.\n"          \
 	             ,__FILE__,nmb,__LINE__)
 
-
-
+enum isodo {unclear=0,atmfile,ignore,fixed};
 
 
 /***** Structures *****/
@@ -301,6 +301,12 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
   double mm;			/* Mean molecular mass */
   _Bool mass;			/* whether the abundances in 'isov' are
 				   mass abundances or not */
+  char **n;			/* Name for isotopes in atmfile order */
+  PREC_ZREC *m;			/* Mass for isotopes in file order */
+  int *isoeq;			/* Isotope to which each atmosphere
+				   datafile column corresponds */
+  int n_aiso;			/* Number of isotopes in the atmosphere
+				   file */
 };
 
 struct extinction{

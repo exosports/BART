@@ -5,7 +5,7 @@
 static int terr_allown=0;
 int transit_nowarn=0;
 int verblevel;
-
+int maxline=200;
 
 inline void transitdot(int thislevel, int verblevel)
 {
@@ -120,44 +120,54 @@ int fileexistopen(char *in,	/* Input filename */
 
 /*\fcnfh
   Output for the different cases. of fileexistopen()
+
+  @return 1 on success
+          -1 on error (doesn't always returns though
 */
-void verbfileopen(char *in,	/* Input filename */
-		 FILE **fp,	/* Opened file pointer if successful */
-		 char *desc)	/* Comment on the kind of file */
+int
+verbfileopen(char *in,		/* Input filename */
+	     FILE **fp,		/* Opened file pointer if successful */
+	     char *desc)	/* Comment on the kind of file */
 {
   switch(fileexistopen(in,fp)){
     //Success in opening or user don't want to use atmosphere file
   case 1:
+    return 1;
   case 0:
-    break;
+    return -1;
     //File doesn't exist
   case -1:
-    transiterror(TERR_WARNING,
+    transiterror(TERR_SERIOUS,
 		 "%sinfo file '%s' doesn't exist."
 		 ,desc,in);
-    break;
+    return -1;
     //Filetype not valid
   case -2:
-    transiterror(TERR_WARNING,
+    transiterror(TERR_SERIOUS,
 		 "%sfile '%s' is not of a valid kind\n"
 		 "(it is a dir or device)\n"
 		 ,desc,in);
-    break;
+    return -1;
     //file not openable.
   case -3:
-    transiterror(TERR_WARNING,
+    transiterror(TERR_SERIOUS,
 		 "%sfile '%s' is not openable.\n"
 		 "Probably because of permissions.\n"
 		 ,desc,in);
-    break;
+    return -1;
     //stat returned -1.
   case -4:
-    transiterror(TERR_WARNING,
+    transiterror(TERR_SERIOUS,
 		 "Some error happened for %sfile '%s',\n"
 		 "stat() returned -1, but file exists\n"
 		 ,desc,in);
-    break;
+    return -1;
+  default:
+    transiterror(TERR_SERIOUS,
+		 "Ooops, something weird in file %s, line %i\n"
+		 __FILE__,__LINE__);
   }
+  return 1;
 }
 
 

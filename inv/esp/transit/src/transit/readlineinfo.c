@@ -25,13 +25,7 @@
 #include <transit.h>
 #include <math.h>
 
-static int maxline=200;
-
-static void asciierr(int max,	/* Maxiumum length of an accepted line
-				 */ 
-		     char *file, /* File from which we were reading */
-		     int line);	/* Line who was being read */
-
+static void asciierr(int max, char *file, int line);
 static void notyet(int lin, char *file);
 
 static inline void datafileBS(FILE *fp,	/* File pointer */

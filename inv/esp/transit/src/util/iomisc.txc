@@ -454,6 +454,73 @@ double readds(FILE *fp,
   return atof(str);
 }
 
+/* \fcnfh
+   read a double value from a string and optionally return the next
+   field in in 'string', a field ends in space and can be separated from
+   the number by a dash.
+
+   @returns 0 on success
+            first character read if it was not appropiate
+*/
+double getds(char *in,
+	     char *c,
+	     char *string,
+	     int maxstring)	/* includes '\0' */
+{
+  char *cur,car;
+  _Bool atleast=0;
+  enum {ent=0x1,dec=0x2,man=0x4,unsig=0x8} stage=ent|unsig;
+
+  cur=in;
+  while((car=*cur)){
+    if(car=='\n')
+      break;
+    if(car=='e'||car=='E'){
+      if(!atleast||stage&man)
+	break;
+      stage=man|unsig;
+    }
+    else if(car=='+'||car=='-'){
+      if(!stage&unsig)
+	break;
+      stage&=~unsig;
+    }
+    else if(car=='.'){
+      if(!stage&ent)
+	break;
+      stage=dec;
+    }
+    else if(isdigit(car)){
+      atleast=1;
+      stage&=~unsig;
+    }
+    else
+      break;
+
+    cur++;
+  }
+  if(string){
+    //an optional dash can separate number from string
+    if(*cur=='-')
+      cur++;
+    while(*cur!=' '&&*cur!='\t'&&*cur!='\0'){
+      //if line is bigger than wanted, stop storing and discard rest of
+      //line
+      if(!--maxstring)
+	break;
+      *string++=*cur++;
+    }
+    *string='\0';
+  }
+
+  if(!atleast){
+    if(c) *c=*in;
+    return 0;
+  }
+  if(c) *c=0;
+  return atof(in);
+}
+
 
 /* \fcnfh
    read a long value
