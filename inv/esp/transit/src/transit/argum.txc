@@ -37,12 +37,16 @@ const static transit_ray_solution *raysols[] = {
 
 
 #ifndef EXTRACFGFILES
-#define PREPEXTRACFGFILES ""
+#  define PREPEXTRACFGFILES ""
 #else
-#define PREPEXTRACFGFILES ","EXTRACFGFILES
+#  define PREPEXTRACFGFILES ","EXTRACFGFILES
 #endif
 
-
+#ifdef NODOTDEFAULT
+#  define DOTCFGFILE "NO DEFAULT FILE"
+#else
+#  define DOTCFGFILE "'./.transitrc"
+#endif
 
 /* \fcnfh
    process command line options, saving them in the hint structure.
@@ -104,7 +108,7 @@ int processparameters(int argc, /* number of command line arguments */
      "each + or -. 0 is the quietest"},
     {"paramf",ADDPARAMFILE,'p',
      "filename","Use filename to read parameters in addition to\n"
-     "default file(s): './.transitrc"PREPEXTRACFGFILES"'"},
+     "default file(s): " DOTCFGFILE PREPEXTRACFGFILES"'"},
 
     {NULL,HELPTITLE,0,
      NULL,"INPUT/OUTPUT"},
