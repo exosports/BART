@@ -672,6 +672,7 @@ int processparameters(int argc, /* number of command line arguments */
     case CLA_WAVNMARGIN:
       hints->wnm=atof(optarg);
       break;
+
     case 't':			//Telescope resolution
       hints->t=atof(optarg);
       break;
@@ -680,11 +681,9 @@ int processparameters(int argc, /* number of command line arguments */
 				//ratio before recalculating
       hints->maxratio_doppler=atof(optarg);
       break;
-
     case 'f':			//Change voigt fine-binning
       hints->voigtfine=atoi(optarg);
       break;
-
     case 'a':			//Change times of alphas in profile
       hints->timesalpha=atof(optarg);
       break;

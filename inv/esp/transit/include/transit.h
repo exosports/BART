@@ -274,8 +274,7 @@ struct line_transition {	/* One item per transition */
 
 struct atm_data{		/* Keeps parameters in readatminfo() */
   prop_samp rads;		/* radius sampling */
-  prop_isov *isov;		/* variable isotope info
-				   [isoext] */
+  prop_isov *isov;		/* variable isotope info [isoext] */
   prop_atm atm;			/* Atmospheric properties */
   int n_niso;			/* Number of new isotopes */
   double *mm;			/* Mean molecular mass [rad] */
@@ -329,6 +328,10 @@ struct onept {
   int ne;			/* Number of extra isotopes */
 };
 
+struct optdepth {
+  PREC_RES *t;			/* Optical depth as a function of impact
+				   parameter */
+};
 
 struct transithint {		/* Structure with user hinted data that
 				   should go to the 'struct transit'
@@ -414,6 +417,7 @@ struct transit {		/* Main data structure */
     struct transithint *th;
     struct lineinfo *li;
     struct extinction *ex;
+    struct optdepth *tau;
   }ds;
 };
 

@@ -32,13 +32,21 @@
 int
 tau(struct transit *tr)
 {
+  static struct optdepth tau;
+  tr->ds.tau=&tau;
   prop_isov *isov=tr->isov;
   prop_isof *isof=tr->isof;
   prop_samp *rad=&tr->rads;
   prop_samp *wn=&tr->wns;
-  prop_samp *iprm=&tr->ips;
+  prop_samp *ip=&tr->ips;
+  prop_atm *atm=&tr->atm;
 
+  long i;
+  PREC_RES b;
 
+  for(i=ip->n-1;i>=0;i--){
+    b=ip->v[i];
+  }
 
   tr->pi|=TRPI_TAU;
   return 0;
