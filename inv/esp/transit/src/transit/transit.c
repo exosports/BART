@@ -170,6 +170,13 @@ int main (int argc,		/* Number of variables */
   trh.maxratio_doppler=0.001;
   trh.na|=TRH_VF|TRH_TA|TRH_DR;
 
+
+  //Initialization of optical depth parameters
+  trh.tauiso=0;
+  trh.toomuch=20;
+  trh.na|=TRH_TOOMUCH|TRH_TAUISO;
+
+
   //Command line parameters' processing
   if((rn=processparameters(argc,argv,&trh))!=0)
     transiterror(TERR_SERIOUS,
@@ -294,8 +301,8 @@ printone(struct transit *tr)
     /*    if(rn%tr->wns.o==0)*/
     fprintf(out,"%12.6f%14.6f%17.7g%17.7g\n"
 	    ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
-	    tr->ds.ex->k[0][0][rn],
-	    AMU*tr->ds.ex->k[0][0][rn]*tr->isof[0].m/tr->isov[0].d[0]);
+	    tr->ds.ex->e[0][0][rn],
+	    AMU*tr->ds.ex->e[0][0][rn]*tr->isof[0].m/tr->isov[0].d[0]);
 
   exit(EXIT_SUCCESS);
 }

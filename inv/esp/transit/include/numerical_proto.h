@@ -5,6 +5,6 @@
 #endif
 
 /* numerical.c */
-extern inline int binsearch P_((double *arr, long i, long f, double target));
+extern inline int binsearch P_((double *arr, long i, long f, double val));
 
 #undef P_
