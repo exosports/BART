@@ -68,46 +68,48 @@
 
 
 /* Flags for mode of telresconv */
+#define TRU_SAMPBITS    SAMP_BITS    
+#define TRU_SAMPLIN     SAMP_LINEAR
+#define TRU_SAMPSPL     SAMP_SPLINE
+
 #define TRU_CNVFIX      0x00000000 /* Fix width: accepts one
-				      width(float) */ 
-#define TRU_CNVLINEAR   0x00000001 /* Linear change of width,
-				      accepts initial(float) and
-				      ending width(float) */
-#define TRU_CNVGIVEN    0x00000002 /* Resolution width is given,
-				      accepts array(float *) and
-				      number(int) of elements on it */
-#define TRU_CNVFFT      0x00000003 /* FFT of a fixed width convolver */
+			  	      width(float) */ 
+#define TRU_CNVLINEAR   0x00000010 /* Linear change of width,
+			  	      accepts initial(float) and
+			  	      ending width(float) */
+#define TRU_CNVGIVEN    0x00000020 /* Resolution width is given,
+			  	      accepts array(float *) and
+			  	      number(int) of elements on it */
+#define TRU_CNVFFT      0x00000030 /* FFT of a fixed width convolver */
 
-#define TRU_CNVGAUSSIAN 0x00000010 /* Gaussian convolution */
-#define TRU_CNVBOX      0x00000020 /* Square box convolution */
+#define TRU_CNVGAUSSIAN 0x00000100 /* Gaussian convolution */
+#define TRU_CNVBOX      0x00000200 /* Square box convolution */
 
-#define TRU_CNVMODBITS  0x0000000f /* Bits that define the mode used */ 
-#define TRU_CNVMTHBITS  0x000000f0 /* Bits that define the method used
-				      */
+#define TRU_CNVMODBITS  0x000000f0 /* Bits that define the mode used */ 
+#define TRU_CNVMTHBITS  0x00000f00 /* Bits that define the method used
+			  	      */
 
-/* flags to indicate various user defined behaviors */
+/* flags to indicate varios user defined behaviors */
+
 #define TRU_ATMNODEF    0x00000000 /* Don't use atmospheric defaults,
-				      fail if that condition is
-				      reached */
-#define TRU_ATMHARDC1P  0x00000100 /* Use hard coded values */
-#define TRU_ATMASK1P    0x00000200 /* Atmosphere's one point is
-					obtained from stdin */
-#define TRU_ATM1PBITS   0x00000f00 /* Bits that define one point
-				      atmospheric behavior */
-#define TRU_SAMPBITS    0x00007000
-#define TRU_SAMPLIN	0x00001000
-#define TRU_SAMPSPL     0x00002000
-#define TRU_ATMBITS     0x0000ff00 /* Bits that define atmospheric
-				      parameters */
+			  	      fail if that condition is
+			  	      reached */
+#define TRU_ATMHARDC1P  0x00001000 /* Use hard coded values */
+#define TRU_ATMASK1P    0x00002000 /* Atmosphere's one point is
+			  		obtained from stdin */
+#define TRU_ATM1PBITS   0x0000f000 /* Bits that define one point
+			  	      atmospheric behavior */
+#define TRU_ATMBITS     (TRU_ATM1PBITS|TRU_SAMPBITS) /* Bits that define
+			  	      atmospheric parameters */
 
 
-#define TRU_EXTINPERISO 0x00010000 /* There won't be a calculation of
-				      extinction in a per isotope array,
-				      all of them should be combined */
-#define TRU_EXTBITS     0x000f0000
+#define TRU_EXTINPERISO 0x00100000 /* There won't be a calculation of
+			  	      extinction in a per isotope array,
+			  	      all of them should be combined */
+#define TRU_EXTBITS     0x00f00000
 
-#define TRU_OUTTAU      0x00100000 /* Print out optical depth */
-#define TRU_TAUBITS     0x00f00000
+#define TRU_OUTTAU      0x01000000 /* Print out optical depth */
+#define TRU_TAUBITS     0x0f000000
 
 
 /* Progress indicator flags */
