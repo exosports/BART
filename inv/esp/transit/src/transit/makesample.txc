@@ -68,10 +68,10 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   }
   else if(hint->i>ref->f-marginf){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Hinted initial value for %s sampling(%g) is bigger than\n"
-		 " maximum allowed final value %.8g. Consider final\n"
-		 "margin %.8g\n"
-		 ,TRH_NAME(fl),hint->f,ref->f-marginf,marginf);
+		 "Hinted initial value for %s sampling(%g)\n"
+		 " is bigger than maximum allowed final value %.8g.\n"
+		 " Consider final margin %.8g\n"
+		 ,TRH_NAME(fl),hint->i,ref->f-marginf,marginf);
     return -1;
   }
   else
@@ -286,6 +286,7 @@ int makewnsample(struct transit *tr)
   memset(&fromwav,0,sizeof(prop_samp));
   struct transithint *trh=tr->ds.th;
   prop_samp *wsamp=&tr->wavs;
+  double wnu_o_wlu=1/tr->ds.li->lt.wfct;
 
   transitcheckcalled(tr->pi,"makewnsample",1,
 		     "makewavsample",TRPI_MAKEWAV);
@@ -298,17 +299,17 @@ int makewnsample(struct transit *tr)
   fromwav.n=0;
 
   //convert from wavelength maximum
-  fromwav.i=WNU_O_WLU/wsamp->f;
+  fromwav.i=wnu_o_wlu/wsamp->f;
 
   //convert from wavelength minimum
-  fromwav.f=WNU_O_WLU/wsamp->i;
+  fromwav.f=wnu_o_wlu/wsamp->i;
 
   //set margin. If not given take it from wavelength's
   if(trh->wnm>0)
     tr->wnmf=tr->wnmi=trh->wnm;
   else{
-    tr->wnmf=tr->m*fromwav.f*fromwav.f/WNU_O_WLU;
-    tr->wnmi=tr->m*fromwav.i*fromwav.i/WNU_O_WLU;
+    tr->wnmf=tr->m*fromwav.f*fromwav.f/wnu_o_wlu;
+    tr->wnmi=tr->m*fromwav.i*fromwav.i/wnu_o_wlu;
   }
 
   //set spacing such that the wavenumber grid has the same number of

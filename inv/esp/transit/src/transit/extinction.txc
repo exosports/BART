@@ -319,7 +319,7 @@ extradius(PREC_NREC r,		/* Radius index */
 		 ,propto_k);
 
     //set 'profwn' such that the index mimic wavenumber's array
-    profwn=profile[i][subw]+nwnh[i]-w;
+    profwn=profile[i][subw]+nwnh[i]-w-1;
 
     //set upper and lower limits for Voigt spread
     minj=w-nwnh[i];
@@ -541,8 +541,8 @@ extwn (struct transit *tr)
 	       ,nrad);
 
   transitprint(1,verblevel,
-	       "Computing extinction only in the %i outmost layers for now,\n"
-	       " other layers only if required...\n"
+	       "Computing extinction only in the %i outtermost layers\n"
+	       "for now, other layers only if required...\n"
 	       ,3);
 
   //Initialize radius calculation variables
@@ -594,7 +594,8 @@ printone(struct transit *tr)
 	  "cross-section[cm2]\n");
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(out,"%12.6f%14.6f%17.7g%17.7g\n"
-	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
+	    ,tr->wns.fct*tr->wns.v[rn]
+	    ,1/tr->wavs.fct/tr->wns.v[rn]/tr->wns.fct,
 	    tr->ds.ex->e[0][0][rn],
 	    AMU*tr->ds.ex->e[0][0][rn]*iso->isof[0].m/iso->isov[0].d[0]);
 

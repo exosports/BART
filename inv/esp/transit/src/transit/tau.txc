@@ -159,7 +159,7 @@ tau(struct transit *tr)
   }
 
   transitprint(1,verblevel,
-	       " DONE\nOptical depth calculated up to %g[cm-1]\n"
+	       " DONE\nOptical depth calculated up to %g\n"
 	       ,tr->ds.tau->toomuch);
 
   //Print lowest impact parameter before optical gets too big
@@ -267,7 +267,7 @@ printtau(struct transit *tr)
 	  "#wavenumber[cm-1]\twavelength[nm]\toptical depth[cm-1]\n");
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(out,"%12.6f%14.6f%17.7g\n"
-	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
+	    ,tr->wns.fct*tr->wns.v[rn],1/tr->wavs.fct/tr->wns.v[rn]/tr->wns.fct,
 	    rad>last[rn]?toomuch:t[rn][rad]);
 
   exit(EXIT_SUCCESS);
