@@ -118,11 +118,11 @@ totaltau1(PREC_RES b,		/* impact parameter */
       PREC_RES rm    = rad[1];
       if(alpha<0)
 	res= - alpha * (rm * sqrt( rm * rm - r0 * r0) - r0 * r0 * 
-			log( ( sqrt( rm * rm / r0 / r0 - 1) + rm ) / r0 ) )
+			log( sqrt( rm * rm / r0 / r0 - 1) + rm / r0 ) )
 	  / 2.0;
       else
 	res=   alpha * (rm * sqrt( rm * rm - r0 * r0) + r0 * r0 * 
-			log( ( sqrt( rm * rm / r0 / r0 - 1) + rm ) / r0 ) )
+			log( sqrt( rm * rm / r0 / r0 - 1) + rm / r0 ) )
 	  / 2.0;
     }
   }
@@ -214,11 +214,11 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
     PREC_RES rm    = rad[rs];
     if(alpha<0)
       res= - alpha * (rm * sqrt( rm * rm - r0 * r0) - r0 * r0 * 
-		      log( ( sqrt( rm * rm / r0 / r0 - 1) + rm ) / r0 ) )
+		      log( sqrt( rm * rm / r0 / r0 - 1) + rm / r0 ) )
 	/ 2.0;
     else
       res=   alpha * (rm * sqrt( rm * rm - r0 * r0) + r0 * r0 * 
-		      log( ( sqrt( rm * rm / r0 / r0 - 1) + rm ) / r0 ) )
+		      log( sqrt( rm * rm / r0 / r0 - 1) + rm / r0 ) )
 	/ 2.0;
   }
 
