@@ -47,9 +47,6 @@ idxrefrac(struct transit *tr)
   for(r=0;r<tr->rads.n;r++)
     st_idx.n[r]=1;
 
-  //free atmosphere info that won't be used anymore
-  freemem_atmosphere(tr->ds.at,&tr->pi);
-
   //set progress indicator and return success
   tr->pi|=TRPI_IDXREFRAC;
   return 0;
@@ -69,6 +66,6 @@ freemem_idexrefrac(struct idxref *ir,
   free(ir->n);
 
   //clear progress indicator and return success
-  *pi&=~(TRPI_IDXREFRAC);
+  *pi&=~(TRPI_IDXREFRAC|TRPI_TAU);
   return 0;
 }

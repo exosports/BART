@@ -209,6 +209,13 @@ struct onept {
 };
 
 
+struct savefiles {
+  char *extinction;		/* after extwn() savefile */
+  char *tau;			/* after tau() savefile */
+  char *modulation;		/* after modulation() savefile */
+};
+
+
 struct optdepth {
   PREC_RES **t;			/* Optical depth [wn][ip] */
   short iso;			/* Isotope from which to calculate the
@@ -351,6 +358,8 @@ struct transit {		/* Main data structure */
   PREC_RES *out;		/* Output as seen after interaction with
 				   telescope */
 
+
+
   struct {			/* data structures pointers, this is
 				   data that is not required for the
 				   final computation */
@@ -361,6 +370,7 @@ struct transit {		/* Main data structure */
     struct optdepth *tau;
     struct idxref *ir;
     struct geometry *sg;
+    struct savefiles *sf;
   }ds;
 };
 

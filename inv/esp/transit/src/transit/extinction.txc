@@ -400,7 +400,7 @@ int extwn (struct transit *tr)
   freemem_lineinfotrans(tr->ds.li,&tr->pi);
 
    //save current status if requested.
-
+  savefile_extwn(tr);
 
   //Set porogress indicator, and print and output extinction if one P,T
   //was desired, otherwise return success
@@ -482,7 +482,8 @@ printone(struct transit *tr)
 
   //print!
   fprintf(out,
-	  "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
+	  "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\t"
+	  "cross-section[cm2]\n");
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(out,"%12.6f%14.6f%17.7g%17.7g\n"
 	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
@@ -511,4 +512,16 @@ freemem_extinction(struct extinction *ex, /* Extinciton info */
   //clear indicator and return success
   *pi&=!(TRPI_EXTWN);
   return 0;
+}
+
+
+/* \fcnfh 
+   Saves all the memory that is going to be used after running extwn()
+
+   @returns 0 on success
+*/
+int
+savefile_extwn(struct transit *tr)
+{
+
 }

@@ -477,6 +477,9 @@ int makeradsample(struct transit *tr)
     }
   }
 
+  //free atmosphere info that won't be used anymore
+  freemem_atmosphere(tr->ds.at,&tr->pi);
+
   //set progress indicator and return
   if(res>=0)
     tr->pi|=TRPI_MAKERAD;
