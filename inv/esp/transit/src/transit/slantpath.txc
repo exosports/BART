@@ -23,14 +23,6 @@
 
 #include <transit.h>
 
-static inline PREC_RES
-modulation1 (PREC_RES *tau,
-	     long last,
-	     double toomuch,
-	     prop_samp *ip,
-	     struct geometry *sg)
-     __attribute__((always_inline));
-
 /***** Warning:
        To speed up, slantpath.txc assumed version 1.4 of gsl
        utilities. If not, structure gsl_interp_accel might have
@@ -38,24 +30,113 @@ modulation1 (PREC_RES *tau,
        totaltau(). 
 ***************/
 
+
 /* \fcnfh
  Computes optical depth at a given impact parameter, note that b needs
  to be given in units of 'rad' and the result needs to be multiplied by
  the units 'rad' to be real.
+ There is no ray bending, refr=constant
 
  @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
                                     of 'rad'
 */
 static inline PREC_RES
-totaltau(PREC_RES b,		/* differential impact parameter with
-				   respect to maximum value */
-	 PREC_RES *rad,		/* radius array */
-	 PREC_RES *refr,	/* refractivity index */
-	 PREC_RES **ex,		/* extinction[rad][nwn] */
-	 long nrad,		/* number of radii elements */
-	 long wn)		/* wavenumber looked */
+totaltau1(PREC_RES b,		/* impact parameter */
+	  PREC_RES *rad,	/* Equispaced radius array */
+	  PREC_RES refr,	/* refractivity index */
+	  PREC_RES *ex,		/* extinction[rad] */
+	  long nrad)		/* number of radii elements */
 {
-  gsl_interp_accel acc={0,0,0};
+  int rs;
+  int i;
+  PREC_RES res;
+
+  //Look for closest approach radius
+  PREC_RES r0=b/refr;
+
+  //get bin value 'rs' such that r0 is between rad[rs] inclusive
+  //and rad[rs+1] exclusive.
+  //If we are looking at the outmost layer, then return
+  if((rs=binsearch(rad,0,nrad-1,r0))==-5)
+    return 0;
+  //If some other error occurred
+  else if(rs<0)
+    transiterror(TERR_CRITICAL,
+		 "Closest approach value(%g) is outside sampled radius\n"
+		 "range(%g - %g)\n"
+		 ,r0,rad[0],rad[nrad-1]);
+  //advance the extinction and radius arrays such that the zeroeth
+  //element now is the closest sample to the minimum approach from below
+  //it.
+  rad+=rs;
+  ex+=rs;
+  nrad-=rs;
+
+  //By parabola fitting, interpolate the
+  //value of extinction at the radius of minimum approach and store it
+  //in the sample that corresponded to the closest from below. Store
+  //such value which is to be replaced before returning (\lin{tmpex})
+  const PREC_RES tmpex=*ex;
+  if(nrad==2) *ex=interp_parab(rad-1,ex-1,r0);
+  else *ex=interp_parab(rad,ex,r0);
+  *rad=r0;
+  const PREC_RES dr=rad[1]-rad[0];
+
+  //Now convert to s spacing, i.e. distance along the path. Radius needs
+  //to be equispaced.
+  //If we are not in the border
+  if(nrad>2){
+    PREC_RES s[nrad];
+    const PREC_RES Dr=rad[2]-rad[1];
+    const PREC_RES cte=dr*(dr + 2*r0);
+    s[0]=0;
+
+    for(i=1 ; i<nrad ; i++)
+      s[i]=sqrt(cte + (i-1)*Dr*(2*r0 + (i-1)*Dr) );
+
+    //Integrate!\par
+    //Use spline if GSL is available along with at least 3 points
+#ifdef _USE_GSL
+    gsl_interp_accel acc={0,0,0};
+    gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,nrad);
+    gsl_interp_init(spl,s,ex,nrad);
+    res=gsl_interp_eval_integ(spl,s,ex,0,s[nrad-1],&acc);
+    gsl_interp_free(spl);
+#else
+#error non equispaced integration is not implemented without GSL
+#endif /* _USE_GSL */
+  }
+
+  //Integrate Trapezium if there are only two points
+  else
+    res=integ_trasim(dr,ex,nrad);
+
+  //replace original value of extinction
+  //\linelabel{tmpex}
+  *ex=tmpex;
+
+  //return
+  return 2*(res);
+}
+
+
+/* \fcnfh
+ Computes optical depth at a given impact parameter, note that b needs
+ to be given in units of 'rad' and the result needs to be multiplied by
+ the units 'rad' to be real. 
+ This uses a bent path ray solution.
+
+ @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
+                                    of 'rad'
+*/
+static inline PREC_RES
+totaltau2(PREC_RES b,		/* differential impact parameter with
+				   respect to maximum value */
+	  PREC_RES *rad,	/* radius array */
+	  PREC_RES *refr,	/* refractivity index */
+	  PREC_RES *ex,		/* extinction[rad] */
+	  long nrad)		/* number of radii elements */
+{
   PREC_RES dt[nrad];
   PREC_RES r0a=b;
   PREC_RES r0=0;
@@ -109,7 +190,7 @@ totaltau(PREC_RES b,		/* differential impact parameter with
   //\]\par
   //First for the analitical part of the integral
   PREC_RES frac=b/refr[rs-1];
-  PREC_RES res=ex[rs-1][wn]*frac
+  PREC_RES res=ex[rs-1]*frac
     *( sqrt(rad[rs]*rad[rs]/frac/frac - 1) -
        sqrt(r0     *r0     /frac/frac - 1) );
 
@@ -120,12 +201,13 @@ totaltau(PREC_RES b,		/* differential impact parameter with
 		  "Oops! assert condition not met, b/(nr)=%g > 1\n"
 		  ,r0a);
 
-    dt[i]=ex[i][wn]/sqrt(1-r0a*r0a);
+    dt[i]=ex[i]/sqrt(1-r0a*r0a);
   }
 
   //Integrate!\par
   //Use spline if GSL is available along with at least 3 points
 #ifdef _USE_GSL
+  gsl_interp_accel acc={0,0,0};
   if(nrad-rs>2){
     gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
     gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
@@ -144,39 +226,6 @@ totaltau(PREC_RES b,		/* differential impact parameter with
 }
 
 
-
-/* \fcnfh 
-   observable information as it would be seen before any telescope
-   interaction. Calculates ratio in-transit over out-transit for the
-   simplest expression of modulation.
-
-   @returns modulation obtained
-*/
-static PREC_RES
-modulationperwn (PREC_RES *tau,
-		 long last,
-		 double toomuch,
-		 prop_samp *ip,
-		 struct geometry *sg,
-		 int exprlevel)
-{
-  PREC_RES res;
-
-  switch(exprlevel){
-  case 1:
-    res=modulation1(tau,last,toomuch,ip,sg);
-    break;
-  default:
-    res=0;
-    transiterror(TERR_CRITICAL,
-		 "slantpath:: modulationperwn:: Level %i of detail\n"
-		 "has not been implemented to compute modulation\n"
-		 ,exprlevel);
-  }
-  return res;
-}
-
-
 /* \fcnfh
    Computes most basic modulation scheme, obtained when there is no limb
    darkening or emitted flux 
@@ -191,7 +240,6 @@ modulation1 (PREC_RES *tau,
 	     struct geometry *sg)
 {
   //general variables
-  gsl_interp_accel acc={0,0,0};
   PREC_RES res;
   double srad=sg->starrad*sg->starradfct;
   double *rinteg;
@@ -237,6 +285,7 @@ modulation1 (PREC_RES *tau,
 
   //integrate in radii
 #ifdef _USE_GSL
+  gsl_interp_accel acc={0,0,0};
   gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,last);
   gsl_spline_init(spl,ipv,rinteg,last);
   res=gsl_spline_eval_integ(spl,ipv[0],ipv[last-1],&acc);
@@ -266,6 +315,67 @@ modulation1 (PREC_RES *tau,
   return res;
 }
 
+
+/* \fcnfh
+ Computes optical depth at a given impact parameter, note that b needs
+ to be given in units of 'rad' and the result needs to be multiplied by
+ the units 'rad' to be real.
+
+ @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
+                                    of 'rad'
+*/
+static inline PREC_RES
+totaltau(PREC_RES b,		/* differential impact parameter with
+				   respect to maximum value */
+	 PREC_RES *rad,		/* radius array */
+	 PREC_RES *refr,	/* refractivity index */
+	 PREC_RES *ex,		/* extinction[rad] */
+	 long nrad,		/* number of radii elements */
+	 int exprlevel)		/* Expression level of detail */
+{
+  switch(exprlevel){
+  case 1:
+    return totaltau1(b,rad,*refr,ex,nrad);
+    break;
+  default:
+    transiterror(TERR_CRITICAL,
+		 "slantpath:: totaltau:: Level %i of detail\n"
+		 "has not been implemented to compute optical depth\n"
+		 ,exprlevel);
+    return 0;
+  }
+}
+
+
+
+
+/* \fcnfh 
+   observable information as it would be seen before any telescope
+   interaction. Calculates ratio in-transit over out-transit for the
+   simplest expression of modulation.
+
+   @returns modulation obtained
+*/
+static PREC_RES
+modulationperwn (PREC_RES *tau,
+		 long last,
+		 double toomuch,
+		 prop_samp *ip,
+		 struct geometry *sg,
+		 int exprlevel)
+{
+  switch(exprlevel){
+  case 1:
+    return modulation1(tau,last,toomuch,ip,sg);
+    break;
+  default:
+    transiterror(TERR_CRITICAL,
+		 "slantpath:: modulationperwn:: Level %i of detail\n"
+		 "has not been implemented to compute modulation\n"
+		 ,exprlevel);
+    return 0;
+  }
+}
 
 
 const transit_ray_solution slantpath =
