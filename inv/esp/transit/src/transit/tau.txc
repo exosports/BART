@@ -30,12 +30,12 @@
    @returns 0 on success
  */
 int
-tau(struct transit *tau)
+tau(struct transit *tr)
 {
-  prop_isov *isov=&transit.isov;
-  prop_isof *isof=&transit.isof;
-  prop_samp *rad=&transit.rads;
-  prop_samp *wn=&transit.wns;
+  prop_isov *isov=tr->isov;
+  prop_isof *isof=tr->isof;
+  prop_samp *rad=&tr->rads;
+  prop_samp *wn=&tr->wns;
 
 
 
