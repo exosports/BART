@@ -20,6 +20,8 @@
  * 02111-1307, USA.
  */
 
+#include <util/numerical.h>
+
 /* \fcnfh
    Search for index such that val is between arr[index] inclusive and
    arr[index+1] exclusive.
@@ -31,6 +33,7 @@
                one 
 	    -4 if 'f' is equal or smaller than 'i', or 'i' is less than
 	       0 
+	    -5 if value is the last element of the array
 */
 inline int
 binsearchie(double *arr,	/* Array of length of at least 'f' */
@@ -46,6 +49,8 @@ binsearchie(double *arr,	/* Array of length of at least 'f' */
     return -1;
   if(arr[f]<val)
     return -2;
+  if(arr[f]==val)
+    return -5;
   if(i==f&&arr[i]!=val)
     return -3;
   if(f<i&&i<0)
@@ -74,6 +79,7 @@ binsearchie(double *arr,	/* Array of length of at least 'f' */
                one 
 	    -4 if 'f' is equal or smaller than 'i', or 'i' is less than
 	       0 
+	    -6 if it is first index of the array
 */
 inline int
 binsearchei(double *arr,	/* Array of length of at least 'f' */
@@ -87,6 +93,8 @@ binsearchei(double *arr,	/* Array of length of at least 'f' */
 
   if(arr[i]>val)
     return -1;
+  if(arr[i]==val)
+    return -6;
   if(arr[f]<val)
     return -2;
   if(i==f&&arr[i]!=val)
@@ -119,3 +127,53 @@ binsearch(double *arr,
   return binsearchie(arr,i,f,val);
 }
 
+
+/* \fcnfh
+   Integrate using simpson method and trapezoid at one interval if even
+   number, it requires an equispaced x-grid
+
+   @returns value of the integration
+*/
+inline double
+integ_trasim(double dx,
+	     double *y,
+	     long n)
+{
+  double restrap=0,res=0;
+  long i;
+
+  if(n<2){
+    fprintf(stderr,
+	    "%s:: integ_trasim: At least 2 points are required to perform\n"
+	    "integration\n"
+	    ,__FILE__);
+    exit(EXIT_FAILURE);
+  }
+
+  //use trapezoidal in the last even element
+  if(!(n&1)){
+    n--;
+    restrap=.5*dx*(y[n]+y[n-1]);
+  }
+
+  //if there is enough elements do a Simpson integral
+  if(n>2){
+    //add the middle values, start with the odd elements which will be
+    //multiplied by 4
+    n--;
+    for(i=1;i<n;i+=2)
+      res+=y[i];
+    res*=2;
+
+    //now the even elements to be multiplied by 2
+    for(i=2;i<n;i+=2)
+      res+=y[i];
+    res*=2;
+
+    //now the borders
+    res+=y[0]+y[n];
+  }
+
+  //finish'em
+  return res*dx/3.0+restrap;
+}

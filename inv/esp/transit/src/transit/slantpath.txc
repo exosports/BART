@@ -59,11 +59,12 @@ totaltau(PREC_RES b,		/* differential impact parameter with
 	 gsl_interp_accel *acc)	/* accelerating pointer. Auxiliary array
 				   */
 {
-  PREC_RES res;
+  /* TD: Check that giving dt instead of declaring here dt[nrad] is
+     really the fastest method */
   PREC_RES r0a=b;
   PREC_RES r0=0;
   int i;
-  int maxiterations=50;
+  const int maxiterations=50;
   int rs;
 
   //Look for closest approach radius
@@ -82,22 +83,17 @@ totaltau(PREC_RES b,		/* differential impact parameter with
 
   //get bin value 'rs' such that r0 is between rad[rs-1] inclusive
   //and rad[rs] exclusive.
-  rs=binsearch(rad,0,nrad-1,r0)+1;
-
-  //return 0 optical depth if it goes to less than three layers (this is
-  //for the spline integration to work, an alternative method could be
-  //installed instead).
-  if(rs>nrad-3){
-    /* TD: Install an alternative integration method for less than 3
-       points */
+  //If we are looking at the outmost layer, then return
+  if((rs=binsearch(rad,0,nrad-1,r0))==-5)
     return 0;
-  }
-
-  if(rs<0)
+  //If some other error occurred
+  else if(rs<0)
     transiterror(TERR_CRITICAL,
 		 "Closest approach value(%g) is outside sampled radius\n"
 		 "range(%g - %g)\n"
 		 ,r0,rad[0],rad[nrad-1]);
+  //advance the index to point as desired
+  rs++;
 
   //A fraction 'analiticfrac' of the integration near the closest
   //appraoach is calcualated analitically, otherwise, I get a division
@@ -105,16 +101,20 @@ totaltau(PREC_RES b,		/* differential impact parameter with
   //\[
   //\tau_{\wn}(\rho)=
   //\underbrace{
-  //2\extc_{\wn}r_0\sqrt{2r_0\delta r} 
+  //\frac{2\extc_{\wn}\rho}{n}\left(
+  //                   \sqrt{\left(\frac{nr_1}{\rho}\right)^2-1}
+  //                  -\sqrt{\left(\frac{nr_0}{\rho}\right)^2-1}\right) 
   //}_{\mathrm{analitic}} +
   //\underbrace{
-  //2\int_{r_0+\delta r}^{\infty}
+  //2\int_{r_1=r_0+\delta r}^{\infty}
   //\frac{\extc_{\wn}~n~r}{\sqrt{n^2r^2-\rho^2}}\dd r
   //}_{\mathrm{numerical}}
   //\]\par
   //First for the analitical part of the integral
-  PREC_RES analiticfrac=(rad[rs]-r0);
-  res=ex[rs-1][wn]*sqrt((analiticfrac+2*r0)*analiticfrac)/refr[rs-1];
+  PREC_RES frac=b/refr[rs-1];
+  PREC_RES res=ex[rs-1][wn]*frac
+    *( sqrt(rad[rs]*rad[rs]/frac/frac - 1) -
+       sqrt(r0     *r0     /frac/frac - 1) );
 
   //And now for the numerical integration. Set the variables
   for(i=rs;i<nrad;i++){
@@ -125,24 +125,11 @@ totaltau(PREC_RES b,		/* differential impact parameter with
     dt[i]=ex[i][wn]/sqrt(1-r0a*r0a);
   }
 
-  //and integrate!.\par
-  //This part currently depends on a proper installation of GSL library
-#ifdef _USE_GSL
-  acc->cache = 0;
-  acc->hit_count = 0;
-  acc->miss_count = 0;
-  gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
-  gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
-  res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],acc);
-  gsl_spline_free(spl);
+  //Integrate Simpson if enough elements.
+  if(nrad-rs>1)
+    res+=integ_trasim(rad[1]-rad[0],dt+rs,nrad-rs);
 
-#else
-  //Without {\bf GSL} is currently not implemented. Output is dependent in an
-  //appropiate installation of those libraries
-# error computation of totaltau() without GSL is not implemented
-#endif
-
-  return 2*res;
+  return 2*(res);
 
 }
 
