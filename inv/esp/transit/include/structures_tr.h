@@ -139,14 +139,14 @@ struct line_transition {	/* One item per transition for the
 struct lineinfo {		/* Used to keep parameters in
 				   readlineinfo() */
   struct line_transition lt;	//Line transition
-  int twii_ver;			/* TWII version */
-  int twii_rev;			/* TWII revision */
+  int tli_ver;			/* TLI version */
+  int tli_rev;			/* TLI revision */
   prop_samp wavs;		/* wavelength sampling extracted */
   double wi, wf;		/* initial and final wavelength in the
 				   database */
   long endinfo;			/* position at the end of the info part
 				   of the info file */
-  int asciiline;		/* line number in an TWII-ascii file
+  int asciiline;		/* line number in an TLI-ascii file
 				   being read, it is zero if a binary
 				   file. And the maximum value it gets
 				   is the first line of the transition

@@ -406,10 +406,10 @@ int makeradsample(struct transit *tr)
 
   prop_samp *rad=&tr->rads;
 
-  //getatm() and readinfo\_twii() must have been called before
+  //getatm() and readinfo\_tli() must have been called before
   transitcheckcalled(tr->pi,"makeradsample",2,
 		     "getatm",TRPI_GETATM,
-		     "readinfo_twii",TRPI_READINFO);
+		     "readinfo_tli",TRPI_READINFO);
   transitASSERT(atms->rads.n<1||!ndb||!niso||!neiso,
 		"makeradsample():: called but essential variables are\n"
 		"missing!\n");

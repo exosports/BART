@@ -391,7 +391,7 @@ extwn (struct transit *tr)
 
 
   transitcheckcalled(tr->pi,"extwn",4,
-		     "readinfo_twii",TRPI_READINFO,
+		     "readinfo_tli",TRPI_READINFO,
 		     "readdatarng",TRPI_READDATA,
 		     "makewnsample",TRPI_MAKEWN,
 		     "makeradsample",TRPI_MAKERAD

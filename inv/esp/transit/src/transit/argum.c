@@ -130,8 +130,8 @@ int processparameters(int argc, /* number of command line arguments */
      "atmfile","File containing atmospheric info (Radius,\n"
      "pressure, temperature). A dash (-) indicates alternative\n"
      "input"},
-    {"linedb",CLA_LINEDB,required_argument,"./res/lineread.twii",
-     "linedb","File containing line information (TWII format,\n"
+    {"linedb",CLA_LINEDB,required_argument,"./res/lineread.tli",
+     "linedb","File containing line information (TLI format,\n"
      "as given by 'lineread'"},
     {"outtoomuch",CLA_OUTTOOMUCH,required_argument,NULL,
      "filename","Ouputs depth where toomuch optical depth has been\n"
@@ -178,7 +178,7 @@ int processparameters(int argc, /* number of command line arguments */
      "abundances of the different isotopes. If it is omitted or\n"
      "doesn't have the right amount of values, the program will\n"
      "ask interactively. Note that the order of isotopes is the\n"
-     "same given in the TWII data file"},
+     "same given in the TLI data file"},
     {"onept-interactive",CLA_ONEINT,no_argument,NULL,
      NULL,"Wants to give abundances and pressure and temperature\n"
      "interactively through terminal input"},

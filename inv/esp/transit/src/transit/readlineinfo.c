@@ -37,25 +37,25 @@ static inline void datafileBS(FILE *fp, PREC_NREC initial, PREC_NREC final,
    if(pre)                                                                 \
      transiterror(TERR_SERIOUS,                                            \
                   "Pre-condition failed on line %i(%s)\n while reading:\n" \
-		  "%s\n\nTWII_Ascii format most likely invalid\n"          \
+		  "%s\n\nTLI_Ascii format most likely invalid\n"          \
                   ,__LINE__,__FILE__,line);                                \
    while(omit)                                                             \
      pointer++;                                                            \
    if(post)                                                                \
      transiterror(TERR_SERIOUS,                                            \
                   "Post-condition failed on line %i(%s)\n while reading:\n"\
-		  "%s\n\nTWII_Ascii format most likely invalid\n"          \
+		  "%s\n\nTLI_Ascii format most likely invalid\n"          \
                   ,__LINE__,__FILE__,line);                                \
                                              }while(0)
 
 
 /* \fcnfh
-   Read binary TWII file already open in 'fp'
+   Read binary TLI file already open in 'fp'
 
    @returns 0 on success
  */
 int 
-readtwii_bin(FILE *fp, 
+readtli_bin(FILE *fp, 
 	     struct transit *tr,
 	     struct lineinfo *li)
 {
@@ -74,21 +74,25 @@ readtwii_bin(FILE *fp,
   PREC_ZREC *T,*Z;
   PREC_CS *CS;
   int acumiso=0;
+  char *undefined_string;
   struct isotopes *iso=tr->ds.iso;
 
   //Read datafile name, initial, final wavelength, and
   //number of databases.
-  fread(&li->twii_ver,sizeof(int),1,fp);
-  fread(&li->twii_rev,sizeof(int),1,fp);
+  fread(&li->tli_ver,sizeof(int),1,fp);
+  fread(&li->tli_rev,sizeof(int),1,fp);
 
-  if(li->twii_ver!=compattwiiversion)
+  if(li->tli_ver!=compattliversion)
     transiterror(TERR_SERIOUS,
-		 "The version of the TWII file: %i.%i is not complatible with\n"
+		 "The version of the TLI file: %i.%i is not complatible with\n"
 		 "this version of transit, which can only read version %i\n"
-		 ,li->twii_ver,li->twii_rev,compattwiiversion);
+		 ,li->tli_ver,li->tli_rev,compattliversion);
 
   fread(&iniw,sizeof(double),1,fp);
   fread(&finw,sizeof(double),1,fp);
+  fread(&rn,sizeof(int),1,fp);
+  undefined_string=(char *)calloc(rn+1,sizeof(char));
+  fread(undefined_string,sizeof(char),rn,fp);
   fread(&ndb,sizeof(int),1,fp);
 
   //Allocate pointers according to the number of databases
@@ -112,7 +116,7 @@ readtwii_bin(FILE *fp,
     //allocate for variable and fixed isotope info as well as for
     //temperature points.
     T=li->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
-      
+
     //read temperature points
     fread(T,sizeof(PREC_ZREC),nT,fp);
     
@@ -179,7 +183,7 @@ readtwii_bin(FILE *fp,
       //database 
       nIso=iso->db[db].s;
       transitASSERT(nIso>=i,
-		    "readinfo_twii():: Somehow the first isotope of\n"
+		    "readinfo_tli():: Somehow the first isotope of\n"
 		    "current database %i, has an index (%i) greater than\n"
 		    "current isotope (%i)\n"
 		    ,db,nIso,i);
@@ -235,10 +239,10 @@ readtwii_bin(FILE *fp,
 
 
 /* \fcnfh
-   Read an TWII-ASCII formated file from an already open file 'fp'
+   Read an TLI-ASCII formated file from an already open file 'fp'
 */
 int 
-readtwii_ascii(FILE *fp, 
+readtli_ascii(FILE *fp, 
 	       struct transit *tr,
 	       struct lineinfo *li)
 {
@@ -251,7 +255,7 @@ readtwii_ascii(FILE *fp,
   PREC_ZREC *T;
   struct isotopes *iso=tr->ds.iso;
 
-  //Format of the TWII-ASCII file is the following(names should not
+  //Format of the TLI-ASCII file is the following(names should not
   //contain spaces ('_' are replaced by spaces)
   //\begin{verb}
   //<m-database>
@@ -387,7 +391,7 @@ readtwii_ascii(FILE *fp,
 
   //We don't know beforehand what is the range in ascii storage, it has
   //to be looked for
-  getinifinasctwii(&li->wi,&li->wf,fp, tr->f_line);
+  getinifinasctli(&li->wi,&li->wf,fp, tr->f_line);
 
   return 0;
 }
@@ -400,7 +404,7 @@ readtwii_ascii(FILE *fp,
    @returns 0 on success
 */
 int
-getinifinasctwii(double *ini,	/* where initial value would be stored */
+getinifinasctli(double *ini,	/* where initial value would be stored */
 		 double *fin,	/* where initial value would be stored */
 		 FILE *fp,	/* file pointer */
 		 char *file)	/* File name of file being read */
@@ -432,7 +436,7 @@ getinifinasctwii(double *ini,	/* where initial value would be stored */
   fseek(fp,0,SEEK_END);
   if(ftell(fp)<maxline){
     transiterror(TERR_WARNING,
-		 "readlineinfo:: weird, TWII-Ascii file has less than %i bytes.\n"
+		 "readlineinfo:: weird, TLI-Ascii file has less than %i bytes.\n"
 		 "That looks improbable\n"
 		 ,maxline);
     fseek(fp,0,SEEK_SET);
@@ -488,7 +492,7 @@ getinifinasctwii(double *ini,	/* where initial value would be stored */
 int checkrange(struct transit *tr, /* General parameters and
 					 hints */ 
 	       struct lineinfo *li) /* Values returned by
-					  readinfo\_twii */ 
+					  readinfo\_tli */ 
 {
   //'res' is the return value.
   //'margin' margin value.
@@ -527,7 +531,7 @@ int checkrange(struct transit *tr, /* General parameters and
   }
   margin=tr->m=th->m;
  
-  //If an TWII ascii file, then we'll be using limits twice the margin
+  //If an TLI ascii file, then we'll be using limits twice the margin
   //from the minimum or maximum values in the dataset. This is because,
   //as opposed to binary archiving, I'm not guaranteed that I have all
   //the lines between 'dbini' and 'dbfin', instead they are the minimum
@@ -535,7 +539,7 @@ int checkrange(struct transit *tr, /* General parameters and
   if(li->asciiline){
     if(margin==0.0)
       transiterror(TERR_WARNING,
-		   "Wavelength margin to be used is zero in a TWII-ASCII\n"
+		   "Wavelength margin to be used is zero in a TLI-ASCII\n"
 		   " file. Hence, there will be no points to the left or\n"
 		   " right of the extreme central wavelengths.\n"
 		   );
@@ -664,7 +668,7 @@ notyet(int lin, char *file)
 {
   transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 	       "readlineinfo:: EOF unexpectedly found at line %i in\n"
-	       "ascii-TWII linedb info file '%s'\n"
+	       "ascii-TLI linedb info file '%s'\n"
 	       ,lin,file);
   exit(EXIT_FAILURE);
 }
@@ -672,23 +676,24 @@ notyet(int lin, char *file)
 
 
 /* \fcnfh
-  readinfo\_twii: Read infofile as returned by lineread.
+  readinfo\_tli: Read infofile as returned by lineread.
 
   @todo    checks on allocation errors
   @returns 1 on success
            -1 unavailable file
 	   -2 Filename not hinted
-	   -3 TWII format not valid (missing magic bytes)
-	   -4 Improper TWII-ASCII input
+	   -3 TLI format not valid (missing magic bytes)
+	   -4 Improper TLI-ASCII input
 */
-int readinfo_twii(struct transit *tr,
+int readinfo_tli(struct transit *tr,
 		  struct lineinfo *li)
 {
   //'fp' file pointer of info file.
   int rn;
   FILE *fp;
-  union {char sig[2];short s[2];} sign={{(char)(('T'<<4)|'W'),
-					 (char)(('I'<<4)|'I')}};
+
+  union {char sig[4];int s[2];} sign=
+    {.s={0,((0xff-'T')<<24)|((0xff-'L')<<16)|((0xff-'I')<<8)|(0xff)}};
   char line[maxline+1];
   //Auxiliary hint structure pointer
   struct transithint *th=tr->ds.th;
@@ -714,27 +719,28 @@ int readinfo_twii(struct transit *tr,
   tr->fp_line=fp;
   tr->f_line=th->f_line;
 
-  //Read first two bytes, they should be either `(T<<4|W)(I<<4|I)' or
-  //'\#T'. They are stored as integer, so this check also serves to check
-  //whether the machine were the data file and the one this program is
-  //being run have the same endian order. If the first two are '\#T',
-  //then the first line also start as '\#TWII-ascii'
-  fread(sign.s+1,sizeof(short),1,fp);
-  //is it a binary TWII
+  //Read first two bytes, they should be either
+  //`(0xff-T)(0xff-L)(0xff-I)(0xff)' or '\#TLI'. They are stored as
+  //integer, so this check also serves to check whether the machine were
+  //the data file and the one this program is being run have the same
+  //endian order. If the first two are '\#TLI', then the first line
+  //might also start as '\#TLI-ascii' 
+  fread(sign.s,sizeof(int),1,fp);
+  //is it a binary TLI?
   if(sign.s[0]!=sign.s[1]){
-    //does it look like being a Ascii TWII?, if so check it.
-    rn=strncasecmp((char *)(sign.s+1),"#T",2);
+    //does it look like being an Ascii TLI?, if so check it.
+    rn=strncasecmp(sign.sig,"#TLI",4);
     if(!rn){
-      strcpy(line,"#T");
-      fread(line+2,sizeof(char),9,fp);
-      rn=strncasecmp(line,"#TWII-ascii",11);
+      strcpy(line,"#TLI");
+      fread(line+4,sizeof(char),6,fp);
+      rn=strncasecmp(line,"#TLI-ascii",10);
     }
-    //If it wasn't any valid TWII, then error and exit
+    //If it wasn't any valid TLI, then error and exit
     if(rn){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		   "The file '%s' has not a valid TWII\n"
-		   " format. It may also be because the machine were it\n"
-		   " was created have different endian order, which is\n"
+		   "The file '%s' has not a valid TLI\n"
+		   " format. It may also be because the machine were the\n"
+		   " file was created have different endian order, which is\n"
 		   " incompatible"
 		   ,tr->f_line);
       return -3;
@@ -744,25 +750,25 @@ int readinfo_twii(struct transit *tr,
     fgetupto(line,maxline,fp,&asciierr,tr->f_line,1);
   }
 
-  //if ascii format of TWII read ascii file
+  //if ascii format of TLI read ascii file
   if(li->asciiline){
-    if((rn=readtwii_ascii(fp,tr,li))!=0){
+    if((rn=readtli_ascii(fp,tr,li))!=0){
       transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
-		   "readtwii_ascii() return error code %i\n"
+		   "readtli_ascii() return error code %i\n"
 		   ,rn);
       return -5;
     }
   }
   //If binary storage is used.
   else
-    if((rn=readtwii_bin(fp,tr,li))!=0){
+    if((rn=readtli_bin(fp,tr,li))!=0){
       transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
-		   "readtwii_bin() return error code %i\n"
+		   "readtli_bin() return error code %i\n"
 		   ,rn);
       return -6;
     }
 
-  //Wavelength in a TWII file is always in nm and lower energy is always
+  //Wavelength in a TLI file is always in nm and lower energy is always
   //in cm-1.
   struct line_transition *lt=&li->lt;
   lt->wfct=1e-7;
@@ -814,7 +820,7 @@ invalidfield(char *line,	/* Contents of the line */
 int readdatarng(struct transit *tr, /* General parameters and
 				       hints */ 
 		struct lineinfo *li) /* Values returned by
-					readinfo\_twii */ 
+					readinfo\_tli */ 
 {
   //'fp' datafile file pointer.
   //'alloc' number of allocated line\_transition structures.
@@ -862,9 +868,9 @@ int readdatarng(struct transit *tr, /* General parameters and
 		 ,alloc);
 
   //find starting point in datafile.\par
-  //if it is TWII-ascii file then do a sequential search
+  //if it is TLI-ascii file then do a sequential search
   if(li->asciiline){
-    //go to where readinfo\_twii left off and skip all comments, since
+    //go to where readinfo\_tli left off and skip all comments, since
     //then, 'li->asciiline' won't increase
     fseek(fp,li->endinfo,SEEK_SET);
     while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
@@ -1051,7 +1057,7 @@ int readdatarng(struct transit *tr, /* General parameters and
 */
 static inline void 
 datafileBS(FILE *fp,		/* File pointer */
-	   long offs,	        /* initial position of data in twii 
+	   long offs,	        /* initial position of data in tli 
 				   file */
 	   PREC_NREC nfields,	/* last position */
 	   double lookfor,	/* target value */
@@ -1086,7 +1092,7 @@ datafileBS(FILE *fp,		/* File pointer */
 /* TD: check that strtok doesn't overwrite first string */
 /* \fcnfh
    readlineinfo: It only function is to call all the functions regarding
-   reading TWII information.
+   reading TLI information.
 
    @returns 0 on success
 */
@@ -1105,9 +1111,9 @@ int readlineinfo(struct transit *tr) /* General parameters and
   //Try to read hinted info file
   transitprint(1,verblevel, "Reading info file '%s'... "
 	       ,th->f_line);
-  if((rn= readinfo_twii(tr,&st_li))!=1)
+  if((rn= readinfo_tli(tr,&st_li))!=1)
     transiterror(TERR_SERIOUS,
-		 "readinfo_twii() returned an error code %i!\n"
+		 "readinfo_tli() returned an error code %i!\n"
 		 ,rn);
   transitprint(1,verblevel, "done%c\n",'.');
 
@@ -1266,7 +1272,7 @@ int main(int argc, char **argv)
 
   th.m=0.001;
   th.na|=TRH_WM;
-  char defile_line[]="./res/lineread.twii";
+  char defile_line[]="./res/lineread.tli";
   th.f_line=(char *)calloc(strlen(defile_line)+1,sizeof(char));
   strcpy(th.f_line,defile_line);
 
