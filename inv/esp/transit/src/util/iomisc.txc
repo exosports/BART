@@ -455,7 +455,7 @@ double readds(FILE *fp,
 
 /* \fcnfh
    read a double value from a string and optionally return the rest of
-   the field in in 'string', a field ends in space and can be separated
+   the field in 'string', a field ends in space and can be separated
    from the number by a dash.
 
    @returns 0 on success
