@@ -562,9 +562,9 @@ int processparameters(int argc, /* number of command line arguments */
       break;
 
     case 'V':			//Print version number and exit
-      if(revision<0) snprintf(name,20,"pre%i",-revision);
-      else snprintf(name,20,".%i",revision);
-      printf("This is 'transit' version %i%s\n\n",version,name);
+      if(version_rc>0) snprintf(name,20,"-rc%i",version_rc);
+      else name[0]='\0';
+      printf("This is 'transit' version %i.%i%s\n\n",version,revision,name);
       exit(EXIT_SUCCESS);
       break;
 

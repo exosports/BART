@@ -39,6 +39,7 @@
  */
 int version=2;
 int revision=3;
+int version_rc=1;
 
 
 #endif /* _VERSION_TR_H */
