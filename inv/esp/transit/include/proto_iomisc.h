@@ -6,6 +6,7 @@
 
 /* iomisc.c */
 extern int ncharchg P_((char *str, char car, char chg));
+extern int nchar P_((char *str, char car));
 extern char *readstr_sp P_((char *line, char **next, char fspace));
 extern inline char fgetupto P_((char *line, int max, FILE *fp, void (*errfcn)(int, char *, int), char *name, int other));
 extern int getad P_((int n, char sep, char *str, double **array));

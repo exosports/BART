@@ -25,6 +25,7 @@
 char *linepad_break="-";
 int printpad_columns=__PADTO_COLUMNS;
 
+
 /* \fcnfh
    Count ocurrences of 'car' in 'str', replacing each of them by 'chg'.
 */
@@ -39,6 +40,21 @@ ncharchg(char *str,
       str[-1]=chg;
       n++;
     }
+  return n;
+}
+
+
+/* \fcnfh
+   Count ocurrences of 'car' in 'str'.
+*/
+int
+nchar(char *str,
+      char car)
+{
+  int n=0;
+  while(*str)
+    if(*str++==car)
+      n++;
   return n;
 }
 

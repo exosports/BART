@@ -274,3 +274,113 @@ double powi(double x, int n)
 
   return y;
 }
+
+
+
+/* \fcnfh
+ Works as getopt_long except by the extra parameter 'paramfile' which
+ can process long versions of options from a file in the format
+ \begin{verb} long_option [=] value\end{verb}.
+ Reordering of arguments is also done in the same way as getopt_long
+ does.
+
+ @return shortoption value as it would have been returned by
+ getopt_long.
+*/
+int 
+getopt_long_files_old(int argc,	/* number of arguments */
+		char **argv,	/* agruments list */
+		char *shortopts, /* short options accepted, format is
+				    the same as getopt(). */
+		struct option *getopts,	/* long options accepted, format
+					   is the same as
+					   getopt_long(). Although
+					   optional arguments are not
+					   supported */
+		int *longidxp,	/* returns position in the array
+				   getopts[] for the last selected
+				   option */
+		char *paramfilelist) /* List of files from which to
+					process longoptions. Names are
+					separated by commas. Value of
+					this variable in the first call
+					to this function, is the only
+					one that matters. */
+{
+  static FILE *fp=NULL;
+  static char **parampointer;
+  int ret;
+
+  if(freed){
+    fprintf(stderr,
+	    "procopt:: getopt_long_files() was called after a call to\n"
+	    "getpropt_free(), which should be the very last {procopt}\n"
+	    "function called\n");
+    exit(EXIT_FAILURE);
+  }
+
+  //Allocate name storing array if it is first time this is called.
+  if(!paramfiles)
+    parampointer=paramfiles=splitnzero_alloc(paramfilelist,',');
+
+  //process file if one is given and it was not finished
+  if(*parampointer){
+    //open file if it is first run.
+    if(!fp)
+      fp=fopen(*parampointer,"r");
+    //if file is open then process next line
+    if(fp){
+      //skip empty lines and commented lines. If this is not the first
+      //line read, free the array
+      while(1){
+	if(line)
+	  free(line);
+	//if we reach the end of line proceed with next default file or
+	//go to command line values.
+	if((line=fgets_alloc(fp,NULL))==NULL){
+	  fclose(fp);
+	  fp=NULL;
+	  ++parampointer;
+	  return getopt_long_files(argc,argv,shortopts,getopts,
+				 longidxp,NULL);
+	}
+	if(*line&&*line!='#')
+	  break;
+      }
+      //If line was read succesfully, find if option exist and set
+      //optarg 
+      ret=getoptfrom(line,getopts,longidxp);
+    }
+    //if file was not opened then is because it doesn't exists. So,
+    //continue with next one.
+    else{
+      ++parampointer;
+      return getopt_long_files(argc,argv,shortopts,getopts,
+			       longidxp,NULL);
+    }
+  }
+  //If file didn't exist, was not given or is finished processing then
+  //process command line parameters
+  else
+    ret= getopt_long(argc,argv,shortopts,getopts,longidxp);
+
+  //If the option was to process a new parameter file then do that. That
+  //option is hence never returned out of this function.
+  if(givenparamf>=0&&ret==givenparamf){
+    ret=parampointer-paramfiles;
+    splitnzero_add(&paramfiles,optarg,',');
+    parampointer=paramfiles+ret;
+    if(*parampointer==NULL&&*optarg!='\0'){
+      fprintf(stderr,
+	      "procopt internal error: parampointer is null despite\n"
+	      "having added a new file.\n");
+      exit(EXIT_FAILURE);
+    }
+
+    return getopt_long_files(argc,argv,shortopts,getopts,
+			     longidxp,NULL);
+  }
+
+  return ret;
+}
+

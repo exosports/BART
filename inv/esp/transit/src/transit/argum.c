@@ -45,7 +45,7 @@ const static transit_ray_solution *raysols[] = {
 #ifdef NODOTDEFAULT
 #  define DOTCFGFILE "NO DEFAULT FILE"
 #else
-#  define DOTCFGFILE "'./.transitrc"
+#  define DOTCFGFILE "./noexiste,./.transitrc,./noexiste"
 #endif
 
 /* \fcnfh
@@ -108,7 +108,7 @@ int processparameters(int argc, /* number of command line arguments */
      "each + or -. 0 is the quietest"},
     {"paramf",ADDPARAMFILE,'p',
      "filename","Use filename to read parameters in addition to\n"
-     "default file(s): " DOTCFGFILE PREPEXTRACFGFILES"'"},
+     "default file(s): '" DOTCFGFILE PREPEXTRACFGFILES"'"},
 
     {NULL,HELPTITLE,0,
      NULL,"INPUT/OUTPUT"},
@@ -259,7 +259,7 @@ int processparameters(int argc, /* number of command line arguments */
   struct optcfg var_cfg;
   memset(&var_cfg,0,sizeof(var_cfg));
   var_cfg.contact="Patricio Rojo <pato@astro.cornell.edu>";
-  var_cfg.files="./.transitrc"PREPEXTRACFGFILES;
+  var_cfg.files=DOTCFGFILE PREPEXTRACFGFILES;
   var_cfg.columns=60;
 
   int rn,i;
