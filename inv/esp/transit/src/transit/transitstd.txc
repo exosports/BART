@@ -27,7 +27,7 @@
 static int terr_allown=0;
 int transit_nowarn=0;
 int verblevel;
-int maxline=200;
+int maxline=1000;
 
 inline void transitdot(int thislevel, int verblevel,...)
 {
