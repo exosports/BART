@@ -80,7 +80,27 @@ STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic \
 #libraries to link
 LIBS  = -lX11 -lm $(GSLLIB)
 
+#different levels of output from more to less
+#quiet =
+quiet = quiet_
+#quiet = silent_
 
+# If quiet is set, only print short version of command
+cmd = @$(if $($(quiet)cmd_$(1)),echo '  $($(quiet)cmd_$(1))' &&) $(cmd_$(1))
+
+
+#now for the different functions
+quiet_cmd_c_o   = Compiling...     $@
+      cmd_c_o   = $(CC) -c $(STDFLAGS) -o $@ $<
+
+quiet_cmd_cp    = Copying to...    $@
+      cmd_cp    = cp -f $< ./$(notdir $(basename $<)).c
+
+quiet_cmd_txc_c = Clatexing to...  $@
+      cmd_txc_c = $(CLATEX) $< -sl
+
+quiet_cmd_exec  = Building exec... $@
+      cmd_exec  = $(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
 
 ###############################
 # $^ dependencies
@@ -103,25 +123,33 @@ dbgreadline: $(UT_OBJ) transitstd.c readlineinfo.c
 	$(CC) $(STDFLAGS) -DDBGREADLINEINFO -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf dbgreadline $(BIN)
 
-transit: $(UT_OBJ) $(TR_OBJ)
-	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
+transit : $(TR_OBJ)
+lineread: $(LR_OBJ)
 
-lineread: $(UT_OBJ) $(LR_OBJ)
-	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
+transit lineread: $(UT_OBJ)
+	$(call cmd,exec)
+#	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
+
+#lineread: $(UT_OBJ) $(LR_OBJ)
+#	$(call cmd,exec)
+#	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
 
 #$(UT_OBJ): %.o: %.c
 #	$(CC) -c $(STDFLAGS) -o $@ $<
 
 %.o: %.c
-	$(CC) -c $(STDFLAGS) -o $@ $<
+	$(call cmd,c_o)
+#	$(CC) -c $(STDFLAGS) -o $@ $<
 
 #if clatex exist then run it, otherwise just copy the file changing
 #extensions
 %.c: %.txc
 ifeq ($(strip $(wildcard $(CLATEX))),)
+	$(call cmd,cp)
 	cp -f $< ./$(notdir $(basename $<)).c
 else
-	$(CLATEX) $< -sl
+	$(call cmd,txc_c)
+#	$(CLATEX) $< -sl
 endif
 
 clean:
