@@ -340,9 +340,10 @@ modulation1 (PREC_RES *tau,
   //           -Area_{planet}}
   //          {\pi R_s^2}
   //\end{align}
-  res = exp(-maxtau) * ipv[ipn-last] * ipv[ipn-last]
-    + 2.0 * res 
-    + srad * srad - ipv[ipn1] * ipv[ipn1];
+  res = ipv[ipn1] * ipv[ipn1]
+    - 2.0 * res 
+    - exp(-maxtau) * ipv[ipn-last] * ipv[ipn-last];
+
 
   res *= 1.0 / srad / srad;
 
