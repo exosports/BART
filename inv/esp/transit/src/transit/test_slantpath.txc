@@ -32,12 +32,13 @@ const transit_ray_solution *sol=&slantpath;
 const char *ktypes[NWN]={"constant",
 			 "increasing outwards",
 			 "increasing inwards"};
+long ntests=0;
 
 /* \fcnfh
    Call totaltau and compare value returned with what is expected
    analytically 
 */
-void
+int
 test_tau_monorad_norefr_now(PREC_RES *b, /* differential impact
 					    parameter with respect to
 					    maximum value */
@@ -48,27 +49,33 @@ test_tau_monorad_norefr_now(PREC_RES *b, /* differential impact
 			    long wn, /* wavenumber looked */
 			    PREC_RES *res,
 			    int nimp,
-			    char **ipdesc,
-			    int status)
+			    char **ipdesc)
 {
   double acceptrelerror=.0001;
   gsl_interp_accel acc={0,0,0};
-  int i;
+  int i,status=0;
   PREC_RES result;
 
+  test_result("Testing tau() computation for %li radii, extinction %s\n"
+	      ,nrad,ktypes[wn]);
   for(i=0;i<nimp;i++){
     result=totaltau(b[i],rad,refr,ex,nrad,wn,&acc);
-    test_result("While %s extinction, at %s(%.7g),\n"
-		"  observed %.10g, expect %.10g, error %g\n"
-		,ktypes[wn],ipdesc[i],b[i],result,res[i],
+    test_result("=> IP %s(%.3g):\n"
+		"    observed %.10g, expected %.10g (error %g)\n"
+		,ipdesc[i],b[i],result,res[i],
 		fabs(result-res[i])/res[i]);
     if(fabs(result-res[i])/res[i]>acceptrelerror)
-      test_fail(status,"Error bigger than %.5g\n"
-		,acceptrelerror);
-    else
-      test_succeed();
+      status++;
+    ntests++;
   }
+  if (status)
+    test_result("FAIL: %i tests with error bigger than %.5g\n\n"
+		,status,acceptrelerror);
+  else
+    test_result("SUCCEED: all tests with error less than %.5g\n\n"
+		,acceptrelerror);
 
+  return status;
 }
 
 
@@ -81,7 +88,7 @@ int
 test_tau_monorad_constrefr(int nrad,
 			   double alpha)
 {
-  PREC_RES refr[nrad], rad[nrad],*ex[nrad],res[nrad];
+  PREC_RES refr[nrad], rad[nrad],*ex[nrad];
   int i,status=0;
   ex[0]=(PREC_RES *)calloc(nrad*NWN,sizeof(PREC_RES));
   if(!ex[0]){
@@ -91,6 +98,13 @@ test_tau_monorad_constrefr(int nrad,
 	    ,nrad*NWN*sizeof(PREC_RES),__LINE__,__FILE__);
     exit(EXIT_FAILURE);
   }
+
+  //tests at impact parameters: grazing, interpolated-radius, exact-radius,
+  //lowest-radius 
+#define nimpact 4
+  char *ipdesc[nimpact]={"grazing","interpolated","coincident",
+			 "lowest"};
+  PREC_RES res[nimpact];
 
   //Print filling of arrays if necessary to debug
   if(0)
@@ -116,27 +130,16 @@ test_tau_monorad_constrefr(int nrad,
       fprintf(stderr,"%-14.9g%-14.9g%-14.9g%-14.9g%-14.9g\n"
 	      ,rad[i],refr[i],ex[i][0],ex[i][1],ex[i][2]);
   }
-
-
-  //tests at impact parameters: grazing, interpolated-radius, exact-radius,
-  //lowest-radius 
-#define nimpact 4
   PREC_RES b[nimpact]={rad[nrad-2], (rad[(3*nrad)/4-1] + rad[(3*nrad)/4])/2.0,
 		       rad[nrad/2-1], rad[0]};
-  char *ipdesc[nimpact]={"grazing IP","interpolated IP","coincident IP",
-			 "lowest IP"};
 
   //Test the atmosphere with constant extinction at different radius
   //$res=2 ex \sqrt{rm^2-b^2}$
-  /*    PREC_RES res[nimpact]={8.71779788708134710448,
-	13.2287565553229529525,
-	17.32050807568877293528,
-	19.89974874213239909468};*/
-  for(i=0;i<nrad;i++)
+  for(i=0;i<nimpact;i++)
     res[i]=2*alpha*sqrt(rm*rm-b[i]*b[i]);
 
-  test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,0
-			      ,res,nimpact,ipdesc,status);
+  status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,0
+			      ,res,nimpact,ipdesc);
 
   //Test the atmosphere with increasing extinction outwards
   //$res=\alpha ( rm\sqrt{rm^2-b^2} + b^2 \log{\sqrt{(rm/b)^2-1}+rm/b})$
@@ -144,16 +147,12 @@ test_tau_monorad_constrefr(int nrad,
   //{\em define
   //res(b)=alpha*(rm*sqrt(rm*rm-b*b)+b*b*ln(sqrt((rm/b)\^2-1)+rm/b)/ln(10))}
   //\par $ex=\alpha r$
-  /*    PREC_RES res[nimpact]={60.02215842946226671978,
-			   85.57381701507597253714,
-			   100.90122906677784957218,
-			   100.79868387584142893220};*/
-  for(i=0;i<nrad;i++)
+  for(i=0;i<nimpact;i++)
     res[i]=alpha*(rm*sqrt(rm*rm-b[i]*b[i]) +
 		  b[i]*b[i]*log(sqrt(rm*rm/b[i]/b[i]-1)+rm/b[i])/log(10.0));
 
-  test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,1
-			      ,res,nimpact,ipdesc,status);
+  status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,1
+			      ,res,nimpact,ipdesc);
 
   //Test the atmosphere with increasing extinction inwards
   //Test the atmosphere with increasing extinction outwards
@@ -162,17 +161,14 @@ test_tau_monorad_constrefr(int nrad,
   //{\em define
   //res(b)=alpha*(rm*sqrt(rm*rm-b*b)-b*b*ln(sqrt((rm/b)\^2-1)+rm/b)/ln(10))}
   //\par $ex=\alpha (rm-r)$
-  /*    PREC_RES res[nimpact]={27.15582044135120432502,
-			   46.71374853815355698786,
-			   72.30385169010987978062,
-			   98.19880354548256201460};*/
-  for(i=0;i<nrad;i++)
+  for(i=0;i<nimpact;i++)
     res[i]=alpha*(rm*sqrt(rm*rm-b[i]*b[i]) -
 		  b[i]*b[i]*log(sqrt(rm*rm/b[i]/b[i]-1)+rm/b[i])/log(10.0));
 
-  test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,2
-			      ,res,nimpact,ipdesc,status);
+  status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,2
+			      ,res,nimpact,ipdesc);
 
+  free(ex[0]);
   return status;
 }
 
@@ -186,8 +182,15 @@ int test_tau()
 {
   int status = 0;
 
-  //First check for monospaced radius with only 10 samples, with alpha=1
+  //First check for monospaced radius with 10,100,1000 samples, alpha=1
   status += test_tau_monorad_constrefr(10, 1.0);
+  status += test_tau_monorad_constrefr(100, 1.0);
+  status += test_tau_monorad_constrefr(1000, 1.0);
+  
+  //Now with a different alpha
+  status += test_tau_monorad_constrefr(10, 8.0);
+  status += test_tau_monorad_constrefr(100, 8.0);
+  status += test_tau_monorad_constrefr(1000, 8.0);
   
 
   /* TD: test for nonmonospaced radius */
@@ -206,8 +209,13 @@ main(int argc, char *argv[])
   status += test_tau( );
 
   if(status){
-    fprintf(stderr,"\nFail: %i error%s found\n",status,status>1?"s":"");
+    fprintf(stderr,
+	    "\nslantpath.txc result is FAILURE: %i error%s found out of %li test%s\n"
+	    ,status,status>1?"s":"",ntests,ntests>1?"s":"");
     exit(EXIT_FAILURE);
   }
+  fprintf(stderr,
+	  "\nslantpath.txc result is SUCCESS: no errors found out of %li test%s\n"
+	  ,ntests,ntests>1?"s":"");
   exit(EXIT_SUCCESS);
 }

@@ -23,17 +23,8 @@
 #ifndef _TEST_COMMON_H
 #define _TEST_COMMON_H
 
-#define test_fail(stat,fmt,...)        do{              \
-         stat++;                                        \
-         fprintf(stdout,"FAIL: "fmt"\n",__VA_ARGS__);   \
-                                       }while(0)
-
 #define test_result(fmt,...)        do{                 \
-         fprintf(stdout,"Testing... "fmt,__VA_ARGS__);  \
-                                       }while(0)
-
-#define test_succeed()        do{                    \
-         fprintf(stdout,"PASS.\n\n");                \
+         fprintf(stdout,fmt,__VA_ARGS__);  \
                                        }while(0)
 
 #endif
