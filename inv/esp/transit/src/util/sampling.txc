@@ -150,7 +150,7 @@ resample(const int getingx, /* Flag indicating which axis we
       if(ndat==1){
 	for(j=0;j<ndat;j++)
 	  out[j]=y[0];
-	return 0;
+	continue;
       }
 
       switch(flags&SAMP_BITS){
