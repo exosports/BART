@@ -93,9 +93,8 @@ typedef struct {
        (PREC_RES b,		/* impact parameter */
 	PREC_RES *rad,		/* radius array */
 	PREC_RES *refr,		/* refractivity index */
-	PREC_RES ***ex,		/* extinction[rad][iso][nwn] */
+	PREC_RES **ex,		/* extinction[rad][iso][nwn] */
 	long nrad,		/* number of radii elements */
-	short iso,		/* isotope chosen */
 	long wn,		/* wavenumber looked */
 	PREC_RES *dt,		/* differential optical depth [rad].
 				   Auxiliary array */
@@ -182,7 +181,7 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
 
 
 struct extinction{
-  PREC_RES ***e;		/* Extinction value [rad][iso:][wav]*/
+  PREC_RES ***e;		/* Extinction value [iso:][rad][wav]*/
   float maxratio;		/* Maximum Doppler width ratio between
 				   current and last calculated profile.
 				   If the value is greater than this,

@@ -513,7 +513,7 @@ printsample(FILE *out,	/* File pointer to write out */
   if(!(fl&TRF_NOVALUE)){
     fprintf(out,"Values: ");
     for(i=0;i<samp->n;i++)
-      fprintf(out," %8.3g",samp->v[i]);
+      fprintf(out," %12.8g",samp->v[i]);
     fprintf(out,"\n");
   }
 

@@ -50,9 +50,8 @@ static inline PREC_RES
 totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
 	 PREC_RES *rad,		/* radius array */
 	 PREC_RES *refr,	/* refractivity index */
-	 PREC_RES ***ex,	/* extinction[rad][iso][nwn] */
+	 PREC_RES **ex,		/* extinction[rad][nwn] */
 	 long nrad,		/* number of radii elements */
-	 short iso,		/* isotope chosen */
 	 long wn,		/* wavenumber looked */
 	 PREC_RES *dt,		/* differential optical depth [rad].
 				   Auxiliary array */
@@ -114,7 +113,7 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
   //\]\par
   //First for the analitical part of the integral
   PREC_RES analiticfrac=(rad[rs]-r0);
-  res=ex[rs-1][iso][wn]*sqrt((analiticfrac+2*r0)*analiticfrac)/refr[rs-1];
+  res=ex[rs-1][wn]*sqrt((analiticfrac+2*r0)*analiticfrac)/refr[rs-1];
 
   //And now for the numerical integration. Set the variables
   for(i=rs;i<nrad;i++){
@@ -122,7 +121,7 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
     transitASSERT(r0a>1,
 		  "Oops! assert condition not met, b/(nr)=%g",r0a);
 
-    dt[i]=ex[i][iso][wn]/sqrt(1-r0a*r0a);
+    dt[i]=ex[i][wn]/sqrt(1-r0a*r0a);
   }
 
   //and integrate!.\par

@@ -38,7 +38,7 @@ tau(struct transit *tr)
   prop_samp *rad=&tr->rads;
   prop_samp *wn=&tr->wns;
   prop_samp *ip=&tr->ips;
-  PREC_RES ***e=tr->ds.ex->e;
+  PREC_RES **e=tr->ds.ex->e[tr->tauiso];
 
   //index, initial and final values
   long ii,wi;
@@ -80,9 +80,10 @@ tau(struct transit *tr)
   double riw=ip->fct/rfct;
 
   //Need at least three radius to calculate a spline interpolation.
-  if(inn<3)
+  if(inn<4)
     transiterror(TERR_SERIOUS,
-		 "tau(): At least three impact parameters points are required!.\n"
+		 "tau(): At least four impact parameters points are required!.\n"
+		 " (three for spline and one for the analitical part)"
 		 );
 
   transitprint(1,verblevel,
@@ -105,7 +106,7 @@ tau(struct transit *tr)
     //For each resultant impact parameter
     for(ii=inn-1;ii>=0;ii--){
       if((t[ii]=rfct*tr->sol->tauperb(bb[ii]*riw,r,n,e,inn
-					  ,tr->tauiso,wi,dt,acc))
+					  ,wi,dt,acc))
 	 >tau.toomuch){
 	tau.first[wi]=ii;
 	break;
@@ -165,7 +166,7 @@ printtoomuch(char *file, 	/* Filename to save to, a '-' is
 
   fprintf(out,"#Wavelength  Maximum_calculated_depth\n");
   for(w=0;w<wn->n;w++)
-    fprintf(out,"%12.3g%12.3g\n",wn->v[w]*wn->fct,
+    fprintf(out,"%-14.10g%16.12g\n",wn->v[w]*wn->fct,
 	    rad->v[tau->first[w]]*rad->fct);
 
 }

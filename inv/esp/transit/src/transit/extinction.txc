@@ -162,7 +162,9 @@ int extwn (struct transit *tr)
 
   ex->periso=extinctperiso=(tr->fl&TRU_EXTINPERISO);
   //allocate array for extinctions and widths, initialization of second
-  //index will be done in the loop (\lin{kini})
+  //index will be done in the loop (\lin{kini}). Note that to calculate
+  //extinction [rad][iso][wn] will be used, but later (\lin{erearr}) it
+  //will be rearranged to [iso][rad][wn]
   ex->e=(PREC_RES ***)calloc(nrad,sizeof(PREC_RES **));
   *ex->e=(PREC_RES **)calloc(niso*nrad,sizeof(PREC_RES *));
   i=extinctperiso?niso:1;
@@ -218,11 +220,7 @@ int extwn (struct transit *tr)
     //Initialize a voigt profile for every isotope as well for the
     //mass, ziso, densiso and csiso arrays
     for(i=0;i<niso;i++){
-      //If this isotope is marked as ignore (no density info) continue
-      //with the next one.
-      if(iso->isodo[i]==ignore)
-	continue;
-
+      //initialize arrays
       kiso[i]=kiso[0];
       if(extinctperiso)
 	kiso[i]+=nwn*i;
@@ -230,6 +228,11 @@ int extwn (struct transit *tr)
       ziso[i]=iso->isov[i].z[r];
       densiso[i]=iso->isov[i].d[r];
       csiso[i]=iso->isov[i].c[r];
+
+      //If this isotope is marked as ignore (no density info) continue
+      //with the next one.
+      if(iso->isodo[i]==ignore)
+	continue;
 
       //Calculate lorentz with every isotope except those ignored
       alphal[i]=0;
@@ -397,6 +400,21 @@ int extwn (struct transit *tr)
 	free(profile[i][0]);
   }
 
+  //rearrange the extinctions so that the order is now [iso][rad][wn]
+  //\linelabel{erearr}
+  PREC_RES *oldext = ex->e[0][0];
+  free(ex->e[0]);
+  free(ex->e);
+  ex->e=(PREC_RES ***)calloc(niso,sizeof(PREC_RES **));
+  int nni=extinctperiso?niso:1;
+  ex->e[0]=(PREC_RES **)calloc(nni*nrad,sizeof(PREC_RES *));
+  int nnr=extinctperiso?nrad:0;
+  for(i=0;i<niso;i++){
+    ex->e[i]=ex->e[0]+i*nnr;
+    if(!i||extinctperiso)
+      for(j=0;j<nrad;j++)
+	ex->e[i][j]=oldext + nwn*( j + nni*i );
+  }
 
   //free memory that is no longer needed.
   freemem_lineinfotrans(tr->ds.li,&tr->pi);
@@ -536,42 +554,40 @@ restextinct(FILE *in,
 	    struct extinction *ex)
 {
   PREC_NREC nr,nw;
-  short ni;
+  short i;
   size_t rn;
 
   rn=fread(&nr,sizeof(PREC_NREC),1,in);
   if(rn!=1) return -1;
-  rn=fread(&ni,sizeof(short),1,in);
+  rn=fread(&i,sizeof(short),1,in);
   if(rn!=1) return -1;
   rn=fread(&nw,sizeof(PREC_NREC),1,in);
   if(rn!=1) return -1;
 
   //no more than 10 000 isotopes, or 10 000 000 of radii or wavelenth
-  if(nr!=nrad||nw!=nwn||ni!=niso||
+  if(nr!=nrad||nw!=nwn||i!=niso||
      niso>10000||nrad>10000000||nwn>10000000)
     return -2;
 
-  int n=ex->periso?niso:1;
+  int nni=ex->periso?niso:1;
 
-  if((ex->e      =(PREC_RES ***)calloc(nrad      ,sizeof(PREC_RES **)))==NULL)
+  if((ex->e      =(PREC_RES ***)calloc(niso        ,sizeof(PREC_RES **)))==NULL)
     return -3;
-  if((ex->e[0]   =(PREC_RES **) calloc(niso*nrad ,sizeof(PREC_RES * )))==NULL)
+  if((ex->e[0]   =(PREC_RES **) calloc(nni*nrad    ,sizeof(PREC_RES * )))==NULL)
     return -3;
-  if((ex->e[0][0]=(PREC_RES *)  calloc(nrad*n*nwn,sizeof(PREC_RES   )))==NULL)
+  if((ex->e[0][0]=(PREC_RES *)  calloc(nrad*nni*nwn,sizeof(PREC_RES   )))==NULL)
     return -3;
 
-  for(nr=0;nr<nrad;nr++){
-    ex->e[nr]=ex->e[0]+niso*nr;
-    ex->e[nr][0]=ex->e[0][0]+nr*n*nwn;
-    for(ni=1;ni<niso;ni++){
-      ex->e[nr][ni]=ex->e[nr][0];
-      if(ex->periso)
-	ex->e[nr][ni] +=nwn*ni;
-    }
+  rn=fread(ex->e[0][0],sizeof(PREC_RES),nwn*nni*nrad,in);
+  if(rn!=nwn*nni*nrad) return -1;
+
+  int nnr=ex->periso?nrad:0;
+  for(i=0;i<niso;i++){
+    ex->e[i]=ex->e[0]+i*nnr;
+    if(!i||ex->periso)
+      for(nr=0;nr<nrad;nr++)
+	ex->e[i][nr]=ex->e[0][0] + nwn*( nr + nni*i );
   }
-
-  rn=fread(ex->e[0][0],sizeof(PREC_RES),nwn*n*nrad,in);
-  if(rn!=nwn*n*nrad) return -1;
 
   return 0;
 }
@@ -618,3 +634,5 @@ savefile_extwn(struct transit *tr)
 
   return 0;
 }
+
+

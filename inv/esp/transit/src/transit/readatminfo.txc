@@ -48,6 +48,7 @@ static inline void checkposvalue(PREC_RES val, int field, char *file,
 	    -2 Default handling mode inexistent
 	    -3 Something really bad happened!
 	    -4 sum of abundances add up to more than 1
+	    -5 requested isotope is an ignored one
 */
 int getatm(struct transit *tr) /* Containing filename of atmosphere
 				       info file */
@@ -289,12 +290,20 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 
 
   //'tauiso' is the isotope index which tau() will calculate
-  //afterward. Just check that it is between boundaries.
+  //afterwards. Just check that it is between boundaries.
   tr->tauiso=0;
   if(th->tauiso>=0&&
-     th->tauiso<iso->n_i)
-    tr->tauiso=th->tauiso;
-
+     th->tauiso<iso->n_i){
+    if(iso->isodo[th->tauiso]==ignore&&tr->ds.ex->periso){
+      transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		   "Selected isotope to compute tau (#%i: %s) was actually\n"
+		   "ignored according to the atmospheric info\n"
+		   ,th->tauiso,tr->ds.iso->isof[th->tauiso]);
+      return -5;
+    }
+    else
+      tr->tauiso=th->tauiso;
+  }
 
   //Return succes and set progress indicator
   tr->pi|=TRPI_GETATM;
