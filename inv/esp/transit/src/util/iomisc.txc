@@ -400,7 +400,7 @@ fprintpad(FILE *fp,		/* File pointer to print */
 double readds(FILE *fp,
 	      char *c,
 	      char *string,
-	      int maxstring)	/* includes '\0' */
+	      int maxstring)	/* includes '\\0' */
 {
   char *str,*cur,car;
   int salloc=8,ns;
@@ -480,7 +480,7 @@ double readds(FILE *fp,
 double getds(char *in,
 	     char *c,
 	     char *string,
-	     int maxstring)	/* includes '\0' */
+	     int maxstring)	/* includes '\\0' */
 {
   char *cur,car;
   _Bool atleast=0;
@@ -796,7 +796,7 @@ fgets_alloc(FILE *fp, 		/* where to read from */
 
 
 /* \fcnfh
-   Add elements to an array already allocated by aplitnzero_alloc. It
+   Add elements to an array already allocated by splitnzero\_alloc. It
    can also initialize if the a pointer to NULL is given.
 
 */
@@ -903,7 +903,7 @@ splitnzero_alloc(char *string,	/* String to split */
   //element...
   multi=(char **)calloc(nf+1,sizeof(char *));
   *multi=(char *)calloc(len+1,sizeof(char));
-  //\linlabel{looplen}
+  //\linelabel{looplen}
   len=nf=0;
   sp=string;
   while(sp[len]){
@@ -925,7 +925,7 @@ splitnzero_alloc(char *string,	/* String to split */
 
 
 /* \fcnfh
-   Free space allocated by splitnzero_alloc()
+   Free space allocated by splitnzero\_alloc()
  */
 void
 splitnzero_free(char **multi)

@@ -199,7 +199,7 @@ dep: $(DEP_FILES)
 
 
 #making prototype files
-proto: $(PROTO_FILES:.c=.proto)
+proto: check_cproto $(PROTO_FILES:.c=.proto)
 ifdef firstproto
 	@echo
 	@echo "** Probably reruning 'make proto' will clear any error message above **"
@@ -207,6 +207,11 @@ ifdef firstproto
 endif
 %.proto: %.c
 	$(call cmd,proto)
+
+
+#checking that apropiate cproto version is being used
+check_cproto:
+	@exec ./scripts/check_proto.sh $(CPROTO)
 
 
 #include dependencies
