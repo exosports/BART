@@ -106,9 +106,14 @@
 				      parameters */
 
 
-#define TRU_SAMPBITS    0x0000f000
+#define TRU_SAMPBITS    0x00007000
 #define TRU_SAMPLIN	0x00001000
 #define TRU_SAMPSPL     0x00002000
+
+#define TRU_EXTBITS     0x00038000
+#define TRU_EXTINPERISO 0x00008000 /* There won't be a calculation of
+				      extinction in a per isotope array,
+				      all of them should be combined */
 
 
 /* Progress indicator flags */
@@ -218,6 +223,7 @@ typedef struct {          	/* One item per isotope */
 
 typedef struct {		/* One item per atmospheric conditions
 				   in the atmosphere */
+  PREC_ATM *p;			/* Pressure [cgs=dyne/cm2] */
   PREC_ATM *t;			/* Temperature [radius] */
 } prop_atm;
 
@@ -256,8 +262,8 @@ struct atm_data{
   int n_niso;			/* Number of new isotopes */
 };
 
-struct opacities{
-  PREC_RES **k;			/* Opacities value [rad][wav]*/
+struct extinction{
+  PREC_RES ***k;		/* Extinciton value [rad][iso:][wav]*/
   PREC_VOIGTP **al;		/* Lorentz width [rad][iso] */
   PREC_VOIGTP **ad;		/* Doppler width/central wavenumber
 				   [rad][iso] */
@@ -352,7 +358,7 @@ struct transit {		/* Main data structure */
     struct atm_data *at;
     struct transithint *th;	/*  */
     struct lineinfo *li;	/*  */
-    struct opacities *op;
+    struct extinction *ex;
   }ds;
 };
 

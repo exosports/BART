@@ -39,8 +39,8 @@
  */
 static int version=1;
 static int revision=-1;
-extern int verblevel;              /* verbose level, greater than 10 is
-                               only for debuging */
+extern int verblevel;              /* verbose level, greater than 10 
+				      is only for debuging */
 
 static inline PREC_ZREC interpolateTR(PREC_ZREC *x,
 				      PREC_ZREC *y,
@@ -106,7 +106,7 @@ int main (int argc,		/* Number of variables */
   trh.na|=TRH_RI|TRH_RF|TRH_RD;
 
   //Initialization of wavenumber sampling in cm-1. Note that the
-  //opacities are calculated in wavenumber and then optionally
+  //extincitons are calculated in wavenumber and then optionally
   //interpolated to wavelength.
   //Fields from 'trh.wns'.
   //'.i', '.f', '.d', '.n', '.v' are equivalent to the wavelegth
@@ -170,12 +170,13 @@ int main (int argc,		/* Number of variables */
   trh.na|=TRH_FA;
   trh.fl|=TRU_ATMHARDC1P|TRU_SAMPLIN;
 
-  //Initialization of opacity parameters.
+  //Initialization of extinction parameters.
   //'.voigtfine' is the fine binning of voigt
   trh.voigtfine=5;
   trh.timesalpha=50;
   trh.maxratio_doppler=0.001;
   trh.na|=TRH_VF|TRH_TA|TRH_DR;
+  trh.fl|=TRU_EXTINPERISO;
 
   //Command line parameters' processing
   opterr=0;
@@ -351,16 +352,16 @@ int main (int argc,		/* Number of variables */
 		 ,rn);
 
 
-  //Calculates Kappa
-  if((rn=kapwl(&transit))!=0)
+  //Calculates extinction coefficient
+  if((rn=extwn(&transit))!=0)
     transiterror(TERR_SERIOUS,
-		 "kapwl() returned error code %i\n"
+		 "extwn() returned error code %i\n"
 		 ,rn);
 
-  
-  printf("#Wavelength\twaven\tkappa\n");
+
+  printf("#Wavelength\twaven\textinction\n");
   for(rn=0;rn<transit.wns.n;rn++)
-    printf("%10.4f%10.4f%15.5g\n",transit.wns.v[rn],WNU_O_WLU/transit.wns.v[rn],transit.ds.op->k[0][rn]);
+    printf("%10.4f%10.4f%15.5g%15.5g\n",transit.wns.v[rn],WNU_O_WLU/transit.wns.v[rn],transit.ds.ex->k[0][0][rn],transit.ds.ex->k[0][0][rn]/transit.isov[0].d[0]);
 
 
 
@@ -928,7 +929,7 @@ int makeradsample(struct transit *tr)
 
 
 /*\fcnfh
-  kapwl: Scattering parameters should be added at some point here
+  extwn: Scattering parameters should be added at some point here
 
   @returns 0 on success
            -2 if no radii has been specified.
@@ -938,14 +939,14 @@ int makeradsample(struct transit *tr)
 	   -7 timesalpha less than 1
 	   -8 maxratio less than 0
 */
-int kapwl (struct transit *tr)
+int extwn (struct transit *tr)
 {
   prop_samp *rad=&tr->rads;
-  static struct opacities st_op;
-  tr->ds.op=&st_op;
-  struct opacities *op=&st_op;
+  static struct extinction st_ex;
+  tr->ds.ex=&st_ex;
+  struct extinction *ex=&st_ex;
   struct line_transition *line=tr->lt;
-  PREC_RES *k,*wn,dwn,wavn,iniwn,wnmar,wni,wnf;
+  PREC_RES *k,**kiso,*wn,dwn,wavn,iniwn,wnmar,wni,wnf;
   PREC_NSAMP nrad,nwn;
   int neiso,niso;
   int r,i,ln;
@@ -959,6 +960,7 @@ int kapwl (struct transit *tr)
   PREC_CS *csiso;
   PREC_ZREC *ziso;
   PREC_ZREC *mass;
+  _Bool extinctperiso;
 
   transitcheckcalled(tr->pi,"kapwl",5,
 		     "getatm",TRPI_GETATM,
@@ -967,6 +969,7 @@ int kapwl (struct transit *tr)
 		     "makewnsample",TRPI_MAKEWN,
 		     "makeradsample",TRPI_MAKERAD
 		     );
+  transitacceptflag(tr->fl,tr->ds.th->fl,TRU_EXTBITS);
 
   //Check hinted values.
   //'.voigtfine' is the number of fine-bins of the Voigt function
@@ -977,7 +980,7 @@ int kapwl (struct transit *tr)
 		 ,tr->ds.th->voigtfine);
     return -6;
   }
-  transitaccepthint(op->vf,tr->ds.th->voigtfine,
+  transitaccepthint(ex->vf,tr->ds.th->voigtfine,
 		    tr->ds.th->na,TRH_VF);
 
   //'.timesalpha' is the number of alphas from the maximum of either
@@ -989,7 +992,7 @@ int kapwl (struct transit *tr)
 		 ,tr->ds.th->voigtfine);
     return -7;
   }
-  transitaccepthint(op->ta,tr->ds.th->timesalpha,
+  transitaccepthint(ex->ta,tr->ds.th->timesalpha,
 		    tr->ds.th->na,TRH_TA);
 
   //'.maxratio' is the maximum allowed ratio change before recalculating
@@ -1001,7 +1004,7 @@ int kapwl (struct transit *tr)
 		 ,tr->ds.th->maxratio_doppler);
     return -8;
   }
-  transitaccepthint(op->maxratio,tr->ds.th->maxratio_doppler,
+  transitaccepthint(ex->maxratio,tr->ds.th->maxratio_doppler,
 		    tr->ds.th->na,TRH_DR);
      
 
@@ -1046,38 +1049,44 @@ int kapwl (struct transit *tr)
   //allocate array for the voigt profile
   wa=(int *)calloc(niso,sizeof(int));
   profile=(PREC_VOIGT ***)calloc(niso,sizeof(PREC_VOIGT **));
-  *profile=(PREC_VOIGT **)calloc(niso*op->vf,sizeof(PREC_VOIGT *));
+  *profile=(PREC_VOIGT **)calloc(niso*ex->vf,sizeof(PREC_VOIGT *));
 
   //allocate indicative arrays. '.lw' stores info about line's width,
   //and '.cp' indicate when to change arrays.
-  op->lw=(int *)calloc(nwn,sizeof(int));
+  //'.recalc' index from which a recalculation of the voigt profile is
+  //required.
+  ex->lw=(int *)calloc(nwn,sizeof(int));
   wrc=(int *)calloc(niso,sizeof(int));
-  op->recalc=(int **)calloc(niso,sizeof(int *));
-  op->recalc[0]=(int *)calloc(nwn*niso,sizeof(int));
+  ex->recalc=(int **)calloc(niso,sizeof(int *));
+  ex->recalc[0]=(int *)calloc(nwn*niso,sizeof(int));
   for(i=1;i<niso;i++){
-    op->recalc[i]=op->recalc[0]+i*nwn;
-    profile[i]=*profile+i*op->vf;
+    ex->recalc[i]=ex->recalc[0]+i*nwn;
+    profile[i]=*profile+i*ex->vf;
   }
 
-  //allocate array for opacities and widths, initialization of second
+  extinctperiso=(tr->fl&TRU_EXTINPERISO);
+  //allocate array for extinctions and widths, initialization of second
   //index will be done in the loop (\lin{kini})
-  op->k=(PREC_RES **)calloc(nrad,sizeof(PREC_RES *));
-  op->al=(PREC_VOIGTP **)calloc(nrad,sizeof(PREC_VOIGTP *));
-  op->ad=(PREC_VOIGTP **)calloc(nrad,sizeof(PREC_VOIGTP *));
-  *op->k=(PREC_RES *)calloc(nrad*nwn,sizeof(PREC_RES));
-  *op->al=(PREC_VOIGTP *)calloc(nrad*niso,sizeof(PREC_VOIGTP));
-  *op->ad=(PREC_VOIGTP *)calloc(nrad*niso,sizeof(PREC_VOIGTP));
+  ex->k=(PREC_RES ***)calloc(nrad,sizeof(PREC_RES **));
+  ex->al=(PREC_VOIGTP **)calloc(nrad,sizeof(PREC_VOIGTP *));
+  ex->ad=(PREC_VOIGTP **)calloc(nrad,sizeof(PREC_VOIGTP *));
+  kiso=*ex->k=(PREC_RES **)calloc(niso*nrad,sizeof(PREC_RES *));
+  i=extinctperiso?niso:1;
+  ex->k[0][0]=(PREC_RES *)calloc(nrad*i*nwn,sizeof(PREC_RES));
+  *ex->al=(PREC_VOIGTP *)calloc(nrad*niso,sizeof(PREC_VOIGTP));
+  *ex->ad=(PREC_VOIGTP *)calloc(nrad*niso,sizeof(PREC_VOIGTP));
 
   //For each radius (index 'r')
   for(r=0;r<nrad;r++){
 
     transitprint(2,verblevel,"Radius %i: %g[planetary radius]\n",r,rad->v[r]);
 
-    //Initialization of 2nd dimension of opacity array.
+    //Initialization of 2nd dimension of extinction array.
     //\verblabel{kini}
-    k=op->k[r]=*op->k+r*niso;
-    alphal=op->al[r]=*op->al+r*niso;
-    alphad=op->ad[r]=*op->ad+r*niso;
+    i=extinctperiso?niso:1;
+    kiso=ex->k[r]=*ex->k+r*i*nwn;
+    alphal=ex->al[r]=*ex->al+r*niso;
+    alphad=ex->ad[r]=*ex->ad+r*niso;
 
     //set some auxiliary variables.
     temp=tr->atm.t[r];
@@ -1108,6 +1117,9 @@ int kapwl (struct transit *tr)
     //Initialize a voigt profile for every isotope as well for the
     //mass, ziso, densiso and csiso arrays
     for(i=0;i<niso;i++){
+      kiso[i]=kiso[0];
+      if(extinctperiso)
+	kiso[i]+=nwn*i;
       mass[i]=tr->isof[i].m;
       ziso[i]=tr->isov[i].z[r];
       densiso[i]=tr->isov[i].d[r];
@@ -1123,16 +1135,16 @@ int kapwl (struct transit *tr)
       //Following calculates doppler divided by central wavenumber.
       alphad[i]=propto_adop/sqrt(mass[i]);
 
-      if((nwnh[i]=newprofile(profile[i],op->vf,&op->lw[0],dwn,
-			     wn[0]*alphad[i],alphal[i],op->ta)
+      if((nwnh[i]=newprofile(profile[i],ex->vf,&ex->lw[0],dwn,
+			     wn[0]*alphad[i],alphal[i],ex->ta)
 	  )<1)
 	transiterror(TERR_CRITICAL,
 		     "newprofile() returned error code %i on its\n"
 		     "first try for isotope %i.\n"
 		     ,nwnh[i],i);
       w=nwn-1;
-      cp=op->recalc[i];
-      cp[w]=(int)(op->maxratio*wn[w]/dwn+0.5);
+      cp=ex->recalc[i];
+      cp[w]=(int)(ex->maxratio*wn[w]/dwn+0.5);
       if(!cp[w])
 	cp[w]=1;
       wrc[i]=w-cp[w];
@@ -1165,10 +1177,11 @@ int kapwl (struct transit *tr)
       if(w>=nwn)
 	continue;
 
-      subw=op->vf*(wavn-w*dwn-iniwn)/dwn;
+      subw=ex->vf*(wavn-w*dwn-iniwn)/dwn;
       i=line[ln].isoid;
-      cp=op->recalc[i];
+      k=kiso[i];
 
+      cp=ex->recalc[i];
 
       transitASSERT(wa[i]!=-1&&wa[i]<w,
 		    "Database is not ordered!, previous wavenumber was\n"
@@ -1177,7 +1190,7 @@ int kapwl (struct transit *tr)
       if(w<=wrc[i]){
 	//Find number of wavenumbers until the next recalculation
 	cp[wrc[i]]=0;
-	cp[w]=(int)(op->maxratio*wn[w]/dwn+0.5);
+	cp[w]=(int)(ex->maxratio*wn[w]/dwn+0.5);
 	if(!cp[w])
 	  cp[w]=1;
 	wrc[i]=w-cp[w];
@@ -1188,8 +1201,8 @@ int kapwl (struct transit *tr)
 		     "wavenumber %i, next wavenumber %i/%i\n"
 		     ,i,w,wrc[i],nwn);
 
-	if((nwnh[i]=newprofile(profile[i],op->vf,&op->lw[w],dwn,
-			       wn[w]*alphad[i],alphal[i],op->ta)
+	if((nwnh[i]=newprofile(profile[i],ex->vf,&ex->lw[w],dwn,
+			       wn[w]*alphad[i],alphal[i],ex->ta)
 	    )<1)
 	  transiterror(TERR_CRITICAL,
 		       "newprofile() returned error code %i for\n"
@@ -1216,7 +1229,7 @@ int kapwl (struct transit *tr)
 		   "  *%10.3g  //(1-exp(-EXPCTE*wavn/temp))\n"
 		   "  /%10.3g  //mass[i]\n"
 		   "  /%10.3g  //ziso[i]\n"
-		   " = %10.3g   //kap\n"
+		   " = %10.3g   //extinction\n"
 		   ,i,temp,line[ln].elow
 		   ,densiso[i]
 		   ,SIGCTE
