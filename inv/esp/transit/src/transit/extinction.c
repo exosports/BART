@@ -80,7 +80,7 @@ newprofile(PREC_VOIGT **pr,	/* output 2d profile */
   //Afterwards set the number of points in the array, an odd number
   //is preferred so that the central bin can have a maximum value.
   wvgt=bigalpha*ta;
-  nvgt=2*wvgt/dwn+1;
+  nvgt=2*(long)(wvgt/dwn+0.5)+1;
 
   //Basic check that 'lor' or 'dop' are within sense
   if(nvgt<0)
