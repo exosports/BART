@@ -25,6 +25,8 @@
 #include <transit.h>
 #include <math.h>
 
+static int maxline=200;
+
 static void asciierr(int max,	/* Maxiumum length of an accepted line
 				 */ 
 		     char *file, /* File from which we were reading */
@@ -232,8 +234,7 @@ readtwii_bin(FILE *fp,
 int 
 readtwii_ascii(FILE *fp, 
 	       struct transit *tr,
-	       struct lineinfo *li,
-	       int maxline)
+	       struct lineinfo *li)
 {
   char rc;
   char line[maxline+1],*lp,*lp2;
@@ -378,7 +379,7 @@ readtwii_ascii(FILE *fp,
 
   //We don't know beforehand what is the range in ascii storage, it has
   //to be looked for
-  getinifinasctwii(&li->wi,&li->wf,fp, tr->f_line,maxline);
+  getinifinasctwii(&li->wi,&li->wf,fp, tr->f_line);
 
   return 0;
 }
@@ -394,8 +395,7 @@ int
 getinifinasctwii(double *ini,	/* where initial value would be stored */
 		 double *fin,	/* where initial value would be stored */
 		 FILE *fp,	/* file pointer */
-		 char *file,	/* File name of file being read */
-		 int maxline)	/* Length of line array */
+		 char *file)	/* File name of file being read */
 {
   char rc;
   char line[maxline+1],*lp,*lplast;
@@ -681,7 +681,6 @@ int readinfo_twii(struct transit *tr,
   FILE *fp;
   union {char sig[2];short s[2];} sign={{(char)(('T'<<4)|'W'),
 					 (char)(('I'<<4)|'I')}};
-  int maxline=200;
   char line[maxline+1];
   //Auxiliary hint structure pointer
   struct transithint *th=tr->ds.th;
@@ -738,7 +737,7 @@ int readinfo_twii(struct transit *tr,
 
   //if ascii format of TWII read ascii file
   if(li->asciiline){
-    if((rn=readtwii_ascii(fp,tr,li,maxline))!=0){
+    if((rn=readtwii_ascii(fp,tr,li))!=0){
       transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
 		   "readtwii_ascii() return error code %i\n"
 		   ,rn);
@@ -765,6 +764,29 @@ int readinfo_twii(struct transit *tr,
 }
 
 
+
+/* \fcnfh
+   print out an error, it is called by readdatarng if one of the field
+   with transition info is invalid
+
+   @return -5 always
+*/
+int
+invalidfield(char *line,	/* Contents of the line */
+	     char *file,	/* File name */
+	     int nmb,		/* File number */
+	     int fld,		/* field with the error */
+	     char *fldn)	/* Name of the field */
+{
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+	       "Line %i of file '%s': Field %i (%s) has\n"
+	       " not a valid value:\n%s\n"
+	       ,nmb,file,fld,fldn,line);
+  return -5;
+}
+
+
+
 /*
   readdatarng: Read a wavelength range from datafile as returned by
   lineread. This function doesn't check for correct boundaries of
@@ -774,6 +796,9 @@ int readinfo_twii(struct transit *tr,
            -1 on unexpected EOF
 	   -2 file non-seekable
 	   -3 on non-integer number of structure records
+	   -4 First field is not valid while looking for starting
+              point. 
+	   -5 One of the fields contained an invalid flaoating point.
 */
 int readdatarng(struct transit *tr, /* General parameters and
 				       hints */ 
@@ -799,6 +824,7 @@ int readdatarng(struct transit *tr, /* General parameters and
   PREC_LNDATA iniw=li->wavs.i,finw=li->wavs.f;
   PREC_LNDATA wltmp;
   PREC_NREC nfields;
+  char line[maxline+1],rc,*lp,*lp2;
 
   //Open data file 
   if((rn=fileexistopen(tr->f_line,&fp))!=1){
@@ -817,65 +843,130 @@ int readdatarng(struct transit *tr, /* General parameters and
 		 "structure array of length %i, in function readdatarng()\n"
 		 ,alloc);
 
-  /* Finding starting point in datafile 
-     i=(int)((iniw-dbini)/li->dwmark);
-     transitDEBUG(20,verblevel,
-     "iniw: %.6g    dbini: %.6g  dmark:%g\n"
-     ,iniw,dbini,li->dwmark);
-     datafileBS(fp, li->mark[i], li->mark[i+1], iniw,
-  */
-  //find starting point in datafile through binary search.
-  if(fseek(fp,0,SEEK_END)){
-    transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
-		 "File '%s' was not seekable when trying to go to the end\n"
-		 ,tr->f_line);
-    return -2;
-  }
-  offs=li->endinfo;
-  j=ftell(fp);
-  rn=sizeof(struct line_transition);
-  nfields=((j-offs)/rn);
+  //find starting point in datafile.\par
+  //if it is TWII-ascii file then do a sequential search
+  if(li->asciiline){
+    //go to where readinfo\_twii left off and skip all comments, since
+    //then, 'li->asciiline' won't increase
+    fseek(fp,li->endinfo,SEEK_SET);
+    while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
+	  =='#'||rc=='\n');
 
-  if(nfields*rn+offs!=j){
-    transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
-		 "Data file does not have an integer number of records\n"
-		 "Initial byte %i, final %i, record size %i\n"
-		 ,offs,j,rn);
-    return -3;
-  }
+    //'offs' is the number of lines since the first transition.
+    offs=0;
+    while(!feof(fp)){
+      wltmp=strtod(lp,&lp2);
+      //if the first field is not double
+      if(lp==lp2){
+	transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		     "First field of line %i in file '%s' is not a valid\n"
+		     " floating point value:\n%s\n"
+		     ,li->asciiline+offs,tr->f_line);
+	return -4;
+      }
 
-  datafileBS(fp, offs, nfields, iniw, &j, rn);
-  transitDEBUG(20,verblevel,"Beginning found at position %li ",j);
-  //check whether we need to start reading from records further back
-  //because of repetition of wavelength
-  if (j){
-    do{
-      fseek(fp,offs+--j*sizeof(struct line_transition),SEEK_SET);
-      fread(&wltmp,sizeof(PREC_LNDATA),1,fp);
-    }while(wltmp>=iniw);
-    j++;
+      //if this line's central wavelength is bigger or equal to the
+      //requested initial value, then stop loop: we found starting
+      //point.
+      if(wltmp>=iniw)
+	break;
+
+      //skip following comments and increase 'offs'
+      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,
+			 li->asciiline+offs++))
+	    =='#'||rc=='\n');
+    }
   }
-  //seek file to starting point.
-  transitDEBUG(20,verblevel,"and then slide to %li\n",j);
-  fseek(fp,offs+j*sizeof(struct line_transition),SEEK_SET);
+  //if is a binary file then we can look through binary search
+  else{
+    //Check seekability.
+    if(fseek(fp,0,SEEK_END)){
+      transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
+		   "File '%s' was not seekable when trying to go to the end\n"
+		   ,tr->f_line);
+      return -2;
+    }
+    //Find number of fields, checking that there are an integer number
+    //of them
+    offs=li->endinfo;
+    j=ftell(fp);
+    rn=sizeof(struct line_transition);
+    nfields=((j-offs)/rn);
+    if(nfields*rn+offs!=j){
+      transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
+		   "Data file does not have an integer number of records\n"
+		   "Initial byte %i, final %i, record size %i\n"
+		   ,offs,j,rn);
+      return -3;
+    }
+
+    //Do the binary search
+    datafileBS(fp, offs, nfields, iniw, &j, rn);
+    transitDEBUG(20,verblevel,"Beginning found at position %li ",j);
+    //check whether we need to start reading from records further back
+    //because of repetition of wavelength
+    if (j){
+      do{
+	fseek(fp,offs+--j*sizeof(struct line_transition),SEEK_SET);
+	fread(&wltmp,sizeof(PREC_LNDATA),1,fp);
+      }while(wltmp>=iniw);
+      j++;
+    }
+    //seek file to starting point.
+    transitDEBUG(20,verblevel,"and then slide to %li\n",j);
+    fseek(fp,offs+j*sizeof(struct line_transition),SEEK_SET);
+  }
 
   /* Main loop to read all the data. */
-  //read the data
+  //read the data in the main loop
   i=0;
   while(1){
     //enlarge structure if allocated spaced got filled up
     if(i==alloc)
-      if((res=
-	  (struct line_transition *)realloc(res,sizeof(struct line_transition)*(alloc<<=1)))
+      if((res=(struct line_transition *)
+	  realloc(res,sizeof(struct line_transition)*(alloc<<=1)))
 	 ==NULL)
 	transiterror(TERR_CRITICAL|TERR_ALLOC,
 		     "Cannot enlarge memory allocation area\n"
 		     "for array of linetran structure to length %i in\n"
 		     "function readdatarng\n",alloc);
 
-    //read a data structure and warn if EOF was found. This should be OK
-    //if you want to read until the very last line.
-    if(fread(res+i,sizeof(struct line_transition),1,fp)==0){
+    //if ascii, after skipping comments read the 4 fields: center, isoid,
+    //lowE, loggf
+    if(li->asciiline){
+      while((rn=fgetupto(lp=line,maxline,fp,&asciierr,
+			 tr->f_line,li->asciiline+offs++))
+	    =='#'||rc=='\n');
+      //if it is not end of file, read the records.
+      if(rn){
+	res[i].wl=strtod(lp,&lp2);
+	if(lp==lp2) 
+	  return invalidfield(line,tr->f_line,li->asciiline+offs
+			      ,1,"central wavelength");
+	res[i].isoid=strtol(lp2,&lp,0);
+	if(lp==lp2)
+	  return invalidfield(line,tr->f_line,li->asciiline+offs
+			      ,2,"isotope ID");
+	res[i].elow=strtod(lp,&lp2);
+	if(lp==lp2)
+	  return invalidfield(line,tr->f_line,li->asciiline+offs
+			      ,3,"lower energy level");
+	res[i].gf=strtod(lp2,&lp);
+	if(lp==lp2)
+	  return invalidfield(line,tr->f_line,li->asciiline+offs
+			      ,4,"log(gf)");
+      }
+    }
+    //If binary read a data structure
+    else{
+      rn=fread(res+i,sizeof(struct line_transition),1,fp);
+      transitDEBUG(22,verblevel,"Wavelength:%.8f iso:%i\n",res[i].wl,
+		   res[i].isoid);
+    }
+
+    //Warn if EOF was found. This should be OK if you want to read
+    //until the very last line.
+    if(!rn){
       transiterror(TERR_WARNING,
 		   "End-of-file in datafile '%s'.\n"
 		   "Last wavelength read (%f) was in record %i.\n"
@@ -883,8 +974,6 @@ int readdatarng(struct transit *tr, /* General parameters and
 		   ,tr->f_line,res[i-1].wl,i);
       break;
     }
-    transitDEBUG(22,verblevel,"Wavelength:%.8f iso:%i\n",res[i].wl,
-		 res[i].isoid);
 
     /* TD: Skip isotope at read time */
 
