@@ -252,10 +252,11 @@ int main (int argc,		/* Number of variables */
 
   printf("#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
   for(rn=0;rn<transit.wns.n;rn++)
-    printf("%10.4f%10.4f%15.5g%15.5g\n"
-	   ,transit.wns.v[rn],WNU_O_WLU/transit.wns.v[rn],
-	   transit.ds.ex->k[0][0][rn],
-	   transit.ds.ex->k[0][0][rn]*transit.isof[0].m/transit.isov[0].d[0]);
+    if(rn%transit.wns.o==0)
+      printf("%10.4f%10.4f%15.5g%15.5g\n"
+	     ,transit.wns.v[rn],WNU_O_WLU/transit.wns.v[rn],
+	     transit.ds.ex->k[0][0][rn],
+	     transit.ds.ex->k[0][0][rn]*transit.isof[0].m/transit.isov[0].d[0]);
 
 
 
