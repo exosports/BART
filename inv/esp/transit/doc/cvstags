@@ -34,7 +34,10 @@ transit_2-2  : Modulation integration is working now after a thorough
 transit_2-3-rc1 : Never completed. Major changes in atmosphere reading
 		  make change of version to 3.0. 072304. PMR
 transit_3-0-rc1 :
-transit_3-2-rc2 : Big BUG regarding P&S database decoding was found
+transit_3-0-rc2 : Big BUG regarding P&S database decoding was found
                   and exterminated, but the result now is too
                   small. 081304. PMR.
-transit_3-3-rc3 :
+transit_3-0-rc3 : Became 3.0
+transit_3-0     : Computes all right when extinction is coming just
+                  from molecules (no clouds or
+                  scattering). 090104. PMR 

@@ -40,10 +40,11 @@
    2.3: NEVER COMPLETED. Only rc1 was out when important changes in
         reading atmospheric file were done, hence I decided to jump
         straight into version 3.0. 072204. PMR
+   3.0: Extinction due only to molecules is working fine!!
  */
 int version=3;
 int revision=0;
-int version_rc=3;
+int version_rc=-1;
 
 
 #endif /* _VERSION_TR_H */
