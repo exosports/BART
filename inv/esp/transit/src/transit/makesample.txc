@@ -428,6 +428,16 @@ int makeradsample(struct transit *tr)
 		"makeradsample():: called but essential variables are\n"
 		"missing!\n");
 
+  int flag;
+  switch(tr->fl&TRU_SAMPBITS){
+  case TRU_SAMPLIN:
+    flag=SAMP_LINEAR;
+    break;
+  case TRU_SAMPSPL:
+    flag=SAMP_SPLINE;
+    break;
+  }
+
   //We need to set-up limit so that the hinted values are compatible
   //with the atmosphere.
   //If there is only one atmospheric point then no sense in doing a
@@ -473,10 +483,9 @@ int makeradsample(struct transit *tr)
   atmt->t=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   atmt->p=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
 
-  /* TD: interpolation */
   //interpolate temperature values according to radius
-  resamplex(tr->fl,rsamp->n,rsamp->v,nrad,rad->v);
-  resampley(tr->fl,2,
+  resamplex(flag,rsamp->n,rsamp->v,nrad,rad->v);
+  resampley(flag,2,
 	    atms->atm.t,atmt->t,
 	    atms->atm.p,atmt->p);
 
@@ -487,7 +496,7 @@ int makeradsample(struct transit *tr)
   //Density for all the isotopes
   /* TD-BUG: Find out why it fails if I take the brackets away. */
   for(i=0;i<neiso;i++){
-    resampley(tr->fl,2,
+    resampley(flag,2,
 	      atms->isov[i].d,isovt[i].d,
 	      atms->isov[i].q,isovt[i].q);
   }
@@ -500,13 +509,13 @@ int makeradsample(struct transit *tr)
     isovs=li->isov+iso1db;
 
     //interpolate variable isotope info respect to temperature
-    resamplex(tr->fl,li->db[i].t,li->db[i].T,nrad,atmt->t);
+    resamplex(flag,li->db[i].t,li->db[i].T,nrad,atmt->t);
     for(j=0;j<iso->db[i].i;j++){
       transitASSERT(iso1db+j>niso-1,
 		    "trying to reference an isotope (%i) outside\n"
 		    "the extended limit (%i)\n"
 		    ,iso1db+j,niso-1);
-      resampley(tr->fl,2,
+      resampley(flag,2,
 		isovs[j].z,isovt[iso1db+j].z,
 		isovs[j].c,isovt[iso1db+j].c);
     }

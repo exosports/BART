@@ -67,10 +67,10 @@
 #define TRF_NOVALUE     0x00000002 /* Do not print each of the values */
 
 
-/* Flags for mode of telresconv */
-#define TRU_SAMPBITS    SAMP_BITS    
-#define TRU_SAMPLIN     SAMP_LINEAR
-#define TRU_SAMPSPL     SAMP_SPLINE
+/* Flags for mode */
+#define TRU_SAMPBITS    0x00000003
+#define TRU_SAMPLIN     0x00000001
+#define TRU_SAMPSPL     0x00000002
 
 #define TRU_CNVFIX      0x00000000 /* Fix width: accepts one
 			  	      width(float) */ 
