@@ -258,6 +258,55 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
 
 
 /* \fcnfh
+   Computes alternative modulation scheme, obtained when there is no limb
+   darkening or emitted flux. It just computes radius at which optical
+   depth reaches toomuch being totally opaque the planet deeper than
+   that.
+
+   @returns modulation obtained
+            -1 if toomuch was not reached
+*/
+static inline PREC_RES
+modulationm1(PREC_RES *tau,
+	     long last,		/* Index of the last position it has to
+				   be at least 1 */
+	     double toomuch,
+	     prop_samp *ip,	/* Order is descending */
+	     struct geometry *sg)
+{
+  long i,ni=last+1;
+  double ipv[ni],itau[ni];
+  double muchrad;
+  double srad=sg->starrad*sg->starradfct;
+
+  if(tau[last]<toomuch)
+    return -1;
+
+  for(i=0;i<ni;i++){
+    ipv[i]=ip->v[last-i];
+    tau[i]=tau[last-i];
+  }
+
+#ifdef _USE_GSL
+  //Find the level at which toomuch is reached through a spline if there
+  //is enough points
+  if(last>1){
+    gsl_interp_accel acc={0,0,0};
+    gsl_interp *spl=gsl_interp_alloc( gsl_interp_cspline, ni );
+    gsl_interp_init( spl, ipv, itau, ni );
+    muchrad = gsl_interp_eval( spl, ipv, itau, toomuch, &acc );
+    gsl_interp_free(spl);
+  }
+  //use linear interpolation if not enough points or no GSL
+  else
+#endif
+    muchrad = interp_line(itau, ipv, toomuch);
+
+  return muchrad*muchrad/srad/srad;
+}
+
+
+/* \fcnfh
    Computes most basic modulation scheme, obtained when there is no limb
    darkening or emitted flux.
 
@@ -265,7 +314,8 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
 */
 static inline PREC_RES
 modulation1 (PREC_RES *tau,
-	     long last,
+	     long last,		/* Index of the last poisition it has to
+				   be at least 1 */
 	     double toomuch,
 	     prop_samp *ip,	/* Order is descending */
 	     struct geometry *sg)
@@ -405,6 +455,9 @@ modulationperwn (PREC_RES *tau,
   switch(exprlevel){
   case 1:
     return modulation1(tau,last,toomuch,ip,sg);
+    break;
+  case -1:
+    return modulationm1(tau,last,toomuch,ip,sg);
     break;
   default:
     transiterror(TERR_CRITICAL,
