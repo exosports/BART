@@ -25,6 +25,17 @@
 #include <transit.h>
 #include <math.h>
 
+#define checkasctwii(pointer,ignore,fail) do{                                         \
+    while(ignore) pointer++;                                              \
+    if(errno&ERANGE||(fail)){                                             \
+      transiterror(TERR_SERIOUS|TERR_ALLOWCONT,                           \
+		   "Invalid character (%c) or out of range number (%i)\n" \
+		   "found in line %i:\n%s\n"                              \
+		   ,*pointer,(errno&ERANGE)==ERANGE,asciiline,line);      \
+      return -4;                                                          \
+    }                                                                     \
+                               }while(0)
+
 /* TD: data info in a structure */
 
 /*
@@ -218,6 +229,7 @@ notyet(int lin, char *file)
            -1 unavailable file
 	   -2 Filename not hinted
 	   -3 TWII format not valid (missing magic bytes)
+	   -4 Improper TWII-ASCII input
 */
 int readinfo_twii(struct transit *tr,
 		  struct lineinfo *li)
@@ -243,7 +255,7 @@ int readinfo_twii(struct transit *tr,
 					 (char)(('I'<<4)|'I')}};
   int asciiline=0;
   int maxline=200;
-  char line[maxline];
+  char line[maxline],*lp,*lp2;
 
   //Auxiliary structure pointers
   struct transithint *th=tr->ds.th;
@@ -297,60 +309,145 @@ int readinfo_twii(struct transit *tr,
     fgetupto(line,maxline,fp,&asciierr,tr->f_line,1);
   }
 
+  //if ascii format of TWII
   if(asciiline){
+    //Format of the TWII-ASCII file is the following(names should not
+    //contain spaces ('_' are replaced by spaces)
+    //\begin{verb}
+    //<m-database>
+    //<DATABASE1-name> <n1-iso> <nt1-temp>
+    //<TEMP1>    <Z1-1>  ...  <Z1-n1>   <CS1-1>  ...  <CS1-n1>
+    //...
+    //<TEMPnt1> <Znt1-1> ... <Znt1-n1> <CSnt1-1> ... <CSnt1-n1>
+    //<DATABASE2-name> <n2-iso> <nt2-temp>
+    //<TEMP1>    <Z1-1>  ...  <Z1-n2>   <CS1-1>  ...  <CS1-n2>
+    //...
+    //<TEMPnt2> <Znt2-1> ... <Znt2-n2> <CSnt2-1> ... <CSnt2-n2>
+    //....
+    //....
+    //<DATABASEm-name> <nm-iso> <ntm-temp>
+    //<TEMP1>    <Z1-1>  ...  <Z1-nm>   <CS1-1>  ...  <CS1-nm>
+    //...
+    //<TEMPntm> <Zntm-1> ... <Zntm-nm> <CSntm-1> ... <CSntm-nm>
+    //<ISOID1> <CTRWAV1> <LOWENER1> <LOGGF1>
+    //<ISOID2> <CTRWAV2> <LOWENER2> <LOGGF2>
+    //...
+    //...
+    //\end{verb}
+    //get Number of databases from first line
     while((rc=fgetupto(line,maxline,fp,&asciierr,tr->f_line,asciiline++))
 	  =='#');
     if(!rc) notyet(asciiline,tr->f_line);
-
-    /* TD from here!: read ascii-twii input */
-
-
-  }
-  else{
-    //Read datafile name, initial, final wavelength, and
-    //number of datrabases.
-    fread(&li->twii_ver,sizeof(int),1,fp);
-    fread(&li->twii_rev,sizeof(int),1,fp);
-    fread(&iniw,sizeof(double),1,fp);
-    fread(&finw,sizeof(double),1,fp);
-    fread(&ndb,sizeof(int),1,fp);
-
+    ndb=strtol(line,&lp,0);
+    checkasctwii(lp,*lp==' ',*lp!='\0');
     //Allocate pointers according to the number of databases
     tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
     in->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
 
-    //Read info for each database
+    //for each database
     for(i=0;i<ndb;i++){
-      //Allocate and get DB's name
-      fread(&rn,sizeof(int),1,fp);
+      //get name
+      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+	    =='#');
+      if(!rc) notyet(asciiline,tr->f_line);
+      checkasctwii(lp,*lp&&*lp!=' ',*lp=='\0');
+      rn=lp-line;
       tr->db[i].n=(char *)calloc(rn+1,sizeof(char));
-      fread(tr->db[i].n,sizeof(char),rn,fp);
+      strncpy(lp2=tr->db[i].n,line,rn);
       tr->db[i].n[rn]='\0';
-
-      //Get number of temperature and isotopes
-      fread(&nT,sizeof(int),1,fp);
-      fread(&nIso,sizeof(int),1,fp);
+      //change '_' per spaces
+      while(*lp2)
+	if(*lp2++=='_')
+	  lp2[-1]=' ';
+      //go to next field and get number of temperatures and isotopes
+      checkasctwii(lp,*lp==' '||*lp=='\t',*lp=='\0');
+      rn=getnl(2,' ',lp,&nT,&nIso);
+      checkasctwii(lp,0,rn!=2);
       in->db[i].t=nT;
       tr->db[i].i=nIso;
 
-      //allocate for variable and fixed isotop info as well as for
+      //Update acumulated isotope count
+      tr->db[i].s=tr->n_i;
+      tr->n_i+=nIso;
+
+      //allocate for variable and fixed isotope info as well as for
       //temperature points.
       T=in->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
       
-      //read temperature points
-      fread(T,sizeof(PREC_ZREC),nT,fp);
+      //allocate structure that are going to receive the isotope
+      //info. If it is not first database just reallocate then
+      if(!i){
+	in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
+	tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
+	tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
+      }
+      else{
+	in->isov=(prop_isov *)realloc(in->isov,tr->n_i*sizeof(prop_isov));
+	tr->isof=(prop_isof *)realloc(tr->isof,tr->n_i*sizeof(prop_isof));
+	tr->isov=(prop_isov *)realloc(tr->isov,tr->n_i*sizeof(prop_isov));
+      }
+
+      //for each isotope in database
+      for(acumiso=0;acumiso<nIso;acumiso++){
+
+	//read temperature points
+	fread(T,sizeof(PREC_ZREC),nT,fp);
+	/* TD from here!: read ascii-twii input */
+      }      
       
-      //Update acumulated isotope count
-      tr->db[i].s=acumiso;
-      acumiso+=nIso;
     }
-    //read total number of isotopes.
-    fread(&tr->n_i,sizeof(int),1,fp);
-    transitASSERT(tr->n_i!=acumiso,
+
+    fclose(fp);
+
+    //set progres indicator and return success.
+    tr->pi|=TRPI_READINFO;
+    return 1;
+  }
+    
+  //If binary storage
+  //Read datafile name, initial, final wavelength, and
+  //number of datrabases.
+  fread(&li->twii_ver,sizeof(int),1,fp);
+  fread(&li->twii_rev,sizeof(int),1,fp);
+  fread(&iniw,sizeof(double),1,fp);
+  fread(&finw,sizeof(double),1,fp);
+  fread(&ndb,sizeof(int),1,fp);
+
+  //Allocate pointers according to the number of databases
+  tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
+  in->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
+
+  //Read info for each database
+  for(i=0;i<ndb;i++){
+    //Allocate and get DB's name
+    fread(&rn,sizeof(int),1,fp);
+    tr->db[i].n=(char *)calloc(rn+1,sizeof(char));
+    fread(tr->db[i].n,sizeof(char),rn,fp);
+    tr->db[i].n[rn]='\0';
+    
+    //Get number of temperature and isotopes
+    fread(&nT,sizeof(int),1,fp);
+    fread(&nIso,sizeof(int),1,fp);
+    in->db[i].t=nT;
+    tr->db[i].i=nIso;
+
+    //allocate for variable and fixed isotope info as well as for
+    //temperature points.
+    T=in->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
+      
+    //read temperature points
+    fread(T,sizeof(PREC_ZREC),nT,fp);
+    
+    //Update acumulated isotope count
+    tr->db[i].s=acumiso;
+    acumiso+=nIso;
+  }
+  //read total number of isotopes.
+  fread(&tr->n_i,sizeof(int),1,fp);
+  transitASSERT(tr->n_i!=acumiso,
 		"Given number of isotopes (%i), doesn't equal\n"
 		"real total number of isotopes (%i)\n"
 		,tr->n_i,acumiso);
-  }
 
   //allocate structure that are going to receive the isotope info.
   in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
@@ -724,7 +821,7 @@ int readlineinfo(struct transit *transit) /* General parameters and
 	       "Lower Energy Level: %.10g\n"
 	       "Log(gf): %.10g\n"
 	       "Isotope: %i\n"
-	       ,rn,lp->wl,lp->elow, lp->lgf
+	       ,rn,lp->wl,lp->elow, lp->gf
 	       ,(lp->isoid));
 #endif
 
@@ -816,7 +913,7 @@ int main(int argc, char **argv)
       Pprintf(1,"Wavelength: %.10g\n"
 	      ,lp->wl);
       Pprintf(1,"Lower Energy Level: %.10g\nLog(gf): %.10g\n"
-	      , lp->elow, lp->lgf);
+	      , lp->elow, lp->gf);
       printf("Isotope Name: %s\n"
 	     ,tr.isof[lp->isoid].n);
     }

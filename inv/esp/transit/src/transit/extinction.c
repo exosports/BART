@@ -283,7 +283,7 @@ int extwn (struct transit *tr)
 	w=(wavn-iniwn)/dwn;
       transitDEBUG(21,verblevel,
 		   "wavn:%g lgf:%g\n"
-		   ,wavn,line[ln].lgf);
+		   ,wavn,line[ln].gf);
       //If it is beyond the last then just skip that line
       /* out of borders enabled =>change following */
       if(w>=nwn)
@@ -331,7 +331,7 @@ int extwn (struct transit *tr)
                   _log_ gf */
       propto_k=densiso[i]	         //mass density
 	*SIGCTE			         //Constant in sigma
-	*line[ln].lgf		         //Log(gf)
+	*line[ln].gf		         //gf
 	*exp(-EXPCTE*line[ln].elow/temp) //Level population
 	*(1-exp(-EXPCTE*wavn/temp))      //induced emission
 	/mass[i]	        	 //mass
@@ -341,7 +341,7 @@ int extwn (struct transit *tr)
 		   "i=%i   temp=%g   Elow=%g\n"
 		   "k= %10.3g  //densiso[i] \n"
 		   "  *%10.3g  //SIGCTE\n"
-		   "  *%10.3g  //line[ln].lgf\n"
+		   "  *%10.3g  //line[ln].gf\n"
 		   "  *%10.3g  //exp(-EXPCTE*line[ln].elow/temp)\n"
 		   "  *%10.3g  //(1-exp(-EXPCTE*wavn/temp))\n"
 		   "  /%10.3g  //mass[i]\n"
@@ -350,7 +350,7 @@ int extwn (struct transit *tr)
 		   ,i,temp,line[ln].elow
 		   ,densiso[i]
 		   ,SIGCTE
-		   ,line[ln].lgf
+		   ,line[ln].gf
 		   ,exp(-EXPCTE*line[ln].elow/temp)
 		   ,(1-exp(-EXPCTE*wavn/temp))
 		   ,mass[i]

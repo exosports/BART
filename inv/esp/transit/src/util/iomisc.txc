@@ -145,7 +145,9 @@ getad(int n,			/* Number of float field to accept */
 */
 int
 getnd(int n,			/* Number of float field to accept */
-      char sep,			/* separation character */
+      char sep,			/* separation character. If it is a
+				   space, then it also accept tabs as
+				   separation character */
       char *str,		/* String where to look for values */
       ...)			/* Pointers to double value */
 {
@@ -166,7 +168,7 @@ getnd(int n,			/* Number of float field to accept */
   }
 
   do{
-    if(*ptr==sep)
+    if(*ptr==sep||(sep==' '&&*ptr=='\t'))
       rn++;
   }while(*ptr++);
   if(ptr-1==str)
@@ -182,11 +184,76 @@ getnd(int n,			/* Number of float field to accept */
       *in=out;
     }
 
-    while(*ptr!=sep)
+    while(!(*ptr==sep||(sep==' '&&*ptr=='\t')))
       if(!*ptr++){
 	if(rn!=n-1)
 	  fprintf(stderr,
 		  "iomisc:: getnd: the one with %f was not supposed to\n"
+		  "be the last(%ith) field but it is in: %s\n"
+		  ,out,n,str);
+	else
+	  break;
+      }
+    str=ptr+1;
+  }
+  va_end(ap);
+  return nc;
+}
+
+/* \fcnfh
+   get 'n' long format numbers from 'str', they are separated by
+   'sep'. There is no way to know which of the 'n' were really
+   converted. The non-converted doubles are returned untouched.
+
+   @returns number of converted values
+            -x if there were 'x' fields separated by car instead of 'n'.
+*/
+int
+getnl(int n,			/* Number of long fields to accept */
+      char sep,			/* separation character. If it is a
+				   space, then it also accept tabs as
+				   separation character */
+      char *str,		/* String where to look for values */
+      ...)			/* Pointers to long value */
+{
+  char *ptr=str;
+  int rn=1,nc=0;
+  long out,*in;
+  va_list ap;
+
+  switch(sep){
+  default:
+    if(!isdigit(sep)) break;
+  case '-': case '+':
+    fprintf(stderr,
+	    "iomisc:: getnd: invalid separator '%c'. It cannot be a\n"
+	    "digit, '+', nor '-'\n"
+	    ,sep);
+    exit(EXIT_FAILURE);
+  }
+
+  do{
+    if(*ptr==sep||(sep==' '&&*ptr=='\t'))
+      rn++;
+  }while(*ptr++);
+  if(ptr-1==str)
+    return 0;
+  if (rn!=n)
+    return -rn;
+  va_start(ap,str);
+  for(rn=0;rn<n;rn++){
+    in=(long *)va_arg(ap,long *);
+    out=strtol(str,&ptr,0);
+    if(str!=ptr){
+      nc++;
+      *in=out;
+    }
+
+    while(!(*ptr==sep||(sep==' '&&*ptr=='\t')))
+      if(!*ptr++){
+	if(rn!=n-1)
+	  fprintf(stderr,
+		  "iomisc:: getnl: the one with %li was not supposed to\n"
 		  "be the last(%ith) field but it is in: %s\n"
 		  ,out,n,str);
 	else

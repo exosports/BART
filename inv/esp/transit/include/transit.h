@@ -257,7 +257,7 @@ struct iso_noext {
 struct line_transition {	/* One item per transition */
   PREC_LNDATA wl;		//Wavelength in nm.
   PREC_LNDATA elow;		//Lower energy level in cm-1
-  PREC_LNDATA lgf;		//Log(gf) value
+  PREC_LNDATA gf;		//gf value
   short isoid;			//Isotope ID (Assumed to be in range)
 };
 
