@@ -44,7 +44,7 @@ CLATEX  = $(HOME)/bin/clatex.pl
 TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 	    readatminfo.o extinction.o transit.o \
 	    tau.o idxrefraction.o argum.o \
-	    slantpath.o geometry.o observable.o
+	    slantpath.o geometry.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o iomisc.o procopt.o \
 	    numerical.o xmalloc.o

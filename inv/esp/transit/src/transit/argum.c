@@ -91,6 +91,9 @@ int processparameters(int argc, /* number of command line arguments */
     {"verb",required_argument,'v',
      "[+..][-..]","Increase or decrease verbose level by one per\n"
      "each + or -. 0 is the quietest"},
+    {"paramf",ADDPARAMFILE,'p',
+     "filename","Use filename to read parameters in addition to\n"
+     "default files: ./.transitrc"PREPEXTRACFGFILES},
 
     {NULL,HELPTITLE,0,
      NULL,"INPUT/OUTPUT"},
@@ -235,7 +238,7 @@ int processparameters(int argc, /* number of command line arguments */
   char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
   double rf;
 
-  procopt_debug=0;
+  procopt_debug=1;
   opterr=0;
   while(1){
     rn=getprocopt(argc,argv,var_docs,&var_cfg,NULL);
@@ -468,10 +471,10 @@ int processparameters(int argc, /* number of command line arguments */
 	      "Unknown or unsupported option of code %i(%c) passed\n"
 	      "as argument\n"
 	      ,rn,(char)rn);
-      prochelp(EXIT_FAILURE,var_docs,&var_cfg);
+      prochelp(EXIT_FAILURE);
       break;
     case 'h':
-      prochelp(EXIT_SUCCESS,var_docs,&var_cfg);
+      prochelp(EXIT_SUCCESS);
       break;
     case CLA_EXTPERISO:
       hints->fl|=TRU_EXTINPERISO;
