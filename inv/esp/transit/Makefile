@@ -28,9 +28,9 @@ TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 LR_OBJ    = transitstd.o dbread_pands.o
 UT_OBJ    = sampling.o voigt.o procopt.o
 
-UT_HDR    = sampling.h profile.h procopt.h
+UT_HDR    = util/sampling.h util/profile.h util/procopt.h
 
-UT_DEP    = $(UT_OBJ) $(HDR_UT)
+UT_DEP    = $(UT_OBJ) $(UT_HDR)
 TR_DEP    = $(TR_OBJ) transit.h transit.c
 LR_DEP    = $(LR_OBJ) lineread.h lineread.c
 

@@ -26,7 +26,7 @@
 /* TD: atmosphere info  retrieval */
 
 #include <transit.h>
-#include <procopt.h>
+#include <util/procopt.h>
 #include <math.h>
 
 /* Version history:
@@ -307,8 +307,7 @@ int processparameters(int argc, /* number of command line arguments */
      NULL,"Prints default values of the different variable"},
     {"verb",required_argument,'v',
      "[+..][-..]","Increase or decrease verbose level by one per\n"
-     "each + or -. 0 is the quietest, %i is the\n"
-     "noisiest (%i)"},
+     "each + or -. 0 is the quietest"},
 
     {NULL,HELPTITLE,0,
      NULL,"INPUT/OUTPUT"},

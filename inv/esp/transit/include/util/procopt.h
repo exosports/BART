@@ -30,11 +30,11 @@
 extern _Bool procopt_debug;
 
 struct optdocs {
-  const char *name;
-  const int has_arg;
-  const int val;
-  const char *prm;
-  const char *doc;
+  char *name;
+  int has_arg;
+  int val;
+  char *prm;
+  char *doc;
 };
 
 

@@ -1,5 +1,5 @@
 /*
- * procopt.h - Practical command line option parsing
+ * procopt.[tx]c - Practical command line option parsing
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -19,10 +19,12 @@
  * 02111-1307, USA.
  */
 
-#include <procopt.h>
+#include <util/procopt.h>
 
 static char *prgname=NULL;
 _Bool procopt_debug=1;
+int procopt_columns=75;
+
 
 /* \fcnfh
    Process comand line parameters 
@@ -45,7 +47,7 @@ getprocopt(int argc,		/* Number of command line arguments */
     char *cs;
     int getn,shortn;
 
-    if(cs=rindex(*argv,'/'))
+    if((cs=rindex(*argv,'/')))
       cs++;
     else
       cs=*argv;
@@ -140,7 +142,14 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
     "Contact Information: %s\n";
   int indentdoc=20;
   int currind,tmp;
-  char *doc,*fdoc,*docs;
+  char *doc;
+  int cols;
+
+  doc=getenv("COLUMNS");
+  if(!(cols=atoi(doc?doc:"0")))
+    cols=procopt_columns;
+
+  char out[cols+1];
 
   if(cfg->indentdoc)
     indentdoc=cfg->indentdoc;
@@ -206,18 +215,26 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 	}
 	currind+=tmp;
       }
-      currind=indentdoc-currind;
-      if(currind>0)
-	fprintf(stderr,"%*s",currind,"");
-      doc=docs=(char *)calloc(strlen(opts->doc)+1,sizeof(char));
-      strcpy(doc,opts->doc);
-      while(fdoc=index(doc,'\n')){
-	*fdoc='\0';
-	fprintf(stderr," %s\n",doc);
-	doc=fdoc+1;
+      //'tmp' is now spaces to indentation, and 'currind' is either the
+      //'indentdoc' or wherever the pre-indent ends.
+      tmp=indentdoc-currind;
+      if(tmp>0){
+	fprintf(stderr,"%*s",tmp,"");
+	currind+=tmp;
+	tmp=0;
+      }
+      else{
+	fprintf(stderr," ");
+	tmp=1;
+      }
+
+      doc=opts->doc;
+      while((doc=linepad(out,cols-currind-tmp,doc))){
+	tmp=0;
+	fprintf(stderr,"%s\n",out);
 	fprintf(stderr,"%*s",indentdoc,"");
       }
-      fprintf(stderr," %s.\n",doc);
+      fprintf(stderr,"%s.\n",out);
     }
     opts++;
 
@@ -229,3 +246,86 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
   exit(status);
 }
 
+char *linepad_break="-";
+
+/* \fcnfh
+   Align a line by adding spaces in between words, returns a pointer to
+   the position right after the the last word. All newlines and tabs are
+   cosidered spaces. It doesn't add a newline at the end of lines.
+
+@returns pointer to the beggining of new word
+         NULL if all is processed, in this case it doesn't do alignement.
+*/
+char *
+linepad(char *out,		/* output, it has to have a length of at
+				   least nc+1 */
+	int nc,			/* number of columns */
+	char *in)		/* input array */
+{
+  //word count 'wc' initializes to zero, it will be counting
+  //interspaces.'out' index 'o' also initialize to zero.
+  int wc=0,o=0,lasto=0;
+  _Bool prev;
+  out[nc]='\0';
+
+  while(o<nc){
+    //\linlabel{lastline}
+    if(!*in){
+      out[o]='\0';
+      return NULL;
+    }
+    if(*in==' '||*in=='\n'||*in=='\t'){
+      if(!prev){
+	wc++;
+	out[o]=' ';
+	lasto=o;
+	prev=1;
+      }
+    }
+    else{
+      prev=0;
+      out[o]=*in;
+    }
+    in++;
+    o++;
+  }
+  //if there is only one word, which is larger than 'nc' then break with
+  //the string 'linepad_break'.
+  if(!lasto){
+    o=strlen(linepad_break);
+    strcpy(out+nc-o,linepad_break);
+    return in-o;
+  }
+  //'out' is now in the last position before padding.
+  out+=lasto-1;
+  out[1]='\0';
+  //'lasto' now has the number of spaces that need to be added. 'in'
+  //points to the beggining of the first non-processed word in the input
+  //array
+  lasto=nc-lasto;
+  in-=lasto-1;
+  wc--;
+
+  while(lasto){
+    //if there are spaces to add, but only a single word, then something
+    //weird happened, this should have been noticed in \lin{lastline}
+    if(!wc){
+      fprintf(stderr,
+	      "paralign:: critical error, no spaces, no end\n"
+	      "of string, but spaces are to be addded\n");
+      exit(EXIT_FAILURE);
+    }
+    //if space found, then add 'lasto'/'wc' (+1 if they were not an
+    //exact ratio) extra spaces before this word. Diminish 'lasto' by
+    //those many spaces and 'wc' by 1.
+    if(*out==' '){
+      o=(int)((float)lasto/wc--+0.999999999999);
+      while(o--)
+	out[lasto--]=' ';
+    }
+    out[lasto]=*out;
+    out--;
+  }
+
+  return in;
+}
