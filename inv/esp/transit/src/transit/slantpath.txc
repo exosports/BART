@@ -337,6 +337,9 @@ totaltau(PREC_RES b,		/* differential impact parameter with
   case 1:
     return totaltau1(b,rad,*refr,ex,nrad);
     break;
+  case 2:
+    return totaltau2(b,rad,refr,ex,nrad);
+    break;
   default:
     transiterror(TERR_CRITICAL,
 		 "slantpath:: totaltau:: Level %i of detail\n"
