@@ -376,8 +376,8 @@ int extwn (struct transit *tr)
       if(minj<0)
 	minj=0;
       maxj=w+nwnh[i];
-      if(maxj>=nwn)
-	maxj=nwn-1;
+      if(maxj>nwn)
+	maxj=nwn;
 
       //distribute the oscillator strength according to the voigt
       //profile

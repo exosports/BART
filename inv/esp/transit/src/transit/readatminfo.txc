@@ -146,14 +146,14 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     //opened.
     if(verbfileopen(th->f_atm,&tr->fp_atm,"Atmospheric info ")!=1)
       exit(EXIT_FAILURE);
+    transitaccepthint(tr->f_atm,th->f_atm,th->na,TRH_FA);
     inp=file;
+    fp=tr->fp_atm;
 
     //nrad willl be the amount of allocated radius so far.
     nrad=8;
     rads->n=0;
 
-    transiterror(TERR_CRITICAL,
-		 "Read atmospheric data file not yet implemented!\n");
   }
 
   if(inp==invalid)
@@ -204,7 +204,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   case given:
     //if there were given an exact number of masses and names for the
     //extra isotopes.
-    if(onept->nm==onept->ne){
+    if(onept->nm==newiso){
       for(i=0;i<newiso;i++){
 	strcpy(tr->isof[i+tr->n_i].n,onept->n[i]);
 	tr->isof[i+tr->n_i].m=onept->m[i];
@@ -247,29 +247,29 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   //get isotope abundance
   switch(inp){
   case given:
-    if(onept->nq==nmb){
+    if(onept->nq==nmb)
       for(i=0;i<nmb;i++){
 	st_at.isov[i].q[0]=onept->q[i];
 	tr->isodo[i]=fixed;
       }
-      break;
-    }
-    if(onept->nq>0)
+    else if(onept->nq>0)
       free(onept->q);
   case ask:
-    onept->q=(PREC_ATM *)calloc(nmb,sizeof(PREC_ATM));
-    for(i=0;i<nmb;i++){
-      st_at.isov[i].q[0]=onept->q[i]
-	=askforposd(" %s abundance for isotope %s: "
-		    ,st_at.mass?"Mass":"Number",tr->isof[i].n);
-      if(onept->q[i]>=1){
-	transitprint(1,verblevel,
-		     " Abundance given is greater than 1, hence ignoring this\n"
-		     "isotope from now on\n");
-	tr->isodo[i]=ignore;
+    if(onept->nq!=nmb){
+      onept->q=(PREC_ATM *)calloc(nmb,sizeof(PREC_ATM));
+      for(i=0;i<nmb;i++){
+	st_at.isov[i].q[0]=onept->q[i]
+	  =askforposd(" %s abundance for isotope %s: "
+		      ,st_at.mass?"Mass":"Number",tr->isof[i].n);
+	if(onept->q[i]>=1){
+	  transitprint(1,verblevel,
+		       " Abundance given is greater than 1, hence ignoring this\n"
+		       "isotope from now on\n");
+	  tr->isodo[i]=ignore;
+	}
+	else
+	  tr->isodo[i]=fixed;
       }
-      else
-	tr->isodo[i]=fixed;
     }
 
     if((sumq=checkaddmm(st_at.mm,0,st_at.isov,tr->isof,nmb,st_at.mass))
