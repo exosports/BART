@@ -237,6 +237,7 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 	tmp=0;
 	fprintf(stderr,"%s\n",out);
 	fprintf(stderr,"%*s",indentdoc,"");
+	currind=indentdoc;
       }
       fprintf(stderr,"%s.\n",out);
     }
