@@ -12,4 +12,5 @@ transit-1pre3: Atmosphere file reading should be working, tested
                  only for one radius, though
 transit_1-0  : Parameters could be given by atmosphere, command line
                  or interactively. Extinction is computed succesfully.
-                 Uses version 2 of TWII for first time
+                 Uses version 2 of TWII for first time.
+transit_1-1  : Extinction can be computed for more than one radius.

@@ -34,9 +34,12 @@
    0.3: First light, it only calculates Kappa values of it and of
         lorentz widening seem rather high. 102703. Patricio Rojo
    0.5: Lorentz and doppler width work all right now. 102803. PR
+   1.0: One dimensional extinction coefficient working with input from
+        command line or atmopshere file. 032504. PMR
+   1.1: Multi radius working for extinction calculation. 032804. PMR
  */
 static int version=1;
-static int revision=-1;
+static int revision=1;
 extern int verblevel;              /* verbose level, greater than 10 
 				      is only for debuging */
 
