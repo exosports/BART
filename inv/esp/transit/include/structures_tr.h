@@ -202,6 +202,8 @@ struct extinction{
   float ta;			/* number of alphas that have to be
 				   contained in the profile */
   _Bool periso;			/* Extinction per isotope */
+  _Bool *computed;		/* Whether the extinction at the given
+				   radius was computed */
 };
 
 

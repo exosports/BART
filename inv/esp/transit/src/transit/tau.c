@@ -128,6 +128,9 @@ tau(struct transit *tr)
   if(tr->f_toomuch)
     printtoomuch(tr->f_toomuch,tr->ds.tau, &tr->wns, &tr->rads);
 
+  //free memory that is no longer needed.
+  freemem_lineinfotrans(tr->ds.li,&tr->pi);
+  freemem_localextinction();
 
   //Set progress indicator and output tau if requested, otherwise return
   //success.
