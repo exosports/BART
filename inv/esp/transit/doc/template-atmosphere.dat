@@ -1,0 +1,15 @@
+#Comments are ignored
+#An optional line starting with n stores info about the file. Only the
+#first of such lines will be stored
+n <source of this info>
+
+#lines starting with i contain isotope information
+i <mass1-name1>           <mass2-name2>
+i <mass3name3>
+i    <mass4-name4> <mass5name5> <mass6-name6>
+
+#From the first non-isotope line everything is assumed to be
+#atmosphere info
+<radius1> <pressure1> <temperature1> <abund1,iso1> ... <abund1,iso6>
+<radius2> <pressure2> <temperature2> <abund2,iso1> ... <abund2,iso6>
+.....

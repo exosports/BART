@@ -1,9 +1,9 @@
     ********* TRANSIT *********
 
 
-     Readme files for last stable version 1
+  Readme file for last stable version: 1
 
-------------------------------------------------------------------------
+========================================================================
 COMPILATION: to compile from scratch, execute one after the other the
 following commands
 
@@ -11,15 +11,37 @@ following commands
    make dep
    make proto
    make CFLAGS=TRANSITv1 transit
+   make lineread
 
-------------------------------------------------------------------------
-EXECUTING: to get a help of all commands, run
+========================================================================
+EXECUTING LINEREAD: This is used to build the .twii file that transit
+uses, right now it can only read Partridge and Schwenke database as
+prepared by Kurucz. To get a list of options
+
+   lineread -h
+
+ Right now, it can only read the P&S files from the default location,
+hence it requires these two files to run
+    ./oth/pands/h2ofast.bin
+    ./oth/pands/h2opartfn.dat
+
+-----
+ EXAMPLE:
+
+    lineread 1748.5 1828.5 >./res/lineread.twii
+
+========================================================================
+EXECUTING TRANSIT: to get a help of all commands, run
 
    transit -h
 
  Note that not all the commands listed in the help might be available.
 
-------------------------------------------------------------------------
+ By default it reads the following lineinfo file:
+./res/lineread.twii. So, don't forget to use option --linedb if the file
+located somewhere else.
+
+-----
 EXAMPLE: 
 
    transit --oneptn=1.1e3,1340,3 --oneextra 2H2,4He,30CO --oneabund 6.5e-4,1e-10,1e-10,1e-10,.80,.14,.00065 >output.dat

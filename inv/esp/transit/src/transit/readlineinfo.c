@@ -27,13 +27,12 @@
 
 static void asciierr(int max, char *file, int line);
 static void notyet(int lin, char *file);
+static int invalidfield(char *line, char *file, int nmb,
+			int fld, char *fldn);
 
-static inline void datafileBS(FILE *fp,	/* File pointer */
-			      PREC_NREC initial, /* initial index */
-			      PREC_NREC final, /* last index */
-			      double lookfor, /* target value */
-			      PREC_NREC *resultp, /* result index */
-			      int reclength); /* Total length of record */
+static inline void datafileBS(FILE *fp, PREC_NREC initial, PREC_NREC final,
+			      double lookfor, PREC_NREC *resultp,
+			      int reclength); 
 
 #define checkprepost(pointer,pre,omit,post) do{                           \
    if(pre)                                                                \
@@ -78,7 +77,7 @@ readtwii_bin(FILE *fp,
   int acumiso=0;
 
   //Read datafile name, initial, final wavelength, and
-  //number of datrabases.
+  //number of databases.
   fread(&li->twii_ver,sizeof(int),1,fp);
   fread(&li->twii_rev,sizeof(int),1,fp);
   fread(&iniw,sizeof(double),1,fp);
@@ -125,6 +124,7 @@ readtwii_bin(FILE *fp,
   li->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
   tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
   tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
+  tr->isodo=(enum isodo *)calloc(tr->n_i,sizeof(enum isodo));
   transitDEBUG(21,verblevel,
 	       "Isotopes:%i\n"
 	       "databases: %i\n"
@@ -134,6 +134,9 @@ readtwii_bin(FILE *fp,
   //info for each isotope in database
   for(i=0;i<tr->n_i;i++){
     transitDEBUG(21,verblevel,"isotope %i/%i\n",i,tr->n_i);
+
+    //initialize to be modified by getatm()
+    tr->isodo[i]=unclear;
 
     //read database index
     fread(&tr->isof[i].d,sizeof(int),1,fp);
@@ -760,7 +763,7 @@ int readinfo_twii(struct transit *tr,
 
    @return -5 always
 */
-int
+static int
 invalidfield(char *line,	/* Contents of the line */
 	     char *file,	/* File name */
 	     int nmb,		/* File number */

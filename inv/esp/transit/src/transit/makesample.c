@@ -357,7 +357,7 @@ int makeradsample(struct transit *tr)
   //radius sampling
   if(rsamp->n==1){
     rad->f=rad->i=rsamp->v[0];
-    nrad=rad->n=1;
+    rad->n=1;
     rad->d=-1;
     rad->v=(PREC_RES *)calloc(1,sizeof(PREC_RES));
     rad->v[0]=rsamp->v[0];
@@ -367,21 +367,19 @@ int makeradsample(struct transit *tr)
   }
   //If there is more than one atmospheric point
   else{
-    //If no initial value is hinted, we take atmosphere minimum.
-    /* TD: more than one atmospheric point: completion of 'limit', don't
-       forget to set nrad, set 'rsamp' from 'tr->ds.th.rads' if there
-       are zeroes */
-    nrad=rad->n=0;
+    //If no initial value is hinted, we take atmosphere minimum and
+    //maximum.\par
     //do the sampling
     res=makesample(rad,&tr->ds.th->rads,rsamp,
 		   tr->ds.th->na,TRH_RADSFT,0);
   }
+  nrad=rad->n;
 
   //Allocate arrays that will receive the interpolated data
   isovt->d=(PREC_ATM  *)calloc(nrad*neiso,sizeof(PREC_ATM ));
   isovt->q=(PREC_ATM  *)calloc(nrad*neiso,sizeof(PREC_ATM ));
-  isovt->c=(PREC_CS   *)calloc(nrad*niso,sizeof(PREC_CS  ));
-  isovt->z=(PREC_ZREC *)calloc(nrad*niso,sizeof(PREC_ZREC));
+  isovt->c=(PREC_CS   *)calloc(nrad*niso, sizeof(PREC_CS  ));
+  isovt->z=(PREC_ZREC *)calloc(nrad*niso, sizeof(PREC_ZREC));
   for(i=1;i<neiso;i++){
     isovt[i].d=isovt->d+i*nrad;
     isovt[i].q=isovt->q+i*nrad;

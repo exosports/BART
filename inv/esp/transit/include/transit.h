@@ -312,6 +312,7 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
 				   datafile column corresponds [iso] */
   int n_aiso;			/* Number of isotopes in the atmosphere
 				   file */
+  char *info;			/* Optional atmosphere file info */
 };
 
 
@@ -408,6 +409,7 @@ struct transit {		/* Main data structure */
 				   isotopes, of extended isotopes, and
 				   of lines in database */
   PREC_NREC n_l;		/* Number of lines in database */
+  enum isodo *isodo;		/* What to do with every isotope */
 
   long fl;			/* flags */
   long pi;			/* progress indicator */

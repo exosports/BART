@@ -168,6 +168,7 @@ int main (int argc,		/* Number of variables */
   char defile_atm[]="-";
   trh.f_atm=(char *)calloc(strlen(defile_atm)+1,sizeof(char));
   strcpy(trh.f_atm,defile_atm);
+  trh.allowrq=0.1;
   trh.na|=TRH_FA;
   trh.fl|=TRU_ATMASK1P|TRU_SAMPLIN|TRH_MASS;
 
@@ -310,6 +311,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_ONEINT,
     CLA_ONEEXTRA,
     CLA_NUMBERQ,
+    CLA_ALLOWQ,
   };
 
   //General help-option structure
@@ -359,7 +361,7 @@ int processparameters(int argc, /* number of command line arguments */
      NULL,"ATMPOSPHERE OPTIONS"},
     {"number-abund",no_argument,CLA_NUMBERQ,
      NULL,"Indicates that given abundances are by number rather\n"
-     "than by mass.\n"},
+     "than by mass"},
     {"oneptn",required_argument,CLA_ONEPT,
      "press,temp,extra_iso","Don't calculate transit spectra, just\n"
      "obtain spectra for a given pressure and temperature. Unless\n"
@@ -369,7 +371,7 @@ int processparameters(int argc, /* number of command line arguments */
      "mass1name1,mass2name2,...","It only has effect with --onept,\n"
      "a list of the atomic mass and names for the hitherto specified\n"
      "extra isotopes. If it doesn't have the right amount of values,\n"
-     "the program will ask interactively.\n"},
+     "the program will ask interactively"},
     {"oneabund",required_argument,CLA_ONEABUND,
      "q1,...","It also only has effect with --onept, a list of the\n"
      "abundances of the different isotopes. If it is omitted or\n"
@@ -379,6 +381,9 @@ int processparameters(int argc, /* number of command line arguments */
     {"onept-interactive",no_argument,CLA_ONEINT,
      NULL,"Wants to give abundances and pressure and temperature\n"
      "interactively through terminal input"},
+    {"allowq",required_argument,CLA_ALLOWQ,
+     "value","How much less than one is accepted, so that no\n"
+     "warning is issued if abundances don't ad up to that"},
 
     {NULL,HELPTITLE,0,
      NULL,"WAVELENGTH OPTIONS (all in nanometers)"},
@@ -516,7 +521,9 @@ int processparameters(int argc, /* number of command line arguments */
 	/*	longidx++;*/
       }
       break;
-
+    case CLA_ALLOWQ:
+      hints->allowrq=atoi(optarg);
+      break;
     case CLA_NUMBERQ:
       hints->mass=0;
       break;

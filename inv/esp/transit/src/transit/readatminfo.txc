@@ -29,7 +29,10 @@ static void askonemn (struct onept *onept, prop_isof *isof, int n, int nf);
 static void telldefaults(struct transit *tr, struct atm_data *at);
 static void atmerr(int max, char *file, int line);
 static void notyet(int lin, char *file);
-static int checknonmatch(struct transit *tr, struct atm_data *at, enum isodo *isodo);
+static int checknonmatch(struct transit *tr, struct atm_data *at, 
+			 enum isodo *isodo);
+static void invalidfield(char *line, char *file, int nmb,
+			int fld, char *fldn);
 
 
 /* TD: atmosphere info  retrieval */
@@ -48,7 +51,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 				       info file */
 {
   //'nmb' auxiliar variable for a number.
-  int nmb,nrad,i,newiso;
+  int nmb,nrad,i,newiso,lines;
   double sumq;
   //'at' and 'hints' are the atmospheric and hint's structure,
   //respectively
@@ -220,10 +223,10 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     st_at.m=onept->m;
     break;
   case file:
-    if((i=getmnfromfile(fp,&st_at,tr,nmb))<1){
+    if((lines=getmnfromfile(fp,&st_at,tr,nmb))<1){
       transiterror(TERR_SERIOUS,
 		   "getmnfromfile() returned error code %i\n"
-		   ,i);
+		   ,lines);
       exit(EXIT_FAILURE);
     }
     break;
@@ -277,7 +280,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 				      st_at.atm.t[0]);
     break;
   case file:
-    readatmfile(fp,tr,&st_at,rads,nrad);
+    readatmfile(fp,tr,&st_at,rads,nrad,lines);
     break;
   default:
     break;
@@ -537,8 +540,7 @@ getmnfromfile(FILE *fp,
   char line[maxline],*lp;
   int iso=0,i;
   prop_isof *isof=tr->isof;
-  enum isodo isodo[tr->n_i];
-  memset(isodo,unclear,tr->n_i*sizeof(int));
+  enum isodo *isodo=tr->isodo;
 
   at->isoeq=(int *)calloc(nmb,sizeof(int));
   at->m=(PREC_ZREC *)calloc(nmb,sizeof(PREC_ZREC));
@@ -555,6 +557,10 @@ getmnfromfile(FILE *fp,
     while((rc=fgetupto(line,maxline,fp,&atmerr,tr->f_atm,lines++))
 	  =='#'||rc=='\n');
     if(!rc) notyet(lines,tr->f_atm);
+    if(rc=='n'){
+      storename(at,line+1);
+      continue;
+    }
     if(rc!='i')
       break;
     lp=line+1;
@@ -587,14 +593,17 @@ getmnfromfile(FILE *fp,
       //now check if that isotope is one of the given in lineinfo file
       for(i=0;i<tr->n_i;i++){
 	if(strcmp(at->n[iso],isof[i].n)==0){
-	  isodo[i]=atmfile;
 	  at->isoeq[iso]=i;
 	  if(isof[i].m!=at->m[iso])
 	    transiterror(TERR_WARNING,
-			 "Mass of isotope %s, is not the same in the atmosphere\n"
+			 "Mass of isotope %s, is not the same in the"
+			 " atmosphere\n"
 			 "file %s(%g) than in the transition info\n"
 			 "file %s(%g)\n"
-			 ,at->n[iso],tr->f_atm,at->m[iso],tr->f_line,isof[i].m);
+			 ,at->n[iso],tr->f_atm,at->m[iso],
+			 tr->f_line,isof[i].m);
+	  if(isodo[i]!=ignore)
+	    isodo[i]=atmfile;
 	  break;
 	}
       }
@@ -691,17 +700,17 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
   //matched, ignored or given a fixed value.
   for(i=0;i<tr->n_i;i++){
     if(isodo[i]==unclear){
+      //If want to match then ask with what, if ignored or fixed it will
+      //be dealt with later
       isodo[i]=askforposl("Isotope %i is not in atmosphere file, what do you\n"
-			  "want to do? (1:match to some isotope, 2:ignore this\n"
-			  "isotope, 3:give a fixed abundance value) "
+			  "want to do? (1:match to some isotope, 2:ignore"
+			  " this\nisotope, 3:give a fixed abundance value) "
 			  ,tr->isof[i].n);
       if(isodo[i]>3){
 	fprintf(stderr,"Invalid value, Try again!:\n");
 	isodo[i--]=0;
 	continue;
       }
-      //If want to match then ask with what, if ignored or fixed it will
-      //be dealt with later
       if(isodo[i]==atmfile){
 	while(1){
 	  rn=0;
@@ -721,7 +730,6 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
 		       "match %s with: ",at->n[i]);
 	  if(at->isoeq[j-1]==-1){
 	    at->isoeq[j-1]=i;
-	    j=-1;
 	    break;
 	  }
 	  else
@@ -734,10 +742,11 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
   rn=0;
   for(j=0;j<iso;j++)
     if(at->isoeq[j]==-1)
-      rn++;
+      at->isoeq[j]=tr->n_i+rn++;
 
   return rn;
 }
+
 
 /* \fcnfh
    Read abundances and pressure for each isotope and radius
@@ -747,14 +756,21 @@ readatmfile(FILE *fp,		/* File */
 	    struct transit *tr, /* transit info */
 	    struct atm_data *at, /* atmosphere info */
 	    prop_samp *rads,	/* radius sampling */
-	    int nrad)		/* number of allocated radii, note that
+	    int nrad,		/* number of allocated radii, note that
 				   is not returned updated */
+	    int lines)		/* number of lines read so far from the
+				   atmosphere file */
 {
   //find abundance related quantities for each radius
   PREC_NREC r=0;
   int i,nmb=tr->n_e;
+  char rc;
   float allowq=1-tr->allowrq;
   double sumq;
+  char line[maxline],*lp,*lp2;
+  prop_isov *isov=at->isov;
+  int *isoeq=at->isoeq;
+  enum isodo *isodo=tr->isodo;
 
   while(1){
     //allocate if necessary
@@ -765,16 +781,64 @@ readatmfile(FILE *fp,		/* File */
       at->atm.p= (PREC_ATM *)realloc(at->atm.p,nrad*sizeof(PREC_ATM));
       at->mm=(double *)realloc(at->mm,nrad*sizeof(double));
       for(i=0;i<nmb;i++){
-	at->isov[i].d=(PREC_ATM *)realloc(at->isov[i].d,
-					  nrad*sizeof(PREC_ATM));
-	at->isov[i].q=(PREC_ATM *)realloc(at->isov[i].q,
-					  nrad*sizeof(PREC_ATM));
+	isov[i].d=(PREC_ATM *)realloc(isov[i].d,
+				      nrad*sizeof(PREC_ATM));
+	isov[i].q=(PREC_ATM *)realloc(isov[i].q,
+				      nrad*sizeof(PREC_ATM));
       }
     }
 
-    //TD:read file
+    //Skip comments and read next line
+    while((rc=fgetupto(lp=line,maxline,fp,&atmerr,tr->f_atm,lines++))
+	  =='#'||rc=='\n');
+    //if it is end of file, stop loop
+    if(!rc)
+      break;
 
-    if((sumq=checkaddmm(at->mm+r,r,at->isov,tr->isof,nmb,at->mass))
+    rads->v[r]=strtod(lp,&lp2);
+    if(lp==lp2) 
+    invalidfield(line,tr->f_atm,lines
+		 ,1,"radius");
+    at->atm.p[r]=strtod(lp2,&lp);
+    if(lp==lp2)
+      invalidfield(line,tr->f_atm,lines
+		   ,2,"pressure");
+    at->atm.t[r]=strtod(lp,&lp2);
+    if(lp==lp2)
+      invalidfield(line,tr->f_atm,lines
+		   ,3,"temperature");
+
+    //now read abundances for every isotope
+    for(i=0;i<at->n_aiso;i++){
+      transitASSERT(isoeq[i]<0||isoeq[i]>=tr->n_e,
+		    "Assertion failed in file %s, line %i: %i!=[0,%i]\n"
+		    ,__FILE__,__LINE__,isoeq[i],tr->n_e-1);
+      isov[isoeq[i]].q[r]=strtod(lp2,&lp);
+      if(lp==lp2)
+	invalidfield(line,tr->f_atm,lines
+			    ,4+i,"isotope abundance");
+      lp2=lp;
+    }
+
+    for(i=0;i<tr->n_i;i++)
+      if(isodo[i]==fixed){
+	if(!r){
+	  isov[i].q[0]=askforposd(" %s abundance for isotope %s: "
+				  ,at->mass?"Mass":"Number"
+				  ,tr->isof[i].n);
+	  if(isov[i].q[0]>=1){
+	    fprintf(stderr," Abundance for any single isotope has to be"
+		    " less than one\n Try Again!\n");
+	    i--;
+	  }
+	}
+	else
+	  isov[i].q[r]=isov[i].q[0];
+      }
+
+    //calculate mean molecular mass and check whether abundances add up
+    //correctly
+    if((sumq=checkaddmm(at->mm+r,r,isov,tr->isof,nmb,at->mass))
        <allowq)
       transiterror(TERR_WARNING,
 		   "In radius %g(%i), abundances don't add up to 1: %.9g\n"
@@ -782,10 +846,10 @@ readatmfile(FILE *fp,		/* File */
 
     //Calculate densities
     for(i=0;i<nmb;i++)
-      at->isov[i].d[r]=stateeqnford(at->isov[i].q[r],
-				    at->mm[r],
-				    at->atm.p[r],
-				    at->atm.t[r]);
+      isov[i].d[r]=stateeqnford(isov[i].q[r],
+				at->mm[r],
+				at->atm.p[r],
+				at->atm.t[r]);
     r++;
   }
   rads->n=nrad=r;
@@ -794,9 +858,48 @@ readatmfile(FILE *fp,		/* File */
   at->atm.p= (PREC_ATM *)realloc(at->atm.p,nrad*sizeof(PREC_ATM));
   at->mm=(double *)realloc(at->mm,nrad*sizeof(double));
   for(i=0;i<nmb;i++){
-    at->isov[i].d=(PREC_ATM *)realloc(at->isov[i].d,
-				      nrad*sizeof(PREC_ATM));
-    at->isov[i].q=(PREC_ATM *)realloc(at->isov[i].q,
-				      nrad*sizeof(PREC_ATM));
+    isov[i].d=(PREC_ATM *)realloc(isov[i].d,
+				  nrad*sizeof(PREC_ATM));
+    isov[i].q=(PREC_ATM *)realloc(isov[i].q,
+				  nrad*sizeof(PREC_ATM));
   }
+}
+
+/* \fcnfh
+   Stores info about the atmopshere file
+*/
+void
+storename(struct atm_data *at,
+	  char *line)
+{
+  while(*line==' '||*line=='\t') line++;
+
+  int len=strlen(line);
+
+  //only store name if it has not been stored before
+  if(!at->info){
+    at->info=calloc(len+1,sizeof(char));
+    strcpy(at->info,line);
+  }
+}
+
+
+
+/* \fcnfh
+   print out an error, it is called by readdatarng if one of the field
+   with transition info is invalid
+
+*/
+static void
+invalidfield(char *line,	/* Contents of the line */
+	     char *file,	/* File name */
+	     int nmb,		/* File number */
+	     int fld,		/* field with the error */
+	     char *fldn)	/* Name of the field */
+{
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+	       "Line %i of file '%s': Field %i (%s) has\n"
+	       " not a valid value:\n%s\n"
+	       ,nmb,file,fld,fldn,line);
+  exit(EXIT_FAILURE);
 }
