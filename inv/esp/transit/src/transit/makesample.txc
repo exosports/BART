@@ -62,16 +62,16 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
     samp->fct=hint->fct;
 
   //check initial value
-  if(hint->i<=0||hint->i<ref->i+margini){
+  if(hint->i<=0||(margini!=0&&hint->i<ref->i+margini)){
     samp->i=ref->i+margini;
     res|=0x1;
   }
   else if(hint->i>ref->f-marginf){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Hinted initial value for %s sampling, is bigger than\n"
+		 "Hinted initial value for %s sampling(%g) is bigger than\n"
 		 " maximum allowed final value %.8g. Consider final\n"
 		 "margin %.8g\n"
-		 ,TRH_NAME(fl),ref->f-marginf,marginf);
+		 ,TRH_NAME(fl),hint->f,ref->f-marginf,marginf);
     return -1;
   }
   else
@@ -79,16 +79,16 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   si=samp->i;
 
   //check final value
-  if(hint->f<=0||hint->f>ref->f-marginf){
+  if(hint->f<=0||(marginf!=0&&hint->f>ref->f-marginf)){
     samp->f=ref->f-marginf;
     res|=0x2;
   }
   else if(hint->f<ref->i+margini){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Hinted final value for %s sampling is smaller than\n"
-		 "minimum allowed initial value %.8g.\n"
-		 "Consider initial margin %.8g\n"
-		 ,TRH_NAME(fl),ref->i+margini,margini);
+		 "Hinted final value for %s sampling(%g) is smaller\n"
+		 " than minimum allowed initial value %.8g.\n"
+		 " Consider initial margin %.8g\n"
+		 ,TRH_NAME(fl),hint->f,ref->i+margini,margini);
     return -2;
   }
   else
@@ -98,8 +98,8 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   if(samp->f<=si && ref->d>=0 && hint->d>=0){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Initial accepted sampling value (%g) is greater or\n"
-		 "equal than final accepted sample value(%g).\n"
-		 "%s was being hinted\n"
+		 " equal than final accepted sample value(%g).\n"
+		 " %s was being hinted\n"
 		 ,si,samp->f,TRH_NAME(fl));
     return -3;
   }
@@ -303,7 +303,7 @@ int makewnsample(struct transit *tr)
   //convert from wavelength minimum
   fromwav.f=WNU_O_WLU/wsamp->i;
 
-  //set margin. If not given take it from wavelength's (the bigger side)
+  //set margin. If not given take it from wavelength's
   if(trh->wnm>0)
     tr->wnmf=tr->wnmi=trh->wnm;
   else{
@@ -314,13 +314,20 @@ int makewnsample(struct transit *tr)
   //set spacing such that the wavenumber grid has the same number of
   //points as the wavelength grid. Then change reference initial and
   //final point to include margin
+  if(wsamp->n<2&&trh->wns.d<=0)
+    transiterror(TERR_SERIOUS,
+		 "Spacing among wavelengths is too big(%g),\n"
+		 " unusable as reference for wavenumber spacing. And\n"
+		 " because you haven't hinted any wavenumber spacing I\n"
+		 " refuse to continue...\n"
+		 ,wsamp->d);
   fromwav.d=(fromwav.f-fromwav.i)/((wsamp->n-1)/wsamp->o);
   fromwav.f+=tr->wnmf;
   fromwav.i-=tr->wnmi;
 
   //make the sampling
   res=makesample(&tr->wns,&trh->wns,&fromwav,
-		 TRH_WN,tr->wnmi,tr->wnmf);
+		 TRH_WN,0,0);
 
   //set progress indicator if sampling was successful and return status
   if(res>=0)
