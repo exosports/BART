@@ -28,7 +28,7 @@
 defined(KB) || defined(H) || defined(PI) || defined (SIGCTE) ||  \
 defined(EXPCTE) || defined(WNU_O_WLU) ||                         \
 defined(AU) || defined(SUNMASS) || defined(SUNRADIUS) ||         \
-defined(HOUR)                                                    \
+defined(HOUR) ||                                                   \
 defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 #error Some of the preprocessor constants I wanted to use were already defined elsewhere!
 #endif

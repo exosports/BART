@@ -86,8 +86,11 @@
 
 extern const int maxeisoname;
 extern int transit_nowarn;
-extern int verblevel;
+extern int verblevel;              /* verbose level, greater than 10 
+				      is only for debuging */
 extern int maxline;
+extern int version;
+extern int revision;
 
 enum isodo {unclear=0,atmfile,ignore,fixed};
 
@@ -102,6 +105,6 @@ enum isodo {unclear=0,atmfile,ignore,fixed};
 #include <extinction_proto.h>
 #include <idxrefraction_proto.h>
 #include <tau_proto.h>
-
+#include <argum_proto.h>
 
 #endif /* _TRANSIT_H */

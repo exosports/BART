@@ -43,7 +43,7 @@ CLATEX  = $(HOME)/bin/clatex.pl
 #objects and headers
 TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 	    readatminfo.o extinction.o transit.o \
-	    tau.o idxrefraction.o \
+	    tau.o idxrefraction.o argum.o \
 	    slantpath.o geometry.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o iomisc.o procopt.o \

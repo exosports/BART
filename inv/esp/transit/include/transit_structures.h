@@ -19,8 +19,8 @@
  * 02111-1307, USA.
  */
 
-#ifndef _TRANSIT_H
-#define _TRANSIT_H
+#ifndef _TRANSIT_STRUCTURES_H
+#define _TRANSIT_STRUCTURES_H
 
 /***** Structures *****/
 
@@ -343,3 +343,4 @@ struct transit {		/* Main data structure */
 };
 
 
+#endif /* _TRANSIT_STRUCTURES_H */

@@ -37,19 +37,20 @@ setgeom(struct transit *tr)
 
   sg->smaxis=hg->smaxis;
 
-  //If values are not hinted, then use hard coded values: semimajor axis
-  //of 1AU. Timing is mid eclipse. star's mass and radius are solar
+  //If values are not hinted, then use hard coded values: 
   sg->smaxis=hg->smaxis>0?hg->smaxis:1*AU;
   sg->time=hg->time>0?hg->time:0;
   sg->starmass=hg->starmass>0?hg->starmass:1*SUNMASS;
   sg->starrad=hg->starrad>0?hg->starrad:1*SUNRADIUS;
 
-  //If factor values are correctly hinted then use them, otherwise just
-  //assume that values are in cgs.
-  sg->smaxisfct=hg->smaxisfct>0?hg->smaxisfct:1;
-  sg->timefct=hg->timefct>0?hg->timefct:1;
-  sg->starmassfct=hg->starmassfct>0?hg->starmassfct:1;
-  sg->starradfct=hg->starradfct>0?hg->starradfct:1;
+  //If factor values are correctly hinted then use them, otherwise
+  //assume hard coded values. If you change the following lines, don't
+  //forget to change the help page in transit.h that the semimajor axis is in AU; timing is in hours from mid
+  //eclipse; star's mass and radius are in solar units
+  sg->smaxisfct=hg->smaxisfct>0?hg->smaxisfct:AU;
+  sg->timefct=hg->timefct>0?hg->timefct:HOUR;
+  sg->starmassfct=hg->starmassfct>0?hg->starmassfct:SUNMASS;
+  sg->starradfct=hg->starradfct>0?hg->starradfct:SUNRADIUS;
 
   return 0;
 }
