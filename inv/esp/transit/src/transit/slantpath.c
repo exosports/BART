@@ -150,9 +150,15 @@ static inline PREC_RES
 modulation (PREC_RES *tau,
 	    PREC_RES *b,
 	    long nb,
-	    struct geometry *star,
+	    struct geometry *sg,
 	    gsl_interp_accel *acc)
 {
+
+  double intx,integrand;
+
+  double srad=sg->starrad*sg->starradfct;
+  double dint=srad/b[nb-1]*nb;
+
 
 
   return 0;

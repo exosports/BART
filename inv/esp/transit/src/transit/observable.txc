@@ -35,6 +35,13 @@ modulation(struct transit *tr)	/* Main structure */
   prop_samp *ip=&tr->ips;
   prop_samp *wn=&tr->wns;
 
+  transitcheckcalled(tr->pi,"modulation",4,
+		     "tau",TRPI_TAU,
+		     "makeipsample",TRPI_MAKEIP,
+		     "makewnsample",TRPI_MAKEWN,
+		     "setgeom",TRPI_GEOMETRY
+		     );
+
   //output and geometry variables.
   PREC_RES *out=tr->outpret=(PREC_RES *)calloc(wn->n,sizeof(PREC_RES));
   struct geometry *sg=tr->ds.sg;
@@ -42,12 +49,12 @@ modulation(struct transit *tr)	/* Main structure */
 
   PREC_RES *t;
 
+  setgeom(sg,HUGE_VAL,&tr->pi);
 
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
   for(w=0;w<wn->n;w++){
-    t=tau->t[w];
-
-    out[w]=tr->sol->obsperwn(t,ip->v,ip->n,sg,acc);
+    out[w]=tr->sol->obsperwn(tau->t[w],tau->first[w],tau->toomuch,
+			     ip->v,ip->n,sg,acc);
   }
   gsl_interp_accel_free(acc);
 

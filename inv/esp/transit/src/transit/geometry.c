@@ -83,19 +83,24 @@ setgeom(struct geometry *sg,	/* geometry structure */
 				   position, use HUGE_VAL for use the
 				   default value stored in the geometry
 				   structure */
-	int flags)		/* Progress indicator flag */
+	int *flags)		/* Progress indicator flag */
 {
+  transitcheckcalled(*flags,"setgeom",1,
+		     "idxrefrac",TRPI_GEOMETRYHINT
+		     );
+
+  /* TD: include argument of pericenter and longitud of the node in the
+     computations, right now both values are used as zero. */
   //Auxiliary variables in cgs
   double smaxis=sg->smaxis*sg->smaxisfct;
   double ecc=sg->ecc*sg->eccfct;
   double incl=sg->incl*sg->inclfct;
-  double aper=sg->aper*sg->aperfct;
-  double lnode=sg->lnode*sg->lnodefct;
+  //  double aper=sg->aper*sg->aperfct;
+  //  double lnode=sg->lnode*sg->lnodefct;
   double t=(time<HUGE_VAL?time:sg->time)*sg->timefct;
   double mass=sg->starmass*sg->starmassfct;
 
-
-  //set mean angular velocity, mean true anomaly
+  //set mean angular velocity, mean true anomaly, and others variables
   double prec2=1e-12;
   double n=sqrt(GGRAV*mass/smaxis/smaxis/smaxis);
   double Ea=HUGE_VAL,E=n*time;
@@ -105,14 +110,15 @@ setgeom(struct geometry *sg,	/* geometry structure */
   }
   double M=smaxis*(1-ecc*ecc);
   double Delta=smaxis*(1-ecc*cos(E));
-  double v=acos((M-Delta)/ecc/Delta);
+  double cosv=(M-Delta)/ecc/Delta;
+  double sini=sin(incl);
+  double cosi=cos(incl);
 
-  //set X and Y
-  double d=M/(1+ecc*cos(v));
+  //set X and Y.
+  sg->x=Delta*sqrt(cosi*cosi-cosv*cosv);
+  sg->y=Delta*sini;
   
-
-
   //set progress indicator and return.
-  flags|=TRPI_GEOMETRY;
+  *flags|=TRPI_GEOMETRY;
   return 0;
 }

@@ -50,6 +50,8 @@ typedef struct {
 				   integration of optical depth
 				*/ 
        (PREC_RES *tau,
+	long first,
+	PREC_RES tautoomuch,
 	PREC_RES *b,
 	long nb,
 	struct geometry *star,
@@ -243,7 +245,7 @@ struct geometry {
   double starradfct;		/* 'starrad' times this gives cgs
 				   units. */
 
-  double x0,y0;			/* coordinates of the center of the
+  double x,y;			/* coordinates of the center of the
 				   planet with respect to the
 				   star. 'fct' to convert to cgs is
 				   found in rads.fct. These fields are
