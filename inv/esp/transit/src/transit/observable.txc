@@ -64,8 +64,7 @@ modulation(struct transit *tr)	/* Main structure */
   setgeom(sg,HUGE_VAL,&tr->pi);
 
   transitprint(1,verblevel,
-	       "Integrating for each wavelength. For the current range,\n"
-	       "expect %li dots below...\n"
+	       "Integrating for each wavelength. Expect %li dots below...\n"
 	       ,wn->n/512);
   //integrate for each wavelength
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
@@ -116,6 +115,8 @@ printmod(struct transit *tr)
     fprintf(outf,"%12.6f%14.6f%17.7g\n"
 	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
 	    outray->o[rn]);
+
+  fclose(outf);
 
   exit(EXIT_SUCCESS);
 }

@@ -189,8 +189,8 @@ int processparameters(int argc, /* number of command line arguments */
      "data maximum"},
     {"wl-delt",CLA_WAVDELT,required_argument,".2",
      "spacing","Wavelength spacing. It cannot be 0 or less"},
-    {"wl-osamp",CLA_WAVOSAMP,required_argument,"0",
-     "integer","Wavelength oversampling"},
+    {"wl-osamp",CLA_WAVOSAMP,required_argument,"100",
+     "integer","Wavelength oversampling. It cannot be 0 or less"},
     {"wav-fct",CLA_WAVFCT,required_argument,"0",
      "factor","Wavelength factor. Multiplicating wavelength values by\n"
      "this gives centimeters. If 0 or 1 then use centimeters"},
@@ -631,7 +631,7 @@ acceptgenhints(struct transit *tr) /* transit structure */
 
 
   //Accept output file
-  if(tr->f_out)
+  if(th->f_out)
     tr->f_out=th->f_out;
   else{
     tr->f_out=(char *)calloc(2,sizeof(char));

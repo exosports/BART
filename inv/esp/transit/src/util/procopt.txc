@@ -348,7 +348,7 @@ getopt_long_files(int argc,	/* number of arguments */
    Gives command line summary
 */
 void
-prochelp(int status)		/* either 'EXIT_FAILURE' or
+getprochelp(int status)		/* either 'EXIT_FAILURE' or
 				   'EXIT_SUCCESS' */
 {
   char *options="[options]";
