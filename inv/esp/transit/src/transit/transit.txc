@@ -40,7 +40,7 @@
    1.2: (1.1 patch) Exportable and fixes on one P,T point. 033104. PMR
  */
 static int version=2;
-static int revision=-1;
+static int revision=-2;
 extern int verblevel;              /* verbose level, greater than 10 
 				      is only for debuging */
 

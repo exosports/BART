@@ -19,3 +19,7 @@ transit_1-2  : Portability and onept output
 transit_1-3  : '-o', nonnegative abundances, lineread compilation,
    		 significative digits Bug fixes
 transit_2pre1: Just merged from transit_1-2. Started working in tau().
+transit_2pre2: Inlcudes merge from 1-3. and attempted to get an
+               allocation of radius*wavenumber elements... it
+               fails. So from here start working on per wavenumber
+	       allocation to get an observable.
