@@ -40,7 +40,10 @@ int extwn (struct transit *tr)
   static struct extinction st_ex;
   tr->ds.ex=&st_ex;
   struct extinction *ex=&st_ex;
-  struct line_transition *line=tr->lt;
+  PREC_LNDATA *ltgf=tr->lt.gf;
+  PREC_LNDATA *ltelow=tr->lt.elow;
+  PREC_LNDATA *ltwl=tr->lt.wl;
+  short *ltisoid=tr->lt.isoid;
   PREC_RES *k,**kiso,*wn,dwn,wavn,iniwn,wnmar,wni,wnf;
   PREC_NSAMP nrad,nwn;
   int neiso,niso;
@@ -57,7 +60,7 @@ int extwn (struct transit *tr)
   PREC_ZREC *mass;
   _Bool extinctperiso;
 
-  transitcheckcalled(tr->pi,"kapwl",5,
+  transitcheckcalled(tr->pi,"extwn",5,
 		     "getatm",TRPI_GETATM,
 		     "readinfo_twii",TRPI_READINFO,
 		     "readdatarng",TRPI_READDATA,
@@ -261,14 +264,14 @@ int extwn (struct transit *tr)
 
     //Compute the spectra!, proceed for every line.
     for(ln=0;ln<tr->n_l;ln++){
+      /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
-      /*
       if(ln<9000||ln>11000)
 	continue;
       */
 
-      wavn=WNU_O_WLU/line[ln].wl;
+      wavn=WNU_O_WLU/ltwl[ln];
       /* 
 	 when out of borders enabled
 	 if(wavn<wni||wavn>wnf)
@@ -285,14 +288,14 @@ int extwn (struct transit *tr)
 	w=(wavn-iniwn)/dwn;
       transitDEBUG(21,verblevel,
 		   "wavn:%g lgf:%g\n"
-		   ,wavn,line[ln].gf);
+		   ,wavn,ltgf[ln]);
       //If it is beyond the last then just skip that line
       /* out of borders enabled =>change following */
       if(w>=nwn)
 	continue;
 
       subw=ex->vf*(wavn-w*dwn-iniwn)/dwn;
-      i=line[ln].isoid;
+      i=ltisoid[ln];
       k=kiso[i];
 
       //If this isotope is marked as ignore (no density info) continue
@@ -336,13 +339,13 @@ int extwn (struct transit *tr)
       //Calculate opacity coefficient less the voigt spread
       /* CAVEATS: _mass_ densitty 
                   _log_ gf */
-      propto_k=densiso[i]	         //mass density
-	*SIGCTE			         //Constant in sigma
-	*line[ln].gf		         //gf
-	*exp(-EXPCTE*line[ln].elow/temp) //Level population
-	*(1-exp(-EXPCTE*wavn/temp))      //induced emission
-	/mass[i]	        	 //mass
-	/ziso[i];		         //Partition function
+      propto_k=densiso[i]	          //mass density
+	*SIGCTE			          //Constant in sigma
+	*ltgf[ln]		          //gf
+	*exp(-EXPCTE*ltelow[ln]/temp) //Level population
+	*(1-exp(-EXPCTE*wavn/temp))       //induced emission
+	/mass[i]	         	  //mass
+	/ziso[i];		          //Partition function
 
       transitDEBUG(21,verblevel,
 		   "i=%i   temp=%g   Elow=%g\n"
@@ -350,19 +353,19 @@ int extwn (struct transit *tr)
 		   "wl=%.10g  wn=%.10g\n"
 		   "k= %12.5g  //densiso[i] \n"
 		   "  *%12.5g  //SIGCTE\n"
-		   "  *%12.5g  //line[ln].gf\n"
-		   "  *%12.5g  //exp(-EXPCTE*line[ln].elow/temp)\n"
+		   "  *%12.5g  //ltgf[ln]\n"
+		   "  *%12.5g  //exp(-EXPCTE*ltelow[ln]/temp)\n"
 		   "  *%12.5g  //(1-exp(-EXPCTE*wavn/temp))\n"
 		   "  /%12.5g  //mass[i]\n"
 		   "  /%12.5g  //ziso[i]\n"
 		   " = %12.5g   //extinction\n\n"
-		   ,i,temp,line[ln].elow
+		   ,i,temp,ltelow[ln]
 		   ,alphad[i]*wn[w],alphal[i]
-		   ,line[ln].wl,WNU_O_WLU/line[ln].wl
+		   ,ltwl[ln],WNU_O_WLU/ltwl[ln]
 		   ,densiso[i]
 		   ,SIGCTE
-		   ,line[ln].gf
-		   ,exp(-EXPCTE*line[ln].elow/temp)
+		   ,ltgf[ln]
+		   ,exp(-EXPCTE*ltelow[ln]/temp)
 		   ,(1-exp(-EXPCTE*wavn/temp))
 		   ,mass[i]
 		   ,ziso[i]

@@ -48,10 +48,11 @@
    1.6:  Magic bytes are added as the first two in twii. 031504. PMR.
    1.7:  Two files merged into one, marks are no more. 031604. PMR.
    1.8:  Help fixed and default ouput changed. 032404. PMR.
+   2.1:  Change from structure storage to array in TWII
+         file. 032504. PMR. 
 */
-static int lineread_ver=1;
-static int lineread_rev=8;
-
+static int lineread_ver=2;
+static int lineread_rev=1;
 
 
 short gabby_dbread=0;
@@ -98,9 +99,6 @@ int main(int argc,char *argv[])
   float deltw;
   double iniw,finw,parw;
   struct linedb **lineread,**crnt;
-#ifndef NODEBUG
-  struct line_transition *ltest;
-#endif
   PREC_ZREC ***Z,**T,**mass;
   PREC_LNDATA tmin;
   int *nT,*nIso,*dbid,totaliso,adb;
@@ -249,9 +247,7 @@ int main(int argc,char *argv[])
 				    tempp,T+left,mass+left,nT+left,
 				    nIso+left,isonames+left))>0){
 	crnt[left]=lineread[left];
-	transitDEBUG(12,verblevel,"wlprev:%f\nwlnew:%f\n"
-		     ,lineread[left]->wl,
-		     (ltest=(void *)&(crnt[left]->wl))->wl);
+
 	if(left)
 	  dbid[left]=dbid[left-1]+nIso[left-1];
 	else
@@ -314,8 +310,12 @@ int main(int argc,char *argv[])
 	 storing its database information in the array 'dbinfo' */
       crnt[pmin]->isoid=dbid[pmin]+crnt[pmin]->isoid;
 
-      if(!dummy)
-	fwrite(&(crnt[pmin]->wl),sizeof(struct line_transition),1,fpout);
+      if(!dummy){
+	fwrite(&(crnt[pmin]->wl),sizeof(PREC_LNDATA),1,fpout);
+	fwrite(&(crnt[pmin]->isoid),sizeof(short),1,fpout);
+	fwrite(&(crnt[pmin]->elow),sizeof(PREC_LNDATA),1,fpout);
+	fwrite(&(crnt[pmin]->lgf),sizeof(PREC_LNDATA),1,fpout);
+      }
       dindex++;
 
       if(++crnt[pmin]-lineread[pmin]>=nlines[pmin]){

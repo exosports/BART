@@ -80,6 +80,13 @@ readtwii_bin(FILE *fp,
   //number of databases.
   fread(&li->twii_ver,sizeof(int),1,fp);
   fread(&li->twii_rev,sizeof(int),1,fp);
+
+  if(li->twii_ver!=compattwiiversion)
+    transiterror(TERR_SERIOUS,
+		 "The version of the TWII file: %i.%i is not complatible with\n"
+		 "this version of transit, which can only read version %i\n"
+		 ,li->twii_ver,li->twii_rev,compattwiiversion);
+
   fread(&iniw,sizeof(double),1,fp);
   fread(&finw,sizeof(double),1,fp);
   fread(&ndb,sizeof(int),1,fp);
@@ -799,8 +806,6 @@ int readdatarng(struct transit *tr, /* General parameters and
 {
   //'fp' datafile file pointer.
   //'alloc' number of allocated line\_transition structures.
-  //'res' is an auxiliar pointer to tr->lt, where line transition
-  //information is kept.
   //'iniw' and 'finw' are auxiliary to keep chosen extractable range.
   //'wltemp' a temporal variable to store wavelength.
   /*
@@ -812,7 +817,11 @@ int readdatarng(struct transit *tr, /* General parameters and
   long i,j;
   long offs;
   PREC_NREC alloc=8;
-  struct line_transition *res;
+  PREC_LNDATA *ltgf;
+  PREC_LNDATA *ltelow;
+  PREC_LNDATA *ltwl;
+  short *ltisoid;
+
   PREC_LNDATA iniw=li->wavs.i,finw=li->wavs.f;
   PREC_LNDATA wltmp;
   PREC_NREC nfields;
@@ -829,8 +838,12 @@ int readdatarng(struct transit *tr, /* General parameters and
   }
 
   //Allocate initial room for line transition's structure
-  if((res=(struct line_transition *)
-      calloc(alloc,sizeof(struct line_transition)))==NULL)
+  ltgf=(PREC_LNDATA *)calloc(alloc,sizeof(PREC_LNDATA));
+  ltwl=(PREC_LNDATA *)calloc(alloc,sizeof(PREC_LNDATA));
+  ltelow=(PREC_LNDATA *)calloc(alloc,sizeof(PREC_LNDATA));
+  ltisoid=(short *)calloc(alloc,sizeof(short));
+
+  if(!ltgf||!ltwl||!ltelow||!ltisoid)
     transiterror(TERR_CRITICAL|TERR_ALLOC,
 		 "Cannot allocate memory for linetran\n"
 		 "structure array of length %i, in function readdatarng()\n"
@@ -885,7 +898,7 @@ int readdatarng(struct transit *tr, /* General parameters and
     //of them
     offs=li->endinfo;
     j=ftell(fp);
-    rn=sizeof(struct line_transition);
+    rn=sizeof(short)+3*sizeof(PREC_LNDATA);
     nfields=((j-offs)/rn);
     if(nfields*rn+offs!=j){
       transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
@@ -902,14 +915,14 @@ int readdatarng(struct transit *tr, /* General parameters and
     //because of repetition of wavelength
     if (j){
       do{
-	fseek(fp,offs+--j*sizeof(struct line_transition),SEEK_SET);
+	fseek(fp,offs+--j*rn,SEEK_SET);
 	fread(&wltmp,sizeof(PREC_LNDATA),1,fp);
       }while(wltmp>=iniw);
       j++;
     }
     //seek file to starting point.
     transitDEBUG(21,verblevel,"and then slide to %li\n",j);
-    fseek(fp,offs+j*sizeof(struct line_transition),SEEK_SET);
+    fseek(fp,offs+j*rn,SEEK_SET);
   }
 
   /* Main loop to read all the data. */
@@ -917,15 +930,19 @@ int readdatarng(struct transit *tr, /* General parameters and
   i=0;
   while(1){
     //enlarge structure if allocated spaced got filled up
-    if(i==alloc)
-      if((res=(struct line_transition *)
-	  realloc(res,sizeof(struct line_transition)*(alloc<<=1)))
-	 ==NULL)
+    if(i==alloc){
+      alloc<<=1;
+      ltisoid=(short *)      realloc(ltisoid,alloc*sizeof(short)      );
+      ltgf=   (PREC_LNDATA *)realloc(ltgf   ,alloc*sizeof(PREC_LNDATA));
+      ltwl=   (PREC_LNDATA *)realloc(ltwl   ,alloc*sizeof(PREC_LNDATA));
+      ltelow= (PREC_LNDATA *)realloc(ltelow ,alloc*sizeof(PREC_LNDATA));
+
+      if(!ltgf||!ltwl||!ltelow||!ltisoid)
 	transiterror(TERR_CRITICAL|TERR_ALLOC,
 		     "Cannot enlarge memory allocation area\n"
 		     "for array of linetran structure to length %i in\n"
 		     "function readdatarng\n",alloc);
-
+    }
     //if ascii, after skipping comments read the 4 fields: center, isoid,
     //lowE, loggf
     if(li->asciiline){
@@ -934,19 +951,19 @@ int readdatarng(struct transit *tr, /* General parameters and
 	    =='#'||rc=='\n');
       //if it is not end of file, read the records.
       if(rn){
-	res[i].wl=strtod(lp,&lp2);
+	ltwl[i]=strtod(lp,&lp2);
 	if(lp==lp2) 
 	  return invalidfield(line,tr->f_line,li->asciiline+offs
 			      ,1,"central wavelength");
-	res[i].isoid=strtol(lp2,&lp,0);
+	ltisoid[i]=strtol(lp2,&lp,0);
 	if(lp==lp2)
 	  return invalidfield(line,tr->f_line,li->asciiline+offs
 			      ,2,"isotope ID");
-	res[i].elow=strtod(lp,&lp2);
+	ltelow[i]=strtod(lp,&lp2);
 	if(lp==lp2)
 	  return invalidfield(line,tr->f_line,li->asciiline+offs
 			      ,3,"lower energy level");
-	res[i].gf=strtod(lp2,&lp);
+	ltgf[i]=strtod(lp2,&lp);
 	if(lp==lp2)
 	  return invalidfield(line,tr->f_line,li->asciiline+offs
 			      ,4,"log(gf)");
@@ -954,9 +971,12 @@ int readdatarng(struct transit *tr, /* General parameters and
     }
     //If binary read a data structure
     else{
-      rn=fread(res+i,sizeof(struct line_transition),1,fp);
-      transitDEBUG(22,verblevel,"Wavelength:%.8f iso:%i\n",res[i].wl,
-		   res[i].isoid);
+      rn=fread(ltwl+i,sizeof(PREC_LNDATA),1,fp);
+      fread(ltisoid+i,sizeof(short),1,fp);
+      fread(ltelow+i,sizeof(PREC_LNDATA),1,fp);
+      fread(ltgf+i,sizeof(PREC_LNDATA),1,fp);
+      transitDEBUG(22,verblevel,"Wavelength:%.8f iso:%i\n",ltwl[i],
+		   ltisoid[i]);
     }
 
     //Warn if EOF was found. This should be OK if you want to read
@@ -967,14 +987,14 @@ int readdatarng(struct transit *tr, /* General parameters and
 		   "Last wavelength read (%f) was in record %i.\n"
 		   "If you are reading the whole range, you can safely ignore\n"
 		   "this warning.\n\n"
-		   ,tr->f_line,res[i-1].wl,i);
+		   ,tr->f_line,ltwl[i-1],i);
       break;
     }
 
     /* TD: Skip isotope at read time */
 
     //End if we passed maximum required wavelength
-    if(res[i].wl>finw)
+    if(ltwl[i]>finw)
       break;
 
     i++;
@@ -985,9 +1005,14 @@ int readdatarng(struct transit *tr, /* General parameters and
 
   //Realloc final strucuture array to its required size and set the
   //pointer in the transit structure.
-  if((tr->lt=
-      (struct line_transition *)realloc(res,sizeof(struct line_transition)*i))
-     ==NULL){
+  alloc=i;
+  struct line_transition *lt=&tr->lt;
+  lt->isoid=(short *)      realloc(ltisoid,alloc*sizeof(short)      );
+  lt->gf   =(PREC_LNDATA *)realloc(ltgf   ,alloc*sizeof(PREC_LNDATA));
+  lt->wl   =(PREC_LNDATA *)realloc(ltwl   ,alloc*sizeof(PREC_LNDATA));
+  lt->elow =(PREC_LNDATA *)realloc(ltelow ,alloc*sizeof(PREC_LNDATA));
+
+  if(!ltgf||!ltwl||!ltelow||!ltisoid){
     transiterror(TERR_CRITICAL|TERR_ALLOC,
 		 "Cannot diminish memory allocation area\n"
 		 "for array of linetran structure to length %i in\n"
@@ -1093,9 +1118,6 @@ int readlineinfo(struct transit *transit) /* General parameters and
 		 "readdatarng() returned an error code %li\n"
 		 ,transit->n_l);
   transitprint(1,verblevel, "done%c\n",'.');
-  transitDEBUG(21,verblevel,
-	       "Record 97: wav: %.10g\n"
-	       ,transit->lt[97].wl);
 
   //Status so far
   transitprint(2,verblevel,
@@ -1112,15 +1134,14 @@ int readlineinfo(struct transit *transit) /* General parameters and
 
 #ifndef NODEBUG_TRANSIT
   rn=97; //Some random number to test
-  struct line_transition *lp=transit->lt+rn;
   transitDEBUG(21,verblevel,
 	       " * And the record %li has the following info\n"
 	       "Wavelength: %.10g\n"
 	       "Lower Energy Level: %.10g\n"
 	       "Log(gf): %.10g\n"
 	       "Isotope: %i\n"
-	       ,rn,lp->wl,lp->elow, lp->gf
-	       ,(lp->isoid));
+	       ,rn,transit->lt.wl[rn],transit->lt.elow[rn], transit->lt.gf[rn]
+	       ,transit->lt.isoid[rn]);
 #endif
 
   transitDEBUG(21,verblevel,
@@ -1140,7 +1161,10 @@ int main(int argc, char **argv)
   struct transithint th;
   struct lineinfo *li;
   int i,ti1,nbins,ans;
-  struct line_transition *lp,*lines;
+  PREC_LNDATA *ltgf;
+  PREC_LNDATA *ltelow;
+  PREC_LNDATA *ltwl,*twl;
+  short *ltisoid,*tisoid;
 
   tr.ds.th=&th;
   th.na=0;
@@ -1149,7 +1173,7 @@ int main(int argc, char **argv)
 
   th.m=0.001;
   th.na|=TRH_WM;
-  char defile_line[]="./res/lineread.inf";
+  char defile_line[]="./res/lineread.twii";
   th.f_line=(char *)calloc(strlen(defile_line)+1,sizeof(char));
   strcpy(th.f_line,defile_line);
 
@@ -1168,7 +1192,10 @@ int main(int argc, char **argv)
 	       "range: %.10g to %.10g\n"
 	       ,tr.ds.li->wi,tr.ds.li->wf);
   li=tr.ds.li;
-  lines=tr.lt;
+  ltgf=tr.lt.gf;
+  ltwl=tr.lt.wl;
+  ltisoid=tr.lt.isoid;
+  ltelow=tr.lt.elow;
 
   ti1=(int)(log10(tr.n_l)+1);
 
@@ -1183,16 +1210,17 @@ int main(int argc, char **argv)
   float szb=(li->wf-li->wi)/nbins;
   double endb;
  
-  lp=lines;
+  twl=ltwl;
+  tisoid=ltisoid;
   if(!nbins)
     Pprintf(1,"  hmmm, you chose 0 bins!\n");
   for(i=0;i<nbins;i++){
     memset(qb,0,sizeof(*qb)*4);
     endb=li->wi+(i+1)*szb;
     //    PPprintf(1,2,"KK %g %f\n",lp->wl,endb);
-    while((lp->wl)<endb&&lp-lines<tr.n_l){
-      qb[lp->isoid]++;
-      lp++;
+    while(*twl<endb&&twl-ltwl<tr.n_l){
+      qb[*tisoid++]++;
+      twl++;
     }
 
     Pprintf(1," %*i = %i + %i + %i + %i lines shorter than %.3f\n"
@@ -1207,13 +1235,12 @@ int main(int argc, char **argv)
 
   while(Pgeti(0,&ans,(int)(log10(tr.n_l))+1)>=0){
     if(ans<tr.n_l&&ans>=0){
-      lp=lines+ans;
       Pprintf(1,"Wavelength: %.10g\n"
-	      ,lp->wl);
+	      ,ltwl[ans]);
       Pprintf(1,"Lower Energy Level: %.10g\nLog(gf): %.10g\n"
-	      , lp->elow, lp->gf);
+	      , ltelow[ans], ltgf[ans]);
       printf("Isotope Name: %s\n"
-	     ,tr.isof[lp->isoid].n);
+	     ,tr.isof[ltisoid[ans]].n);
     }
     else
       Pprintf(1,"\nInvalid record number, so ...");

@@ -3,8 +3,9 @@
 
 
 #directories
+PREFIX=..
 SRC=./src
-BIN=../bin
+BIN=$(PREFIX)/bin
 INCL=./include
 INCL_UT=$(INCL)/util
 
@@ -68,6 +69,9 @@ LIBS  = -lX11 -lP -lm
 # $? modified dependencies
 ################################
 
+dbgreadline: $(UT_DEP) transitstd.c readlineinfo.c
+	$(CC) $(STDFLAGS) -DDBGREADLINEINFO -o $@ $(filter %.c %.o,$^) $(LIBS)
+	cp -pf dbgreadline $(BIN)
 
 transit: $(UT_DEP) $(TR_DEP)
 	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)

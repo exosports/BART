@@ -6,7 +6,10 @@ transit-1pre1: ASCII should be working
            KB: Lorentz profile only includes one specie rather
                  than an average 
 transit-1pre2: Multiple extra isotopes is working, everything but
-               reading atmosphere file for release v1. Well, only
-               linear interpolation.
+                 reading atmosphere file for release v1. Well, only
+                 linear interpolation.
 transit-1pre3: Atmosphere file reading should be working, tested
-               only for one radius, though
+                 only for one radius, though
+transit_1.0  : Parameters could be given by atmosphere, command line
+                 or interactively. Extinction is computed succesfully.
+                 Uses version 2 of TWII for first time

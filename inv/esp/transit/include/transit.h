@@ -14,7 +14,10 @@
 #include <util/profile.h>
 #include <util/iomisc.h>
 #include <strings.h>
+#include <stdlib.h>
+#include <stdio.h>
 
+#define compattwiiversion 2
 
 /*****   Flags   *****/
 /* Flags for hintable parameters. Its precense indicates that the
@@ -290,10 +293,10 @@ struct lineinfo {		/* Used to keep parameters in
 
 
 struct line_transition {	/* One item per transition */
-  PREC_LNDATA wl;		//Wavelength in nm.
-  PREC_LNDATA elow;		//Lower energy level in cm-1
-  PREC_LNDATA gf;		//gf value
-  short isoid;			//Isotope ID (Assumed to be in range)
+  PREC_LNDATA *wl;		//Wavelength in nm.
+  PREC_LNDATA *elow;		//Lower energy level in cm-1
+  PREC_LNDATA *gf;		//gf value
+  short *isoid;			//Isotope ID (Assumed to be in range)
 };
 
 
@@ -420,7 +423,7 @@ struct transit {		/* Main data structure */
   long fl;			/* flags */
   long pi;			/* progress indicator */
 
-  struct line_transition *lt;	/* line transition */
+  struct line_transition lt;	/* line transition */
 
 
   struct {			/* data structures pointers, this is

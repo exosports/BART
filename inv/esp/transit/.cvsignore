@@ -1,3 +1,4 @@
 *.c  *.o
 transit  .log
 lineread
+dbgreadline
