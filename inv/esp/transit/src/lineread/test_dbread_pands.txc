@@ -173,7 +173,7 @@ int main(int argc,
 
   printf("\nWanna know the value of a single record?\n"
 	  "If so, write record number (range 0 - %li), else "
-	    "press 'enter'"
+	    "press 'enter': "
 	  ,n-1);
 
 
