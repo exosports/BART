@@ -32,6 +32,12 @@
 int
 tau(struct transit *tau)
 {
+  prop_isov *isov=&transit.isov;
+  prop_isof *isof=&transit.isof;
+  prop_samp *rad=&transit.rads;
+  prop_samp *wn=&transit.wns;
+
+
 
   return 0;
 }
