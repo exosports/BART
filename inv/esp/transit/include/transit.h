@@ -226,7 +226,26 @@ struct transit;			/* Forward declaration */
 
 typedef struct {
   const char *name;
-  int (*fcn)(struct transit *tr); /*  */
+  PREC_RES (*tauperb)		/* Optical depth per impact
+				   parameter */
+       (PREC_RES b,		/* impact parameter */
+	PREC_RES *rad,		/* radius array */
+	PREC_RES *refr,		/* refractivity index */
+	PREC_RES ***ex,		/* extinction[rad][iso][nwn] */
+	long nrad,		/* number of radii elements */
+	short iso,		/* isotope chosen */
+	long wn,		/* wavenumber looked */
+	PREC_RES *dt,		/* differential optical depth [rad].
+				   Auxiliary array */
+	gsl_interp_accel *acc);	/* accelerating pointer. Auxiliary array
+				 */
+  PREC_RES (*perwn)		/* Quantity obtained from
+				   integration of optical depth
+				*/ 
+       (PREC_RES *tau,
+	PREC_RES *b,
+	long nb,
+	gsl_interp_accel *acc);
 } transit_ray_solution;
 extern const transit_ray_solution slantpath;
 
@@ -473,6 +492,11 @@ struct transit {		/* Main data structure */
   struct line_transition lt;	/* line transition */
 
   transit_ray_solution *sol;	/* Solution type */
+  PREC_RES *outpret;		/* Output dependent on wavelength only
+				   as it travels to Earth before
+				   telescope */
+  PREC_RES *out;		/* Output as seen after interaction with
+				   telescope */
 
   struct {			/* data structures pointers, this is
 				   data that is not required for the
