@@ -44,6 +44,31 @@ double calcex(double alpha, double rm, double ri)
 
 
 int
+tau_now(double ip,
+	double *rad,
+	double *refr,
+	double *ex,
+	long nrad,
+	double res,
+	int type,
+	char *desc)
+{
+  double result,err;
+  int status=0;
+
+  result=totaltau(ip,rad,refr,ex,nrad,type);
+  err=fabs(1-result/res);
+  test_result("        %25s: observed %13.10g (error %g)\n"
+	      ,desc,result,err);
+  if(err>maxerr)
+    status++;
+  test++;
+
+  return status;
+}
+
+
+int
 tau_dens(double rm,
 	 double ip,
 	 long nrad,
@@ -53,7 +78,6 @@ tau_dens(double rm,
   int status=0,i;
   double rad[nrad],ex[nrad],refr[nrad];
   double dr=rm/nrad;
-  double result,err;
 
   test_result("      Using %li layers, an interspacing of %g\n",nrad,dr);
   if(outp)
@@ -68,20 +92,10 @@ tau_dens(double rm,
 	      "%12.9g%12.9g%12.9g\n"
 	      ,rad[i],ex[i],refr[i]);
   }
-  result=totaltau(ip,rad,refr,ex,nrad,1);
-  err=fabs(1-result/res);
-  test_result("        RefIdx constant technique: observed %13.10g (error %g)\n"
-		,result,err);
-  if(err<maxerr)
-    status++;
-  result=totaltau(ip,rad,refr,ex,nrad,2);
-  err=fabs(1-result/res);
-  test_result("        Ray bending technique    : observed %13.10g (error %g)\n"
-		,result,err);
-  if(err<maxerr)
-    status++;
 
-  test+=2;
+  status+=tau_now(ip,rad,refr,ex,nrad,res,1,"RefIdx constant technique");
+  status+=tau_now(ip,rad,refr,ex,nrad,res,2,"Ray bending technique");
+
   return status;
 }
 
@@ -206,12 +220,17 @@ main(int argc, char *argv[])
 
   if(status){
     fprintf(stdout,
-	    "\nslantpath.txc result is FAILURE: %i error%s found out of %li test%s\n"
-	    ,status,status>1?"s":"",test,test>1?"s":"");
+	    "\n###########################################################################\n"
+	    "slantpath.txc result is FAILURE: %i difference%s bigger than %g\n"
+	    "                                 found out of %li test%s\n"
+	    ,status,status>1?"s":"",maxerr,test,test>1?"s":"");
     exit(EXIT_FAILURE);
   }
   fprintf(stdout,
-	  "\nslantpath.txc result is SUCCESS: no errors found out of %li test%s\n"
-	  ,test,test>1?"s":"");
+	  "\n#############################################################################\n"
+	  "slantpath.txc result is SUCCESS: no differences bigger than %g\n"
+	  "                                 found out of %li test%s\n"
+	  ,maxerr,test,test>1?"s":"");
+
   exit(EXIT_SUCCESS);
 }
