@@ -39,9 +39,7 @@ tau(struct transit *tr)
   prop_samp *wn=&tr->wns;
   prop_samp *ip=&tr->ips;
   PREC_RES **e=tr->ds.ex->e[tr->tauiso];
-  PREC_RES (*fcn)(PREC_RES b,PREC_RES *rad,PREC_RES *refr,
-		  PREC_RES **ex,long nrad,long wn)
-    =tr->sol->tauperb;
+  PREC_RES (*fcn)()=tr->sol->tauperb;
 
 
   //index, initial and final values
@@ -98,15 +96,22 @@ tau(struct transit *tr)
 		 "were ignored\n"
 		 ,tr->ds.iso->isof[tr->tauiso].n);
 
+  //to store reordered extinction
+  PREC_RES er[rnn];
 
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
     t=tau.t[wi];
 
+    //Put the extinction values in a new array, the values may be
+    //temporarily overwritten by (fnc)(), but they should come back as
+    //they went in.
+    for(ii=0;ii<rnn;ii++)
+      er[ii]=e[ii][wi];
+
     //For each resultant impact parameter
     for(ii=0;ii<inn;ii++){
-      if((t[ii]=rfct*fcn(bb[ii]*riw,r,n,e,rnn,wi))
-	 >tau.toomuch){
+      if( (t[ii] = rfct * fcn(bb[ii]*riw,r,n,er,rnn,1)) > tau.toomuch){
 	tau.last[wi]=ii;
 	break;
       }
