@@ -86,6 +86,7 @@ tau(struct transit *tr)
 		 );
 
   PREC_RES *out=tr->outpret=(PREC_RES *)calloc(wnn,sizeof(PREC_RES));
+  struct star_geom *sg=tr->ds.sg;
 
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
   //for each wavenumber
@@ -101,7 +102,7 @@ tau(struct transit *tr)
       }
     }
 
-    out[wi]=tr->sol->perwn(t,bb,inn,acc);
+    out[wi]=tr->sol->perwn(t,bb,inn,sg,acc);
   }
   gsl_interp_accel_free(acc);
 

@@ -222,7 +222,9 @@ enum isodo {unclear=0,atmfile,ignore,fixed};
 
 /***** Structures *****/
 
-struct transit;			/* Forward declaration */
+/* Forward declarations */
+struct transit;
+struct star_geom;
 
 typedef struct {
   const char *name;
@@ -245,6 +247,7 @@ typedef struct {
        (PREC_RES *tau,
 	PREC_RES *b,
 	long nb,
+	struct star_geom *star,
 	gsl_interp_accel *acc);
 } transit_ray_solution;
 extern const transit_ray_solution slantpath;
