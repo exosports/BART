@@ -180,6 +180,8 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
     }
   }
 
+  //Count how many isotopes are not in the linefile nor has been chosen
+  //to be ignored
   rn=0;
   for(j=0 ; j<ison ; j++)
     if( at->isoeq[j]==-1 && at->isodo[j]!=ignore )
@@ -243,6 +245,9 @@ isisoline(char *name,		/* Isotope's name */
 {
   PREC_NREC i;
 
+  //Note that here, even though the isotope might be ignored, it will
+  //stilll have an equivalent lineiso associated if one is found.
+  //\refline{isodbassoc}
   for(i=0;i<nliso;i++){
     if(strcasecmp(name,isof[i].n)==0){
       *isoeq=i;
@@ -422,9 +427,8 @@ getmnfromfile(FILE *fp,
 	  at->isodo=(enum isodo *)realloc(at->isoeq,nmb*sizeof(enum isodo));
 	  at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
 	  at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
-	  char *tmp=at->n[0];
 	  at->n=(char **)realloc(at->n,nmb*sizeof(char *));
-	  at->n[0]=(char *)realloc(tmp,nmb*maxeisoname*sizeof(char));
+	  at->n[0]=(char *)realloc(at->n[0],nmb*maxeisoname*sizeof(char));
 	  for(i=1;i<nmb;i++)
 	    at->n[i]=at->n[0]+i*maxeisoname;
 	  for(i=nmb/2;i<nmb;i++)
@@ -480,65 +484,100 @@ getmnfromfile(FILE *fp,
 				    sizeof(struct atm_isoprop));
 
   //Makes at arrays bigger, so that they can hold the factorized values.
-  nmb=at->n_aiso=ison+ipa;
-  at->isodo=(enum isodo *)realloc(at->isodo,nmb*sizeof(enum isodo));
-  at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
-  at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
-  lp=at->n[0];
-  at->n=(char **)realloc(at->n,nmb*sizeof(char *));
-  at->n[0]=(char *)realloc(lp,nmb*maxeisoname*sizeof(char));
+  nmb       = at->n_aiso = ison + ipa;
+  at->isodo = (enum isodo *)realloc(at->isodo,nmb*sizeof(enum isodo)      );
+  at->isoeq = (int *)       realloc(at->isoeq,nmb*sizeof(int)             );
+  at->m     = (PREC_ZREC *) realloc(at->m,    nmb*sizeof(PREC_ZREC)       );
+  at->n     = (char **)     realloc(at->n,    nmb*sizeof(char *)          );
+  at->n[0]  = (char *)      realloc(at->n[0], nmb*maxeisoname*sizeof(char));
   for(i=1;i<nmb;i++)
-    at->n[i]=at->n[0]+i*maxeisoname;
+    at->n[i] = at->n[0] + i * maxeisoname;
 
   //initialize values for the factorized elements
   for(i=ison;i<nmb;i++){
-    at->isoeq[i]=isoprop[i-ison].eq;
-    at->m[i]=isoprop[i-ison].m;
     strncpy(at->n[i],isoprop[i-ison].n,maxeisoname-1);
-    at->n[i][maxeisoname-1]='\0';
-    at->isodo[i]=factor;
+    at->n[i][maxeisoname-1] = '\0';
+    at->isoeq[i]            = i-ison;
+    at->m[i]                = isoprop[i-ison].m;
+    at->isodo[i]            = factor;
   }
 
   //Resolve what to do with those isotopes that appear in the transition
   //database, but not in the atmosphere file.
-  at->n_niso=checknonmatch(tr,at,isodo);
+  at->n_niso = checknonmatch(tr,at,isodo);
 
   //Set full isotope info in the transit structure
-  nmb=iso->n_e=iso->n_i+at->n_niso;
-  iso->isof=(prop_isof *)realloc(iso->isof,nmb*sizeof(prop_isof));
-  iso->isof[iso->n_i].n=(char *)realloc(iso->isof[iso->n_i].n,
-				      nmb*maxeisoname*sizeof(char));
-  for(i=1;i<at->n_niso;i++)
-    iso->isof[iso->n_i+i].n=iso->isof[iso->n_i].n+i*maxeisoname;
-  
-  nmb=iso->n_i;
-  ipi=0;
-  for(i=0;i<ison+ipa;i++)
-    if(at->isoeq[i]==-1){
-      if(at->isodo[i]!=ignore){
-	at->isoeq[i]=nmb;
-	iso->isof[nmb].m=at->m[i];
-	strcpy(iso->isof[nmb++].n,at->n[i]);
+  nmb = iso->n_i + at->n_niso;
+  iso->isodo   = (enum isodo *)realloc(iso->isodo,
+				       nmb*sizeof(enum isodo));
+  iso->isof    = (prop_isof *)realloc(iso->isof,
+				      nmb*sizeof(prop_isof));
+  iso->isof->n = (char *)realloc(iso->isof->n,
+				 nmb*maxeisoname*sizeof(char));
+  for(i=1;i<nmb;i++)
+    iso->isof[i].n = iso->isof->n + i * maxeisoname;
+
+
+
+  //Look for isotopes who have not been associated and see whether they
+  //are supposed to be ignored. 
+  nmb = iso->n_i;
+  ipi = 0;
+  int lineignore=0;
+  for(i=0 ; i<ison+ipa ; i++)
+    //If the isotope is not associated to the linedb isotopes, then
+    //associate it. Note that isotopes in linedb that are ignored will
+    //be associated (see comments for Line \label{isodbassoc}). Hence
+    //they won't be detected in this loop.
+    if(at->isoeq[i] == -1){
+      //If they want to be ignored then associate them with the
+      //following index available of post linedb isotopes.
+      if(at->isodo[i] != ignore){
+	at->isoeq[i]     = nmb;
+	iso->isodo[nmb]  = at->isodo[i];
+	iso->isof[nmb].m = at->m[i];
+	strcpy(iso->isof[nmb++].n, at->n[i]);
       }
+      //otherwise, they might only be used as a reference to factor.
       else{
-	at->isoeq[i]=ipi;
-      	strcpy(fonly[ipi++].n,at->n[i]);
+	at->isoeq[i] = ipi;
+      	strcpy(fonly[ipi++].n, at->n[i]);
       }
     }
-  at->n_nonignored=nmb;
+  //Just count the number of ignored isotopes that belonged to the line
+  //isotopes.
+    else if(at->isodo[i] == ignore)
+      lineignore++;
 
+
+  //Reduce the array to get rid of nonline-ignored isotopes.
+  iso->n_e = nmb;
+  iso->isodo   = (enum isodo *)realloc(iso->isodo,
+				       nmb*sizeof(enum isodo));
+  iso->isof    = (prop_isof *)realloc(iso->isof,
+				      nmb*sizeof(prop_isof));
+  iso->isof->n = (char *)realloc(iso->isof->n,
+				 nmb*maxeisoname*sizeof(char));
+  for(i=1;i<nmb;i++)
+    iso->isof[i].n = iso->isof->n + i * maxeisoname;
+
+
+  //Check that everything makes sense
   transitASSERT(nmb+nfonly!=ison+ipa,
-		"Oooops number of ignored-nonline elements (%i) plus the\n"
-		"number of nonignored (%i), doesn't match the number of elements\n"
+		"Oooops, number of ignored-nonline elements (%i), plus the\n"
+		"number of ignored-line elements(%i), plus the number of\n"
+		"nonignored (%i), doesn't match the number of elements\n"
 		"found in fields 'i'(%i) and 'f'(%i) of the atmosphere\n"
 		"file '%s'\n"
-		,nfonly,nmb,ison,ipa,atmfilename);
+		,nfonly,lineignore,nmb-lineignore,ison,ipa,atmfilename);
 
   transitASSERT(nmb!=iso->n_e,
 		"Uyuyuyuyu! Problem in file %s, line %i,\n"
 		"assertion failed: %i != %i!!\n"
 		,__FILE__,__LINE__,nmb,iso->n_e);
 
+  //free unused array, store factor info in at structure and return line
+  //where T,P start
   free(isolineinatm);
   at->isoprop=isoprop;
 
@@ -570,7 +609,7 @@ readatmfile(FILE *fp,		/* File */
   prop_isov *isov=at->isov;
   int *isoeq=at->isoeq;
   struct isotopes *iso=tr->ds.iso;
-  enum isodo *isodo=iso->isodo;
+  enum isodo *isodo=at->isodo;
   int i,nmb=iso->n_e;
 
   for(i=0;i<nfonly;i++)
@@ -616,77 +655,99 @@ readatmfile(FILE *fp,		/* File */
     if(lp==lp2)
       invalidfield(line, lines, 3, "temperature");
 
-    //now read abundances for every isotope
+    //variables to be used by factor (except ieq which is general)
+    int ieq, feq;
+    double ref;
+    _Bool otherfct[nmb];
+    memset(otherfct,0,sizeof(otherfct));
+
+    //now read abundances for every isotope, but don't process
+    //factorized elements. Because they might be proportional to a fixed
+    //element which is set below.
     for(i=0;i<at->n_aiso;i++){
-      //stop reading from file if we reach the factorized elements
-      if(isodo[i]==factor)
-	continue;
-      //Read the abundance of the new element. There are two ways:      
-      transitASSERT(isoeq[i]<0 || 
-		    (isodo[i]==ignore&&isoeq[i]>=nfonly) || 
-		    (isodo[i]!=ignore&&isoeq[i]>=iso->n_e),
-		    "Assertion failed in file %s, line %i: %i!=[0,%i]. Fonly: %i\n"
-		    ,__FILE__, __LINE__, isoeq[i], 
-		    isodo[i]==ignore?nfonly:iso->n_e-1, isodo[i]==ignore);
-      //If processing one of the factor only elements
-      if(isodo[i]==ignore)
-	tmp=fonly[isoeq[i]].q[r]=strtod(lp2,&lp);
-      //otherwise if this element is going to be considered
-      else
-	tmp=isov[isoeq[i]].q[r]=strtod(lp2,&lp);
-      checkposvalue(tmp, i+4, lines);
-
-      if(lp==lp2)
-	invalidfield(line, lines, 4+i, "isotope abundance");
-      lp2=lp;
-    }
-    int factorfrom=i;
-
-    for(i=0;i<iso->n_i;i++)
-      if(isodo[i]==fixed){
+      ieq=isoeq[i];
+      switch(isodo[i]){
+      case fixed:
 	if(!r){
-	  isov[i].q[0]=askforposd(" %s abundance for isotope %s: "
-				  ,at->mass?"Mass":"Number"
-				  ,iso->isof[i].n);
-	  if(isov[i].q[0]>=1){
+	  isov[ieq].q[0]=askforposd(" %s abundance for isotope %s: "
+				    ,at->mass?"Mass":"Number"
+				    ,iso->isof[ieq].n);
+	  if(isov[ieq].q[0]>=1){
 	    fprintf(stderr," Abundance for any single isotope has to be"
 		    " less than one\n Try Again!\n");
 	    i--;
 	  }
 	}
 	else
-	  isov[i].q[r]=isov[i].q[0];
-      }
-
-    /* TD: this is WRONG, it goes two loops above. */
-    //process the factorized elements if there is any
-    if(at->n_aiso>factorfrom){
-      double ref;
-      int fcti;
-      _Bool otherfct[nmb];
-      memset(otherfct,0,sizeof(otherfct));
-      //go for each of such element defining fcti as the index in that
-      //realm.
-      for(i=factorfrom;i<at->n_aiso;i++){
-	fcti=i-factorfrom;
+	  isov[ieq].q[r]=isov[ieq].q[0];
+	break;
+      case factor:
 	//don't process yet those that will use whatever abundance is left
 	//to complete unity
-	if(strcasecmp(isoprop[fcti].t,"other")==0){
-	  otherfct[isoeq[i]]=1;
+	feq=ieq;
+	ieq=isoprop[feq].eq;
+	if(strcasecmp(isoprop[feq].t,"other")==0){
+	  otherfct[ieq]=1;
 	  continue;
 	}
 	//find the reference value
-	ref=findfactq(isoprop[fcti].n,iso->isof,isov,nmb,r);
-	isov[isoeq[i]].q[r]=isoprop[fcti].f*ref;
+	ref=findfactq(isoprop[feq].n,iso->isof,isov,nmb,r);
+	isov[ieq].q[r]=isoprop[feq].f*ref;
+	break;
+      default:
+	transiterror(TERR_CRITICAL,
+		     "Trying to read isotope in readatmfile() which is\n"
+		     "not 'fixed', 'atmfile', 'ignored', nor 'factor'.\n"
+		     );
+	exit(EXIT_FAILURE);
+	break;
+      case atmfile:
+      case ignore:
+	transitASSERT(ieq<0 || 
+		      (isodo[i]==ignore&&ieq>=nfonly) || 
+		      (isodo[i]!=ignore&&ieq>=iso->n_e),
+		      "Assertion failed in file %s, line %i: %i!=[0,%i].\n"
+		      " Fonly: %i\n"
+		      ,__FILE__, __LINE__, isoeq[i], 
+		      isodo[i]==ignore?nfonly:iso->n_e-1, isodo[i]==ignore);
+	//Read the abundance of the new element. There are two ways:      
+	//If processing one of the factor only elements
+	if(isodo[i]==ignore)
+	  tmp=fonly[ieq].q[r]=strtod(lp2,&lp);
+	//otherwise if this element is going to be considered
+	else
+	  tmp=isov[ieq].q[r]=strtod(lp2,&lp);
+	checkposvalue(tmp, i+4, lines);
+
+	if(lp==lp2)
+	  invalidfield(line, lines, 4+i, "isotope abundance");
+	lp2=lp;
+	break;
       }
-      //process factorized elements that will take care of the rest of the
-      //atmosphere
-      ref=1-addq(isov,isodo,otherfct,nmb,r);
-      for(i=factorfrom;i<at->n_aiso;i++)
-	if(otherfct[isoeq[i]])
-	  isov[isoeq[i]].q[r]=isoprop[i-factorfrom].f*ref;
     }
 
+
+    //process factorized elements that will take care of the rest of the
+    //atmosphere
+    double cumulother=0;
+    ref=1-addq(isov,isodo,otherfct,nmb,r);
+    for(i=0;i<at->n_aiso;i++)
+      if(otherfct[isoeq[i]]){
+	feq=isoeq[i];
+	ieq=isoprop[feq].eq;
+	cumulother+=ref;
+	isov[ieq].q[r]=isoprop[feq].f*ref;
+      }
+
+    //It doesn't make sense for cumulother to be anything different from
+    //unity (except round-off error): you want to associate the
+    //remainder of the atmosphere to some isotopic properties. 
+    if( cumulother!=0 && (int)(cumulother*1e6)!=1000000 )
+      transiterror(TERR_SERIOUS,
+		   "If you are specifying isotopes proportional to 'other'\n"
+		   "you have to complete unity (%g). It doesn't make sense\n"
+		   "otherwise\n"
+		   ,cumulother);
 
     //calculate mean molecular mass and check whether abundances add up
     //correctly
