@@ -64,11 +64,6 @@ getprocopt(int argc,		/* Number of command line arguments */
     shortn=2;
     //Analize every element of the structure
     while(1){
-      if(opts->name==NULL&&opts->val==0){
-	if(opts++->has_arg==HELPTITLE)
-	  continue;
-	break;
-      }
       if(getn==getalloc){
 	getopts=(struct option *)realloc(getopts,
 					 (getalloc<<=1)*sizeof(struct option));
@@ -77,6 +72,11 @@ getprocopt(int argc,		/* Number of command line arguments */
       if(shortn>shortalloc){
 	shortopts=(char *)realloc(shortopts,(shortalloc<<=1)*sizeof(char));
 	memset(shortopts+shortn,0,shortn);
+      }
+      if(opts->name==NULL&&opts->val==0){
+	if(opts++->has_arg==HELPTITLE)
+	  continue;
+	break;
       }
 
       //save short options
