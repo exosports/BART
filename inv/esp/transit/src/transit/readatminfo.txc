@@ -529,7 +529,7 @@ getmnfromfile(FILE *fp,
       //now check if that isotope is one of the given in the lineinfo
       //file
       for(i=0;i<tr->n_i;i++){
-	if(strcmp(at->n[iso],isof[i].n)==0){
+	if(strcasecmp(at->n[iso],isof[i].n)==0){
 	  at->isoeq[iso]=i;
 	  if(isof[i].m!=at->m[iso])
 	    transiterror(TERR_WARNING,
@@ -794,7 +794,7 @@ readatmfile(FILE *fp,		/* File */
     if((sumq=checkaddmm(at->mm+r,r,isov,tr->isof,nmb,at->mass,isodo))
        <allowq)
       transiterror(TERR_WARNING,
-		   "In radius %g(%i), abundances don't add up to 1: %.9g\n"
+		   "In radius %g(%i), abundances don't add up to 1: %.9g"
 		   ,at->rads.v[r],r,sumq);
 
     //Calculate densities
