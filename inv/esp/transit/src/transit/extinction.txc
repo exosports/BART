@@ -144,11 +144,6 @@ extradius(PREC_NREC r,		/* Radius index */
 
   transitprint(2,verblevel,"Radius %li: %.9g[cm]\n",r+1,rad);
 
-  //Initialization of 2nd dimension of extinction array.
-  //\linelabel{kini}
-  i=extinctperiso?niso:1;
-  kiso[0] += r * i * nwn;
-
   //'propto\_adop' is proportional to the Doppler width, which in its
   //total splendor is
   //\[
@@ -518,8 +513,8 @@ extwn (struct transit *tr)
 		 "Unable to allocate %li = %li*%li*%li to calculate\n"
 		 "extinction for every radii, %stry to shorten the wavenumber\n"
 		 "range\n"
-		 ,nrad*i*nwn,nrad,i,nwn,extinctperiso?"try disabling exctinction per\n"
-		 "isotope (option --no-per-iso), or ":"");
+		 ,nrad*i*nwn,nrad,i,nwn,extinctperiso?"try disabling"
+		 " exctinction per\nisotope (option --no-per-iso), or ":"");
   for(i=0;i<niso;i++){
     ex->e[i]=ex->e[0]+i*nnr;
     if(!i||extinctperiso)
@@ -539,8 +534,12 @@ extwn (struct transit *tr)
 
   //For each radius (index 'r')
   transitprint(1,verblevel,
-	       "Computing extinction for %li radii...\n"
+	       "\nThere are %li radii samples.\n"
 	       ,nrad);
+
+  transitprint(1,verblevel,
+	       "Computing only the %i outmost ones to start...\n"
+	       ,3);
 
   //Initialize radius calculation variables
   prop_samp *rad=&tr->rads;
