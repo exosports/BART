@@ -319,6 +319,44 @@ inline void natcubsplinecoef(long n, /* Number of data points */
 }
 
 
+/* \fcnfh
+   interpolates in arrays (x,y), the value corresponding to 'refx'. 'n'
+   is the arrays' length
+
+   @returns the interpolated y-value
+ */
+double
+interp(double refx,		/* Reference x point */
+       double *x,		/* x-axis */
+       double *y,		/* y-axis */
+       long n)			/* lenght of array */
+{
+
+  if(*x>refx){
+    fprintf(stderr,
+	    "interp():: first x-value (%g) is larger\n"
+	    "than refx(%g)\n"
+	    ,*x,refx);
+    exit(EXIT_FAILURE);
+  }
+
+  while(1){
+    if(n<2){
+      fprintf(stderr,
+	      "interp():: Array of length less than 2 or last\n"
+	      "x-value (%g) is smaller than refx(%g)\n"
+	      ,*x,refx);
+      exit(EXIT_FAILURE);
+    }
+    //found!
+    /* TD: from here */
+    if(x[1]>refx){
+      return ;
+    }
+  }
+}
+
+
 //\delfh
 #ifdef DBGSPLINE
 #include "transitstd.c"

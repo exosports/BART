@@ -24,7 +24,7 @@
 #include <transit.h>
 
 /* \fcnfh
-   Calculates optical depth as a function of radii for a espherical
+   Calculates optical depth as a function of radii for a spherical
    symmetric planet
 
    @returns 0 on success
@@ -32,6 +32,7 @@
 int
 tau(struct transit *tr)
 {
+  /* Different structures */
   static struct optdepth tau;
   tr->ds.tau=&tau;
   prop_isov *isov=tr->isov;
@@ -41,11 +42,50 @@ tau(struct transit *tr)
   prop_samp *ip=&tr->ips;
   prop_atm *atm=&tr->atm;
 
-  long i;
-  PREC_RES b;
+  //index and final values
+  long ii,ri,wi;
+  long wnn,rnn;
+  /* 'bb' is the impact parameter, while 'n' is the index of refraction,
+     'w' is the wavenumber, 't' is the tau as function of impact
+     parameter, 'r' is the radius */
+  PREC_RES b,*bb=ip->v;
+  PREC_RES *n=tr->ds.ir->n;
+  PREC_RES *w=wn->v;
+  PREC_RES *t,*r;
+  PREC_RES r0;
 
-  for(i=ip->n-1;i>=0;i--){
-    b=ip->v[i];
+  transitcheckcalled(tr->pi,"tau",2,
+		     "idxrefrac",TRPI_IDXREFRAC,
+		     "extwn",TRPI_EXTWN,
+		     );
+
+  //set tau structures' value
+  if(tr->ds.th.na&TRH_TOOMUCH&&tr->ds.th.toomuch>0)
+    tau.toomuch=tr->ds.th.toomuch;
+  tau.first=(long *)calloc(wn->n,sizeof(long));
+  tau.t=(PREC_RES **)calloc(wn->n,sizeof(PREC_RES *));
+  tau.t[0]=(PREC_RES *)calloc(wn->n*ip->n,sizeof(PREC_RES));
+  for(i=1;i<wn->n;i++)
+    tau.t[i]=tau.t[0]+i*ip->n;
+
+  //final index or number of elements
+  wnn=wn->n;
+  inn=ip->n-1;
+  rnn=rad->n;
+
+  //for each wavenumber
+  for(wi=0;wi<wnn;wi++){
+    t=tau.t[wi];
+
+    //For each resultant impact parameter
+    for(ii=inn;ii>=0;ii--){
+      b=bb[ii];
+
+      //Look for closest approach radius
+      /* TD from here complete iteration and loops */
+      r0=b;
+      r0=b/interp(r0,r,n,rnn);
+    }
   }
 
   tr->pi|=TRPI_TAU;

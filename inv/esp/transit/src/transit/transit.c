@@ -238,6 +238,11 @@ int main (int argc,		/* Number of variables */
 		 "to returned flag: 0x%x\n"
 		 ,rn);
 
+  //Computes index of refraction
+  if((rn=idxref(&transit))!=0)
+    transiterror(TERR_SERIOUS,
+		 "idxref() returned error code %i\n"
+		 ,rn);
 
   //Calculates extinction coefficient
   if((rn=extwn(&transit))!=0)

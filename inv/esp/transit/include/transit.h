@@ -34,6 +34,8 @@
 #define TRH_DR          0x00000100 /* max doppler ratio */
 
 #define TRH_MASS        0x00000200 /* mass abundance? */
+#define TRH_TOOMUCH     0x00000400 /* Limit optical depth, above this is
+				      just set to this value. */
 
 #define TRH_WAVO        0x01000000 /* Wavelength oversampling */
 #define TRH_WNO         0x02000000 /* Wavenumber oversampling */
@@ -99,7 +101,9 @@
 #define TRPI_MAKEWAV    0x000020 /* makewavsample() completed */
 #define TRPI_MAKEWN     0x000040 /* makewnsample() completed */
 #define TRPI_MAKEIP     0x000080 /* makeipsample() completed */
-#define TRPI_TAU        0x000100 /* tau() completed */
+#define TRPI_IDXREFRAC  0x000100 /* idxrefrac() completed */
+#define TRPI_EXTWN      0x000200 /* extwn() completed */
+#define TRPI_TAU        0x000400 /* tau() completed */
 
 
 /* flags for transiterror */
@@ -317,6 +321,11 @@ struct extinction{
 };
 
 
+struct idxref {
+  PREC_RES *n;			/* Index of refraction [rad] */
+};
+
+
 struct onept {
   double p,t;			/* pressure, temperature */
   double *q;			/* abundances for isotopes */
@@ -328,10 +337,20 @@ struct onept {
   int ne;			/* Number of extra isotopes */
 };
 
+
 struct optdepth {
-  PREC_RES *t;			/* Optical depth as a function of impact
-				   parameter */
+  PREC_RES **t;			/* Optical depth [wn][ip] */
+  long *first;			/* Index of the lowest impact parameter
+				   value, lower than this the optical
+				   depth is greater than '.toomuch'. It
+				   is naturally assumed that optical
+				   depth increases inward the
+				   planet. [wn] */
+  double toomuch;		/* Optical depth values greater than
+				   this won't be calculated: the
+				   extinction is assumed to be zero. */
 };
+
 
 struct transithint {		/* Structure with user hinted data that
 				   should go to the 'struct transit'
@@ -368,7 +387,11 @@ struct transithint {		/* Structure with user hinted data that
   long na;			/* flags of non-accepted or just changed
 				   hints */
   struct onept onept;		/* Parameters for onept atmosphere */
+  double toomuch;		/* Optical depth values greater than
+				   this won't be calculated: the
+				   extinction is assumed to be zero. */
 };
+
 
 struct transit {		/* Main data structure */
   char *f_atm,*f_line,*f_out;	/* Filenames */
@@ -418,6 +441,7 @@ struct transit {		/* Main data structure */
     struct lineinfo *li;
     struct extinction *ex;
     struct optdepth *tau;
+    struct idxref *ir;
   }ds;
 };
 

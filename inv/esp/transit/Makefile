@@ -3,7 +3,7 @@
 
 #directories
 ifndef PREFIX
-PREFIX=..
+PREFIX  = ..
 endif
 SRC     = ./src
 BIN     = $(PREFIX)/bin
@@ -24,6 +24,7 @@ CLATEX  = $(HOME)/bin/clatex.pl
 #objects and headers
 TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 	    readatminfo.o extinction.o tau.o transit.o
+	    idxrefrac.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o procopt.o iomisc.o
 
@@ -37,6 +38,8 @@ PROTO_FILES = $(DEP_FILES)
 .PHONY=clean dep proto
 
 #parameters
+CPUOPTION   = -mcpu=athlon-tbird
+#CPUOPTION   = -mcpu=pentium3
 EXTPRM      =
 WARNFLAGS   = -Wall -Winline
 #-W -Werror
@@ -51,7 +54,7 @@ STDFLAGS    = $(NODBGFLAGS)
 else
 STDFLAGS    = $(DBGFLAGS)
 endif
-STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic -std=c99 $(EXTPRM) $(CFLAGS)
+STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic -std=c99 $(EXTPRM) $(CFLAGS) $(CPUOPTION)
 
 #libraries to link
 LIBS  = -lX11 -lm
