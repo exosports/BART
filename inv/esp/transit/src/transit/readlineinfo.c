@@ -1,6 +1,7 @@
 /*
- * readlineinfo.[tx]c - It reads line info as returned by
- *                      lineread. Component of Transit program
+ * readlineinfo.c
+ * readlineinfo.txc - reads line info as returned by
+ *                    lineread. Component of Transit program
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -187,13 +188,44 @@ int checkrange(struct transit *tr, /* General parameters and
   return res;
 }
 
-/*
+
+/* \fcnfh
+   This function is called if a line of 'file' was longer than 'max'
+   characters
+*/
+static void 
+asciierr(int max,		/* Maxiumum length of an accepted line
+				   */ 
+	 char *file,		/* File from which we were reading */
+	 int line)		/* Line who was being read */
+{
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+	       "Line %i of file '%s' has more than %i characters,\n"
+	       "that is not allowed\n"
+	       ,file,max);
+  exit(EXIT_FAILURE);
+}
+
+/* \fcnfh
+   It outputs error. Used when EOF is found before expected
+*/
+static void
+notyet(int lin, char *file){
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+	       "readlineinfo:: EOF unexpectedly found at line %i in\n"
+	       "ascii-TWII linedb info file '%s'\n"
+	       ,lin,file);
+  exit(EXIT_FAILURE);
+}
+
+/* \fcnfh
   readinfo\_twii: Read infofile as returned by lineread.
 
   @todo    checks on allocation errors
   @returns 1 on success
            -1 unavailable file
 	   -2 Filename not hinted
+	   -3 TWII format not valid (missing magic bytes)
 */
 int readinfo_twii(struct transit *tr,
 		  struct lineinfo *li)
@@ -220,6 +252,10 @@ int readinfo_twii(struct transit *tr,
   PREC_NREC *mark;
   int acumiso=0;
   long nalloc=8;
+  union {char sig[4];int i;} sign={{'T','W','I','I'}};
+  int asciiline=0;
+  int maxline=200;
+  char line[maxline];
 
   //Auxiliary structure pointers
   struct transithint *th=tr->ds.th;
@@ -244,54 +280,93 @@ int readinfo_twii(struct transit *tr,
   tr->fp_line=fp;
   transitaccepthint(tr->f_line,th->f_line,th->na,TRH_FL);
 
-  //Read datafile name, mark spacing, initial, final wavelength, and
-  //number of datrabases.
-  fread(&li->twii_ver,sizeof(int),1,fp);
-  fread(&li->twii_rev,sizeof(int),1,fp);
-  fread(&rn,sizeof(int),1,fp);
-  li->f_data=(char *)calloc(rn+1,sizeof(char));
-  fread(li->f_data,sizeof(char),rn,fp);
-  li->f_data[rn]='\0';
-  fread(&dwmark,sizeof(float),1,fp);
-  fread(&iniw,sizeof(double),1,fp);
-  fread(&finw,sizeof(double),1,fp);
-  fread(&ndb,sizeof(int),1,fp);
-
-  //Allocate pointers according to the number of databases
-  tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
-  in->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
-
-  //Read info for each database
-  for(i=0;i<ndb;i++){
-    //Allocate and get DB's name
-    fread(&rn,sizeof(int),1,fp);
-    tr->db[i].n=(char *)calloc(rn+1,sizeof(char));
-    fread(tr->db[i].n,sizeof(char),rn,fp);
-    tr->db[i].n[rn]='\0';
-
-    //Get number of temperature and isotopes
-    fread(&nT,sizeof(int),1,fp);
-    fread(&nIso,sizeof(int),1,fp);
-    in->db[i].t=nT;
-    tr->db[i].i=nIso;
-
-    //allocate for variable and fixed isotop info as well as for
-    //temperature points.
-    T=in->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
-
-    //read temperature points
-    fread(T,sizeof(PREC_ZREC),nT,fp);
-
-    //Update acumulated isotope count
-    tr->db[i].s=acumiso;
-    acumiso+=nIso;
+  //Read first two bytes, they should be either `(T<<4|W)(I<<4|I)' or
+  //'\#T'. They are stored as integer, so this check also serves to check
+  //whether the machine were the data file and the one this program is
+  //being run have the same endian order. If the first two are '\#T',
+  //then the first line also start as '\#TWII-ascii'
+  fread(&sign.i,sizeof(int),1,fp);
+  //is it a binary TWII
+  if(strncmp(sign.sig,"TWII",4)!=0){
+    //does it look like being a Ascii TWII?, if so check it.
+    rn=strncmp((char *)&sign.i,"#T",2);
+    if(!rn){
+      strcpy(line,"#T");
+      fread(line+2,sizeof(char),9,fp);
+      rn=strncmp(line,"#TWII-ascii",11);
+    }
+    //If it wasn't any valid TWII, then error and exit
+    if(rn){
+      transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		   "The file '%s' has not a valid TWII format. It may\n"
+		   "also be because the machine were it was created have\n"
+		   "different endian order, which is incompatible"
+		   ,tr->f_line);
+      return -3;
+    }
+    asciiline=1;
+    //ignore the rest of the first line
+    fgetupto(line,maxline,fp,&asciierr,tr->f_line,1);
   }
-  //read total number of isotopes.
-  fread(&tr->n_i,sizeof(int),1,fp);
-  transitASSERT(tr->n_i!=acumiso,
+
+  if(asciiline){
+    while((rc=fgetupto(line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+	  =='#');
+    if(!rc) notyet(asciiline,tr->f_line);
+    /* TD from here!: read ascii-twii input */
+
+
+  }
+  else{
+    //Read datafile name, mark spacing, initial, final wavelength, and
+    //number of datrabases.
+    fread(&li->twii_ver,sizeof(int),1,fp);
+    fread(&li->twii_rev,sizeof(int),1,fp);
+    fread(&rn,sizeof(int),1,fp);
+    li->f_data=(char *)calloc(rn+1,sizeof(char));
+    fread(li->f_data,sizeof(char),rn,fp);
+    li->f_data[rn]='\0';
+    fread(&dwmark,sizeof(float),1,fp);
+    fread(&iniw,sizeof(double),1,fp);
+    fread(&finw,sizeof(double),1,fp);
+    fread(&ndb,sizeof(int),1,fp);
+
+    //Allocate pointers according to the number of databases
+    tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
+    in->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
+
+    //Read info for each database
+    for(i=0;i<ndb;i++){
+      //Allocate and get DB's name
+      fread(&rn,sizeof(int),1,fp);
+      tr->db[i].n=(char *)calloc(rn+1,sizeof(char));
+      fread(tr->db[i].n,sizeof(char),rn,fp);
+      tr->db[i].n[rn]='\0';
+
+      //Get number of temperature and isotopes
+      fread(&nT,sizeof(int),1,fp);
+      fread(&nIso,sizeof(int),1,fp);
+      in->db[i].t=nT;
+      tr->db[i].i=nIso;
+
+      //allocate for variable and fixed isotop info as well as for
+      //temperature points.
+      T=in->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
+      
+      //read temperature points
+      fread(T,sizeof(PREC_ZREC),nT,fp);
+      
+      //Update acumulated isotope count
+      tr->db[i].s=acumiso;
+      acumiso+=nIso;
+    }
+    //read total number of isotopes.
+    fread(&tr->n_i,sizeof(int),1,fp);
+    transitASSERT(tr->n_i!=acumiso,
 		"Given number of isotopes (%i), doesn't equal\n"
 		"real total number of isotopes (%i)\n"
 		,tr->n_i,acumiso);
+  }
 
   //allocate structure that are going to receive the isotope info.
   in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));

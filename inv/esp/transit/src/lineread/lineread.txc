@@ -44,9 +44,10 @@
          1 per isotope. 041203. PMR.
    1.5:  Change to directory structure and linking (several files
          instead of one). 040904. PMR.
+   1.6:  Magic bytes are added as the first two in twii. 041504. PMR
 */
 static int lineread_ver=1;
-static int lineread_rev=5;
+static int lineread_rev=6;
 
 
 
@@ -95,7 +96,8 @@ static void synhelp(float deltw,char *datafile,char *infofile,
 
 int main(int argc,char *argv[])
 {
-  int i,j,rc;
+  union {char sig[4];int i;} sign={{'T','W','I','I'}};
+  int i,j,rn;
   int left; //Number of databases with lines available for reorder.
   float deltw;
   double iniw,finw,parw;
@@ -148,11 +150,11 @@ int main(int argc,char *argv[])
     synhelp(deltw,datafile,infofile,deltwmark,verblevel);
 
   while(1){
-    rc=getopt(argc,argv,"vhqd:o:O:m:n");
-    if (rc==-1)
+    rn=getopt(argc,argv,"vhqd:o:O:m:n");
+    if (rn==-1)
       break;
 
-    switch(rc){
+    switch(rn){
     case 'n':
       dummy=1;
       break;
@@ -195,13 +197,13 @@ int main(int argc,char *argv[])
   transitprint(1,verblevel,
 	       "Reading %i line database(s)\n\n",dbread_nfcn);
 
-  rc=0;
+  rn=0;
   if(strcmp("-",datafile)==0){
-    rc=1;
+    rn=1;
     fpdout=stdout;
   }
   if(strcmp("-",infofile)==0){
-    rc+=2;
+    rn+=2;
     fpiout=stdout;
     if(fpdout==stdout)
       transiterror(TERR_WARNING,
@@ -230,8 +232,8 @@ int main(int argc,char *argv[])
 	       "TWIIf requires two output files that were chosen to be:\n"
 	       " '%s' as the info file, and\n"
 	       " '%s' as the data file\n\n"
-	       ,rc&2?"standard output":infofile
-	       ,rc&1?"standard output":datafile);
+	       ,rn&2?"standard output":infofile
+	       ,rn&1?"standard output":datafile);
 
 
   if(!dummy){
@@ -254,16 +256,17 @@ int main(int argc,char *argv[])
 		 "initial wavelength (%.2f)\n",finw,iniw);
 
   if(!dummy){
+    fwrite(&sign.i,sizeof(int),1,fpiout);
     fwrite(&lineread_ver, sizeof(int),1,fpiout);
     fwrite(&lineread_rev, sizeof(int),1,fpiout);
-    rc=strlen(datafile);
-    fwrite(&rc,sizeof(int),1,fpiout);
-    fwrite(datafile,sizeof(char),rc,fpiout);
+    rn=strlen(datafile);
+    fwrite(&rn,sizeof(int),1,fpiout);
+    fwrite(datafile,sizeof(char),rn,fpiout);
     fwrite(&deltwmark,sizeof(float),1,fpiout);
     fwrite(&iniw,sizeof(double),1,fpiout);
     fwrite(&finw,sizeof(double),1,fpiout);
-    rc=dbread_nfcn;
-    fwrite(&rc,sizeof(int),1,fpiout);
+    rn=dbread_nfcn;
+    fwrite(&rn,sizeof(int),1,fpiout);
   }
 
   dindex=0;
@@ -308,9 +311,9 @@ int main(int argc,char *argv[])
        the first range */
     if(!dindex&&!dummy){
       for(i=0;i<dbread_nfcn;i++){
-	rc=strlen(dname[i]);
-	fwrite(&rc,sizeof(int),1,fpiout);
-	fwrite(dname[i],sizeof(char),rc,fpiout);
+	rn=strlen(dname[i]);
+	fwrite(&rn,sizeof(int),1,fpiout);
+	fwrite(dname[i],sizeof(char),rn,fpiout);
 	fwrite(nT+i,sizeof(int),1,fpiout);
 	fwrite(nIso+i,sizeof(int),1,fpiout);
 	fwrite(T[i],sizeof(PREC_ZREC),nT[i],fpiout);
@@ -323,12 +326,12 @@ int main(int argc,char *argv[])
 	  transitDEBUG(22,verblevel,
 		       "Just wrote mass %g at %li\n"
 		       ,mass[adb][j],ftell(fpiout));
-	  rc=strlen(isonames[adb][j]);
-	  fwrite(&rc,sizeof(int),1,fpiout);
+	  rn=strlen(isonames[adb][j]);
+	  fwrite(&rn,sizeof(int),1,fpiout);
 	  transitDEBUG(22,verblevel,
 		       "Just wrote name's length %i at %li\n"
-		       ,rc,ftell(fpiout));
-	  fwrite(isonames[adb][j],sizeof(char),rc,fpiout);
+		       ,rn,ftell(fpiout));
+	  fwrite(isonames[adb][j],sizeof(char),rn,fpiout);
 	  fwrite(Z[adb][j],sizeof(PREC_ZREC),nT[adb],fpiout);
 	}
       }
@@ -379,11 +382,10 @@ int main(int argc,char *argv[])
       free(mass[i]);
     }
     transitprint(1,verblevel,"done\n");
-    //      Pprintf(2,"DD:Freed\n",left);
   }
-  rc=0;
+  rn=0;
   if(!dummy){
-    fwrite(&rc,sizeof(int),1,fpiout);
+    fwrite(&rn,sizeof(int),1,fpiout);
 
     fclose(fpiout);
     fclose(fpdout);

@@ -1,5 +1,6 @@
 /*
- * iomisc.[tx]c - Miscellaneous input/output utilities.
+ * iomisc.c
+ * iomisc.txc - Miscellaneous input/output utilities.
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -24,6 +25,56 @@
 char *linepad_break="-";
 int printpad_columns=__PADTO_COLUMNS;
 
+/* \fcnfh
+   reads into 'line' from 'fp' up to 'max' characters, it check that the
+   last character read is '\n', if not then it assumes error and calls
+   errfcn with parameters 'max' and 'name'. If '\n' is found then it
+   take it out from the returned value. the idea behind returning the
+   first character is to quickly identify comment lines
+
+   @returns 0 if end of file is reached while no characters were read
+            first character read otherwise.
+	    -1 should never be returned.
+*/
+inline char
+fgetupto(char *line,	/* Where input is stored, it has to have
+			   dimension 'max' */
+	 int max, 		/* dimension of 'line' */
+	 FILE *fp,		/* File pointer to read from */
+	 void (*errfcn)(int,char *),	/* Error funtion to call
+					   in case a newline is
+					   not the last
+					   character read and we
+					   reached 'max' */
+	 char *name)	/* Second parameter with which errfcn is
+			   going to be called */
+{
+  char *lp;
+  int n=0;
+
+  lp=fgets(line,max,fp);
+  if(lp!=line)
+    return 0;
+  //'n' does not include `\0'
+  while(*lp++)
+    n++;
+
+  if(n==0){
+    fprintf(stderr,
+	    "UYYUYUY!, this should had not happened ever, maybe\n"
+	    "fgets() is not working?. File %s, line %i\n"
+	    ,__FILE__,__LINE__);
+    exit(EXIT_FAILURE);
+  }
+
+  if(line[n-1]=='\n'){
+    line[--n]='\0';
+    return *line;
+  }
+
+  errfcn(max,name);
+  return -1;
+}
 
 /* \fcnfh
    get at most 'n' (indefinite if 0) double format numbers from 'str',
@@ -36,7 +87,7 @@ int
 getad(int n,			/* Number of float field to accept */
       char sep,			/* separation character */
       char *str,		/* String where to look for values */
-      double **array)			/* Pointers to double value */
+      double **array)		/* Pointers to double value */
 {
   char *ptr=str;
   int rn=1;
@@ -191,6 +242,7 @@ fprintpad(FILE *fp,		/* File pointer to print */
 
 }
 
+
 /* \fcnfh
    read a double value
 
@@ -207,6 +259,7 @@ double readd(FILE *fp,
 
   cur=str=(char *)calloc(salloc,sizeof(char));
 
+  fflush(fp);
   tcflush(fileno(fp),TCIFLUSH);
   while(fread(&car,1,1,fp)){
     if(cur-str==salloc){
@@ -214,30 +267,16 @@ double readd(FILE *fp,
       salloc<<=1;
     }
     *cur=car;
-    if(car=='\n'){
-      if(!atleast){
-	if(c) *c=*cur;
-	return 0;
-      }
+    if(car=='\n')
       break;
-    }
     if(car=='e'||car=='E'){
-      if(!atleast){
-	if(c) *c=*cur;
-	return 0;
-      }
-      if(stage&man)
+      if(!atleast||stage&man)
 	break;
       stage=man|unsig;
     }
     else if(car=='+'||car=='-'){
-      if(!stage&unsig){
-	if(!atleast){
-	  if(c) *c=*cur;
-	  return 0;
-	}
+      if(!stage&unsig)
 	break;
-      }
       stage&=~unsig;
     }
     else if(car=='.'){
@@ -254,7 +293,14 @@ double readd(FILE *fp,
 
     cur++;
   }
+  while(fread(&car,1,1,fp))
+    if(car=='\n')
+      break;
 
+  if(!atleast){
+    if(c) *c=*cur;
+    return 0;
+  }
   *cur='\0';
   if(c) *c=0;
   return atof(str);
