@@ -14,5 +14,6 @@ extern void transitcheckcalled P_((const long pi, const char *fcn, const int n, 
 extern void free_isov P_((prop_isov *isov));
 extern void free_dbnoext P_((prop_dbnoext *db));
 extern void free_samp P_((prop_samp *samp));
+extern void free_atm P_((prop_atm *atm));
 
 #undef P_

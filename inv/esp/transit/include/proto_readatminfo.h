@@ -11,5 +11,6 @@ extern int getmnfromfile P_((FILE *fp, struct atm_data *at, struct transit *tr, 
 extern int readatmfile P_((FILE *fp, struct transit *tr, struct atm_data *at, prop_samp *rads, int nrad));
 extern void storename P_((struct atm_data *at, char *line));
 extern void sethcdef P_((struct transit *tr, struct atm_data *at, prop_samp *rads));
+extern int freemem_atmosphere P_((struct atm_data *at, long *pi));
 
 #undef P_

@@ -42,12 +42,13 @@ int extwn (struct transit *tr)
   static struct extinction st_ex;
   tr->ds.ex=&st_ex;
   struct extinction *ex=&st_ex;
-  PREC_LNDATA *ltgf=tr->lt.gf;
-  PREC_LNDATA *ltelow=tr->lt.elow;
-  PREC_LNDATA *ltwl=tr->lt.wl;
-  short *ltisoid=tr->lt.isoid;
-  double efct=tr->lt.efct;
-  double wfct=tr->lt.wfct;
+  struct line_transition *lt=&(tr->ds.li->lt);
+  PREC_LNDATA *ltgf=lt->gf;
+  PREC_LNDATA *ltelow=lt->elow;
+  PREC_LNDATA *ltwl=lt->wl;
+  short *ltisoid=lt->isoid;
+  double efct=lt->efct;
+  double wfct=lt->wfct;
   PREC_RES *k,**kiso,*wn,dwn,wavn,iniwn,wni,wnf;
   PREC_NSAMP nrad,nwn;
   int neiso,niso,nisoalloc;
@@ -64,8 +65,7 @@ int extwn (struct transit *tr)
   PREC_ZREC *mass;
   _Bool extinctperiso;
 
-  transitcheckcalled(tr->pi,"extwn",5,
-		     "getatm",TRPI_GETATM,
+  transitcheckcalled(tr->pi,"extwn",4,
 		     "readinfo_twii",TRPI_READINFO,
 		     "readdatarng",TRPI_READDATA,
 		     "makewnsample",TRPI_MAKEWN,
@@ -397,7 +397,7 @@ int extwn (struct transit *tr)
 
 
   //free memory that is no longer needed.
-  freemem_extinction(&tr->lt,tr->ds.li,&tr->pi);
+  freemem_extinction(tr->ds.li,&tr->pi);
 
    //save current status if requested.
 
@@ -498,13 +498,10 @@ printone(struct transit *tr)
    @returns 0 on success
 */
 int
-freemem_extinction(struct line_transition *lt, /* Line transition
-						  structure to be freed
-						  */
-		   struct lineinfo *li,	/* Line information from
+freemem_extinction(struct lineinfo *li,	/* Line information from
 					   readlineinfo() */
 		   long *pi)	/* progress indicator flags from which
 				   to clear */
 {
-  return free_lineinfotrans(lt,li,pi);
+  return free_lineinfotrans(li,pi);
 }

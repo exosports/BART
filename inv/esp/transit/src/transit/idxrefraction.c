@@ -42,10 +42,15 @@ idxrefrac(struct transit *tr)
 
   tr->ds.ir=&st_idx;
 
+  //allocate space and initialize
   st_idx.n=(PREC_RES *)calloc(tr->rads.n,sizeof(PREC_RES));
   for(r=0;r<tr->rads.n;r++)
     st_idx.n[r]=1;
 
+  //free atmosphere info that won't be used anymore
+  freemem_atmosphere(tr->ds.at,&tr->pi);
+
+  //set progress indicator and return success
   tr->pi|=TRPI_IDXREFRAC;
   return 0;
 }

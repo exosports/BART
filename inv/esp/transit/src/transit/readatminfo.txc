@@ -926,3 +926,35 @@ sethcdef(struct transit *tr,
   }
   telldefaults(tr,at);
 }
+
+
+/* \fcnfh
+   frees memory from the atmosphere structure
+
+   @returns 0 on success
+*/
+int
+freemem_atmosphere(struct atm_data *at,
+		   long *pi)
+{
+  //free structures
+  free_samp(&at->rads);
+  free_isov(at->isov);
+  free_atm(&at->atm);
+
+
+  //free arrays
+  free(at->isov);
+  free(at->mm);
+  free(at->n[0]);
+  free(at->n);
+  free(at->m);
+  free(at->isoeq);
+  free(at->isodo);
+  free(at->info);
+
+
+  //clear progress indicator and return success
+  *pi&=~(TRPI_GETATM);
+  return 0;
+}

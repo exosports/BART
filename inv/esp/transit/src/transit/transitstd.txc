@@ -310,3 +310,14 @@ free_samp(prop_samp *samp)
   free(samp->v);
 }
 
+
+/* \fcnfh
+   Frees array in prop_atm
+*/
+void
+free_atm(prop_atm *atm)
+{
+  free(atm->p);
+  free(atm->t);
+}
+

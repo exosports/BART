@@ -112,8 +112,22 @@ typedef struct {
 } transit_ray_solution;
 
 
+struct line_transition {	/* One item per transition for the
+				   following arrays */
+  PREC_LNDATA *wl;		//Wavelength
+  PREC_LNDATA *elow;		//Lower energy level
+  PREC_LNDATA *gf;		//gf value
+  short *isoid;			//Isotope ID (Assumed to be in range)
+  double wfct;			//'.wl' multiplied by this factor yields
+				//cgs.
+  double efct;			//'.elow' multiplied by this factor
+				//yields cgs.
+};
+
+
 struct lineinfo {		/* Used to keep parameters in
 				   readlineinfo() */
+  struct line_transition lt;	//Line transition
   int twii_ver;			/* TWII version */
   int twii_rev;			/* TWII revision */
   prop_samp wavs;		/* wavelength sampling extracted */
@@ -132,19 +146,6 @@ struct lineinfo {		/* Used to keep parameters in
 				   [iso] */
   prop_dbnoext *db;		/* Temperature info from databases [DB]
 				   */
-};
-
-
-struct line_transition {	/* One item per transition for the
-				   following arrays */
-  PREC_LNDATA *wl;		//Wavelength
-  PREC_LNDATA *elow;		//Lower energy level
-  PREC_LNDATA *gf;		//gf value
-  short *isoid;			//Isotope ID (Assumed to be in range)
-  double wfct;			//'.wl' multiplied by this factor yields
-				//cgs.
-  double efct;			//'.elow' multiplied by this factor
-				//yields cgs.
 };
 
 
@@ -339,8 +340,6 @@ struct transit {		/* Main data structure */
   long fl;			/* flags */
   long pi;			/* progress indicator */
 
-  struct line_transition lt;	/* line transition */
-
   transit_ray_solution *sol;	/* Solution type */
   PREC_RES *outpret;		/* Output dependent on wavelength only
 				   as it travels to Earth before
@@ -351,10 +350,9 @@ struct transit {		/* Main data structure */
   struct {			/* data structures pointers, this is
 				   data that is not required for the
 				   final computation */
-    struct iso_noext *in;
-    struct atm_data *at;
     struct transithint *th;
     struct lineinfo *li;
+    struct atm_data *at;
     struct extinction *ex;
     struct optdepth *tau;
     struct idxref *ir;

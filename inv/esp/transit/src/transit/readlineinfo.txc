@@ -767,8 +767,9 @@ int readinfo_twii(struct transit *tr,
 
   //Wavelength in a TWII file is always in nm and lower energy is always
   //in cm-1.
-  tr->lt.wfct=1e-7;
-  tr->lt.efct=1;
+  struct line_transition *lt=&li->lt;
+  lt->wfct=1e-7;
+  lt->efct=1;
 
   //close file, set progres indicator and return success.
   fclose(fp);
@@ -1020,7 +1021,7 @@ int readdatarng(struct transit *tr, /* General parameters and
   //Realloc final strucuture array to its required size and set the
   //pointer in the transit structure.
   alloc=i;
-  struct line_transition *lt=&tr->lt;
+  struct line_transition *lt=&li->lt;
   lt->isoid=(short *)      realloc(ltisoid,alloc*sizeof(short)      );
   lt->gf   =(PREC_LNDATA *)realloc(ltgf   ,alloc*sizeof(PREC_LNDATA));
   lt->wl   =(PREC_LNDATA *)realloc(ltwl   ,alloc*sizeof(PREC_LNDATA));
@@ -1148,14 +1149,15 @@ int readlineinfo(struct transit *transit) /* General parameters and
 
 #ifndef NODEBUG_TRANSIT
   rn=97; //Some random number to test
+  struct line_transition *lt=&transit->ds.li->lt;
   transitDEBUG(21,verblevel,
 	       " * And the record %li has the following info\n"
 	       "Wavelength: %.10g\n"
 	       "Lower Energy Level: %.10g\n"
 	       "Log(gf): %.10g\n"
 	       "Isotope: %i\n"
-	       ,rn,transit->lt.wl[rn],transit->lt.elow[rn], transit->lt.gf[rn]
-	       ,transit->lt.isoid[rn]);
+	       ,rn,lt->wl[rn],lt->elow[rn], lt->gf[rn]
+	       ,lt->isoid[rn]);
 #endif
 
   transitDEBUG(21,verblevel,
@@ -1173,11 +1175,17 @@ int readlineinfo(struct transit *transit) /* General parameters and
    @returns 0 on success
 */
 int
-free_lineinfotrans(struct line_transition *lt,
-		   struct lineinfo *li,
+free_lineinfotrans(struct lineinfo *li,
 		   long *pi)
 {
   int i;
+
+  //free the four arrays of lt
+  struct line_transition *lt=&li->lt;
+  free(lt->wl);
+  free(lt->elow);
+  free(lt->gf);
+  free(lt->isoid);
 
   //free isov, dbnoext and samp in li
   free_isov(li->isov);
@@ -1189,15 +1197,8 @@ free_lineinfotrans(struct line_transition *lt,
 
   free_samp(&li->wavs);
 
-  //free the four arrays of lt
-  free(lt->wl);
-  free(lt->elow);
-  free(lt->gf);
-  free(lt->isoid);
-
-  //zero all the structures 
+  //zero all the structure
   memset(li,0,sizeof(struct lineinfo));
-  memset(lt,0,sizeof(struct line_transition));
 
   //unset appropiate flags.
   *pi&=~(TRPI_READDATA|TRPI_READINFO|TRPI_CHKRNG);
@@ -1245,10 +1246,10 @@ int main(int argc, char **argv)
 	       "range: %.10g to %.10g\n"
 	       ,tr.ds.li->wi,tr.ds.li->wf);
   li=tr.ds.li;
-  ltgf=tr.lt.gf;
-  ltwl=tr.lt.wl;
-  ltisoid=tr.lt.isoid;
-  ltelow=tr.lt.elow;
+  ltgf=tr.ds->lt.gf;
+  ltwl=tr.ds->lt.wl;
+  ltisoid=tr.ds->lt.isoid;
+  ltelow=tr.ds->lt.elow;
 
   ti1=(int)(log10(tr.n_l)+1);
 

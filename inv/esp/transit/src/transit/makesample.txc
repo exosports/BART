@@ -477,6 +477,7 @@ int makeradsample(struct transit *tr)
     }
   }
 
+  //set progress indicator and return
   if(res>=0)
     tr->pi|=TRPI_MAKERAD;
   return res;
