@@ -474,3 +474,145 @@ static inline PREC_ZREC interpolateTR(PREC_ZREC *x,
 				 (idxi+idxt)%osw);
 #endif /* obsolete */
 //\deluh
+
+
+  //\delfh
+#if 0 				/* READLININFO.TXC */
+/* tokenize a comma separated list of files and open them */
+  //Find the maximum number of line info files, and check which of those
+  //are available.
+  char *file;
+  int of=0,cf=Pnchr(th->f_line,',');
+  transit->fp_line=(FILE **)calloc(cf+1,sizeof(FILE *));
+  transit->f_line=(char *)calloc(strlen(th->f_line)+1,sizeof(char));
+  file=strtok(th->f_line,",");
+  th->f_line=NULL;
+  //For each suggested file,
+  while(file!=NULL){
+    //if they can't be opened keep them in 'th'
+    if((rn=fileexistopen(file,&(transit->fp_line[of])))!=1){
+      transiterror(TERR_WARNING,
+		   "Line info file '%s' is not available.\n"
+		   " fileexistopen() error code %i.\n"
+		   ,file,rn);
+      strcat(th->f_line,file);
+      strcat(th->f_line,",");
+    }
+    //otherwise move the name to 'transit'
+    else{
+      strcat(transit->f_line,file);
+      strcat(transit->f_line,",");
+      of++;
+      th->na&=~TRH_FL;
+    }
+    file=strtok(NULL,",");
+  }
+  //If nothing was succesfully opened.
+  if(!of)
+    transiterror(TERR_SERIOUS,
+		 "No line info files were available from:\n%s\n"
+		 ,th->f_line);
+  //Clean a bit, in 'transit' and 'th' if there was something left,
+  //erase the final `,', else free the array and nullify the
+  //pointer. Also fix the size of FILE pointers to what was used.
+  th->f_line=(char *)realloc(th->f_line,rn=strlen(th->f_line));
+  if(rn) th->f_line[rn-1]='\0';
+  else th->f_line=NULL;
+  transit->f_line=(char *)realloc(transit->f_line,rn=strlen(transit->f_line));
+  if(rn) transit->f_line[rn-1]='\0';
+  else transit->f_line=NULL;
+  transit->fp_line=(FILE **)realloc(transit->fp_line,of*sizeof(FILE *));
+  //Update flags to indicate non-accepted functions
+  cf-=of;
+  if(cf>TRH_FL_SOME) cf=TRH_FL_SOME;
+  th->na|=cf;
+#endif /* not used tokenization */
+
+#if 0 				/* obsolte */
+/*
+  readdatastart: Initialize data file to be read from iniw from
+  lineread. This function doesn't check for correct boundaries of
+  data. You should run checkrange() before running this
+
+  @returns 1  on success
+           -1 on unexpected EOF
+*/
+int readdatastart(char *datafile,
+
+		  double iniw,
+
+		  PREC_LNDATA dbini,
+		  float dwmark,
+		  PREC_NREC *wmark,
+
+		  FILE **fp)
+{
+  PREC_NREC i,alloc,mb;
+  PREC_LNDATA wltmp;
+
+  alloc=8;
+
+  if((*fp=fopen(datafile,"r"))==NULL){
+    transiterror(TERR_SERIOUS,
+		 "Cannot open data file '%s', please check and try again.\n"
+		 ,datafile);
+  }    
+
+  /* Finding starting point in datafile */
+
+  i=(int)((iniw-dbini)/dwmark);
+  datafileBS(*fp, wmark[i], wmark[i+1], iniw, &mb, sizeof(struct line_transition));
+  transitDEBUG(20,verblevel,"Beginning found at position %li ",mb);
+  if (mb){
+    do{
+      fseek(*fp,--mb*sizeof(struct line_transition),SEEK_SET);
+      fread(&wltmp,sizeof(PREC_LNDATA),1,*fp);
+    }while(wltmp>=iniw);
+    mb++;
+  }
+  transitDEBUG(20,verblevel,"and then slide to %li\n",mb);
+  fseek(*fp,mb*sizeof(struct line_transition),SEEK_SET);
+
+  return 1;
+}
+
+/*
+  readdatanext: Read next line information from datafile previously
+  opened by readdatanext
+
+  @returns 1 on success
+           -1 on EOF
+*/
+inline int readdatanext(FILE *fp,
+			struct line_transition *res,
+
+			short *dbiso,    //Read from which database/isotopes?
+			short ndbiso)      // that many
+{
+  int j;
+
+  do{
+    if(fread(res,sizeof(struct line_transition),1,fp)==0){
+      transiterror(TERR_WARNING,
+		   "End-of-file while reading single record. "
+		   "Last wavelength read was %f\n\n"
+		   ,(*res).wl);
+      return -1;
+    }
+    transitprint(21,verblevel,"Wavelength:%f iso:%i\n",(*res).wl,
+		 (*res).isoid);
+
+    /* Following blocks checks for wanted isotopes */
+    for(j=0;j<ndbiso;j++){
+      if(dbiso[j]==(*res).isoid)
+	break;
+    }
+    if(j>0&&j==ndbiso)    //Skipping this record because it is an
+                          //unwanted isotope.
+      continue;
+  }while(0);
+
+  return 1;
+}
+#endif /*obsolete*/
+//\deluh

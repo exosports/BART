@@ -1,6 +1,7 @@
 /*
- * readatminfo.c - Read atmospheric info. Component of the
- *                 Transit program.
+ * readatminfo.c
+ * readatminfo.txc - Read atmospheric info. Component of the
+ *                   Transit program.
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *

@@ -32,7 +32,7 @@
 #define PREC_BREC int		/* Type for the Big record  */
 #define NUM_ISOT 4
 
-static char *pands_name="Partridge & Schwenke";
+static char *pands_name="Partridge & Schwenke(1997)";
 static char *isotope[NUM_ISOT]={"1H1H16O","1H1H17O","1H1H18O","1H2H16O"};
 
 static int isoname(char ***isotope, int niso);
@@ -175,8 +175,6 @@ PREC_NREC dbread_pands(char *filename,
   double ratiolog;
   PREC_NREC i;
   FILE *fp;
-  //  char carac[8];
-  //  PREC_BREC irec1,irec2,lnwlt;    //upper and lower records of BS
 
   *nIso=NUM_ISOT;
   if(!filename)

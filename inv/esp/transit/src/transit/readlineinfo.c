@@ -24,15 +24,8 @@
 
 #include <transit.h>
 #include <math.h>
-#ifdef DBGREADLINEINFO
-#include "transitstd.c"
-extern int verblevel;
-#endif
 
 /* TD: data info in a structure */
-
-extern int verblevel;              //verbose level, greater than 10 is
-                                   //only for debuging
 
 /*
   datafileBS: Perform a binary search in file pointed by 'fp'(FILE *)
@@ -102,7 +95,7 @@ int checkrange(struct transit *tr, /* General parameters and
   else
     margin=tr->m=0.0;
 
-  transitDEBUG(20,verblevel,
+  transitDEBUG(21,verblevel,
 	       "hinted initial %g, final %g\n"
 	       "Databse max %g and min %g\n"
 	       ,hsamp->i,hsamp->f,li->wi,li->wf);
@@ -210,7 +203,8 @@ asciierr(int max,		/* Maxiumum length of an accepted line
    It outputs error. Used when EOF is found before expected
 */
 static void
-notyet(int lin, char *file){
+notyet(int lin, char *file)
+{
   transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 	       "readlineinfo:: EOF unexpectedly found at line %i in\n"
 	       "ascii-TWII linedb info file '%s'\n"
@@ -236,23 +230,27 @@ int readinfo_twii(struct transit *tr,
   //'isonames' array with isotope names.
   //'dnames' array with databases names.
   //'fp' file pointer of info file.
-  //'dwmark' mark wavelength spacing.
   //'iniw' and 'finw' initial and final wavelength of database.
   //'CS' is an auxiliary cross section pointer.
   //'T' and 'Z' auxiliary temperature and partition function pointers.
-  //'mark' is an auxiliary pointer to allocate marks.
   //'acumiso' keeps the cumulative number of isotopes per database.
+  /*
   //'nalloc' is the length of mark's allocation.
+  //'mark' is an auxiliary pointer to allocate marks.
+  //'dwmark' mark wavelength spacing.
+    float dwmark;
+    PREC_NREC *mark;
+  */
   int rn,i,db,ndb,nT,nIso;
   FILE *fp;
-  float dwmark;
   double iniw,finw;
   PREC_CS *CS;
   PREC_ZREC *T, *Z;
-  PREC_NREC *mark;
   int acumiso=0;
-  long nalloc=8;
-  union {char sig[4];int i;} sign={{'T','W','I','I'}};
+  /*  long nalloc=8;*/
+  char rc;
+  union {char sig[2];short s[2];} sign={{(char)(('T'<<4)|'W'),
+					 (char)(('I'<<4)|'I')}};
   int asciiline=0;
   int maxline=200;
   char line[maxline];
@@ -285,11 +283,11 @@ int readinfo_twii(struct transit *tr,
   //whether the machine were the data file and the one this program is
   //being run have the same endian order. If the first two are '\#T',
   //then the first line also start as '\#TWII-ascii'
-  fread(&sign.i,sizeof(int),1,fp);
+  fread(sign.s+1,sizeof(short),1,fp);
   //is it a binary TWII
-  if(strncmp(sign.sig,"TWII",4)!=0){
+  if(sign.s[0]!=sign.s[1]){
     //does it look like being a Ascii TWII?, if so check it.
-    rn=strncmp((char *)&sign.i,"#T",2);
+    rn=strncmp((char *)&sign.s,"#T",2);
     if(!rn){
       strcpy(line,"#T");
       fread(line+2,sizeof(char),9,fp);
@@ -313,20 +311,23 @@ int readinfo_twii(struct transit *tr,
     while((rc=fgetupto(line,maxline,fp,&asciierr,tr->f_line,asciiline++))
 	  =='#');
     if(!rc) notyet(asciiline,tr->f_line);
+
     /* TD from here!: read ascii-twii input */
 
 
   }
   else{
-    //Read datafile name, mark spacing, initial, final wavelength, and
+    //Read datafile name, initial, final wavelength, and
     //number of datrabases.
     fread(&li->twii_ver,sizeof(int),1,fp);
     fread(&li->twii_rev,sizeof(int),1,fp);
+    /*
     fread(&rn,sizeof(int),1,fp);
     li->f_data=(char *)calloc(rn+1,sizeof(char));
     fread(li->f_data,sizeof(char),rn,fp);
     li->f_data[rn]='\0';
     fread(&dwmark,sizeof(float),1,fp);
+    */
     fread(&iniw,sizeof(double),1,fp);
     fread(&finw,sizeof(double),1,fp);
     fread(&ndb,sizeof(int),1,fp);
@@ -372,7 +373,7 @@ int readinfo_twii(struct transit *tr,
   in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
   tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
   tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
-  transitDEBUG(20,verblevel,
+  transitDEBUG(21,verblevel,
 	       "Isotopes:%i\n"
 	       "databases: %i\n"
 	       "position %li\n"
@@ -380,7 +381,7 @@ int readinfo_twii(struct transit *tr,
 
   //info for each isotope in database
   for(i=0;i<tr->n_i;i++){
-    transitDEBUG(20,verblevel,"isotope %i/%i\n",i,tr->n_i);
+    transitDEBUG(21,verblevel,"isotope %i/%i\n",i,tr->n_i);
 
     //read database index
     fread(&tr->isof[i].d,sizeof(int),1,fp);
@@ -389,7 +390,7 @@ int readinfo_twii(struct transit *tr,
     db=tr->isof[i].d;
     nT=in->db[db].t;
 
-    transitDEBUG(20,verblevel,
+    transitDEBUG(21,verblevel,
 		 "belongs to DB %i\n"
 		 "which have %i temperatures %i isotopes\n"
 		 "and starts at isotope %i\n"
@@ -400,7 +401,7 @@ int readinfo_twii(struct transit *tr,
       nIso=tr->db[db].i;
       Z=in->isov[i].z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
       CS=in->isov[i].c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
-      transitDEBUG(20,verblevel,
+      transitDEBUG(21,verblevel,
 		   "allocating %i * %i = %i spaces of Z and CS\n"
 		   " at %p and %p\n"
 		   ,nIso,nT,nIso*nT,(void *)Z,(void *)CS);
@@ -417,7 +418,7 @@ int readinfo_twii(struct transit *tr,
 		    ,db,nIso,i);
       Z=in->isov[i].z=in->isov[nIso].z+nT*(i-nIso);
       CS=in->isov[i].c=in->isov[nIso].c+nT*(i-nIso);
-      transitDEBUG(20,verblevel,
+      transitDEBUG(21,verblevel,
 		   "Partition pointer allocated at %p\n"
 		   "and CS at %p\n"
 		   ,(void *)Z,(void *)CS);
@@ -427,7 +428,7 @@ int readinfo_twii(struct transit *tr,
     fread(&tr->isof[i].m,sizeof(PREC_ZREC),1,fp);
     tr->isof[i].m*=AMU;
 
-    transitDEBUG(20,verblevel,
+    transitDEBUG(21,verblevel,
 		 "Mass read: %g * %g = %g\n"
 		 "position: %li, size %i\n"
 		 ,tr->isof[i].m/AMU,AMU,tr->isof[i].m
@@ -435,7 +436,7 @@ int readinfo_twii(struct transit *tr,
 
     //allocate and read isotope names
     fread(&rn,sizeof(int),1,fp);
-    transitDEBUG(20,verblevel,
+    transitDEBUG(21,verblevel,
 		 "Name's length: %i\n"
 		 "position: %li, size %i\n"
 		 ,rn,ftell(fp),sizeof(int));
@@ -443,7 +444,7 @@ int readinfo_twii(struct transit *tr,
     fread(tr->isof[i].n,sizeof(char),rn,fp);
     tr->isof[i].n[rn]='\0';
 
-    transitDEBUG(20,verblevel,
+    transitDEBUG(21,verblevel,
 		 "Name: %s\n"
 		 ,tr->isof[i].n);
 
@@ -456,8 +457,9 @@ int readinfo_twii(struct transit *tr,
       CS[rn]=SIGWATER;
   }
 
-  transitDEBUG(20,verblevel,"Aqui no%c\n",'!'); 
+  li->endinfo=ftell(fp);
 
+  /*
   //prepare to read marks. the first one should be 0.
   rn=0;
   mark=(PREC_NREC *)calloc(nalloc,sizeof(PREC_NREC));
@@ -492,12 +494,14 @@ int readinfo_twii(struct transit *tr,
 		 "it should have been %i.\n"
 		 ,rn,(int)((finw-iniw)/(dwmark)));
   }
+  li->dwmark=dwmark;
+  */
 
   //update structure values
   li->wi=iniw;
   li->wf=finw;
-  li->dwmark=dwmark;
   tr->n_db=ndb;
+  fclose(fp);
 
   //set progres indicator and return success.
   tr->pi|=TRPI_READINFO;
@@ -512,34 +516,40 @@ int readinfo_twii(struct transit *tr,
 
   @returns Number of records read on success
            -1 on unexpected EOF
+	   -2 file non-seekable
+	   -3 on non-integer number of structure records
 */
 int readdatarng(struct transit *tr, /* General parameters and
-					 hints */ 
-	       struct lineinfo *li) /* Values returned by
-					  readinfo\_twii */ 
+				       hints */ 
+		struct lineinfo *li) /* Values returned by
+					readinfo\_twii */ 
 {
   //'fp' datafile file pointer.
   //'alloc' number of allocated line\_transition structures.
   //'res' is an auxiliar pointer to tr->lt, where line transition
   //information is kept.
   //'iniw' and 'finw' are auxiliary to keep chosen extractable range.
-  //'dbini' is the first wavelength in database, required for marks.
   //'wltemp' a temporal variable to store wavelength.
+  /*
+    'dbini' is the first wavelength in database, required for marks.
+    PREC_LNDATA dbini=li->wi;
+  */
   FILE *fp;
   int rn;
-  PREC_NREC i,j;
+  long i,j;
+  long offs;
   PREC_NREC alloc=8;
   struct line_transition *res;
   PREC_LNDATA iniw=li->wavs.i,finw=li->wavs.f;
-  PREC_LNDATA dbini=li->wi;
   PREC_LNDATA wltmp;
+  PREC_NREC nfields;
 
   //Open data file 
-  if((rn=fileexistopen(li->f_data,&fp))!=1){
+  if((rn=fileexistopen(tr->f_line,&fp))!=1){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "Data file '%s' is not available.\n"
 		   " fileexistopen() error code %i.\n"
-		   ,li->f_data,rn);
+		   ,tr->f_line,rn);
     return -1;
   }
 
@@ -551,28 +561,47 @@ int readdatarng(struct transit *tr, /* General parameters and
 		 "structure array of length %i, in function readdatarng()\n"
 		 ,alloc);
 
-  /* Finding starting point in datafile */
-  //find starting point in datafile through the use of marks and a
-  //binary search
-  i=(int)((iniw-dbini)/li->dwmark);
-  transitDEBUG(20,verblevel,
-	       "iniw: %.6g    dbini: %.6g  dmark:%g\n"
-	       ,iniw,dbini,li->dwmark);
-  datafileBS(fp, li->mark[i], li->mark[i+1], iniw,
-	     &j, sizeof(struct line_transition));
+  /* Finding starting point in datafile 
+     i=(int)((iniw-dbini)/li->dwmark);
+     transitDEBUG(20,verblevel,
+     "iniw: %.6g    dbini: %.6g  dmark:%g\n"
+     ,iniw,dbini,li->dwmark);
+     datafileBS(fp, li->mark[i], li->mark[i+1], iniw,
+  */
+  //find starting point in datafile through binary search.
+  if(fseek(fp,0,SEEK_END)){
+    transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
+		 "File '%s' was not seekable when trying to go to the end\n"
+		 ,tr->f_line);
+    return -2;
+  }
+  offs=li->endinfo;
+  j=ftell(fp);
+  rn=sizeof(struct line_transition);
+  nfields=((j-offs)/rn);
+
+  if(nfields*rn+offs!=j){
+    transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
+		 "Data file does not have an integer number of records\n"
+		 "Initial byte %i, final %i, record size %i\n"
+		 ,offs,j,rn);
+    return -3;
+  }
+
+  datafileBS(fp, offs, nfields, iniw, &j, rn);
   transitDEBUG(20,verblevel,"Beginning found at position %li ",j);
   //check whether we need to start reading from records further back
-  //because of repitition of wavelength
+  //because of repetition of wavelength
   if (j){
     do{
-      fseek(fp,--j*sizeof(struct line_transition),SEEK_SET);
+      fseek(fp,offs+--j*sizeof(struct line_transition),SEEK_SET);
       fread(&wltmp,sizeof(PREC_LNDATA),1,fp);
     }while(wltmp>=iniw);
     j++;
   }
   //seek file to starting point.
   transitDEBUG(20,verblevel,"and then slide to %li\n",j);
-  fseek(fp,j*sizeof(struct line_transition),SEEK_SET);
+  fseek(fp,offs+j*sizeof(struct line_transition),SEEK_SET);
 
   /* Main loop to read all the data. */
   //read the data
@@ -595,7 +624,7 @@ int readdatarng(struct transit *tr, /* General parameters and
 		   "End-of-file in datafile '%s'.\n"
 		   "Last wavelength read (%f) was in record %i.\n"
 		   "If you are reading the whole range ignore this warning.\n\n"
-		   ,li->f_data,res[i-1].wl,i);
+		   ,tr->f_line,res[i-1].wl,i);
       break;
     }
     transitDEBUG(22,verblevel,"Wavelength:%.8f iso:%i\n",res[i].wl,
@@ -635,31 +664,34 @@ int readdatarng(struct transit *tr, /* General parameters and
 }
 
 
-static inline void datafileBS(FILE *fp, 	   /* File pointer */
-			      PREC_NREC initial,  /* initial index */
-			      PREC_NREC final,	   /* last index */
-			      double lookfor,     /* target value */
-			      PREC_NREC *resultp, /* result index */
-			      int reclength)	   /* Total length of record */
+static inline void 
+datafileBS(FILE *fp,		/* File pointer */
+	   long offs,	        /* initial position of data in twii 
+				   file */
+	   PREC_NREC nfields,	/* last position */
+	   double lookfor,	/* target value */
+	   PREC_NREC *resultp,	/* result index */
+	   int reclength)	/* Total length of record */
 {
   PREC_LNDATA temp;
   const int trglength=sizeof(PREC_LNDATA);
+  PREC_NREC ini=0,fin=nfields-1;
 
   transitDEBUG(20,verblevel,
-	       "BS: Start looking between %li and %li for %f\n"
-	       ,initial,final,lookfor);
+	       "BS: Start looking from %li in %li fields for %f\n"
+	       ,offs,nfields,lookfor);
   do{
-    *(resultp)=(final+initial)/2;
-    fseek(fp,reclength*(*resultp),SEEK_SET);
+    *(resultp)=(fin+ini)/2;
+    fseek(fp,offs+reclength*(*resultp),SEEK_SET);
     fread(&temp,trglength,1,fp);
     transitDEBUG(20,verblevel,"BS: found wl %f at position %li\n"
 		 ,temp,(*resultp));
     if(lookfor>temp)
-      initial=*(resultp);
+      ini=*(resultp);
     else
-      final=*(resultp);
-  }while (final-initial>1);
-  *resultp=initial;
+      fin=*(resultp);
+  }while (fin-ini>1);
+  *resultp=ini;
 }
 
 
@@ -709,13 +741,13 @@ int readlineinfo(struct transit *transit) /* General parameters and
   transitprint(2,verblevel,
 	       " After checking limits, the wavelength range to be\n"
 	       "used is %g to %g.\n"
-	       "Including a margin of %g,"
+	       "Including a margin of %g,\n"
 	       "the range to be extracted is %g to %g\n"
 	       ,transit->ds.li->wavs.i,transit->ds.li->wavs.f
 	       ,transit->m,st_li.wi,st_li.wf);
 
   //read data file
-  transitprint(1,verblevel, "Reading data file '%s'... ",st_li.f_data);
+  transitprint(1,verblevel, "Reading data... ");
   if((transit->n_l=readdatarng(transit,&st_li))<1)
     transiterror(TERR_SERIOUS,
 		 "readdatarng() returned an error code %li\n"
@@ -854,144 +886,3 @@ int main(int argc, char **argv)
   
 }
 #endif
-
-
-  //\delfh
-#if 0 /* tokenize a comma separated list of files and open them */
-  //Find the maximum number of line info files, and check which of those
-  //are available.
-  char *file;
-  int of=0,cf=Pnchr(th->f_line,',');
-  transit->fp_line=(FILE **)calloc(cf+1,sizeof(FILE *));
-  transit->f_line=(char *)calloc(strlen(th->f_line)+1,sizeof(char));
-  file=strtok(th->f_line,",");
-  th->f_line=NULL;
-  //For each suggested file,
-  while(file!=NULL){
-    //if they can't be opened keep them in 'th'
-    if((rn=fileexistopen(file,&(transit->fp_line[of])))!=1){
-      transiterror(TERR_WARNING,
-		   "Line info file '%s' is not available.\n"
-		   " fileexistopen() error code %i.\n"
-		   ,file,rn);
-      strcat(th->f_line,file);
-      strcat(th->f_line,",");
-    }
-    //otherwise move the name to 'transit'
-    else{
-      strcat(transit->f_line,file);
-      strcat(transit->f_line,",");
-      of++;
-      th->na&=~TRH_FL;
-    }
-    file=strtok(NULL,",");
-  }
-  //If nothing was succesfully opened.
-  if(!of)
-    transiterror(TERR_SERIOUS,
-		 "No line info files were available from:\n%s\n"
-		 ,th->f_line);
-  //Clean a bit, in 'transit' and 'th' if there was something left,
-  //erase the final `,', else free the array and nullify the
-  //pointer. Also fix the size of FILE pointers to what was used.
-  th->f_line=(char *)realloc(th->f_line,rn=strlen(th->f_line));
-  if(rn) th->f_line[rn-1]='\0';
-  else th->f_line=NULL;
-  transit->f_line=(char *)realloc(transit->f_line,rn=strlen(transit->f_line));
-  if(rn) transit->f_line[rn-1]='\0';
-  else transit->f_line=NULL;
-  transit->fp_line=(FILE **)realloc(transit->fp_line,of*sizeof(FILE *));
-  //Update flags to indicate non-accepted functions
-  cf-=of;
-  if(cf>TRH_FL_SOME) cf=TRH_FL_SOME;
-  th->na|=cf;
-#endif /* not used tokenization */
-
-#if 0 				/* obsolte */
-/*
-  readdatastart: Initialize data file to be read from iniw from
-  lineread. This function doesn't check for correct boundaries of
-  data. You should run checkrange() before running this
-
-  @returns 1  on success
-           -1 on unexpected EOF
-*/
-int readdatastart(char *datafile,
-
-		  double iniw,
-
-		  PREC_LNDATA dbini,
-		  float dwmark,
-		  PREC_NREC *wmark,
-
-		  FILE **fp)
-{
-  PREC_NREC i,alloc,mb;
-  PREC_LNDATA wltmp;
-
-  alloc=8;
-
-  if((*fp=fopen(datafile,"r"))==NULL){
-    transiterror(TERR_SERIOUS,
-		 "Cannot open data file '%s', please check and try again.\n"
-		 ,datafile);
-  }    
-
-  /* Finding starting point in datafile */
-
-  i=(int)((iniw-dbini)/dwmark);
-  datafileBS(*fp, wmark[i], wmark[i+1], iniw, &mb, sizeof(struct line_transition));
-  transitDEBUG(20,verblevel,"Beginning found at position %li ",mb);
-  if (mb){
-    do{
-      fseek(*fp,--mb*sizeof(struct line_transition),SEEK_SET);
-      fread(&wltmp,sizeof(PREC_LNDATA),1,*fp);
-    }while(wltmp>=iniw);
-    mb++;
-  }
-  transitDEBUG(20,verblevel,"and then slide to %li\n",mb);
-  fseek(*fp,mb*sizeof(struct line_transition),SEEK_SET);
-
-  return 1;
-}
-
-/*
-  readdatanext: Read next line information from datafile previously
-  opened by readdatanext
-
-  @returns 1 on success
-           -1 on EOF
-*/
-inline int readdatanext(FILE *fp,
-			struct line_transition *res,
-
-			short *dbiso,    //Read from which database/isotopes?
-			short ndbiso)      // that many
-{
-  int j;
-
-  do{
-    if(fread(res,sizeof(struct line_transition),1,fp)==0){
-      transiterror(TERR_WARNING,
-		   "End-of-file while reading single record. "
-		   "Last wavelength read was %f\n\n"
-		   ,(*res).wl);
-      return -1;
-    }
-    transitprint(21,verblevel,"Wavelength:%f iso:%i\n",(*res).wl,
-		 (*res).isoid);
-
-    /* Following blocks checks for wanted isotopes */
-    for(j=0;j<ndbiso;j++){
-      if(dbiso[j]==(*res).isoid)
-	break;
-    }
-    if(j>0&&j==ndbiso)    //Skipping this record because it is an
-                          //unwanted isotope.
-      continue;
-  }while(0);
-
-  return 1;
-}
-#endif /*obsolete*/
-//\deluh

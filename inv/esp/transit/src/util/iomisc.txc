@@ -41,13 +41,14 @@ fgetupto(char *line,	/* Where input is stored, it has to have
 			   dimension 'max' */
 	 int max, 		/* dimension of 'line' */
 	 FILE *fp,		/* File pointer to read from */
-	 void (*errfcn)(int,char *),	/* Error funtion to call
-					   in case a newline is
-					   not the last
-					   character read and we
-					   reached 'max' */
-	 char *name)	/* Second parameter with which errfcn is
+	 void (*errfcn)(int,char *, int), /* Error funtion to call
+					     in case a newline is
+					     not the last
+					     character read and we
+					     reached 'max' */
+	 char *name,	/* Second parameter with which errfcn is
 			   going to be called */
+	 int other)
 {
   char *lp;
   int n=0;
@@ -72,7 +73,7 @@ fgetupto(char *line,	/* Where input is stored, it has to have
     return *line;
   }
 
-  errfcn(max,name);
+  errfcn(max,name,other);
   return -1;
 }
 

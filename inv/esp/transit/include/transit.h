@@ -291,15 +291,19 @@ struct extinction{
 };
 
 struct lineinfo {
-  char *f_data;			/* Data filename */
   int twii_ver;			/* TWII version */
   int twii_rev;			/* TWII revision */
-  float dwmark;			/* Mark every this many delta wavelength
-				   in nanometers */
-  PREC_NREC *mark;		/* Marks */
+  /*
+    char *f_data;			Data filename 
+    float dwmark;			 Mark every this many delta wavelength
+    in nanometers
+    PREC_NREC *mark;		Marks
+  */
   prop_samp wavs;		/* wavelength sampling extracted */
   double wi,wf;			/* initial and final wavelength in the
 				   database */
+  long endinfo;			/* position at the end of the info part
+				   of the info file */
 };
 
 struct onept {

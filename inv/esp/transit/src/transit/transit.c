@@ -141,11 +141,11 @@ int main (int argc,		/* Number of variables */
 #ifdef NODEBUG_TRANSIT
   verblevel=2;
 #else
-  verblevel=19;
+  verblevel=20;
 #endif /* NODEBUG_TRANSIT */
 
   //Initialization of line database variables. 
-  //'file\_line' is the name of the info file that is finally used
+  //'f\_line' is the name of the twii data file 
   //'trh.m' is the amount of microns that cannot be trusted at the
   //boundaries of databases range, and also how much extra out of
   //requested range it has to look for transitions.
@@ -153,7 +153,7 @@ int main (int argc,		/* Number of variables */
   //(i.e. modifiable by the user)
   trh.m=0.001;
   trh.na|=TRH_WM;
-  char defile_line[]="./res/lineread.inf";
+  char defile_line[]="./res/lineread.twii";
   trh.f_line=(char *)calloc(strlen(defile_line)+1,sizeof(char));
   strcpy(trh.f_line,defile_line);
   trh.na|=TRH_FL;
@@ -197,10 +197,6 @@ int main (int argc,		/* Number of variables */
     transiterror(TERR_SERIOUS,
 		 "readlineinfo() returned error code %i\n"
 		 ,rn);
-
-  transitDEBUG(20,verblevel,
-	       "Final limits: %g %g\n"
-	       ,transit.wavs.i,transit.wavs.f);
 
   //Read Atmosphere information
   if((rn=getatm(&transit))!=0)  

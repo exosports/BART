@@ -281,7 +281,7 @@ int extwn (struct transit *tr)
       */
       else
 	w=(wavn-iniwn)/dwn;
-      transitDEBUG(20,verblevel,
+      transitDEBUG(21,verblevel,
 		   "wavn:%g lgf:%g\n"
 		   ,wavn,line[ln].lgf);
       //If it is beyond the last then just skip that line
@@ -337,7 +337,7 @@ int extwn (struct transit *tr)
 	/mass[i]	        	 //mass
 	/ziso[i];		         //Partition function
 
-      transitDEBUG(20,verblevel,
+      transitDEBUG(21,verblevel,
 		   "i=%i   temp=%g   Elow=%g\n"
 		   "k= %10.3g  //densiso[i] \n"
 		   "  *%10.3g  //SIGCTE\n"

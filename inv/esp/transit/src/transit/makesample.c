@@ -231,6 +231,7 @@ int makewavsample(struct transit *tr)
   int res;
   int fl=tr->ds.th->na;
   prop_samp *samp=&tr->ds.th->wavs;
+  prop_samp *lin=&(tr->ds.li->wavs);
 
   transitcheckcalled(tr->pi,"makewavsample",1,
 		     "chkrange",TRPI_CHKRNG);
@@ -244,9 +245,8 @@ int makewavsample(struct transit *tr)
     return -10;
   }
 
-
   //make the sampling
-  res=makesample(&tr->wavs,samp,&tr->ds.li->wavs,
+  res=makesample(&tr->wavs,samp,lin,
 		 fl,TRH_WAVSFT,tr->m);
 
   //set progress indicator if sampling was successful and return status
