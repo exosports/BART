@@ -941,6 +941,7 @@ int readdatarng(struct transit *tr, /* General parameters and
   //read the data in the main loop
   i=0;
   while(1){
+    rn=rc=1;
     //enlarge structure if allocated spaced got filled up
     if(i==alloc){
       alloc<<=1;
