@@ -529,7 +529,19 @@ savesample(FILE *out,		/* File pointer to write out */
 	   prop_samp *samp)	/* Sample strucuture to print */
 {
   fwrite(samp,sizeof(prop_samp),1,out);
-  fwrite(samp->v,sizeof(PREC_RES),samp->n,out);
+  savesample_arr( out, samp);
+}
+
+
+/* \fcnfh
+   Saves in binary the sample structure's arrays
+*/
+void
+savesample_arr(FILE *out, 
+	       prop_samp *samp)
+{
+  if(samp->n>0)
+    fwrite(samp->v,sizeof(PREC_RES),samp->n,out);
 }
 
 
@@ -548,12 +560,31 @@ restsample(FILE *in,		/* File pointer to read in */
 {
   if(fread(samp,sizeof(prop_samp),1,in)!=1)
     return -1;
+  return restsample_arr(in,samp);
+}
+
+
+/* \fcnfh
+   Restore a binary sample structure
+
+   @returns 0 on success
+            -1 if not all the expected information is read
+	    -2 if info read is wrong
+	    -3 if cannot allocate memory
+	    1 if information read was suspicious
+*/
+int
+restsample_arr(FILE *in,
+	       prop_samp *samp)
+{
   if(samp->n<0)
     return -2;
   if(samp->n>1000000)
     return 1;
   if((samp->v=(PREC_RES *)calloc(samp->n,sizeof(PREC_RES)))==NULL)
     return -3;
+  if(samp->n==0)
+    return 0;
   if(fread(samp->v,sizeof(PREC_RES),samp->n,in)!=samp->n)
     return -1;
 

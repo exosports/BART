@@ -697,16 +697,17 @@ savehint(FILE *out,
   savestr(out,hints->solname);
 
   //save sub-structures
-  savesample(out,&hints->rads);
-  savesample(out,&hints->wavs);
-  savesample(out,&hints->wns);
-  savesample(out,&hints->ips);
+  savesample_arr(out,&hints->rads);
+  savesample_arr(out,&hints->wavs);
+  savesample_arr(out,&hints->wns);
+  savesample_arr(out,&hints->ips);
 
   saveonept_arr(out,&hints->onept);
 }
 
 /* \fcnfh
-   Restore hints structure
+   Restore hints structure, the structure needs to have been allocated
+   before
 
    @returns 0 on success
             -1 if not all the expected information is read
@@ -716,8 +717,40 @@ savehint(FILE *out,
 */
 int 
 resthint(FILE *in,
-	 struct transithint **hint)
+	 struct transithint *hint)
 {
+  int rn,res=0;
 
-  return 0;
+  //Restore main structure
+  rn=fread(hint,sizeof(struct transithint),1,in);
+  if(rn<0) return rn; else res+=rn;
+
+  //restore strings
+  rn=reststr(in,&hint->f_atm);
+  if(rn<0) return rn; else res+=rn;
+  rn=reststr(in,&hint->f_line);
+  if(rn<0) return rn; else res+=rn;
+  rn=reststr(in,&hint->f_out);
+  if(rn<0) return rn; else res+=rn;
+  rn=reststr(in,&hint->f_toomuch);
+  if(rn<0) return rn; else res+=rn;
+  rn=reststr(in,&hint->f_outsample);
+  if(rn<0) return rn; else res+=rn;
+  rn=reststr(in,&hint->solname);
+  if(rn<0) return rn; else res+=rn;
+
+  //restore sub-structures
+  restsample_arr(in,&hint->rads);
+  if(rn<0) return rn; else res+=rn;
+  restsample_arr(in,&hint->wavs);
+  if(rn<0) return rn; else res+=rn;
+  restsample_arr(in,&hint->wns);
+  if(rn<0) return rn; else res+=rn;
+  restsample_arr(in,&hint->ips);
+  if(rn<0) return rn; else res+=rn;
+
+  restonept_arr(in,&hint->onept);
+  if(rn<0) return rn; else res+=rn;
+
+  return res;
 }

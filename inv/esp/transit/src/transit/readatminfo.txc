@@ -980,6 +980,8 @@ void
 saveonept_arr(FILE *out,
 	      struct onept *onept)
 {
+  if(onept->ne<=0)
+    return;
   fwrite(onept->n[0],1,maxeisoname*onept->ne,out);
   fwrite(onept->m,sizeof(PREC_ZREC),onept->ne,out);
 }
