@@ -77,7 +77,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_EXTPERISO,
     CLA_NOEXTPERISO,
     CLA_GORBPAR,
-    CLA_GSORBPARFCT,
+    CLA_GORBPARFCT,
     CLA_GTIME,
     CLA_GTIMEFCT,
     CLA_GMASSRAD,
@@ -222,11 +222,11 @@ int processparameters(int argc, /* number of command line arguments */
     {NULL,HELPTITLE,0,
      NULL,"GEOMETRY PARAMETERS"},
     {"g-orbpar",required_argument,CLA_GORBPAR,
-     "smaxis,incl,time,ecc,long_node,arg_per","Orbital parameters, in"
+     "smaxis,time,incl,ecc,long_node,arg_per","Orbital parameters, in"
      " the above order, to use the default of any of these (1,0,0,0,0,0),"
      " leave the corresponding field blank"},
-    {"g-orbpar",required_argument,CLA_GORBPAR,
-     "unitsof:smaxis,incl,time,ecc,long_node,arg_per","Units of orbital"
+    {"g-orbpar",required_argument,CLA_GORBPARFCT,
+     "unitsof:smaxis,time,incl,ecc,long_node,arg_per","Units of orbital"
      " parameters, in the above order, to use the default of any of these"
      " (AU,deg,hours,,deg,deg), leave the corresponding field blank"},
 
@@ -499,6 +499,17 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_NOEXTPERISO:
       hints->fl&=~TRU_EXTINPERISO;
+      break;
+
+    case CLA_GORBPAR:
+      getnd(6,',',optarg,
+	    &hints->sg.smaxis,&hints->sg.time,&hints->sg.incl,
+	    &hints->sg.ecc,&hints->sg.lnode,&hints->sg.aper);
+      break;
+    case CLA_GORBPARFCT:
+      getnd(6,',',optarg,
+	    &hints->sg.smaxisfct,&hints->sg.timefct,&hints->sg.inclfct,
+	    &hints->sg.eccfct,&hints->sg.lnodefct,&hints->sg.aperfct);
       break;
     }
   }

@@ -204,7 +204,8 @@ getad(int n,			/* Number of float field to accept */
 /* \fcnfh
    get 'n' double format numbers from 'str', they are separated by
    'sep'. There is no way to know which of the 'n' were really
-   converted. The non-converted doubles are returned untouched.
+   converted. The pointers to the non-converted doubles are returned
+   untouched.
 
    @returns number of converted values
             -x if there were only 'x' fields separated by car instead 
@@ -242,6 +243,7 @@ getnd(int n,			/* Number of float field to accept */
     return 0;
   if (rn<n)
     return -rn;
+
   va_start(ap,str);
   for(rn=0;rn<n;rn++){
     in=(double *)va_arg(ap,double *);
@@ -252,20 +254,16 @@ getnd(int n,			/* Number of float field to accept */
     }
 
     while(!(*ptr==sep||(sep==' '&&*ptr=='\t')))
-      if(!*ptr++){
-	if(rn!=n-1)
-	  fprintf(stderr,
-		  "iomisc:: getnd: the one with %f was not supposed to\n"
-		  "be the last(%ith) field but it is in: %s\n"
-		  ,out,n,str);
-	else
+      if(!*ptr++)
+	if(rn==n-1)
 	  break;
-      }
     str=ptr+1;
   }
   va_end(ap);
+
   return nc;
 }
+
 
 /* \fcnfh
    get 'n' long format numbers from 'str', they are separated by
@@ -454,10 +452,11 @@ double readds(FILE *fp,
   return atof(str);
 }
 
+
 /* \fcnfh
-   read a double value from a string and optionally return the next
-   field in in 'string', a field ends in space and can be separated from
-   the number by a dash.
+   read a double value from a string and optionally return the rest of
+   the field in in 'string', a field ends in space and can be separated
+   from the number by a dash.
 
    @returns 0 on success
             first character read if it was not appropiate

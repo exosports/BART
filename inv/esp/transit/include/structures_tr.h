@@ -213,21 +213,33 @@ struct optdepth {
 
 
 struct geometry {
-  float inclination;		/* inclination of the planetary orbit
-				   with respect to the observer, 90
-				   degrees is edge on */
   float smaxis;			/* Semimajor axis */
   double smaxisfct;		/* 'smaxis' times this gives cgs
 				   units. */
   double time;			/* this value is 0 when in the middle of
 				   the eclipse */
   double timefct;		/* 'time' times this gives cgs units */
+  float incl;			/* inclination of the planetary orbit
+				   with respect to the observer, 90
+				   degrees is edge on */
+  float inclfct;		/* Units to convert inclination to
+				   radians */
+  double ecc;			/* eccentricty */
+  double eccfct;		/* eccentricity's units */
+  double lnode;			/* longitud of the ascending node */
+  double lnodefct;		/* longitud of the ascending node units */
+  double aper;			/* argument of the pericenter */
+  double aperfct;		/* argument of the pericenter units */
+
+
   double starmass;		/* Mass of the star */
   double starmassfct;		/* 'starmass' times this gives cgs
 				   units. */
+
   double starrad;		/* Star's radius */
   double starradfct;		/* 'starrad' times this gives cgs
 				   units. */
+
   double x0,y0;			/* coordinates of the center of the
 				   planet with respect to the
 				   star. 'fct' to convert to cgs is
