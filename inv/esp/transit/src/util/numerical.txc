@@ -22,17 +22,23 @@
 
 
 /* \fcnfh
-   Search for index such that val is between arr[i] inclusive and
-   arr[i+1] exclusive.
+   Search for index such that val is between arr[index] inclusive and
+   arr[index+1] exclusive.
 
    @returns index that is looked for
+	    -1 if 'f' is equal or smaller than 'i'
+            -2 if value is before first element 'i' of array
+	    -3 if value is after last element 'f' of array
  */
 inline int
 binsearch(double *arr, 		/* Array of length of at least 'f' */
 	  long i,		/* initial search index */
-	  long f,		/* final search index plus one (or array
-				   length) */
+	  long f,		/* final search index (or array
+				   length minus 1) */
 	  double target)	/* number to look for in the array */
 {
+  
 
+  while(f-i>1){
+  }
 }
