@@ -151,6 +151,9 @@ tau(struct transit *tr)
     for(ri=0;ri<rnn;ri++)
       er[ri]=e[ri][wi]*blowex+e_s[ri]+e_c[ri];
 
+    if( wi==5762 )
+      rn=56;
+
     //For each resultant impact parameter
     for(ri=0;ri<inn;ri++){
 
@@ -215,6 +218,65 @@ tau(struct transit *tr)
 }
 
 
+void
+outdebtauex(char *name,
+	    PREC_RES **e,
+	    prop_samp *ip,
+	    PREC_RES **t,
+	    long rn,
+	    long w)
+{
+  FILE *fp=fopen(name,"w");
+
+  long j;
+  for(j=0;j<rn;j++)
+    fprintf(fp,"%-15.10g%-15.10g\t%-15.10g\n",ip->v[j],t[w][rn-j-1],e[j][w]);
+
+  fclose(fp);
+}
+
+void
+outdebex(char *name,
+	 PREC_RES **e,
+	 PREC_RES *r,
+	 long rn,
+	 long wi,
+	 long wf)
+{
+  FILE *fp=fopen(name,"w");
+
+  long i,j;
+  for(j=0;j<rn;j++){
+    fprintf(fp,"%-15.10g\t",r[j]);
+    for(i=wi;i<=wf;i++)
+      fprintf(fp,"%-15.10g\t",e[j][i]);
+    fprintf(fp,"\n");
+  }
+
+  fclose(fp);
+}
+	 
+
+void
+outdebtau(char *name,
+       prop_samp *ip,
+       PREC_RES **t,
+       long wi,
+       long wf)
+{
+  FILE *fp=fopen(name,"w");
+
+  long i,j;
+  for(j=0;j<ip->n;j++){
+    fprintf(fp,"%-15.10g\t",ip->v[j]);
+    for(i=wi;i<=wf;i++)
+      fprintf(fp,"%-15.10g\t",t[i][j]);
+    fprintf(fp,"\n");
+  }
+
+  fclose(fp);
+
+}
 
 /* \fcnfh
    Print lowest impact parameter before optical depth gets too big
