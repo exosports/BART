@@ -130,9 +130,10 @@ tau(struct transit *tr)
       //Compute extinction at new radius if required
       if(bb[ri]*ip->fct<r[lastr]*rfct){
 
-	transitprint(3,verblevel,
-		     "Last Tau(bb=%9.3g, wn=%9.3g): %10.4g\n"
-		     ,bb[ri-1],wn->v[wi],t[ri-1]);
+	if(ri)
+	  transitprint(3,verblevel,
+		       "Last Tau(bb=%9.3g, wn=%9.3g): %10.4g\n"
+		       ,bb[ri-1],wn->v[wi],t[ri-1]);
 	//while the extinction at a radius bigger than the impact
 	//parameter is not computed.. go for it
 	do{
