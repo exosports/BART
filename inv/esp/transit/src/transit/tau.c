@@ -87,6 +87,9 @@ tau(struct transit *tr)
 		 "tau(): At least three impact parameters points are required!.\n"
 		 );
 
+  transitprint(1,verblevel,
+	       "Calculating optical depth at various radius...\n");
+
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
@@ -141,7 +144,7 @@ printtau(struct transit *tr)
   long rad=
     askforposl("Radius at which you want to print the optical depth(%li - %li): "
 	       ,1,rads->n)-1;
-  if(rad>rads->v[rads->n-1]){
+  if(rad>rads->n){
     fprintf(stderr,"Value out of range, try again\n");
     printtau(tr);
   }
