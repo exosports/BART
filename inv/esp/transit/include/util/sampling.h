@@ -1,6 +1,12 @@
 #ifndef _SAMPLING_H
 #define _SAMPLING_H
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+
+//Make sure to include transit.h before include this header
 #ifdef TRANSIT
 #define SAMP_BITS   TRU_SAMPBITS
 #define SAMP_LINEAR TRU_SAMPLIN

@@ -1,6 +1,6 @@
 /*
  * sampling.c
- * sampling.txc - Practical command line option parsing
+ * sampling.txc - Resampling utilities
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -20,7 +20,7 @@
  * 02111-1307, USA.
  */
 
-#include <transit.h>
+#include <util/sampling.h>
 
 /* \fcnfh
    Do resampling of arrays. If getingx then process the x axis,
@@ -70,11 +70,11 @@ resample(const int getingx, /* Flag indicating which axis we
   if(getingx){
     //if any of the arrays is not given
     if(nrefx<1||noutx<1){
-      transiterror(TERR_SERIOUS,
-		   "Calling resample%c() with zero reference\n"
-		   "or data points.\n"
-		   ,getingx?'x':'y');
-    return -1;
+      fprintf(stderr,
+	      "%s:: Calling resample%c() with zero reference\n"
+	      "or data points.\n"
+	      ,__FILE__,getingx?'x':'y');
+      return -1;
     }
 
     //If there is only one reference point, then
@@ -82,10 +82,10 @@ resample(const int getingx, /* Flag indicating which axis we
       //warn if there was more than one requested point, but don't stop,
       //just keep setting everything as that value.
       if(noutx>1)
-	transiterror(TERR_WARNING,
-		     "In resamplex(), there was only one element\n"
-		     "data array, but %i elements in the resample array\n"
-		     ,noutx);
+	fprintf(stderr,
+		"%s:: In resamplex(), there was only one element\n"
+		"data array, but %li elements in the resample array\n"
+		,__FILE__,noutx);
       ndat=nrefx;
       nout=1;
       return 0;
@@ -93,12 +93,14 @@ resample(const int getingx, /* Flag indicating which axis we
     //Check that we are not ask to extrapolate and that we are within
     //the range
     if((outx[0]<refx[0]||outx[noutx-1]>refx[nrefx-1])||
-       (outx[noutx-1]<refx[0]||outx[0]>refx[nrefx-1]))
-      transiterror(TERR_SERIOUS,
-		   "Data x array (%g to %g), spans outside the values\n"
-		   "of reference x array (%g to %g). Sorry, but I cannot "
-		   "extrapolate.\n"
-		   ,outx[0],outx[noutx-1],refx[0],refx[nrefx-1]);
+       (outx[noutx-1]<refx[0]||outx[0]>refx[nrefx-1])){
+      fprintf(stderr,
+	      "%s:: Data x array (%g to %g), spans outside the values\n"
+	      "of reference x array (%g to %g). Sorry, but I cannot "
+	      "extrapolate.\n"
+	      ,__FILE__,outx[0],outx[noutx-1],refx[0],refx[nrefx-1]);
+      exit(EXIT_FAILURE);
+    }
 
     //If it is not first use of this function
     if(indx!=NULL){
@@ -124,11 +126,13 @@ resample(const int getingx, /* Flag indicating which axis we
     for(j=0;j<nout;j++){
       val=outx[j];
 
-      if(val<refx[0]||val>refx[nrefx])
-	transiterror(TERR_CRITICAL,
-		     "resample():: Looking for a value (%g) that is outside\n"
-		     "reference axis (%g - %g)\n"
-		     ,val,refx[0],refx[nrefx]);
+      if(val<refx[0]||val>refx[nrefx]){
+	fprintf(stderr,
+		"%s:: resample(): Looking for a value (%g) that is outside\n"
+		"reference axis (%g - %g)\n"
+		,__FILE__,val,refx[0],refx[nrefx]);
+	exit(EXIT_FAILURE);
+      }
 
       //In case the next output element is not bigger than the previous,
       //then start looking from the beginning
@@ -165,11 +169,11 @@ resample(const int getingx, /* Flag indicating which axis we
   else{
     //check that resamplex was called before.
     if(nout<1||ndat<1){
-      transiterror(TERR_SERIOUS,
-		   "It seems that 'resamplex()' was not run before this\n"
-		   "run of 'resampley()': either nout(%li) or ndat(%li)\n"
-		   "are not positive.\n"
-		   ,nout,ndat);
+      fprintf(stderr,
+	      "%s:: It seems that 'resamplex()' was not run before this\n"
+	      "run of 'resampley()': either nout(%li) or ndat(%li)\n"
+	      "are not positive.\n"
+	      ,__FILE__,nout,ndat);
       return -2;
     }
 
@@ -193,10 +197,11 @@ resample(const int getingx, /* Flag indicating which axis we
 	lineinterpol(ndat,x,y,nout,indx,t,out,NULL);
 	break;
       default:
-	transiterror(TERR_CRITICAL,
-		     "Sampling method requested(%i) is not yet\n"
-		     "implemented\n"
-		     ,flags&SAMP_BITS);
+	fprintf(stderr,
+		"%s:: Sampling method requested(%li) is not yet\n"
+		"implemented\n"
+		,__FILE__,flags&SAMP_BITS);
+	exit(EXIT_FAILURE);
 	break;
       }
     }
@@ -232,17 +237,20 @@ lineinterpol(int ndat,		/* Length of x,y array */
   for(i=0;i<n;i++){
     idx=indx[i];
     if(idx>=ndat||idx<0){
-      transiterror(TERR_CRITICAL,
-		   "index #%i(%i) is out of dataset\n"
-		   "range (0 - %i) in lineinterpol()\n"
-		   ,i,idx,ndat-1);
+      fprintf(stderr,
+	      "%s:: index #%i(%i) is out of dataset\n"
+	      "range (0 - %i) in lineinterpol()\n"
+	      ,__FILE__,i,idx,ndat-1);
+      exit(EXIT_FAILURE);
     }
     if(idx==ndat-1){
-      if(t[i]!=0)
-	transiterror(TERR_CRITICAL,
-		     "Trying to extrapolate in last index(%i) while\n"
-		     "in lineinterpol(). t=%f\n"
-		     ,idx,t[i]);
+      if(t[i]!=0){
+	fprintf(stderr,
+		"%s:: Trying to extrapolate in last index(%i) while\n"
+		"in lineinterpol(). t=%f\n"
+		,__FILE__,idx,t[i]);
+	exit(EXIT_FAILURE);
+      }
       yout[i]=y[idx];
     }
     else
@@ -278,11 +286,13 @@ void natcubspline(int ndat,	/* Length of (x,y) array */
   double hh;
   long f,i;
 
-  if(ndat<0)
-    transiterror(TERR_CRITICAL,
-		 "ndat was not positive(%i) in call to\n"
-		 "evalnatcubspline()\n"
-		 ,ndat);
+  if(ndat<0){
+    fprintf(stderr,
+	    "%s:: ndat was not positive(%i) in call to\n"
+	    "evalnatcubspline()\n"
+	    ,__FILE__,ndat);
+    exit(EXIT_FAILURE);
+  }
 
   double h[ndat],D[ndat];
 
@@ -293,11 +303,13 @@ void natcubspline(int ndat,	/* Length of (x,y) array */
     tt=t[f];
     hh=h[f];
     if(i==ndat-1){
-      if(t[i]!=0)
-	transiterror(TERR_CRITICAL,
-		     "Trying to extrapolate in last index(%i) while\n"
-		     "in natcubspline(). t=%f\n"
-		     ,ndat,t[i]);
+      if(t[i]!=0){
+	fprintf(stderr,
+		"%s:: Trying to extrapolate in last index(%i) while\n"
+		"in natcubspline(). t=%f\n"
+		,__FILE__,ndat,t[i]);
+	exit(EXIT_FAILURE);
+      }
       yout[f]=y[i];
     }
     else{
@@ -447,7 +459,6 @@ lineinterp(double refx,		/* Reference x point */
 
 //\delfh
 #ifdef DBGSPLINE
-#include "transitstd.c"
 #define na 5
 int main(int argc, char **argv)
 {
@@ -507,7 +518,6 @@ int main(int argc, char **argv)
 #endif /* DBGSPLINE */
 
 #ifdef DBGSAMPLING
-#include "transitstd.c"
 int main(int argc, char **argv)
 {
   //  double x[na]={0,1,2,3,4,5,6,7,8,9};
