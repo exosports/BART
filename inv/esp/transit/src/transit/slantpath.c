@@ -141,7 +141,7 @@ static inline PREC_RES
 modulation (PREC_RES *tau,
 	    PREC_RES *b,
 	    long nb,
-	    struct star_geom *star,
+	    struct geometry *star,
 	    gsl_interp_accel *acc)
 {
 

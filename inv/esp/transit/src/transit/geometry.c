@@ -1,7 +1,7 @@
 /*
- * slantpath.c
- * slantpath.txc - Functions to handle a slant path problem. Component
- *                 of the transit program
+ * geometry.c
+ * geometry.txc - Functions to establish a system geometry. Component
+ *                of the transit program
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -20,3 +20,36 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  */
+
+#include <transit.h>
+
+/*\fcnfh
+  Takes hinted geometry structure and fill it up with calculated values.
+
+  @returns 0 on success
+*/
+int
+setgeom(struct transit *tr)
+{
+  static struct geometry st_sg;
+  struct geometry *sg=tr->ds.sg=&st_sg;
+  struct geometry *hg=&tr->ds.th->sg;
+
+  sg->smaxis=hg->smaxis;
+
+  //If values are not hinted, then use hard coded values: semimajor axis
+  //of 1AU. Timing is mid eclipse. star's mass and radius are solar
+  sg->smaxis=hg->smaxis>0?hg->smaxis:1*AU;
+  sg->time=hg->time>0?hg->time:0;
+  sg->starmass=hg->starmass>0?hg->starmass:1*SUNMASS;
+  sg->starrad=hg->starrad>0?hg->starrad:1*SUNRADIUS;
+
+  //If factor values are correctly hinted then use them, otherwise just
+  //assume that values are in cgs.
+  sg->smaxisfct=hg->smaxisfct>0?hg->smaxisfct:1;
+  sg->timefct=hg->timefct>0?hg->timefct:1;
+  sg->starmassfct=hg->starmassfct>0?hg->starmassfct:1;
+  sg->starradfct=hg->starradfct>0?hg->starradfct:1;
+
+  return 0;
+}

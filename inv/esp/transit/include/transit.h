@@ -175,22 +175,27 @@
 /* units in cgs */
 #if defined(AMU) || defined(EC) || defined(LS) || defined(ME) || \
 defined(KB) || defined(H) || defined(PI) || defined (SIGCTE) ||  \
-defined(EXPCTE) || defined(WNU_O_WLU)
+defined(EXPCTE) || defined(WNU_O_WLU) ||                         \
+defined(AU) || defined(SUNMASS) || defined(SUNRADIUS) ||         \
+defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 #error Some of the preprocessor constants I wanted to use were already defined elsewhere!
 #endif
 
-#define AMU (1.6605402e-24)                 //Atomic Mass unit
-#define EC (4.8032068e-10)                  //Electronic charge
-#define LS (2.99792458e10)                  //Light Speed
-#define ME (9.1093897e-28)                  //Electron mass
-#define KB (1.380658e-16)                   //Boltzmann constant
-#define H (6.6260755e-27)                   //Planck's constant
-#define PI (3.141592653589793)              //PI!
-#define RWATER (3.2e-8/2.0)                 //water molecule radius
-#define HC (H*LS)                           //for lower energy conversion
-#define SIGWATER (PI*RWATER*RWATER)         //water cross section
-#define SIGCTE (PI*EC*EC/LS/LS/ME/AMU)      //Cross-sec constant
-#define EXPCTE (H*LS/KB)                    //Exponent constant
+#define AU (14959786896040.492)	//Astronomical unit
+#define SUNMASS (1.9891e33)	//Solar mass
+#define SUNRADIUS (6.96e10)	//solar volumetric mean radius
+#define AMU (1.6605402e-24)	//Atomic Mass unit
+#define EC (4.8032068e-10)	//electronic charge
+#define LS (2.99792458e10)	//Light Speed
+#define ME (9.1093897e-28)	//Electron mass
+#define KB (1.380658e-16)	//Boltzmann constant
+#define H (6.6260755e-27)	//Planck's constant
+#define PI (3.141592653589793)	//PI!
+#define RWATER (3.2e-8/2.0)	//water molecule radius
+#define HC (H*LS)		//for lower energy conversion
+#define SIGWATER (PI*RWATER*RWATER) //water cross section
+#define SIGCTE (PI*EC*EC/LS/LS/ME/AMU) //Cross-sec constant
+#define EXPCTE (H*LS/KB)	//Exponent constant
 
 #define WNU_O_WLU (1e7)              //Waven(cm) over wavel(nm) (units)
 #define ONEOSQRT2PI (0.3989422804)   // 1.0/sqrt(2pi)
@@ -224,7 +229,7 @@ enum isodo {unclear=0,atmfile,ignore,fixed};
 
 /* Forward declarations */
 struct transit;
-struct star_geom;
+struct geometry;
 
 typedef struct {
   const char *name;
@@ -247,7 +252,7 @@ typedef struct {
        (PREC_RES *tau,
 	PREC_RES *b,
 	long nb,
-	struct star_geom *star,
+	struct geometry *star,
 	gsl_interp_accel *acc);
 } transit_ray_solution;
 extern const transit_ray_solution slantpath;
@@ -410,6 +415,30 @@ struct optdepth {
 };
 
 
+struct geometry {
+  float inclination;		/* inclination of the planetary orbit
+				   with respect to the observer, 90
+				   degrees is edge on */
+  float smaxis;			/* Semimajor axis */
+  double smaxisfct;		/* 'smaxis' times this gives cgs
+				   units. */
+  double time;			/* this value is 0 when in the middle of
+				   the eclipse */
+  double timefct;		/* 'time' times this gives cgs units */
+  double starmass;		/* Mass of the star */
+  double starmassfct;		/* 'starmass' times this gives cgs
+				   units. */
+  double starrad;		/* Star's radius */
+  double starradfct;		/* 'starrad' times this gives cgs
+				   units. */
+  double x0,y0;			/* coordinates of the center of the
+				   planet with respect to the
+				   star. 'fct' to convert to cgs is
+				   found in rads.fct. These fields are
+				   not hinted. */
+};
+
+
 struct transithint {		/* Structure with user hinted data that
 				   should go to the 'struct transit'
 				   upon approval */
@@ -453,6 +482,7 @@ struct transithint {		/* Structure with user hinted data that
 				   isotopes, TRU_EXTPERISO has to be
 				   on. */
   char *solname;		/* Name of the type of solution */
+  struct geometry sg;		/* System geometry */
 };
 
 
@@ -511,6 +541,7 @@ struct transit {		/* Main data structure */
     struct extinction *ex;
     struct optdepth *tau;
     struct idxref *ir;
+    struct geometry *sg;
   }ds;
 };
 

@@ -86,7 +86,7 @@ tau(struct transit *tr)
 		 );
 
   PREC_RES *out=tr->outpret=(PREC_RES *)calloc(wnn,sizeof(PREC_RES));
-  struct star_geom *sg=tr->ds.sg;
+  struct geometry *sg=tr->ds.sg;
 
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
   //for each wavenumber
