@@ -8,3 +8,5 @@ transit-1pre1: ASCII should be working
 transit-1pre2: Multiple extra isotopes is working, everything but
                reading atmosphere file for release v1. Well, only
                linear interpolation.
+transit-1pre3: Atmosphere file reading should be working, tested
+               only for one radius, though
