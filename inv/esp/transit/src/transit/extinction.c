@@ -286,12 +286,12 @@ extradius(PREC_NREC r,		/* Radius index */
     transitASSERT(wa[i]!=-1&&wa[i]<w,
 		  "Database is not ordered!, previous wavenumber was\n"
 		  "at index %i, new one at %i (it should have been smaller)\n"
-		  ,wa,w);
+		  ,wa[i],w);
     //if $'w'<='wrc'$ then recalcute Voigt
     if(w<=wrc[i]){
       //Find number of wavenumbers until the next recalculation, and
       //store as in \lin{voigtrec}
-      j=(int)(maxratio*wn[w]/dwn+0.5);
+      j=(int)(maxratio*(wn[w])/dwn+0.5);
       if(!j) j=1;
       wrc[i]=w-j;
       transitDEBUG(22,verblevel,
