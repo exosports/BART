@@ -87,9 +87,6 @@ tau(struct transit *tr)
 		 "tau(): At least three impact parameters points are required!.\n"
 		 );
 
-  PREC_RES *out=tr->outpret=(PREC_RES *)calloc(wnn,sizeof(PREC_RES));
-  struct geometry *sg=tr->ds.sg;
-
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
@@ -105,7 +102,6 @@ tau(struct transit *tr)
       }
     }
 
-    out[wi]=tr->sol->perwn(t,bb,inn,sg,acc);
   }
   gsl_interp_accel_free(acc);
 

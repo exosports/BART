@@ -43,7 +43,7 @@ typedef struct {
 				   Auxiliary array */
 	gsl_interp_accel *acc);	/* accelerating pointer. Auxiliary array
 				 */
-  PREC_RES (*perwn)		/* Quantity obtained from
+  PREC_RES (*obsperwn)		/* Quantity obtained from
 				   integration of optical depth
 				*/ 
        (PREC_RES *tau,
