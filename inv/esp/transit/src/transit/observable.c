@@ -94,8 +94,8 @@ modulation(struct transit *tr)	/* Main structure */
     if(w==nextw){
       nextw+=wn->n/10;
       transitprint(2,verblevel,
-		   "%li%%\r"
-		   ,100*wn->n/w);
+		   "%i%%\r"
+		   ,(10*(int)(10*w/wn->n+0.9999999999)));
     }
   }
   transitprint(1,verblevel," DONE\n");
