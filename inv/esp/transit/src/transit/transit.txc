@@ -52,6 +52,7 @@ int main (int argc,		/* Number of variables */
   //correctly.
   //'o' is the oversampling.
   //'v' is the value's array.
+  /*
   prop_samp *samp=&trh.wavs;
   samp->i=0;
   samp->f=0;
@@ -61,6 +62,15 @@ int main (int argc,		/* Number of variables */
   samp->v=NULL;
   samp->fct=0;
   trh.na|=TRH_WAV|TRH_WAVO;
+  */
+
+  //'trh.m' is the amount of microns that cannot be trusted at the
+  //boundaries of databases range, and also how much extra out of
+  //requested range it has to look for transitions.
+  /*
+  trh.m=0.001;
+  trh.na|=TRH_WM;
+  */
 
   //Initialization of radius sampling in planetary radius.
   //Fields from 'trh.rads'.
@@ -68,7 +78,8 @@ int main (int argc,		/* Number of variables */
   //sampling above but for the radius. If zeroed then '.i', '.f' or '.d'
   //are taken from the atmosphere datafile.
   //'o' equal to 0 is necessary to dissable oversampling in radius.
-  samp=&trh.rads;
+  /*
+    samp=&trh.rads;
   samp->i=0;
   samp->f=0;
   samp->d=0.6;
@@ -77,6 +88,7 @@ int main (int argc,		/* Number of variables */
   samp->o=0;
   samp->fct=0;
   trh.na|=TRH_RAD;
+  */
 
   //Initialization of wavenumber sampling in cm-1. Note that the
   //extincitons are calculated in wavenumber and then optionally
@@ -87,6 +99,7 @@ int main (int argc,		/* Number of variables */
   //taken from the wavelength transformation. '.d' is calculated so that
   //the same number of points as requested for wavelength are outputted.
   //'o' equal to 0 is necessary to dissable oversampling in radius.
+  /*
   samp=&trh.wns;
   samp->i=5716.5;
   samp->f=5718;
@@ -98,6 +111,7 @@ int main (int argc,		/* Number of variables */
   samp->o=0;
   samp->fct=0;
   trh.na|=TRH_WN|TRH_WNO;
+  */
 
   //Initialization of general variables.
   //'rc' and 'rn' are the general auxiliary variables.
@@ -109,10 +123,13 @@ int main (int argc,		/* Number of variables */
   //'defile\_out' is the default output filename
   int rn;
   trh.verbnoise=4;
+  /*
   char defile_out[]="-";
   trh.f_out=(char *)calloc(strlen(defile_out)+1,sizeof(char));
   strcpy(trh.f_out,defile_out);
   trh.na|=TRH_FO;
+  */
+
 #ifdef NODEBUG_TRANSIT
   verblevel=2;
 #else
@@ -121,45 +138,46 @@ int main (int argc,		/* Number of variables */
 
   //Initialization of line database variables. 
   //'f\_line' is the name of the twii data file 
-  //'trh.m' is the amount of microns that cannot be trusted at the
-  //boundaries of databases range, and also how much extra out of
-  //requested range it has to look for transitions.
   //'defile\_line' is the default name of the line info file.
   //(i.e. modifiable by the user)
-  trh.m=0.001;
-  trh.na|=TRH_WM;
+  /*
   char defile_line[]="./res/lineread.twii";
   trh.f_line=(char *)calloc(strlen(defile_line)+1,sizeof(char));
   strcpy(trh.f_line,defile_line);
   trh.na|=TRH_FL;
-
+  */
 
   //Initialization of atmospheric parameters.
   //'.mass' indicates whether the abundances are by mass or number
   //'.f\_atm' is the name of the file with the atmospheric parameters,
   //a '-' indicates that a one-point solution is desired.
   trh.mass=1;
+  /*
   char defile_atm[]="-";
   trh.f_atm=(char *)calloc(strlen(defile_atm)+1,sizeof(char));
   strcpy(trh.f_atm,defile_atm);
-  trh.allowrq=0.01;
   trh.na|=TRH_FA;
+  trh.allowrq=0.01;
+  */
   trh.fl|=TRU_ATMASK1P|TRU_SAMPLIN|TRH_MASS;
 
   //Initialization of extinction parameters.
   //'.voigtfine' is the fine binning of voigt
+  /*
   trh.voigtfine=5;
   trh.timesalpha=50;
   trh.maxratio_doppler=0.001;
   trh.na|=TRH_VF|TRH_TA|TRH_DR;
-
+  */
 
   //Initialization of optical depth parameters
+  /*
   char defsol[]="slant path";
   trh.solname=strdup(defsol);
-  trh.tauiso=0;
   trh.toomuch=20;
   trh.na|=TRH_TOOMUCH|TRH_TAUISO|TRH_ST;
+  */
+  trh.tauiso=0;
 
   //Command line parameters' processing
   if((rn=processparameters(argc,argv,&trh))!=0)

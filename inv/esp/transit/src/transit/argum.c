@@ -38,14 +38,17 @@ const static transit_ray_solution *raysols[] = {
 
 #ifndef EXTRACFGFILES
 #  define PREPEXTRACFGFILES ""
-#else
-#  define PREPEXTRACFGFILES ","EXTRACFGFILES
 #endif
 
 #ifdef NODOTDEFAULT
-#  define DOTCFGFILE "NO DEFAULT FILE"
+#  define DOTCFGFILE ""
+#  define DOTCFGFILENM "NO DEFAULT FILE"
 #else
-#  define DOTCFGFILE "./noexiste,./.transitrc,./noexiste"
+#  define DOTCFGFILE "./.transitrc"
+#  define DOTCFGFILENM DOTCFGFILE
+#  ifdef EXTRACFGFILES
+#    define PREPEXTRACFGFILES ","EXTRACFGFILES
+#  endif
 #endif
 
 /* \fcnfh
@@ -93,175 +96,186 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_OUTTAU,
     CLA_TOOMUCH,
     CLA_OUTTOOMUCH,
+    CLA_RADFCT,
+    CLA_WAVFCT,
+    CLA_WNFCT,
   };
 
   //General help-option structure
   struct optdocs var_docs[]={
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"GENERAL ARGUMENTS"},
-    {"version",no_argument,'V',
+    {"version",'V',no_argument,NULL,
      NULL,"Prints version number and exit"},
-    {"help",no_argument,'h',
+    {"help",'h',no_argument,NULL,
      NULL,"Prints list of possible parameters"},
-    {"defaults",no_argument,'d',
+    {"defaults",'d',no_argument,NULL,
      NULL,"Prints default values of the different variable"},
-    {"verb",required_argument,'v',
+    {"verb",'v',required_argument,NULL,
      "[+..][-..]","Increase or decrease verbose level by one per\n"
      "each + or -. 0 is the quietest"},
-    {"paramf",ADDPARAMFILE,'p',
+    {"paramf",'p',ADDPARAMFILE,NULL,
      "filename","Use filename to read parameters in addition to\n"
-     "default file(s): '" DOTCFGFILE PREPEXTRACFGFILES"'"},
+     "default file(s): '" DOTCFGFILENM PREPEXTRACFGFILES"'"},
 
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"INPUT/OUTPUT"},
-    {"output",required_argument,'o',
+    {"output",'o',required_argument,"-",
      "outfile","Change output file name, a dash (-)\n"
      "directs to standard output"},
-    {"atm",required_argument,CLA_ATMOSPHERE,
+    {"atm",CLA_ATMOSPHERE,required_argument,"-",
      "atmfile","File containing atmospheric info (Radius,\n"
      "pressure, temperature). A dash (-) indicates alternative\n"
      "input"},
-    {"linedb",required_argument,CLA_LINEDB,
+    {"linedb",CLA_LINEDB,required_argument,"./res/lineread.twii",
      "linedb","File containing line information (TWII format,\n"
      "as given by 'lineread'"},
 
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"RADIUS OPTIONS (planetary radii units, unless stated "
      "otherwise)"},
-    {"radius",no_argument,'r',
+    {"radius",'r',no_argument,NULL,
      NULL,"Interactively input radius parameters"},
-    {"rad-low",required_argument,CLA_RADLOW,
+    {"rad-low",CLA_RADLOW,required_argument,"0",
      "radius","Lower radius. 0 if you want to use atmospheric\n"
      "data minimum"},
-    {"rad-high",required_argument,CLA_RADHIGH,
+    {"rad-high",CLA_RADHIGH,required_argument,"0",
      "radius","Higher radius. 0 if you want to use atmospheric\n"
      "data maximum"},
-    {"rad-delt",required_argument,CLA_RADDELT,
+    {"rad-delt",CLA_RADDELT,required_argument,".5",
      "spacing","Radius spacing. 0 if you want to use atmospheric\n"
      "data spacing"},
+    {"rad-fct",CLA_RADFCT,required_argument,"0",
+     "factor","Radius factor. Multiplicating radius values by this\n"
+     "gives centimeters"},
 
-
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"ATMPOSPHERE OPTIONS"},
-    {"number-abund",no_argument,CLA_NUMBERQ,
+    {"number-abund",CLA_NUMBERQ,no_argument,NULL,
      NULL,"Indicates that given abundances are by number rather\n"
      "than by mass"},
-    {"oneptn",required_argument,CLA_ONEPT,
+    {"oneptn",CLA_ONEPT,required_argument,NULL,
      "press,temp,extra_iso","Don't calculate transit spectra, just\n"
      "obtain spectra for a given pressure and temperature. Unless\n"
      "oneabund is also specified and has the correct number of\n"
      "isotopes, the abundances will be asked interactively"},
-    {"oneextra",required_argument,CLA_ONEEXTRA,
+    {"oneextra",CLA_ONEEXTRA,required_argument,NULL,
      "mass1name1,mass2name2,...","It only has effect with --onept,\n"
      "a list of the atomic mass and names for the hitherto specified\n"
      "extra isotopes. If it doesn't have the right amount of values,\n"
      "the program will ask interactively"},
-    {"oneabund",required_argument,CLA_ONEABUND,
+    {"oneabund",CLA_ONEABUND,required_argument,NULL,
      "q1,...","It also only has effect with --onept, a list of the\n"
      "abundances of the different isotopes. If it is omitted or\n"
      "doesn't have the right amount of values, the program will\n"
      "ask interactively. Note that the order of isotopes is the\n"
      "same given in the TWII data file"},
-    {"onept-interactive",no_argument,CLA_ONEINT,
+    {"onept-interactive",CLA_ONEINT,no_argument,NULL,
      NULL,"Wants to give abundances and pressure and temperature\n"
      "interactively through terminal input"},
-    {"allowq",required_argument,CLA_ALLOWQ,
+    {"allowq",CLA_ALLOWQ,required_argument,"0.01",
      "value","How much less than one is accepted, so that no\n"
      "warning is issued if abundances don't ad up to that"},
 
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"WAVELENGTH OPTIONS (all in nanometers)"},
-    {"wavelength",no_argument,'w',
+    {"wavelength",'w',no_argument,NULL,
      NULL,"Interactively input wavelength parameters"},
-    {"wl-low",required_argument,CLA_WAVLOW,
+    {"wl-low",CLA_WAVLOW,required_argument,"0",
      "wavel","Lower wavelength. 0 if you want to use line\n"
      "data minimum"},
-    {"wl-high",required_argument,CLA_WAVHIGH,
+    {"wl-high",CLA_WAVHIGH,required_argument,"0",
      "wavel","Upper wavelength. 0 if you want to use line\n"
      "data maximum"},
-    {"wl-delt",required_argument,CLA_WAVDELT,
-     "spacing","Wavelength spacing. 0 if you want to use line\n"
-     "data spacing"},
-    {"wl-osamp",required_argument,CLA_WAVOSAMP,
+    {"wl-delt",CLA_WAVDELT,required_argument,".2",
+     "spacing","Wavelength spacing. It cannot be 0 or less"},
+    {"wl-osamp",CLA_WAVOSAMP,required_argument,"0",
      "integer","Wavelength oversampling"},
-    {"wl-marg",required_argument,CLA_WAVMARGIN,
+    {"wav-fct",CLA_WAVFCT,required_argument,"0",
+     "factor","Wavelength factor. Multiplicating wavelength values by\n"
+     "this gives centimeters. If 0 or 1 then use centimeters"},
+    {"wl-marg",CLA_WAVMARGIN,required_argument,"0.001",
      "boundary","Not trustable range in microns at boundary\n"
      "of line databases. Also transitions this much away from\n"
      "the requested range will be considered"},
 
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"WAVENUMBER OPTIONS (all in cm-1)"},
-    {"wavenumber",no_argument,'n',
+    {"wavenumber",'n',no_argument,NULL,
      NULL,"Interactively input wavenumber parameters"},
-    {"wn-low",required_argument,CLA_WAVNLOW,
+    {"wn-low",CLA_WAVNLOW,required_argument,"0",
      "waven","Lower wavenumber. 0 if you want to use equivalent\n"
      "of the wavelength maximum"},
-    {"wn-high",required_argument,CLA_WAVNHIGH,
+    {"wn-high",CLA_WAVNHIGH,required_argument,"0",
      "waven","Upper wavenumber. 0 if you want to use equivalent\n"
      "of the wavelength minimum"},
-    {"wn-delt",required_argument,CLA_WAVNDELT,
+    {"wn-delt",CLA_WAVNDELT,required_argument,"0",
      "spacing","Wavenumber spacing. 0 if you want to have the\n"
      "same number of points as in the wavelength sampling"},
-    {"wn-osamp",required_argument,CLA_WAVNOSAMP,
+    {"wn-osamp",CLA_WAVNOSAMP,required_argument,"0",
      "integer","Wavenumber oversampling. 0 if you want the same\n"
      "value as for the wavelengths"},
-    {"wn-marg",required_argument,CLA_WAVNMARGIN,
+    {"wn-fct",CLA_WNFCT,required_argument,"0",
+     "factor","Wavelength factor. Multiplicating wavelength values by\n"
+     "this gives centimeters. If 0 then use wavelength's value"},
+    {"wn-marg",CLA_WAVNMARGIN,required_argument,NULL,
      "boundary","Not trustable range in cm-1 at boundaries.\n"
      "Transitions this much away from the requested range will\n"
-     "be considered"},
+     "be considered. Use the maximum of the wavelength boundaries\n"
+     "if this value is 0"},
 
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"EXTINCTION CALCULATION OPTIONS:"},
-    {"finebin",required_argument,'f',
+    {"finebin",'f',required_argument,"5",
      "integer","Number of fine-bins to calculate the Voigt\n"
      "function"},
-    {"nwidth",required_argument,'a',
+    {"nwidth",'a',required_argument,"50",
      "number","Number of the max-widths (the greater of Voigt\n"
      "or Doppler widths) that need to be contained in a calculated\n"
      "Voigt profile"},
-    {"maxratio",required_argument,'u',
+    {"maxratio",'u',required_argument,"0.001",
      "uncert","Maximum allowed uncertainty in doppler width before\n"
      "recalculating profile"},
-    {"per-iso",no_argument,CLA_EXTPERISO,
+    {"per-iso",CLA_EXTPERISO,no_argument,NULL,
      NULL,"Calculates extinction per isotope, this allow displaying\n"
      "contribution from different isotopes, but also consumes more\n"
      "memory"},
-    {"no-per-iso",no_argument,CLA_NOEXTPERISO,
+    {"no-per-iso",CLA_NOEXTPERISO,no_argument,NULL,
      NULL,"Do not calculate extinction per isotope. Saves memory\n"
      "(this is the default)\n"},
 
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"GEOMETRY PARAMETERS"},
-    {"g-orbpar",required_argument,CLA_GORBPAR,
+    {"g-orbpar",CLA_GORBPAR,required_argument,NULL,
      "smaxis,time,incl,ecc,long_node,arg_per","Orbital parameters, in"
      " the above order, to use the default of any of these (1,0,0,0,0,0),"
      " leave the corresponding field blank"},
-    {"g-orbpar",required_argument,CLA_GORBPARFCT,
+    {"g-orbparfct",CLA_GORBPARFCT,required_argument,NULL,
      "unitsof:smaxis,time,incl,ecc,long_node,arg_per","Units of orbital"
      " parameters, in the above order, to use the default of any of these"
      " (AU,deg,hours,,deg,deg), leave the corresponding field blank"},
 
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
-    {"solution",required_argument,'s',
+    {"solution",'s',required_argument,"slant path",
      "sol_name","Name of the kind of output solution ('slant path'\n"
      "is currently the only availabale alternative)"},
-    {"toomuch",required_argument,CLA_TOOMUCH,
+    {"toomuch",CLA_TOOMUCH,required_argument,"20",
      "optdepth","If optical depth for a particular path is larger\n"
      "than optdepth, then do not proceed to lower radius"},
-    {"outtau",no_argument,CLA_OUTTAU,
+    {"outtau",CLA_OUTTAU,no_argument,NULL,
      NULL,"Output is optical depth instead of modulation. It will be\n"
      "asked which radius to plot\n"},
-    {"outtoomuch",required_argument,CLA_OUTTOOMUCH,
+    {"outtoomuch",CLA_OUTTOOMUCH,required_argument,NULL,
      "filename","Ouputs depth where toomuch optical depth has been\n"
      "attained as a function of wavelength\n"},
 
-    {NULL,HELPTITLE,0,
+    {NULL,0,HELPTITLE,NULL,
      NULL,"OBSERVATIONAL OPTIONS:"},
-    {"telres",required_argument,'t',
+    {"telres",'t',required_argument,"1",
      "width","Gaussian width of telescope resolution in nm"},
 
-    {NULL,0,0,NULL,NULL}
+    {NULL,0,0,NULL,NULL,NULL}
   };
 
   struct optcfg var_cfg;
@@ -439,6 +453,11 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_WAVDELT:
       hints->wavs.d=atof(optarg);
+      if(hints->wavs.d<=0)
+	transiterror(TERR_SERIOUS,
+		     "Wavelength spacing has to strictly positive,\n"
+		     "greater than 0 instead of %g.\n"
+		     ,hints->wavs.d);
       hints->wavs.n=0;
       hints->wavs.v=NULL;
       break;

@@ -37,7 +37,108 @@ unsigned short procopt_debug=1;
 static _Bool freed=0;
 static int givenparamf=-1;
 
+//The following relate to settle the parameter list and processing defaults
+static struct optdocs *_opts_def;
+static int getalloc=8,shortalloc=8;
+static struct option *co;
+static char *cs;
+static int getn,shortn;
+static _Bool process_defaults=0;
+
 static int getoptfrom(char *line, struct option *getopts, int *longindex);
+
+/* \fcnfh
+   Fill short and long options and set defaults
+
+   @returns value to be processed
+            -1 if no default value or finished
+*/
+static int
+fillanddef()
+{
+  if(getn==getalloc){
+    getopts=(struct option *)realloc(getopts,
+				     (getalloc<<=1)*sizeof(struct option));
+    co=getopts+getn;
+  }
+  if(shortn>shortalloc){
+    shortopts=(char *)realloc(shortopts,(shortalloc<<=1)*sizeof(char));
+    memset(shortopts+shortn,0,shortn);
+  }
+  if(_opts_def->name==NULL&&_opts_def->val==0){
+    if(_opts_def++->has_arg==HELPTITLE)
+      return fillanddef();
+    if(procopt_debug>2){
+      fprintf(stderr,
+	      "----------------------------------------------\n"
+	      "procopt_debug message:: Accepted short string '%s'\n"
+	      "(set procopt_debug to less than 3 if you don't want to see this again).\n"
+	      "----------------------------------------------\n"
+	      ,shortopts);
+    }
+    co->name=NULL;
+    co->has_arg=0;
+    co->flag=NULL;
+    co->val=0;
+    getn++;
+    getopts=(struct option *)realloc(getopts,getn*sizeof(struct option));
+    shortopts=(char *)realloc(shortopts,(shortn-1)*sizeof(char));
+    process_defaults=0;
+    return -1;
+  }
+  
+  //save short options
+  if(_opts_def->val>0x20 && _opts_def->val<0x80){
+    cs=shortopts;
+    while(*cs){
+      if(*cs++==(char)_opts_def->val&&procopt_debug){
+	fprintf(stderr,
+		"procopt_debug error:: The short option '%c' appears more than\n"
+		"once in the given 'struct optdocs'. Currently with %s\n"
+		,_opts_def->val,_opts_def->name);
+	exit(EXIT_FAILURE);
+      }
+    }
+    *cs++=(char)_opts_def->val;
+    shortn++;
+    if(_opts_def->has_arg==required_argument||_opts_def->has_arg==ADDPARAMFILE){
+      *cs=':';
+      shortn++;
+    }
+  }
+
+  //save long option
+  co->name=_opts_def->name;
+  if(_opts_def->has_arg==ADDPARAMFILE){
+    if(givenparamf!=-1&&procopt_debug){
+      fprintf(stderr,
+	      "procopt_debug error:: More than one option with the ADDPARAMFLAG\n"
+	      "mode, only the last will be taken into account\n"
+	      );
+      exit(EXIT_FAILURE);
+    }
+    co->has_arg=required_argument;
+    givenparamf=_opts_def->val;
+  }
+  else
+    co->has_arg=_opts_def->has_arg;
+  co->flag=NULL;
+  co->val=_opts_def->val;
+
+  //advance to next value
+  getn++;
+  _opts_def++;
+  co++;
+
+  //Run default if there is any.
+  if(_opts_def[-1].def!=NULL){
+    optarg=_opts_def[-1].def;
+    return _opts_def[-1].val;
+  }
+
+  return -1;
+}
+
 
 
 /* \fcnfh
@@ -56,6 +157,7 @@ getprocopt(int argc,		/* Number of command line arguments */
 				   working in libraries!, though */
 {
   char *cfgfiles=NULL;
+  int ret;
 
   if(freed){
     fprintf(stderr,
@@ -65,13 +167,16 @@ getprocopt(int argc,		/* Number of command line arguments */
     exit(EXIT_FAILURE);
   }
 
+  //process next element of the array, returning to set default if there
+  //is one.
+  if(process_defaults){
+    while((ret=fillanddef())==-1 && process_defaults);
+    if(ret!=-1)
+      return ret;
+  }
+
   //If first time then initialize
   if(!prgname){
-    int getalloc=8,shortalloc=8;
-    struct option *co;
-    char *cs;
-    int getn,shortn;
-
     //save structures to later call by prochelp
     _opts=opts;
     _cfg=cfg;
@@ -82,6 +187,10 @@ getprocopt(int argc,		/* Number of command line arguments */
       cs=*argv;
     prgname=(char *)calloc(strlen(cs)+1,sizeof(char));
     strcpy(prgname,cs);
+
+    //Set configuration if exists
+    if(cfg)
+      cfgfiles=cfg->files;
 
     //If there is no 'opts' structure then allocate an empty string as
     //'shortopts' and an empty structure for 'getopts'
@@ -98,84 +207,14 @@ getprocopt(int argc,		/* Number of command line arguments */
       //reserve a value for the final `\\0' and a possible colon `:'
       getn=0;
       shortn=2;
-      //Analize every element of the structure
-      while(1){
-	if(getn==getalloc){
-	  getopts=(struct option *)realloc(getopts,
-					   (getalloc<<=1)*sizeof(struct option));
-	  co=getopts+getn;
-	}
-	if(shortn>shortalloc){
-	  shortopts=(char *)realloc(shortopts,(shortalloc<<=1)*sizeof(char));
-	  memset(shortopts+shortn,0,shortn);
-	}
-	if(opts->name==NULL&&opts->val==0){
-	  if(opts++->has_arg==HELPTITLE)
-	    continue;
-	  break;
-	}
 
-	//save short options
-	if(opts->val>0x20 && opts->val<0x80){
-	  cs=shortopts;
-	  while(*cs){
-	    if(*cs++==(char)opts->val&&procopt_debug){
-	      fprintf(stderr,
-		      "procopt_debug error:: The short option '%c' appears more than\n"
-		      "once in the given 'struct optdocs'. Currently with %s\n"
-		      ,opts->val,opts->name);
-	      exit(EXIT_FAILURE);
-	    }
-	  }
-	  *cs++=(char)opts->val;
-	  shortn++;
-	  if(opts->has_arg==required_argument||opts->has_arg==ADDPARAMFILE){
-	    *cs=':';
-	    shortn++;
-	  }
-	}
-
-	//save long option
-	co->name=opts->name;
-	if(opts->has_arg==ADDPARAMFILE){
-	  if(givenparamf!=-1&&procopt_debug){
-	    fprintf(stderr,
-		    "procopt_debug error:: More than one option with the ADDPARAMFLAG\n"
-		    "mode, only the last will be taken into account\n"
-		    );
-	    exit(EXIT_FAILURE);
-	  }
-	  co->has_arg=required_argument;
-	  givenparamf=opts->val;
-	}
-	else
-	  co->has_arg=opts->has_arg;
-	co->flag=NULL;
-	co->val=opts->val;
-
-	//advance to next value
-	getn++;
-	opts++;
-	co++;
-      }
-      if(procopt_debug>2){
-	fprintf(stderr,
-		"----------------------------------------------\n"
-		"procopt_debug message:: Accepted short string '%s'\n"
-		"(set procopt_debug to less than 3 if you don't want to see this again).\n"
-		"----------------------------------------------\n"
-		,shortopts);
-      }
-      co->name=NULL;
-      co->has_arg=0;
-      co->flag=NULL;
-      co->val=0;
-      getn++;
-      getopts=(struct option *)realloc(getopts,getn*sizeof(struct option));
-      shortopts=(char *)realloc(shortopts,(shortn-1)*sizeof(char));
+      //Analize first element and set flag to process the rest
+      _opts_def=opts;
+      process_defaults=1;
+      while((ret=fillanddef())==-1 && process_defaults);
+      if(ret!=-1)
+	return ret;
     }
-    if(cfg)
-      cfgfiles=cfg->files;
   }
 
   //Return the corresponding option.

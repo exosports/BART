@@ -36,8 +36,9 @@ extern unsigned short procopt_debug;
 
 struct optdocs {
   char *name;
-  int has_arg;
   int val;
+  int has_arg;
+  char *def;
   char *prm;
   char *doc;
 };
