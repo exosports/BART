@@ -324,7 +324,7 @@ modulation1 (PREC_RES *tau,
 # error computation of modulation() without GSL is not implemented
 #endif
 
-  /* TD: Add  unblocked area of the star */
+  /* TD: Add real unblocked area of the star, considering geometry */
   //substract the total area blocked by the planet. This is from the
   //following
   //\begin{align}
