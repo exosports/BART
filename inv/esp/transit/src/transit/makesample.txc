@@ -223,7 +223,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   while(n)
     *v--=si+n--*osd;
   //check the final point
-  if(si!=0 && samp->v[samp->n-1]!=samp->f)
+  if(si!=0 && samp->v[samp->n-1]!=samp->f && verblevel>2)
     transiterror(TERR_WARNING,
 		 "Final sampled value (%g) of the\n"
 		 "%li points doesn't coincide exactly with required\n"

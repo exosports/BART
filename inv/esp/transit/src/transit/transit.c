@@ -39,11 +39,7 @@ int main (int argc,		/* Number of variables */
   memset(&transit, 0, sizeof(struct transit));
   int rn;
 
-#ifdef NODEBUG_TRANSIT
   verblevel=2;
-#else
-  verblevel=20;
-#endif /* NODEBUG_TRANSIT */
 
   //Command line parameters' processing
   if((rn=processparameters(argc,argv,&transit))!=0)
