@@ -20,10 +20,10 @@
  */
 
 #include <transit.h>
-#include <util/lineread.h>
+#include <lineread.h>
 #include <math.h>
 #ifdef DBGPANDS
-#include "transitstd.c"
+#include "../transit/transitstd.c"
 #endif
 
 /* TD: Is not safe to use structre to read data, because it may

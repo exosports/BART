@@ -23,8 +23,8 @@
 /* TD: replace gabby_read in dbread_pands and lineread.h by verblevel */
 
 #include <transit.h>
-#include <util/lineread.h>
-#include "../transit/transitstd.c"
+#include <lineread.h>
+/*#include "../transit/transitstd.c"*/
 #include <math.h>
 
 /* Version history:

@@ -19,7 +19,7 @@
 inline void natcubsplinecoef(long n, double *x, double *y, double *h, double *D);
 inline int resample(const int getingx, const long flag, long nrefx, double *refx, long ndatx, double *datx, long ny, ...);
 
-#include <util/sampling_proto.h>
+#include <sampling_proto.h>
 
 
 #endif

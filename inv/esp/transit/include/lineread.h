@@ -37,7 +37,7 @@ extern struct linedb{
 
 short gabby_dbread=0;
 
-#include <util/lineread_proto.h>
+#include <lineread_proto.h>
 
 #ifdef LINEFCN_RUNTIME
 /* To be implemented: Run-time check of available drivers.*/

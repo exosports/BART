@@ -370,7 +370,7 @@ PREC_VOIGT dop, PREC_VOIGT lor, float ta);
 
 
 #include <transit_proto.h>
-#include <util/sampling_proto.h>
+#include <sampling_proto.h>
 #include <readlineinfo_proto.h>
 #include <transitstd_proto.h>
 

@@ -14,6 +14,6 @@ inline int voigtn(int m, int nwn, PREC_VOIGTP dwn,
 		  PREC_VOIGTP alphaL, PREC_VOIGTP alphaD,
 		  PREC_VOIGT **vpro, PREC_VOIGTP eps, int flags);
 
-#include <util/profile_proto.h>
+#include <voigt_proto.h>
 
 #endif /* _PROFILE_H */
