@@ -5,3 +5,6 @@ transit-1pre1: ASCII should be working
        	       Fixed total pressure (now uses mean molecular weight)
            KB: Lorentz profile only includes one specie rather
                  than an average 
+transit-1pre2: Multiple extra isotopes is working, everything but
+               reading atmosphere file for release v1. Well, only
+               linear interpolation.
