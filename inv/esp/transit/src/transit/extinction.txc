@@ -54,7 +54,7 @@ int extwn (struct transit *tr)
   int j,maxj,minj,*nwnh;
   PREC_VOIGT ***profile, *profwn;
   PREC_VOIGTP *alphal,*alphad;
-  int *cp,*wrc;
+  int *wrc;
   double propto_adop,propto_alor, propto_k;
   PREC_ATM temp, *densiso;
   PREC_CS *csiso;
@@ -153,31 +153,19 @@ int extwn (struct transit *tr)
 
   //allocate array for the voigt profile
   wa=(int *)calloc(niso,sizeof(int));
+  wrc=(int *)calloc(niso,sizeof(int));
   profile=(PREC_VOIGT ***)calloc(niso,sizeof(PREC_VOIGT **));
   *profile=(PREC_VOIGT **)calloc(niso*ex->vf,sizeof(PREC_VOIGT *));
-
-  //allocate indicative arrays. '.lw' stores info about line's width,
-  //and '.cp' indicate when to change arrays.
-  //'.recalc' index from which a recalculation of the voigt profile is
-  //required.
-  ex->lw=(int *)calloc(nwn,sizeof(int));
-  wrc=(int *)calloc(niso,sizeof(int));
-  ex->recalc=(int **)calloc(niso,sizeof(int *));
-  ex->recalc[0]=(int *)calloc(nwn*niso,sizeof(int));
-  for(i=1;i<niso;i++){
-    ex->recalc[i]=ex->recalc[0]+i*nwn;
+  for(i=1;i<niso;i++)
     profile[i]=*profile+i*ex->vf;
-  }
 
   extinctperiso=(tr->fl&TRU_EXTINPERISO);
   //allocate array for extinctions and widths, initialization of second
   //index will be done in the loop (\lin{kini})
-  ex->k=(PREC_RES ***)calloc(nrad,sizeof(PREC_RES **));
-  ex->al=(PREC_VOIGTP **)calloc(nrad,sizeof(PREC_VOIGTP *));
-  ex->ad=(PREC_VOIGTP **)calloc(nrad,sizeof(PREC_VOIGTP *));
-  *ex->k=(PREC_RES **)calloc(niso*nrad,sizeof(PREC_RES *));
+  ex->e=(PREC_RES ***)calloc(nrad,sizeof(PREC_RES **));
+  *ex->e=(PREC_RES **)calloc(niso*nrad,sizeof(PREC_RES *));
   i=extinctperiso?niso:1;
-  if((ex->k[0][0]=(PREC_RES *)calloc(nrad*i*nwn,sizeof(PREC_RES)))==NULL)
+  if((ex->e[0][0]=(PREC_RES *)calloc(nrad*i*nwn,sizeof(PREC_RES)))==NULL)
     transiterror(TERR_CRITICAL|TERR_ALLOC,
 		 "Unable to allocate %li = %li*%li*%li to calculate\n"
 		 "extinction for every radii, %stry to shorten the wavenumber\n"
@@ -185,8 +173,8 @@ int extwn (struct transit *tr)
 		 ,nrad*i*nwn,nrad,i,nwn,extinctperiso?"try disabling exctinction per\n"
 		 "isotope (option --no-per-iso), or ":"");
 
-  *ex->al=(PREC_VOIGTP *)calloc(nrad*niso,sizeof(PREC_VOIGTP));
-  *ex->ad=(PREC_VOIGTP *)calloc(nrad*niso,sizeof(PREC_VOIGTP));
+  alphal=(PREC_VOIGTP *)calloc(niso,sizeof(PREC_VOIGTP));
+  alphad=(PREC_VOIGTP *)calloc(niso,sizeof(PREC_VOIGTP));
 
   //For each radius (index 'r')
   for(r=0;r<nrad;r++){
@@ -195,11 +183,9 @@ int extwn (struct transit *tr)
 
     //Initialization of 2nd dimension of extinction array.
     //\linelabel{kini}
-    kiso=ex->k[r]=*ex->k+r*niso;
+    kiso=ex->e[r]=*ex->e+r*niso;
     i=extinctperiso?niso:1;
-    ex->k[r][0]=ex->k[0][0]+r*i*nwn;
-    alphal=ex->al[r]=*ex->al+r*niso;
-    alphad=ex->ad[r]=*ex->ad+r*niso;
+    ex->e[r][0]=ex->e[0][0]+r*i*nwn;
 
     //set some auxiliary variables.
     temp=tr->atm.t[r];
@@ -254,9 +240,9 @@ int extwn (struct transit *tr)
       alphad[i]=propto_adop/sqrt(mass[i]);
 
       //Now get a new profile, 'profile[i]' has dimensions
-      //'ex->vf'x'ex->lw[0]'. The latter is calculated by newprofile,
+      //'ex->vf'x(2*'nwnh[i]'+1). The latter is calculated by newprofile,
       //though.
-      if((nwnh[i]=newprofile(profile[i],ex->vf,&ex->lw[0],dwn,
+      if((nwnh[i]=newprofile(profile[i],ex->vf,dwn,
 			     wn[0]*alphad[i],alphal[i],ex->ta)
 	  )<1)
 	transiterror(TERR_CRITICAL,
@@ -265,20 +251,14 @@ int extwn (struct transit *tr)
 		     ,nwnh[i],i);
       //set 'w' to the last wavenumber index (because the lines are
       //sorted by wavelength.
-      //And set 'cp[w]' to how many other wavenumbers bins to
-      //recalculate the Voigt profile, it has to be at least 1.
+      //And set 'j' to how many other wavenumbers bins to
+      //recalculate the Voigt profile, it has to be at least 1. Then set
+      //'wrc[i]' to the wavelength it has to be recalculated.
       //verbline{voigtrec}
       w=nwn-1;
-      cp=ex->recalc[i];
-      cp[w]=(int)(ex->maxratio*wn[w]/dwn+0.5);
-      if(!cp[w])
-	cp[w]=1;
-
-      //now set 'wrc[i]' to the next wavenumber that Voigt needs to be
-      //recalculated, and put a 1 in that position in the 'cp[]' array.
-      wrc[i]=w-cp[w];
-      if(wrc[i]>=0)
-	cp[wrc[i]]=1;
+      j=(int)(ex->maxratio*wn[w]/dwn+0.5);
+      if(!j) j=1;
+      wrc[i]=w-j;
 
       //initialize 'wa[i]' to last wavenumber
       wa[i]=w;
@@ -325,8 +305,6 @@ int extwn (struct transit *tr)
       if(tr->isodo[i]==ignore)
 	continue;
 
-      cp=ex->recalc[i];
-
       transitASSERT(wa[i]!=-1&&wa[i]<w,
 		    "Database is not ordered!, previous wavenumber was\n"
 		    "at index %i, new one at %i (it should have been smaller)\n"
@@ -335,13 +313,9 @@ int extwn (struct transit *tr)
       if(w<=wrc[i]){
 	//Find number of wavenumbers until the next recalculation, and
 	//store as in \lin{voigtrec}
-	cp[wrc[i]]=0;
-	cp[w]=(int)(ex->maxratio*wn[w]/dwn+0.5);
-	if(!cp[w])
-	  cp[w]=1;
-	wrc[i]=w-cp[w];
-	if(wrc[i]>=0)
-	  cp[wrc[i]]=1;
+	j=(int)(ex->maxratio*wn[w]/dwn+0.5);
+	if(!j) j=1;
+	wrc[i]=w-j;
 	transitDEBUG(22,verblevel,
 		     "Recalculating voigt for isotope %i... current\n"
 		     "wavenumber %i, next wavenumber %i/%i\n"
@@ -349,7 +323,7 @@ int extwn (struct transit *tr)
 
 	//free old profile and recalculate voigt
 	free(profile[i][0]);
-	if((nwnh[i]=newprofile(profile[i],ex->vf,&ex->lw[w],dwn,
+	if((nwnh[i]=newprofile(profile[i],ex->vf,dwn,
 			       wn[w]*alphad[i],alphal[i],ex->ta)
 	    )<1)
 	  transiterror(TERR_CRITICAL,
@@ -429,8 +403,6 @@ int extwn (struct transit *tr)
 */
 inline int newprofile(PREC_VOIGT **pr, /* output 2d profile */
 		      int vf, /* 1st already allocated dimension */
-		      int *lw,	/* where width of the profile (2nd
-				   dimension) is to be stored. */
 		      PREC_RES dwn, /* waavenumber spacing */
 		      PREC_VOIGT dop, /* doppler width */
 		      PREC_VOIGT lor, /* lorenz width */
@@ -451,7 +423,7 @@ inline int newprofile(PREC_VOIGT **pr, /* output 2d profile */
   //Afterwards set the number of points in the array, an odd number
   //is preferred so that the central bin can have a maximum value.
   wvgt=bigalpha*ta;
-  *lw=nvgt=2*wvgt/dwn+1;
+  nvgt=2*wvgt/dwn+1;
 
   //Basic check that 'lor' or 'dop' are within sense
   if(nvgt<0)
