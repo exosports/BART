@@ -22,8 +22,6 @@ DIRECTORIES:
   ./src     Commented source code is under this directory.
 
   ./include Headers for the code.
-            Functions prototypes will also be under this directory
-            after running 'make proto'.
 
 
 ========================================================================
