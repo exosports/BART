@@ -37,6 +37,8 @@ static inline void checkposvalue(PREC_RES val, int field, char *file,
 				 long line);
 
 
+static double zerorad=0;
+
 /* TD: atmosphere info  retrieval */
 /*\fcnfh
    getatm: Get atmospheric parameters from a given file. It has to get
@@ -485,7 +487,6 @@ getmnfromfile(FILE *fp,
 	      struct transit *tr,
 	      int nmb)
 {
-  char rc;
   char line[maxline],*lp;
   int ison=0,i;
   struct isotopes *iso=tr->ds.iso;
@@ -504,12 +505,20 @@ getmnfromfile(FILE *fp,
     at->isoeq[i]=-1;
   }
 
-  //while t,p data doesn't start
+  //while t,p data doesn't start, check for the various modifiers
   while(1){
-    while((rc=fgetupto(line,maxline,fp,&atmerr,tr->f_atm,at->begline++))
-	  =='#'||rc=='\n');
-    if(!rc) notyet(at->begline,tr->f_atm);
-    if(rc=='u'){
+    switch(fgetupto(line,maxline,fp,&atmerr,tr->f_atm,at->begline++)){
+    case '\n':			//Ignore comments and
+    case '#':			//  blank lines
+      continue;
+    case 0:			//Error if EOF
+      notyet(at->begline,tr->f_atm);
+      continue;
+    case 'z':			//Zero radius value
+      zerorad=atof(line+1);
+      continue;
+    case 'u':			//Change factorization of radius, temp,
+				//or press
       switch(line[1]){
       case 'r':
 	at->rads.fct=atof(line+2);
@@ -526,76 +535,81 @@ getmnfromfile(FILE *fp,
 	exit(EXIT_FAILURE);
       }
       continue;
-    }
-    if(rc=='n'){
+    case 'n':			//Name or identifier for file data
       storename(at,line+1);
       continue;
-    }
-    if(rc!='i')
-      break;
-    lp=line+1;
-    while(*lp==' '||*lp=='\t') lp++;
-
-    //for each field
-    while(*lp){
-      atisodo=atmfile;
-      //Allocate if necessary
-      if(ison==nmb){
-	nmb<<=1;
-	at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
-	at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
-	at->n=(char **)realloc(at->n,nmb*sizeof(char *));
-	at->n[0]=(char *)realloc(at->n[0],nmb*maxeisoname*sizeof(char));
-	for(i=1;i<nmb;i++)
-	  at->n[i]=at->n[0]+i*maxeisoname;
-	for(i=nmb/2;i<nmb;i++)
-	  at->isoeq[i]=-1;
-      }
-
-      //get mass and name, checking that is correct. First see if this
-      //isotope wants to be ignored.
-      if(*lp=='!'){
-	lp++;
-	atisodo=ignore;
-      }
-      at->m[ison]=getds(lp,&rc,at->n[ison],maxeisoname-1);
-      if(at->m[ison]<=0||at->n[ison]=='\0'){
-	transiterror(TERR_SERIOUS,
-		     "Invalid field in file %s, line %i while reading isotope"
-		     " info at:\n%s\n"
-		     ,tr->f_atm,at->begline,lp);
-      }
-      
-      //now check if that isotope is one of the given in the lineinfo
-      //file
-      for(i=0;i<iso->n_i;i++){
-	if(strcasecmp(at->n[ison],isof[i].n)==0){
-	  at->isoeq[ison]=i;
-	  if(isof[i].m!=at->m[ison])
-	    transiterror(TERR_WARNING,
-			 "Mass of isotope %s, is not the same\n"
-			 "in the atmosphere file %s(%g) than in\n"
-			 "the transition info file %s(%g)\n"
-			 ,at->n[ison],tr->f_atm,at->m[ison],
-			 tr->f_line,isof[i].m);
-	  if(isodo[i]!=ignore)
-	    isodo[i]=atisodo;
-	  if(isodo[i]==ignore)
-	    transitprint(2,verblevel,
-			 "Ignoring isotope %s (%g AMU)\n"
-			 ,isof[i].n,isof[i].m);
-	  break;
-	}
-      }
-      //count this as an isotope from the atmosphere file only if it was
-      //not an ignored one.
-      if(atisodo!=ignore)
-	ison++;
-      //skip over recently read field, and go to next field.
-      while(*lp!=' '&&*lp!='\0') lp++;
+    case 'i':			//Isotope information
+      lp=line+1;
       while(*lp==' '||*lp=='\t') lp++;
+
+      //for each field
+      while(*lp){
+	atisodo=atmfile;
+	//Allocate if necessary
+	if(ison==nmb){
+	  nmb<<=1;
+	  at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
+	  at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
+	  at->n=(char **)realloc(at->n,nmb*sizeof(char *));
+	  at->n[0]=(char *)realloc(at->n[0],nmb*maxeisoname*sizeof(char));
+	  for(i=1;i<nmb;i++)
+	    at->n[i]=at->n[0]+i*maxeisoname;
+	  for(i=nmb/2;i<nmb;i++)
+	    at->isoeq[i]=-1;
+	}
+
+	//get mass and name, checking that is correct. First see if this
+	//isotope wants to be ignored.
+	if(*lp=='!'){
+	  lp++;
+	  atisodo=ignore;
+	}
+	at->m[ison]=getds(lp,0,at->n[ison],maxeisoname-1);
+	if(at->m[ison]<=0||at->n[ison]=='\0'){
+	  transiterror(TERR_SERIOUS,
+		       "Invalid field in file %s, line %i while reading isotope"
+		       " info at:\n%s\n"
+		       ,tr->f_atm,at->begline,lp);
+	}
+      
+	//now check if that isotope is one of the given in the lineinfo
+	//file
+	for(i=0;i<iso->n_i;i++){
+	  if(strcasecmp(at->n[ison],isof[i].n)==0){
+	    at->isoeq[ison]=i;
+	    if(isof[i].m!=at->m[ison])
+	      transiterror(TERR_WARNING,
+			   "Mass of isotope %s, is not the same\n"
+			   "in the atmosphere file %s(%g) than in\n"
+			   "the transition info file %s(%g)\n"
+			   ,at->n[ison],tr->f_atm,at->m[ison],
+			   tr->f_line,isof[i].m);
+	    if(isodo[i]!=ignore)
+	      isodo[i]=atisodo;
+	    if(isodo[i]==ignore)
+	      transitprint(2,verblevel,
+			   "Ignoring isotope %s (%g AMU)\n"
+			   ,isof[i].n,isof[i].m);
+	    break;
+	  }
+	}
+	//count this as an isotope from the atmosphere file only if it was
+	//not an ignored one.
+	if(atisodo!=ignore)
+	  ison++;
+	//skip over recently read field, and go to next field.
+	while(*lp!=' '&&*lp!='\0') lp++;
+	while(*lp==' '||*lp=='\t') lp++;
+      }
+      continue;
+    default:			//T,P seems to be starting
+      break;
     }
+    break;
   }
+
+  //Check if there was at least an isotope identification and allocate new
+  //arrays
   if(!ison)
     transiterror(TERR_SERIOUS,
 		 "No isotopes were found in atmosphere file, make sure to\n"
@@ -617,6 +631,7 @@ getmnfromfile(FILE *fp,
   //database, but not in the atmosphere file.
   at->n_niso=checknonmatch(tr,at,isodo);
 
+  //Set full isotope info in the tranit structure
   nmb=iso->n_e=iso->n_i+at->n_niso;
   iso->isof=(prop_isof *)realloc(iso->isof,nmb*sizeof(prop_isof));
   iso->isof[iso->n_i].n=(char *)realloc(iso->isof[iso->n_i].n,
@@ -790,7 +805,7 @@ readatmfile(FILE *fp,		/* File */
     if(!rc)
       break;
 
-    tmp=rads->v[r]=strtod(lp,&lp2);
+    tmp=rads->v[r]=strtod(lp,&lp2)+zerorad;
     checkposvalue(tmp,1,tr->f_atm,lines);
     if(lp==lp2) 
       invalidfield(line, tr->f_atm, lines, 1, "radius");
@@ -837,8 +852,8 @@ readatmfile(FILE *fp,		/* File */
     if((sumq=checkaddmm(at->mm+r,r,isov,iso->isof,nmb,at->mass,isodo))
        <allowq)
       transiterror(TERR_WARNING,
-		   "In radius %g(%i), abundances don't add up to 1: %.9g\n"
-		   ,at->rads.v[r],r,sumq);
+		   "In radius %g(%i: %g in file), abundances don't add up to 1: %.9g\n"
+		   ,at->rads.v[r],r,at->rads.v[r]-zerorad,sumq);
 
     //Calculate densities
     for(i=0;i<nmb;i++)
