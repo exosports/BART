@@ -32,6 +32,9 @@
 int
 modulation(struct transit *tr)	/* Main structure */
 {
+  static struct outputray st_out;
+  tr->ds.out=&st_out;
+
   transitcheckcalled(tr->pi,"modulation",4,
 		     "tau",TRPI_TAU,
 		     "makeipsample",TRPI_MAKEIP,
@@ -53,13 +56,12 @@ modulation(struct transit *tr)	/* Main structure */
   }
 
   //output and geometry variables.
-  PREC_RES *out=tr->outpret=(PREC_RES *)calloc(wn->n,sizeof(PREC_RES));
+  PREC_RES *out=st_out.o=(PREC_RES *)calloc(wn->n,sizeof(PREC_RES));
   struct geometry *sg=tr->ds.sg;
   struct optdepth *tau=tr->ds.tau;
 
   //set time to the user hinted default
   setgeom(sg,HUGE_VAL,&tr->pi);
-
 
   transitprint(1,verblevel,
 	       "Integrating for each wavelength. For the current range,\n"
@@ -88,19 +90,19 @@ modulation(struct transit *tr)	/* Main structure */
 }
 
 
-
 /* \fcnfh
    Printout for modulation as function of wavelength
 */
 void
 printmod(struct transit *tr)
 {
-  FILE *out=stdout;
+  FILE *outf=stdout;
+  struct outputray *outray=tr->ds.out;
   int rn;
 
   //open file
   if(tr->f_out&&tr->f_out[0]!='-')
-    out=fopen(tr->f_out,"w");
+    outf=fopen(tr->f_out,"w");
 
   transitprint(1,verblevel,
 	       "\nPrinting in-eclipse/out-eclipse ratio for requested\n"
@@ -108,13 +110,30 @@ printmod(struct transit *tr)
 	       ,tr->f_out?tr->f_out:"standard output");
 
   //print!
-  fprintf(out,
+  fprintf(outf,
 	  "#wavenumber[cm-1]\twavelength[nm]\tmodulation\n");
   for(rn=0;rn<tr->wns.n;rn++)
-    fprintf(out,"%12.6f%14.6f%17.7g\n"
+    fprintf(outf,"%12.6f%14.6f%17.7g\n"
 	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
-	    tr->outpret[rn]);
+	    outray->o[rn]);
 
   exit(EXIT_SUCCESS);
 }
 
+
+/*\fcnfh
+  Frees memory allocated in struct outputray
+
+  @returns 0 on success
+*/
+int
+freemem_outputray(struct outputray *out,
+		  long *pi)
+{
+  //free arrays
+  free(out->o);
+
+  //clear PI and return
+  *pi&=~(TRPI_MODULATION);
+  return 0;
+}

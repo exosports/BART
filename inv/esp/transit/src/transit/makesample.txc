@@ -374,7 +374,8 @@ int makeradsample(struct transit *tr)
   //'isov' and 'atmt' are structure pointers to where the info is going
   //to be stored after resampling.
   int res,i,j,iso1db;
-  int nrad,neiso=tr->n_e,niso=tr->n_i,ndb=tr->n_db;
+  struct isotopes *iso=tr->ds.iso;
+  int nrad,neiso=iso->n_e,niso=iso->n_i,ndb=iso->n_db;
 
   prop_isov *isovs;
 
@@ -382,7 +383,7 @@ int makeradsample(struct transit *tr)
   prop_samp *rsamp=&atms->rads;
 
   struct lineinfo *li=tr->ds.li;
-  prop_isov *isovt=tr->isov;
+  prop_isov *isovt=iso->isov;
   prop_atm *atmt=&tr->atm;
 
   prop_samp *rad=&tr->rads;
@@ -461,12 +462,12 @@ int makeradsample(struct transit *tr)
   //We have to go to each database separately
   for(i=0;i<ndb;i++){
     //position in the first isotope of the database
-    iso1db=tr->db[i].s;
+    iso1db=iso->db[i].s;
     isovs=li->isov+iso1db;
 
     //interpolate variable isotope info respect to temperature
     resamplex(tr->fl,li->db[i].t,li->db[i].T,nrad,atmt->t);
-    for(j=0;j<tr->db[i].i;j++){
+    for(j=0;j<iso->db[i].i;j++){
       transitASSERT(iso1db+j>niso-1,
 		    "trying to reference an isotope (%i) outside\n"
 		    "the extended limit (%i)\n"
@@ -476,9 +477,6 @@ int makeradsample(struct transit *tr)
 		isovs[j].c,isovt[iso1db+j].c);
     }
   }
-
-  //free atmosphere info that won't be used anymore
-  freemem_atmosphere(tr->ds.at,&tr->pi);
 
   //set progress indicator and return
   if(res>=0)

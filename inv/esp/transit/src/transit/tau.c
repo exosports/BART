@@ -62,9 +62,6 @@ tau(struct transit *tr)
   tau.toomuch=50;
   if(tr->ds.th->na&TRH_TOOMUCH&&tr->ds.th->toomuch>0)
     tau.toomuch=tr->ds.th->toomuch;
-  tau.iso=0;
-  if(tr->ds.th->na&TRH_TAUISO&&tr->ds.th->tauiso>=0&&tr->ds.th->tauiso<tr->n_i)
-    tau.iso=tr->ds.th->tauiso;
   tau.first=(long *)calloc(wn->n,sizeof(long));
   tau.t=(PREC_RES **)calloc(wn->n,sizeof(PREC_RES *));
   tau.t[0]=(PREC_RES *)calloc(wn->n*ip->n,sizeof(PREC_RES));
@@ -98,7 +95,7 @@ tau(struct transit *tr)
     //For each resultant impact parameter
     for(ii=inn-1;ii>=0;ii--){
       if((t[ii]=rad->fct*tr->sol->tauperb(bb[ii]*riw,r,n,e,inn
-					  ,tau.iso,wi,dt,acc))
+					  ,tr->tauiso,wi,dt,acc))
 	 >tau.toomuch){
 	tau.first[wi]=ii;
 	break;

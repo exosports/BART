@@ -64,6 +64,8 @@ int extwn (struct transit *tr)
   PREC_ZREC *ziso;
   PREC_ZREC *mass;
   _Bool extinctperiso;
+  struct isotopes *iso=tr->ds.iso;
+  long nlines=tr->ds.li->n_l;
 
   transitcheckcalled(tr->pi,"extwn",4,
 		     "readinfo_twii",TRPI_READINFO,
@@ -109,6 +111,7 @@ int extwn (struct transit *tr)
   transitaccepthint(ex->maxratio,tr->ds.th->maxratio_doppler,
 		    tr->ds.th->na,TRH_DR);
 
+
   iniwn=tr->wns.i;
   wn=tr->wns.v;
   nwn=tr->wns.n;
@@ -116,14 +119,14 @@ int extwn (struct transit *tr)
   wnf=wn[nwn-1]+tr->wnmf;
   dwn=tr->wns.d/tr->wns.o;
   nrad=rad->n;
-  neiso=tr->n_e;
-  nisoalloc=niso=tr->n_i;
+  neiso=iso->n_e;
+  nisoalloc=niso=iso->n_i;
   /*TD: enable nisoalloc, currently alloc is used */
   //Do not allocate memory in multidimensional arrays if we are ignoring
   //that particular isotope. We are not using this in unidimensional
   //arrays because of the extra hassle.
   for(i=0;i<niso;i++)
-    if(tr->isodo[i]==ignore)
+    if(iso->isodo[i]==ignore)
       nisoalloc--;
   if(nrad<1){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
@@ -218,23 +221,23 @@ int extwn (struct transit *tr)
     for(i=0;i<niso;i++){
       //If this isotope is marked as ignore (no density info) continue
       //with the next one.
-      if(tr->isodo[i]==ignore)
+      if(iso->isodo[i]==ignore)
 	continue;
 
       kiso[i]=kiso[0];
       if(extinctperiso)
 	kiso[i]+=nwn*i;
-      mass[i]=tr->isof[i].m;
-      ziso[i]=tr->isov[i].z[r];
-      densiso[i]=tr->isov[i].d[r];
-      csiso[i]=tr->isov[i].c[r];
+      mass[i]=iso->isof[i].m;
+      ziso[i]=iso->isov[i].z[r];
+      densiso[i]=iso->isov[i].d[r];
+      csiso[i]=iso->isov[i].c[r];
 
       //Calculate lorentz with every isotope except those ignored
       alphal[i]=0;
       for(j=0;j<neiso;j++)
-	if(tr->isodo[j]!=ignore)
-	  alphal[i]+=tr->isov[j].d[r]/tr->isof[j].m
-	    *sqrt(1/mass[i] + 1/tr->isof[j].m);
+	if(iso->isodo[j]!=ignore)
+	  alphal[i]+=iso->isov[j].d[r]/iso->isof[j].m
+	    *sqrt(1/mass[i] + 1/iso->isof[j].m);
 
       alphal[i]*=csiso[i]*propto_alor;
 
@@ -267,7 +270,7 @@ int extwn (struct transit *tr)
     }
 
     //Compute the spectra!, proceed for every line.
-    for(ln=0;ln<tr->n_l;ln++){
+    for(ln=0;ln<nlines;ln++){
       /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
@@ -304,7 +307,7 @@ int extwn (struct transit *tr)
 
       //If this isotope is marked as ignore (no density info) continue
       //with the next transition.
-      if(tr->isodo[i]==ignore)
+      if(iso->isodo[i]==ignore)
 	continue;
 
       transitASSERT(wa[i]!=-1&&wa[i]<w,
@@ -391,13 +394,14 @@ int extwn (struct transit *tr)
     }
     //Free the profiles of every non-ignored isotopes
     for(i=0;i<niso;i++)
-      if(tr->isodo[i]!=ignore)
+      if(iso->isodo[i]!=ignore)
 	free(profile[i][0]);
   }
 
 
   //free memory that is no longer needed.
   freemem_lineinfotrans(tr->ds.li,&tr->pi);
+  freemem_isotopes(tr->ds.iso,&tr->pi);
 
    //save current status if requested.
   savefile_extwn(tr);
@@ -471,6 +475,7 @@ printone(struct transit *tr)
 {
   int rn;
   FILE *out=stdout;
+  struct isotopes *iso=tr->ds.iso;
 
   //open file
   if(tr->f_out&&tr->f_out[0]!='-')
@@ -488,7 +493,7 @@ printone(struct transit *tr)
     fprintf(out,"%12.6f%14.6f%17.7g%17.7g\n"
 	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
 	    tr->ds.ex->e[0][0][rn],
-	    AMU*tr->ds.ex->e[0][0][rn]*tr->isof[0].m/tr->isov[0].d[0]);
+	    AMU*tr->ds.ex->e[0][0][rn]*iso->isof[0].m/iso->isov[0].d[0]);
 
   exit(EXIT_SUCCESS);
 }
@@ -524,4 +529,6 @@ int
 savefile_extwn(struct transit *tr)
 {
 
+
+  return 0;
 }

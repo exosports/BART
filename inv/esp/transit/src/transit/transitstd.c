@@ -253,6 +253,7 @@ void transitcheckcalled(const long pi, /* Progress indicator variable */
 
 /* \fcnfh
    Called by a gsl_error
+*/
 void 
 error (int exitstatus,
        int something, 
@@ -272,7 +273,6 @@ error (int exitstatus,
 
   exit(exitstatus);
 }
-*/
 
 
 /* \fcnfh
@@ -288,6 +288,28 @@ free_isov(prop_isov *isov)
     free(isov->d);
   if(isov->q)
     free(isov->q);
+}
+
+
+/* \fcnfh
+   Frees array in prop_isof, this should be called for each of the
+   isotopes.
+*/
+void
+free_isof(prop_isof *isof)
+{
+  free(isof->n);
+}
+
+
+/* \fcnfh
+   Frees array in prop_db, this should be called for each of the
+   isotopes.
+*/
+void
+free_db(prop_db *db)
+{
+  free(db->n);
 }
 
 

@@ -74,6 +74,7 @@ readtwii_bin(FILE *fp,
   PREC_ZREC *T,*Z;
   PREC_CS *CS;
   int acumiso=0;
+  struct isotopes *iso=tr->ds.iso;
 
   //Read datafile name, initial, final wavelength, and
   //number of databases.
@@ -91,22 +92,22 @@ readtwii_bin(FILE *fp,
   fread(&ndb,sizeof(int),1,fp);
 
   //Allocate pointers according to the number of databases
-  tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
+  iso->db=(prop_db *)calloc(ndb,sizeof(prop_db));
   li->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
 
   //Read info for each database
   for(i=0;i<ndb;i++){
     //Allocate and get DB's name
     fread(&rn,sizeof(int),1,fp);
-    tr->db[i].n=(char *)calloc(rn+1,sizeof(char));
-    fread(tr->db[i].n,sizeof(char),rn,fp);
-    tr->db[i].n[rn]='\0';
+    iso->db[i].n=(char *)calloc(rn+1,sizeof(char));
+    fread(iso->db[i].n,sizeof(char),rn,fp);
+    iso->db[i].n[rn]='\0';
     
     //Get number of temperature and isotopes
     fread(&nT,sizeof(int),1,fp);
     fread(&nIso,sizeof(int),1,fp);
     li->db[i].t=nT;
-    tr->db[i].i=nIso;
+    iso->db[i].i=nIso;
 
     //allocate for variable and fixed isotope info as well as for
     //temperature points.
@@ -116,53 +117,53 @@ readtwii_bin(FILE *fp,
     fread(T,sizeof(PREC_ZREC),nT,fp);
     
     //Update acumulated isotope count
-    tr->db[i].s=acumiso;
+    iso->db[i].s=acumiso;
     acumiso+=nIso;
   }
   //read total number of isotopes.
-  fread(&tr->n_i,sizeof(int),1,fp);
-  transitASSERT(tr->n_i!=acumiso,
+  fread(&iso->n_i,sizeof(int),1,fp);
+  transitASSERT(iso->n_i!=acumiso,
 		"Given number of isotopes (%i), doesn't equal\n"
 		"real total number of isotopes (%i)\n"
-		,tr->n_i,acumiso);
+		,iso->n_i,acumiso);
 
-  li->ni=tr->n_i;
+  li->ni=iso->n_i;
   li->ndb=ndb;
 
   //allocate structure that are going to receive the isotope info.
-  li->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
-  tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
-  tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
-  tr->isodo=(enum isodo *)calloc(tr->n_i,sizeof(enum isodo));
+  li->isov=(prop_isov *)calloc(iso->n_i,sizeof(prop_isov));
+  iso->isof=(prop_isof *)calloc(iso->n_i,sizeof(prop_isof));
+  iso->isov=(prop_isov *)calloc(iso->n_i,sizeof(prop_isov));
+  iso->isodo=(enum isodo *)calloc(iso->n_i,sizeof(enum isodo));
   transitDEBUG(21,verblevel,
 	       "Isotopes:%i\n"
 	       "databases: %i\n"
 	       "position %li\n"
-	       ,tr->n_i,ndb,ftell(fp)); 
+	       ,iso->n_i,ndb,ftell(fp)); 
 
   //info for each isotope in database
-  for(i=0;i<tr->n_i;i++){
-    transitDEBUG(21,verblevel,"isotope %i/%i\n",i,tr->n_i);
+  for(i=0;i<iso->n_i;i++){
+    transitDEBUG(21,verblevel,"isotope %i/%i\n",i,iso->n_i);
 
     //initialize to be modified by getatm()
-    tr->isodo[i]=unclear;
+    iso->isodo[i]=unclear;
 
     //read database index
-    fread(&tr->isof[i].d,sizeof(int),1,fp);
+    fread(&iso->isof[i].d,sizeof(int),1,fp);
 
     //set auxiliary variables
-    db=tr->isof[i].d;
+    db=iso->isof[i].d;
     nT=li->db[db].t;
 
     transitDEBUG(21,verblevel,
 		 "belongs to DB %i\n"
 		 "which have %i temperatures %i isotopes\n"
 		 "and starts at isotope %i\n"
-		 ,tr->isof[i].d,li->db[db].t, tr->db[db].i,tr->db[db].s);
+		 ,iso->isof[i].d,li->db[db].t, iso->db[db].i,iso->db[db].s);
     //if this is first isotope in database then allocate room for
     //partition function and cross section
-    if(tr->db[db].s==i){
-      nIso=tr->db[db].i;
+    if(iso->db[db].s==i){
+      nIso=iso->db[db].i;
       Z=li->isov[i].z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
       CS=li->isov[i].c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
       transitDEBUG(21,verblevel,
@@ -176,7 +177,7 @@ readtwii_bin(FILE *fp,
     else{
       //note that for a little while nIso is the first isotope of the
       //database 
-      nIso=tr->db[db].s;
+      nIso=iso->db[db].s;
       transitASSERT(nIso>=i,
 		    "readinfo_twii():: Somehow the first isotope of\n"
 		    "current database %i, has an index (%i) greater than\n"
@@ -191,13 +192,13 @@ readtwii_bin(FILE *fp,
     }
 
     //read mass
-    fread(&tr->isof[i].m,sizeof(PREC_ZREC),1,fp);
+    fread(&iso->isof[i].m,sizeof(PREC_ZREC),1,fp);
 
     transitDEBUG(21,verblevel,
 		 "Mass read: %g * %g = %g\n"
 		 "position: %li, size %i\n"
-		 ,tr->isof[i].m,AMU,tr->isof[i].m*AMU
-		 ,ftell(fp),sizeof(tr->isof[i].m));
+		 ,iso->isof[i].m,AMU,iso->isof[i].m*AMU
+		 ,ftell(fp),sizeof(iso->isof[i].m));
 
     //allocate and read isotope names
     fread(&rn,sizeof(int),1,fp);
@@ -205,13 +206,13 @@ readtwii_bin(FILE *fp,
 		 "Name's length: %i\n"
 		 "position: %li, size %i\n"
 		 ,rn,ftell(fp),sizeof(int));
-    tr->isof[i].n=(char *)calloc(rn+1,sizeof(char));
-    fread(tr->isof[i].n,sizeof(char),rn,fp);
-    tr->isof[i].n[rn]='\0';
+    iso->isof[i].n=(char *)calloc(rn+1,sizeof(char));
+    fread(iso->isof[i].n,sizeof(char),rn,fp);
+    iso->isof[i].n[rn]='\0';
 
     transitDEBUG(21,verblevel,
 		 "Name: %s\n"
-		 ,tr->isof[i].n);
+		 ,iso->isof[i].n);
 
     //read partition function
     fread(Z,sizeof(PREC_ZREC),nT,fp);
@@ -223,7 +224,7 @@ readtwii_bin(FILE *fp,
   }
 
   //update structure values
-  tr->n_db=ndb;
+  iso->n_db=ndb;
   li->endinfo=ftell(fp);
 
   li->wi=iniw;
@@ -248,6 +249,7 @@ readtwii_ascii(FILE *fp,
   int rn,i;
   prop_isov *isov;
   PREC_ZREC *T;
+  struct isotopes *iso=tr->ds.iso;
 
   //Format of the TWII-ASCII file is the following(names should not
   //contain spaces ('_' are replaced by spaces)
@@ -283,7 +285,7 @@ readtwii_ascii(FILE *fp,
   ndb=strtol(line,&lp,0);
   checkprepost(lp,errno&ERANGE,*lp==' ',*lp!='\0');
   //Allocate pointers according to the number of databases
-  tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
+  iso->db=(prop_db *)calloc(ndb,sizeof(prop_db));
   li->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
 
   //for each database
@@ -292,7 +294,7 @@ readtwii_ascii(FILE *fp,
     while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
 	  =='#'||rc=='\n');
     if(!rc) notyet(li->asciiline,tr->f_line);
-    if((tr->db[db].n=readstr_sp(lp,&lp,'_'))==NULL)
+    if((iso->db[db].n=readstr_sp(lp,&lp,'_'))==NULL)
       transitallocerror(0);
 
     //go to next field and get number of temperatures and isotopes
@@ -300,11 +302,11 @@ readtwii_ascii(FILE *fp,
     rn=getnl(2,' ',lp,&nT,&nIso);
     checkprepost(lp,rn!=2,0,0);
     li->db[db].t=nT;
-    tr->db[db].i=nIso;
+    iso->db[db].i=nIso;
 
     //Update acumulated isotope count
-    tr->db[db].s=tr->n_i;
-    tr->n_i+=nIso;
+    iso->db[db].s=iso->n_i;
+    iso->n_i+=nIso;
 
     //allocate for variable and fixed isotope info as well as for
     //temperature points.
@@ -313,19 +315,19 @@ readtwii_ascii(FILE *fp,
     //allocate structure that are going to receive the isotope
     //info. If it is not first database then just reallocate
     if(!db){
-      isov=li->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
-      tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
-      tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
+      isov=li->isov=(prop_isov *)calloc(iso->n_i,sizeof(prop_isov));
+      iso->isof=(prop_isof *)calloc(iso->n_i,sizeof(prop_isof));
+      iso->isov=(prop_isov *)calloc(iso->n_i,sizeof(prop_isov));
     }
     else{
-      isov=li->isov=(prop_isov *)realloc(li->isov,tr->n_i*sizeof(prop_isov));
-      tr->isof=(prop_isof *)realloc(tr->isof,tr->n_i*sizeof(prop_isof));
-      tr->isov=(prop_isov *)realloc(tr->isov,tr->n_i*sizeof(prop_isov));
+      isov=li->isov=(prop_isov *)realloc(li->isov,iso->n_i*sizeof(prop_isov));
+      iso->isof=(prop_isof *)realloc(iso->isof,iso->n_i*sizeof(prop_isof));
+      iso->isov=(prop_isov *)realloc(iso->isov,iso->n_i*sizeof(prop_isov));
     }
 
     //Allocate cross section and temperature for this database. set
     //isov at the beggining of this database
-    isov+=(acumiso=tr->db[db].s);
+    isov+=(acumiso=iso->db[db].s);
     isov->z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
     isov->c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
 
@@ -338,10 +340,10 @@ readtwii_ascii(FILE *fp,
       isov[i].z=isov->z+nT*i;
       isov[i].c=isov->c+nT*i;
       //get name
-      if((tr->isof[acumiso+i].n=readstr_sp(lp2,&lp,'_'))==NULL)
+      if((iso->isof[acumiso+i].n=readstr_sp(lp2,&lp,'_'))==NULL)
 	transitallocerror(0);
       //get mass and convert to cgs
-      tr->isof[acumiso+i].m=strtod(lp,&lp2);
+      iso->isof[acumiso+i].m=strtod(lp,&lp2);
 
       if(i!=nIso-1)
 	checkprepost(lp2,lp==lp2,*lp2==' '||*lp2=='\t',*lp2=='\0');
@@ -378,7 +380,7 @@ readtwii_ascii(FILE *fp,
   }
 
   //store number of database and beginning of data
-  tr->n_db=ndb;
+  iso->n_db=ndb;
   li->endinfo=ftell(fp);
 
   //We don't know beforehand what is the range in ascii storage, it has
@@ -1035,6 +1037,9 @@ int readdatarng(struct transit *tr, /* General parameters and
     return -1;
   }  
 
+  //store number of lines
+  li->n_l=i;
+
   //close file, set progress indicator and exit the number of read line.
   fclose(fp);
   tr->pi|=TRPI_READDATA;
@@ -1089,19 +1094,22 @@ datafileBS(FILE *fp,		/* File pointer */
 
    @returns 0 on success
 */
-int readlineinfo(struct transit *transit) /* General parameters and
-					     hints  */
+int readlineinfo(struct transit *tr) /* General parameters and
+					hints  */
 {
   long rn;
-  struct transithint *th=transit->ds.th;
+  struct transithint *th=tr->ds.th;
   static struct lineinfo st_li;
+  static struct isotopes st_iso;
   memset(&st_li,0,sizeof(struct lineinfo));
-  transit->ds.li=&st_li;
+  memset(&st_iso,0,sizeof(struct isotopes));
+  tr->ds.li=&st_li;
+  tr->ds.iso=&st_iso;
 
   //Try to read hinted info file
   transitprint(1,verblevel, "Reading info file '%s'... "
 	       ,th->f_line);
-  if((rn= readinfo_twii(transit,&st_li))!=1)
+  if((rn= readinfo_twii(tr,&st_li))!=1)
     transiterror(TERR_SERIOUS,
 		 "readinfo_twii() returned an error code %i!\n"
 		 ,rn);
@@ -1109,7 +1117,7 @@ int readlineinfo(struct transit *transit) /* General parameters and
 
   //Check the remainder (margin and range) of the hinted values
   //related to line database reading.
-  if((rn=checkrange(transit,&st_li))<0)
+  if((rn=checkrange(tr,&st_li))<0)
     transiterror(TERR_SERIOUS,
 		 "checkrange() returned error code %i!\n"
 		 ,rn);
@@ -1123,15 +1131,15 @@ int readlineinfo(struct transit *transit) /* General parameters and
 	       "   After checking limits, the wavelength range to be\n"
 	       "  used is %g to %g. Including a margin of %g,\n"
 	       "  the range to be extracted is %g to %g\n"
-	       ,transit->ds.li->wavs.i,transit->ds.li->wavs.f
-	       ,transit->m,st_li.wi,st_li.wf);
+	       ,tr->ds.li->wavs.i,tr->ds.li->wavs.f
+	       ,tr->m,st_li.wi,st_li.wf);
 
   //read data file
   transitprint(1,verblevel, "Reading data... ");
-  if((transit->n_l=readdatarng(transit,&st_li))<1)
+  if((rn=readdatarng(tr,&st_li))<1)
     transiterror(TERR_SERIOUS,
 		 "readdatarng() returned an error code %li\n"
-		 ,transit->n_l);
+		 ,rn);
   transitprint(1,verblevel, "done%c\n",'.');
 
   //Status so far
@@ -1141,15 +1149,15 @@ int readlineinfo(struct transit *transit) /* General parameters and
 	       " * The wavelength range read was %.8g to %.8g.\n"
 	       " * Current margin is %.4g.\n"
 	       " * Usable range is thus %.8g to %.8g.\n"
-	       , transit->n_l
-	       , st_li.wavs.i,st_li.wavs.f,transit->m
-	       ,st_li.wavs.i+transit->m,st_li.wavs.f-transit->m);
+	       , st_li.n_l
+	       , st_li.wavs.i,st_li.wavs.f,tr->m
+	       , st_li.wavs.i+tr->m,st_li.wavs.f-tr->m);
 
 
 
 #ifndef NODEBUG_TRANSIT
   rn=97; //Some random number to test
-  struct line_transition *lt=&transit->ds.li->lt;
+  struct line_transition *lt=&tr->ds.li->lt;
   transitDEBUG(21,verblevel,
 	       " * And the record %li has the following info\n"
 	       "Wavelength: %.10g\n"
@@ -1162,11 +1170,44 @@ int readlineinfo(struct transit *transit) /* General parameters and
 
   transitDEBUG(21,verblevel,
 	       "database min and max: %.10g(%.10g) and %.10g(%.10g)\n"
-	       ,st_li.wi,transit->ds.li->wi
-	       ,st_li.wf,transit->ds.li->wf);
+	       ,st_li.wi,tr->ds.li->wi
+	       ,st_li.wf,tr->ds.li->wf);
 
   return 0;
 }
+
+
+
+/* \fcnfh
+   frees lineinfo structure 
+
+   @returns 0 on success
+*/
+int
+freemem_isotopes(struct isotopes *iso,
+		 long *pi)
+{
+  int i;
+
+  //free structures
+  for(i=0;i<iso->n_i;i++)
+    free_isof(iso->isof+i);
+  for(i=0;i<iso->n_db;i++)
+    free_db(iso->db+i);
+  free_isov(iso->isov);
+
+  //free arrays
+  free(iso->isodo);
+  free(iso->isof);
+  free(iso->isov);
+  free(iso->db);
+
+  //unset appropiate flags
+  *pi&=~(TRPI_READINFO|TRPI_READDATA|TRPI_CHKRNG|
+	 TRPI_GETATM);
+  return 0;
+}
+
 
 
 /* \fcnfh
@@ -1253,14 +1294,14 @@ int main(int argc, char **argv)
   ltisoid=tr.ds->lt.isoid;
   ltelow=tr.ds->lt.elow;
 
-  ti1=(int)(log10(tr.n_l)+1);
+  ti1=(int)(log10(li->n_l)+1);
 
   printf("Done reading the file.\n\n"
 	 "dbread_pands() test results:\n");
   printf("Chosen wavelength range was from %.10g to %.2f [nm]\n"
 	 " %*li lines read\n"
 	 " Choosing %i equal-sized bins, the result is\n"
-	 ,li->wi,li->wf,ti1,tr.n_l,nbins);
+	 ,li->wi,li->wf,ti1,li->n_l,nbins);
 
   long qb[tr.n_i];
   float szb=(li->wf-li->wi)/nbins;
@@ -1274,7 +1315,7 @@ int main(int argc, char **argv)
     memset(qb,0,sizeof(*qb)*4);
     endb=li->wi+(i+1)*szb;
     //    PPprintf(1,2,"KK %g %f\n",lp->wl,endb);
-    while(*twl<endb&&twl-ltwl<tr.n_l){
+    while(*twl<endb&&twl-ltwl<li->n_l){
       qb[*tisoid++]++;
       twl++;
     }
@@ -1287,10 +1328,10 @@ int main(int argc, char **argv)
   Pprintf(1,"\nWanna know the value of a single record?\n"
 	  "If so, write record number (range 0 - %i), else "
 	    "press ^C: "
-	  ,tr.n_l-1);
+	  ,li->n_l-1);
 
-  while(Pgeti(0,&ans,(int)(log10(tr.n_l))+1)>=0){
-    if(ans<tr.n_l&&ans>=0){
+  while(Pgeti(0,&ans,(int)(log10(li->n_l))+1)>=0){
+    if(ans<li->n_l&&ans>=0){
       Pprintf(1,"Wavelength: %.10g\n"
 	      ,ltwl[ans]);
       Pprintf(1,"Lower Energy Level: %.10g\nLog(gf): %.10g\n"
@@ -1304,7 +1345,7 @@ int main(int argc, char **argv)
     Pprintf(1,"\nWanna know the value of another single record?\n"
 	    "If so, write the record number (range 0 - %i), else just "
 	    "press ^C: "
-	    ,tr.n_l-1);
+	    ,li->n_l-1);
   }
   
 }

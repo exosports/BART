@@ -150,6 +150,7 @@ struct lineinfo {		/* Used to keep parameters in
 				   [iso] */
   prop_dbnoext *db;		/* Temperature info from databases [DB]
 				   */
+  PREC_NREC n_l;		/* Number of lines in database */
 };
 
 
@@ -218,8 +219,6 @@ struct savefiles {
 
 struct optdepth {
   PREC_RES **t;			/* Optical depth [wn][ip] */
-  short iso;			/* Isotope from which to calculate the
-				   optical depth */
   long *first;			/* Index of the lowest impact parameter
 				   value, lower than this the optical
 				   depth is greater than '.toomuch'. It
@@ -265,6 +264,25 @@ struct geometry {
 				   star. 'fct' to convert to cgs is
 				   found in rads.fct. These fields are
 				   not hinted. */
+};
+
+
+struct isotopes {
+  enum isodo *isodo;		/* What to do with every isotope */
+  prop_isof *isof;		/* Fixed isotope information
+				   [isoextended] */
+  prop_isov *isov;		/* Variable isotope information
+				   [isoextended] */
+  prop_db *db;			/* Database's info [DB] */
+  int n_db,n_i,n_e;		/* Number of databases, of regular
+				   isotopes, of extended isotopes, and
+				   of lines in database */
+};
+
+
+struct outputray {
+  PREC_RES *o;			/* Output as seen before interaction
+				   with telescope */
 };
 
 
@@ -337,16 +355,8 @@ struct transit {		/* Main data structure */
 				   ray optical depth to be calculated */
   prop_atm atm;			/* Sampled atmospheric data. Height in
 				   kilometers. */
-  prop_isof *isof;		/* Fixed isotope information
-				   [isoextended] */
-  prop_isov *isov;		/* Variable isotope information
-				   [isoextended] */
-  prop_db *db;			/* Database's info [DB] */
-  int n_db,n_i,n_e;		/* Number of databases, of regular
-				   isotopes, of extended isotopes, and
-				   of lines in database */
-  PREC_NREC n_l;		/* Number of lines in database */
-  enum isodo *isodo;		/* What to do with every isotope */
+  short tauiso;			/* Isotope from which to calculate the
+				   optical depth */
 
   long fl;			/* flags */
   long pi;			/* progress indicator */
@@ -354,8 +364,6 @@ struct transit {		/* Main data structure */
   transit_ray_solution *sol;	/* Solution type */
   PREC_RES *outpret;		/* Output dependent on wavelength only
 				   as it travels to Earth before
-				   telescope */
-  PREC_RES *out;		/* Output as seen after interaction with
 				   telescope */
 
 
@@ -371,8 +379,11 @@ struct transit {		/* Main data structure */
     struct idxref *ir;
     struct geometry *sg;
     struct savefiles *sf;
+    struct isotopes *iso;
+    struct outputray *out;
   }ds;
 };
+
 
 
 #endif /* _TRANSIT_STRUCTURES_H */

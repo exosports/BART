@@ -9,12 +9,14 @@
 \begin{document}
 
 \begin{center}
-{\large {\bf Allocatable variable usage in ``transit''}}\\[1cm]
+{\large {\bf Allocatable variable usage in ``transit''}}\\
+\vfill
 In the following tables, \\
 \begin{tabular}{ll}
 if... & variable...\\
 \hline
 a & was allocated (and used) \\
+s & was set (not an allocatable structure)\\
 c & have components allocated (not exhaustive list) \\
 r & was reallocated \\
 u & was used \\
@@ -23,74 +25,74 @@ f & was freed \\
 \end{tabular}
 \end{center}
 
-\vspace{1cm}
+\vfill
 
 \begin{center}
-{\large Structures in {\bf tr.ds.xxx}}\\[1cm]
-\begin{tabular}{l|cccccccc}
+{\large Structures in {\bf tr.ds.xxx}}\\[.5cm]
+\begin{tabular}{l|cccccccccc}
 function
-  & th & li & at & ir & ex & tau & sg & sf \\
+  & th & li & at & ir & ex & tau & iso & out & sf & sg \\
 \hline
 acceptgenhints
-  & a  & .  & .  & .  & .  & .   & a  & a  \\
+  & a  & .  & .  & .  & .  & .   & .   & .   & a  & s  \\
 readlineinfo
-  & u  & a  & .  & .  & .  & .   & .  & .  \\
+  & u  & a  & .  & .  & .  & .   & a   & .   & .  & .  \\
 getatm
-  & u  & .  & a  & .  & .  & .   & .  & .  \\
+  & u  & .  & a  & .  & .  & .   & ur  & .   & .  & .  \\
 makewavsample
-  & u  & u  & .  & .  & .  & .   & .  & .  \\
+  & u  & u  & .  & .  & .  & .   & .   & .   & .  & .  \\
 makewnsample
-  & u  & .  & .  & .  & .  & .   & .  & .  \\
+  & u  & .  & .  & .  & .  & .   & .   & .   & .  & .  \\
 makeradsample
-  & u  & u  & uf & .  & .  & .   & .  & .  \\
+  & u  & u  & u  & .  & .  & .   & uc  & .   & .  & .  \\
 idxrefrac
-  & u  & .  & .  & a  & .  & .   & .  & .  \\
+  & u  & .  & f  & a  & .  & .   & .   & .   & .  & .  \\
 extwn
-  & u  & uf & .  & .  & a  & .   & .  & u  \\
+  & u  & uf & .  & .  & a  & .   & uf  & .   & u  & .  \\
 makeipsample
-  & u  & .  & .  & .  & .  & .   & .  & .  \\
+  & u  & .  & .  & .  & .  & .   & .   & .   & .  & .  \\
 tau
-  & u  & .  & .  & u  & u  & a   & .  & u  \\
+  & u  & .  & .  & u  & u  & a   & .   & .   & u  & .  \\
 modulation
-  & u  & .  & .  & f  & f  & uf  & u  & u  \\
+  & u  & .  & .  & f  & f  & uf  & .   & a   & u  & u  \\
 telescope
-  & u  & .  & .  & .  & .  & .   & .  & .  \\
+  & u  & .  & .  & .  & .  & .   & .   & uf  & .  & .  \\
 \hline
 \end{tabular}
 \end{center}
 
-\vspace{1cm}
+\vfill
 
 \begin{center}
-{\large Structures in {\bf tr.xxx}}\\[1cm]
-\begin{tabular}{l|ccccccccccc}
+{\large Sampling structures in {\bf tr.xxx}}\\[.5cm]
+\begin{tabular}{l|ccccccc}
 function
-   & opt & out & isdo & isf & isv & db & atm & rds & wvs & wns & ips \\
+   & atm & rds & wvs & wns & ips \\
 \hline
 accepgenhints
-   &  .  & .   & .    & .   & .   & .  & .   & .   & .   & .   & .   \\
+   & .   & .   & .   & .   & .   \\
 readlineinfo
-   &  .  & .   & a    & a   & a   & a  & .   & .   & p   & .   & .   \\
+   & .   & .   & p   & .   & .   \\
 getatm
-   &  .  & .   & ur   & ur  & ur  & .  & .   & .   & .   & .   & .   \\
+   & .   & .   & .   & .   & .   \\
 makewavsample
-   &  .  & .   & .    & .   & .   & .  & .   & .   & a   & .   & .   \\
+   & .   & .   & a   & .   & .   \\
 makewnsample
-   &  .  & .   & .    & .   & .   & .  & .   & .   & u   & a   & .   \\
+   & .   & .   & u   & a   & .   \\
 makeradsample
-   &  .  & .   & .    & .   & uc  & u  & a   & a   & .   & .   & .   \\
+   & a   & a   & .   & .   & .   \\
 idxrefrac
-   &  .  & .   & .    & .   & .   & .  & u   & u   & .   & .   & .   \\
+   & u   & u   & .   & .   & .   \\
 extwn
-   &  .  & .   & u    & u   & u   & .  & u   & u   & .   & u   & .   \\
+   & u   & u   & .   & u   & .   \\
 makeipsample
-   &  .  & .   & .    & .   & .   & .  & .   & u   & .   & .   & a   \\
+   & .   & u   & .   & .   & a   \\
 tau
-   &  .  & .   & .    & .   & .   & .  & .   & u   & .   & u   & u   \\
+   & .   & u   & .   & u   & u   \\
 modulation
-   &  a  & .   & .    & .   & .   & .  & .   & .   & .   & u   & u   \\
+   & .   & .   & .   & u   & u   \\
 telescope
-   &  u  & a   & .    & .   & .   & .  & .   & .   & .   & .   & .   \\
+   & .   & .   & .   & .   & .   \\
 \hline
 \end{tabular}
 \end{center}
