@@ -28,6 +28,8 @@ static __inline__ void
 computeextscat(double *e, 
 	       long n, 
 	       struct extscat *sc,
+	       double *rad,
+	       double trad,
 	       double *temp,
 	       double tcft,
 	       double wn)
@@ -46,12 +48,34 @@ static __inline__ void
 computeextcloud(double *e, 
 	       long n,
 	       struct extcloud *cl,
+	       prop_samp *rad,
 	       double *temp,
 	       double tcft,
 	       double wn)
 {
   long i;
+  double *r = rad->v;
+  double rfct = rad->fct;
+  double rini = cl->rini * cl->rfct;
+  double rfin = cl->rfin * cl->rfct;
 
-  for(i=0;i<n;i++)
-    e[i]=0;
+  //Don't do anything if there is no cloud of course.
+  if(rini==0)
+    return;
+
+  if(rad->d == 0)
+    transiterror(TERR_SERIOUS,
+		 "Radius needs to be equispaced for clouds prescription\n"
+		 " to work. Stopping\n");
+  double slp = cl->maxe / (cl->rfin - cl->rini);
+
+  for(i=0;i<n;i++){
+    if(r[i] * rfct > rini)
+      e[i] = 0;
+    else if(r[i] * rfct < rfin)
+      e[i] = slp * (r[i]*rfct - rini);
+    else
+      e[i] = cl->maxe;
+  }
+
 }

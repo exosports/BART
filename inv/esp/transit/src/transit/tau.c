@@ -83,6 +83,16 @@ tau(struct transit *tr)
   for(ii=1;ii<wnn;ii++)
     tau.t[ii]=tau.t[0]+ii*ip->n;
 
+  //set cloud structure
+  struct extcloud *cl=tr->ds.cl;
+  cl->maxe=tr->ds.th->cl.maxe;
+  cl->rini=tr->ds.th->cl.rini;
+  cl->rfin=tr->ds.th->cl.rfin;
+  if(tr->ds.th->cl.rfct==0)
+    cl->rfct=rad->fct;
+  else
+    cl->rfct=tr->ds.th->cl.rfct;
+
   //to temporarily store a per radius info, and the ratio of the ip and
   //rad units
   double rfct=rad->fct;
@@ -113,7 +123,6 @@ tau(struct transit *tr)
   //Following are extinction from scattering and from clouds
   double e_s[rnn];
   double e_c[rnn];
-  struct extcloud *cl=tr->ds.cl;
   struct extscat *sc=tr->ds.sc;
 
   //for each wavenumber
@@ -130,8 +139,10 @@ tau(struct transit *tr)
 
     //Calculate extinction coming from scattering and clouds for each
     //level
-    computeextscat(e_s, rnn, sc, temp, tfct, wn->v[wi]*wfct);
-    computeextcloud(e_c, rnn, cl, temp, tfct, wn->v[wi]*wfct);
+    computeextscat(e_s, rnn, sc, rad->v, rad->fct, 
+		   temp, tfct, wn->v[wi]*wfct);
+    computeextcloud(e_c, rnn, cl, rad,
+		    temp, tfct, wn->v[wi]*wfct);
 
     //Put the extinction values in a new array, the values may be
     //temporarily overwritten by (fnc)(), but they should come back as

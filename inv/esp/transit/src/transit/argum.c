@@ -105,6 +105,9 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_BLOWEX,
     CLA_TAUISO,
     CLA_MINELOW,
+    CLA_CLOUDRAD,
+    CLA_CLOUDFCT,
+    CLA_CLOUDE,
   };
 
   //General help-option structure
@@ -263,6 +266,15 @@ int processparameters(int argc, /* number of command line arguments */
     {"minelow",CLA_MINELOW,required_argument,"0",
      "low-energy","Only use transitions with this minimum low energy\n"
      "(in cm-1)"},
+    {"cloudrad",CLA_CLOUDRAD,required_argument,"0,0",
+     "radup,raddown","Make a cloud appear linearly from radup to raddown\n"
+     "Units specified with '--cloudfct', or use radfct if there is none"},
+    {"cloudfct",CLA_CLOUDFCT,required_argument,"0",
+     "factor","cloud radius values specified by '--cloudrad' will be\n"
+     " multiplied by this to convert to cgs units\n"},
+    {"cloudext",CLA_CLOUDE,required_argument,"0",
+     "extinction","Maximum extinction of the cloud, which opacity will\n"
+     "linearly increase from 'radup' to 'raddown'\n"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
@@ -640,6 +652,20 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_MODLEVEL:
       hints->modlevel=atoi(optarg);
+      break;
+    case CLA_CLOUDRAD:
+      hints->cl.rini=strtod(optarg,&optarg);
+      if(*optarg!=','||optarg[1]=='\0')
+	transiterror(TERR_SERIOUS,
+		     "Syntax error in option '--cloudrad', parameters need\n"
+		     "to be radup,raddown");
+      hints->cl.rfin=strtod(optarg,NULL);
+      break;
+    case CLA_CLOUDFCT:
+      hints->cl.rfct=atof(optarg);
+      break;
+    case CLA_CLOUDE:
+      hints->cl.maxe=atof(optarg);
       break;
     }
     

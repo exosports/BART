@@ -301,7 +301,12 @@ struct outputray {
 };
 
 struct extcloud {
-  double prm;
+  double maxe;			/* Maximum opacity in [cm-1] */
+  double rini;			/* Radius at which clouds start */
+  double rfin;			/* Radius at which clouds has it maximum
+				   thickness 'maxe'. rfin < rini */
+  double rfct;			/* Factor that will make the two radius
+				   values above into cgs */
 };
 
 struct extscat {
@@ -371,6 +376,8 @@ struct transithint {		/* Structure with user hinted data that
 
   double minelow;		/* Only use transitions with this
 				   minimum low energy (in cm-1) */
+
+  struct extcloud cl;
 
 };
 
