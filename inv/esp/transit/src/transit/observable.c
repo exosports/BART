@@ -135,7 +135,7 @@ printmod(struct transit *tr)
   fprintf(outf,
 	  "#wavenumber[%gcm-1]\twavelength[nm]\tmodulation\n",tr->wns.fct);
   for(rn=0;rn<tr->wns.n;rn++)
-    fprintf(outf,"%12.6f%14.6f%18.9g\n"
+    fprintf(outf,"%12.6g%14.6g%18.9g\n"
 	    ,tr->wns.v[rn]/tr->wns.fct,1/tr->wavs.fct/tr->wns.v[rn]/tr->wns.fct,
 	    outray->o[rn]);
 
