@@ -79,8 +79,8 @@ int main (int argc,		/* Number of variables */
 		 "makewavsample() returned error code %i\n"
 		 ,rn);
   if(rn>0)
-    transitprint(1,verblevel,
-		 "makewavsample() modified some parameters according\n"
+    transitprint(2,verblevel,
+		 "makewavsample() modified some of the hinted parameters according\n"
 		 "to returned flag: 0x%x\n"
 		 ,rn);
 
@@ -90,8 +90,8 @@ int main (int argc,		/* Number of variables */
 		 "makewnsample() returned error code %i\n"
 		 ,rn);
   if(rn>0)
-    transitprint(1,verblevel,
-		 "makewnsample() modified some parameters according\n"
+    transitprint(2,verblevel,
+		 "makewnsample() modified some of the hinted parameters according\n"
 		 "to returned flag: 0x%x\n"
 		 ,rn);
 
@@ -101,8 +101,8 @@ int main (int argc,		/* Number of variables */
 		 "makeradsample() returned error code %i\n"
 		 ,rn);
   if(rn>0)
-    transitprint(1,verblevel,
-		 "makeradsample() modified some parameters according\n"
+    transitprint(2,verblevel,
+		 "makeradsample() modified some of the hinted parameters according\n"
 		 "to returned flag: 0x%x\n"
 		 ,rn);
 
@@ -124,8 +124,8 @@ int main (int argc,		/* Number of variables */
 		 "makeipsample() returned error code %i\n"
 		 ,rn);
   if(rn>0)
-    transitprint(1,verblevel,
-		 "makeipsample() modified some parameters according\n"
+    transitprint(2,verblevel,
+		 "makeipsample() modified some of the hinted parameters according\n"
 		 "to returned flag: 0x%x\n"
 		 ,rn);
 
