@@ -3,3 +3,4 @@ transit  .log
 lineread
 dbg*
 .depen
+test_*

@@ -48,8 +48,10 @@ TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o iomisc.o procopt.o \
 	    numerical.o xmalloc.o
+TEST_OBJ  = test_slantpath.o
 
-DEP_FILES = $(UT_OBJ:.o=.c) $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c)
+TEST_BIN  = $(TEST_OBJ:.o=)
+DEP_FILES = $(UT_OBJ:.o=.c) $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) $(TEST_OBJ:.o=.c)
 PROTO_FILES = $(DEP_FILES)
 
 #make specials
@@ -159,6 +161,12 @@ help:
 install: default
 	cp -pf lineread $(BIN)
 	cp -pf transit $(BIN)
+
+
+#compile test programs
+test:	$(TEST_BIN)
+$(TEST_BIN):	$(TEST_OBJ) transitstd.o $(UT_OBJ)
+	$(call cmd,exec)
 
 
 #compile debugging executables
