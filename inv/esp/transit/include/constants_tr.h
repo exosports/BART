@@ -36,24 +36,23 @@ defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 
 #define PI (3.141592653589793)	//PI!
 #define DEGREES (PI/180.0)	//to make degrees to radian
-#define GGRAV (6.673e-8)	//Gravitacioinal constants
-#define HOUR (3600.0)		//1 hour
-#define AU (14959786896040.492)	//Astronomical unit
-#define SUNMASS (1.9891e33)	//Solar mass
-#define SUNRADIUS (6.96e10)	//solar volumetric mean radius
-#define AMU (1.6605402e-24)	//Atomic Mass unit
-#define EC (4.8032068e-10)	//electronic charge
-#define LS (2.99792458e10)	//Light Speed
-#define ME (9.1093897e-28)	//Electron mass
-#define KB (1.380658e-16)	//Boltzmann constant
-#define H (6.6260755e-27)	//Planck's constant
-#define RWATER (3.2e-8/2.0)	//water molecule radius
-#define HC (H*LS)		//for lower energy conversion
-#define SIGWATER (PI*RWATER*RWATER) //water cross section
-#define SIGCTE (PI*EC*EC/LS/LS/ME/AMU) //Cross-sec constant
-#define EXPCTE (H*LS/KB)	//Exponent constant
+#define GGRAV (6.673e-8)	//Gravitational constant (erg * cm / g / g)
+#define HOUR (3600.0)		//1 hour (s)
+#define AU (14959786896040.492)	//Astronomical unit (cm)
+#define SUNMASS (1.9891e33)	//Solar mass (g)
+#define SUNRADIUS (6.96e10)	//solar volumetric mean radius (cm)
+#define AMU (1.6605402e-24)	//Atomic Mass unit (g)
+#define EC (4.8032068e-10)	//electronic charge (statcoulomb)
+#define LS (2.99792458e10)	//Light Speed (cm / s)
+#define ME (9.1093897e-28)	//Electron mass (g)
+#define KB (1.380658e-16)	//Boltzmann constant (erg / K)
+#define H (6.6260755e-27)	//Planck's constant (erg * s)
+#define RWATER (3.2e-8/2.0)	//water molecule radius (cm)
+#define HC (H*LS)		//for lower energy conversion (erg * cm)
+#define SIGWATER (PI*RWATER*RWATER) //water cross section (cm * cm)
+#define SIGCTE (PI*EC*EC/LS/LS/ME/AMU) //Cross-sec constant (cm / g)
+#define EXPCTE (H*LS/KB)	//Exponent constant (cm * K)
 
-#define WNU_O_WLU (1e7)              //Waven(cm) over wavel(nm) (units)
 #define ONEOSQRT2PI (0.3989422804)   // 1.0/sqrt(2pi)
 #define SQRTLN2  0.83255461115769775635 //sqrt(ln(2))
 
