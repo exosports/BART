@@ -105,6 +105,9 @@ endif
 # If quiet is set, only print short version of command
 cmd = @$(if $($(quiet)cmd_$(1)),echo ' $($(quiet)cmd_$(1))' &&) $(cmd_$(1))
 
+ifeq ($(strip $(wildcard include/proto_*.h)),)
+	firstproto = 1
+endif
 
 #now for the different functions
 quiet_cmd_c_o   = Compiling $@
@@ -197,7 +200,11 @@ dep: $(DEP_FILES)
 
 #making prototype files
 proto: $(PROTO_FILES:.c=.proto)
+ifdef firstproto
+	@echo
 	@echo "** Probably reruning 'make proto' will clear any error message above **"
+	@echo
+endif
 %.proto: %.c
 	$(call cmd,proto)
 
