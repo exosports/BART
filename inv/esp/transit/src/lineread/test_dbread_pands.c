@@ -25,6 +25,10 @@
 #include <math.h>
 #include "dbread_pands.c"
 
+//Expect results in nanometers
+double tli_fct=1e-7;
+const char *tli_fct_name="nanometers";
+
 /*\fcnfh 
   Routine for testing
 */
@@ -48,11 +52,11 @@ int main(int argc,
   nbinsgf=10;
 
   printf("Welcome!\n");
-  fprintf(stderr,"Lower wavelength (nm)[%g]?: ",wl1);
+  fprintf(stderr,"Lower wavelength (%s)[%g]?: ",pands_fct_ac,wl1);
   if((tf1=readds(stdin,&rc,NULL,0))!=0||rc==-1)
     wl1=tf1;
 
-  fprintf(stderr,"Upper wavelength (nm)[%g]?: ",wl2);
+  fprintf(stderr,"Upper wavelength (%s)[%g]?: ",pands_fct_ac,wl2);
   if((tf1=readds(stdin,&rc,NULL,0))!=0||rc==-1)
     wl2=tf1;
 
@@ -77,10 +81,10 @@ int main(int argc,
   ti1=(int)(log10(n)+1);
 
   printf("\ndbread_pands() test results:\n"
-	  " Chosen wavelength range was from %.2f to %.2f [nm]\n"
+	  " Chosen wavelength range was from %.2f to %.2f [%s]\n"
 	  " %*li lines read\n"
 	  " Choosing %i equal-sized bins, the result is\n"
-	  ,wl1,wl2,ti1,n,nbins);
+	  ,wl1,wl2,pands_fct_ac,ti1,n,nbins);
 
   szb=(wl2-wl1)/nbins;
   lp=lines;
@@ -95,15 +99,15 @@ int main(int argc,
     endb=wl1+(i+1)*szb;
     //    fprintf(stderr,"KK %g %f\n",lp->wl,endb);
     while((lp->wl)<endb&&lp-lines<n){
-      if(lp->lgf>maxgf){
-	maxgf=lp->lgf;
+      if(lp->gf>maxgf){
+	maxgf=lp->gf;
 	maxgfi=lp-lines;
       }
-      else if(lp->lgf<mingf){
-	mingf=lp->lgf;
+      else if(lp->gf<mingf){
+	mingf=lp->gf;
 	mingfi=lp-lines;
       }
-      gfe=lp->lgf*exp(-lp->elow/2500);
+      gfe=lp->gf*exp(-lp->elow/2500);
       if(gfe>maxgfe){
 	maxgfe=gfe;
 	maxgfei=lp-lines;
@@ -139,7 +143,7 @@ int main(int argc,
     endb=wl1+(i+1)*szb;
     //    fprintf(stderr,"KK %g %f\n",lp->wl,endb);
     while((lp->wl)<endb&&lp-lines<n){
-      bin=nbinsgf*log(lp->lgf/mingf)/log(maxgf/mingf);
+      bin=nbinsgf*log(lp->gf/mingf)/log(maxgf/mingf);
       if(bin==nbinsgf) bin--;
       gfb[bin]++;
       lp++;
@@ -169,19 +173,19 @@ int main(int argc,
 
   printf("\nWanna know the value of a single record?\n"
 	  "If so, write record number (range 0 - %li), else "
-	    "press ^D: "
+	    "press ^D twice: "
 	  ,n-1);
 
 
   while((ans=readl(stdin,&rc))!=0||rc==-1){
     if(ans<n&&ans>=0){
       lp=lines+ans;
-      printf("Record Position: %li\nWavelength: %.10g\n"
-	      ,lp->recpos,lp->wl);
-      printf("Lower Energy Level: %.10g\nLog(gf): %.10g\n"
-	      , lp->elow, lp->lgf);
-      printf("Isotope Name: %s\n"
-	      ,isotope[lp->isoid]);
+      printf("Record Position: %li\nWavelength: %.10g [%s]\n"
+	      ,lp->recpos,lp->wl,tli_fct_name);
+      printf("Lower Energy Level: %.10g [cm-1]\ngf: %.10g\n"
+	      , lp->elow, lp->gf);
+      printf("Isotope Name: %s\nFreq: %.10g"
+	      ,isotope[lp->isoid],LS/lp->wl/tli_fct);
     }
     else
       printf("\nInvalid record number, so ...");

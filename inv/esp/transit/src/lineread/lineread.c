@@ -48,8 +48,12 @@
    1.8:  Help fixed and default ouput changed. 032404. PMR.
    2.1:  Change from structure storage to array in TWII
          file. 032504. PMR. 
+   3.1:  Change magic bits, which is 4 bytes now. Change file extension
+         TWII => TLI. Big bug fix regarding reading of P&S, wasn't
+         divided by freq before. 081204. PMR
 */
-static int lineread_ver=2;
+static int lineread_ver=3;	/* Different version implies
+				   incompatible storage formats */
 static int lineread_rev=1;
 
 
@@ -64,6 +68,9 @@ char *dname[dbread_nfcn]={
   "Partridge & Schwenke (1997). Water"
 };
 
+//Wavelength units is always nanometers
+double tli_fct=1e-7;
+const char *tli_fct_name="nanometers";
 
 /*
   synhelp: Help on syntax
@@ -74,7 +81,7 @@ static void synhelp(float deltw,char *datafile, /*char *infofile,
   fprintf(stderr,
 	  "Syntax:\n\tlineread [..options..] <wavl_i> <wavl_f>\n\n"
 	  " Where available options and their defaults are:\n"
-	  "  -d<delt_wavl>   : range of wavelength in nanometers to be read\n"
+	  "  -d<delt_wavl>   : range of wavelength in %s to be read\n"
 	  "                    and write at once from each database (%.2f).\n"
 	  "  -n              : Dummy run!, do not write anything to files\n"
 	  "  -o              : output file (\"%s\"). A dash '-' indicates\n"
@@ -82,15 +89,18 @@ static void synhelp(float deltw,char *datafile, /*char *infofile,
 	  "                    output.\n"
 	  "  -v and -q       : increase or decrease verbose level(%i).\n"
 	  "  -h              : show this help.\n\n"
-	  ,deltw,datafile/*,deltwmark,infofile*/,verblevel);
+	  ,tli_fct_name,deltw,datafile/*,deltwmark,infofile*/,verblevel);
   exit(EXIT_FAILURE);
 }
 
 
 int main(int argc,char *argv[])
 {
-  union {char sig[2];short s;} sign={{(char)(('T'<<4)|'W'),
-				      (char)(('I'<<4)|'I')}};
+  /* Magic number, which in big endian would be abb3b6ff =
+    {(char)0xff-'T',(char)0xff-'L',(char)0xff-'I',(char)0xff},
+    or in little endian: ffb6b3ab */
+  int sign=((0xff-'T')<<24)|((0xff-'L')<<16)|((0xff-'I')<<8)|(0xff);
+
   int i,j,rn;
   int left; //Number of databases with lines available for reorder.
   float deltw;
@@ -125,6 +135,7 @@ int main(int argc,char *argv[])
   nIso=    (int *)           calloc(dbread_nfcn,sizeof(int)            );
   nT=      (int *)           calloc(dbread_nfcn,sizeof(int)            );
 
+  const char *undefined_string="";
   deltw=40;
   verblevel=1;
   datafile=(char *)calloc(20,sizeof(char));
@@ -183,14 +194,15 @@ int main(int argc,char *argv[])
   }
 
   transitprint(2,verblevel,
-	       "Extra blah, blah enabled. Be prepared!\n\n"
-	       "Total wavelength range is %.2f to %.2f Nanometers.\n"
-	       "The databases are going to be read and written in the"
-	       " standard TWII (Transit\n"
-	       "wavelength information  interchange)  format in smaller"
-	       " wavelength ranges of\n"
-	       "%.1f nanometers each.\n\n"
-	       ,iniw,finw,deltw);
+	       "Extra blah blah enabled. Be prepared!\n\n"
+	       "Wavelength during storage and verbose will always be in\n"
+	       "%s.\n"
+	       "Total wavelength range is %.2g to %.2g.\n"
+	       "The databases are going to be read and written in the\n"
+	       " standard TLI (Transit line information) format.\n"
+	       "Processing chunks with a wavelength range of %.1f\n"
+	       " %s each.\n\n"
+	       ,tli_fct_name,iniw,finw,deltw,tli_fct_name);
 
   if(dummy)
     transitprint(1,verblevel,
@@ -198,7 +210,7 @@ int main(int argc,char *argv[])
 		 "regularly\n");
 
   transitprint(1,verblevel,
-	       "TWIIf output file is: %s\n"
+	       "TLIf output file is: %s\n"
 	       ,rn&1?"standard output":datafile);
 
 
@@ -216,11 +228,14 @@ int main(int argc,char *argv[])
 		 "initial wavelength (%.2f)\n",finw,iniw);
 
   if(!dummy){
-    fwrite(&sign.s,sizeof(short),1,fpout);
+    fwrite(&sign,sizeof(int),1,fpout);
     fwrite(&lineread_ver, sizeof(int),1,fpout);
     fwrite(&lineread_rev, sizeof(int),1,fpout);
     fwrite(&iniw,sizeof(double),1,fpout);
     fwrite(&finw,sizeof(double),1,fpout);
+    rn=strlen(undefined_string);
+    fwrite(&rn,sizeof(int),1,fpout);
+    fwrite(undefined_string,sizeof(char),rn,fpout);
     rn=dbread_nfcn;
     fwrite(&rn,sizeof(int),1,fpout);
   }
@@ -240,9 +255,10 @@ int main(int argc,char *argv[])
     for (i=0;i<dbread_nfcn;i++){
       transitprint(1,verblevel,"    Database %i (%s): \n",i+1,dname[i]);
       tempp=dindex?NULL:Z+left;	/* Only read Z if first time */
-      if((nlines[left]=(linefcn[i])(NULL,lineread+left,iniw,parw,NULL,
-				    tempp,T+left,mass+left,nT+left,
-				    nIso+left,isonames+left))>0){
+      if((nlines[left]=(linefcn[i])(NULL, lineread+left, iniw, 
+				    parw, NULL, tempp, T+left,
+				    mass+left, nT+left, nIso+left,
+				    isonames+left))>0){
 	crnt[left]=lineread[left];
 
 	if(left)
@@ -260,7 +276,7 @@ int main(int argc,char *argv[])
     }
     totaliso=dbid[left-1]+nIso[left-1];
 
-    /* Sorting and output of twiifile is done here only while looking at
+    /* Sorting and output of tlifile is done here only while looking at
        the first range */
     if(!dindex&&!dummy){
       for(i=0;i<dbread_nfcn;i++){
@@ -311,7 +327,7 @@ int main(int argc,char *argv[])
 	fwrite(&(crnt[pmin]->wl),sizeof(PREC_LNDATA),1,fpout);
 	fwrite(&(crnt[pmin]->isoid),sizeof(short),1,fpout);
 	fwrite(&(crnt[pmin]->elow),sizeof(PREC_LNDATA),1,fpout);
-	fwrite(&(crnt[pmin]->lgf),sizeof(PREC_LNDATA),1,fpout);
+	fwrite(&(crnt[pmin]->gf),sizeof(PREC_LNDATA),1,fpout);
       }
       dindex++;
 
