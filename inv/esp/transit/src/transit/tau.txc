@@ -109,7 +109,11 @@ tau(struct transit *tr)
 	       "Optical depth calculated up to %g[cm-1]\n"
 	       ,tr->ds.tau->toomuch);
 
+  //Set progress indicator and output tau if requested, otherwise return
+  //success.
   tr->pi|=TRPI_TAU;
+  if(tr->fl&TRU_OUTTAU)
+    printtau(tr);
   return 0;
 }
 

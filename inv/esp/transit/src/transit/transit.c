@@ -244,9 +244,6 @@ int main (int argc,		/* Number of variables */
     transiterror(TERR_SERIOUS,
 		 "extwn() returned error code %i\n"
 		 ,rn);
-  //Print and output extinction if one P,T was desired
-  if(transit.rads.n==1)
-    printone(&transit);
 
   //Computes sampling of impact parameter
   if((rn=makeipsample(&transit))<0)
@@ -265,17 +262,12 @@ int main (int argc,		/* Number of variables */
     transiterror(TERR_SERIOUS,
 		 "tau() returned error code %i\n"
 		 ,rn);
-  //Output tau if requested
-  if(transit.fl&TRU_OUTTAU)
-    printtau(&transit);
 
-  //Calculates optical depth
+  //Calculates eclipse modulation
   if((rn=modulation(&transit))!=0)
     transiterror(TERR_SERIOUS,
 		 "modulation() returned error code %i\n"
 		 ,rn);
-
-  printmod(&transit);  
 
   return EXIT_SUCCESS;
 }

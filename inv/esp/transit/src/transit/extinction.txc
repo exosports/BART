@@ -402,8 +402,11 @@ int extwn (struct transit *tr)
    //save current status if requested.
 
 
-  //Set porogress indicator and return
+  //Set porogress indicator, and print and output extinction if one P,T
+  //was desired, otherwise return success
   tr->pi|=TRPI_EXTWN;
+  if(tr->rads.n==1)
+    printone(tr);
   return 0;
 }
 

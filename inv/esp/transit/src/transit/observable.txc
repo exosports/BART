@@ -76,6 +76,10 @@ modulation(struct transit *tr)	/* Main structure */
   }
   gsl_interp_accel_free(acc);
 
+
+  //set progress indicator, and print output
+  tr->pi&=TRPI_MODULATION;
+  printmod(tr);  
   return 0;
 }
 

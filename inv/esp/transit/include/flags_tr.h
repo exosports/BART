@@ -118,6 +118,7 @@
 #define TRPI_TAU          0x000400 /* tau() completed */
 #define TRPI_GEOMETRY     0x000800 /* setgeom() completed */
 #define TRPI_GEOMETRYHINT 0x001000 /* setgeomhint() completed */
+#define TRPI_MODULATION   0x002000 /* modulation() completed */
 
 
 /* flags for transiterror */
