@@ -263,6 +263,7 @@ int main (int argc,		/* Number of variables */
 void
 printv1(struct transit *tr)
 {
+  int rn;
   printf("#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
   for(rn=0;rn<tr->wns.n;rn++)
     /*    if(rn%tr->wns.o==0)*/

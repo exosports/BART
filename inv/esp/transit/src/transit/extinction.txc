@@ -259,9 +259,9 @@ int extwn (struct transit *tr)
 
     //Compute the spectra!, proceed for every line.
     for(ln=0;ln<tr->n_l;ln++){
-      /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
+      /*
       if(ln<9000||ln>11000)
 	continue;
       */
