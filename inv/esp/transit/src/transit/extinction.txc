@@ -94,8 +94,9 @@ newprofile(PREC_VOIGT **pr,	/* output 2d profile */
   for(j=1;j<vf;j++)
     pr[j]=pr[0]+j*nvgt;
 
-  //calculate voigt
-  if((j=voigtn(vf, nvgt, wvgt, lor,dop,pr, -1, 
+  //calculate voigt using a width that gives an integer number of 'dwn'
+  //spaced bins
+  if((j=voigtn(vf, nvgt, dwn*(long)(nvgt/2), lor,dop,pr, -1, 
 	       nvgt>_voigt_maxelements?VOIGT_QUICK:0))!=1)
     transiterror(TERR_CRITICAL,
 		 "voigtn() returned error code %i\n"
@@ -341,10 +342,10 @@ extradius(PREC_NREC r,		/* Radius index */
     profwn=profile[i][subw]+nwnh[i]-w-1;
 
     //set upper and lower limits for Voigt spread
-    minj=w-nwnh[i];
+    minj=w-nwnh[i]+1;
     if(minj<0)
       minj=0;
-    maxj=w+nwnh[i];
+    maxj=w+nwnh[i]+1;
     if(maxj>nwn)
       maxj=nwn;
 
@@ -354,7 +355,7 @@ extradius(PREC_NREC r,		/* Radius index */
       k[j]+=propto_k
 	*profwn[j];
 
-    if(ltwl[w]>1.6968){
+    if(ltwl[ln]>1696.8267){
       k=5;
     }
     else if(ln==2594618){
