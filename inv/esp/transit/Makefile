@@ -67,7 +67,7 @@ INCLFLAGS   = -I/usr/X11R6/include -I/home/devel/include -I$(INCL)
 LIBFLAGS    = -L/usr/X11R6/lib -L/home/devel/lib
 CPROTOFLAGS = $(INCLFLAGS) $(GSLPRM) -f 3 -m -e -i -X 0
 
-NODBGFLAGS  = -O2
+NODBGFLAGS  = 
 DBGFLAGS    = -O -g3 -gdwarf-2
 ifdef NODEBUG
 STDFLAGS    = $(NODBGFLAGS)
