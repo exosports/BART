@@ -31,9 +31,11 @@
         command line or atmopshere file. 032504. PMR
    1.1: Multi radius working for extinction calculation. 032804. PMR
    1.2: (1.1 patch) Exportable and fixes on one P,T point. 033104. PMR
+   2.0: Modulation is fully working, not much debugging chase done,
+        though. 051804. PMR
  */
 int version=2;
-int revision=-3;
+int revision=0;
 
 
 #endif /* _VERSION_TR_H */

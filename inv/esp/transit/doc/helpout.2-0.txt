@@ -1,0 +1,151 @@
+Usage:
+	transit [options]
+
+  Where [options] are...
+
+GENERAL ARGUMENTS
+ -V
+ --version           Prints version number and exit.
+ -h
+ --help              Prints list of possible parameters.
+ -d
+ --defaults          Prints default values of the  different
+                     variable.
+ -v <[+..][-..]>
+ --verb <[+..][-..]> Increase or decrease verbose  level  by
+                     one per each + or -. 0 is the quietest.
+ -p <filename>
+ --paramf <filename> Use  filename  to  read  parameters  in
+                     addition    to     default     file(s):
+                     './.transitrc'.
+
+INPUT/OUTPUT
+ -o <outfile>
+ --output <outfile>  Change output file  name,  a  dash  (-)
+                     directs to standard output.
+ --atm <atmfile>     File   containing   atmospheric    info
+                     (Radius,  pressure,   temperature).   A
+                     dash (-) indicates alternative input.
+ --linedb <linedb>   File containing line information  (TWII
+                     format, as given by 'lineread'.
+
+RADIUS OPTIONS (planetary radii units, unless stated otherwise)
+ -r
+ --radius            Interactively input radius parameters.
+ --rad-low <radius>  Lower radius. 0  if  you  want  to  use
+                     atmospheric data minimum.
+ --rad-high <radius> Higher radius. 0 if  you  want  to  use
+                     atmospheric data maximum.
+ --rad-delt <spacing> Radius spacing. 0 if you want  to  use
+                     atmospheric data spacing.
+
+ATMPOSPHERE OPTIONS
+ --number-abund      Indicates that given abundances are  by
+                     number rather than by mass.
+ --oneptn <press,temp,extra_iso> Don't   calculate   transit
+                     spectra,  just  obtain  spectra  for  a
+                     given pressure and temperature.  Unless
+                     oneabund is also specified and has  the
+                     correct   number   of   isotopes,   the
+                     abundances will be asked interactively.
+ --oneextra <mass1name1,mass2name2,...> It only  has  effect
+                     with --onept,  a  list  of  the  atomic
+                     mass  and  names   for   the   hitherto
+                     specified   extra   isotopes.   If   it
+                     doesn't  have  the  right   amount   of
+                     values,   the    program    will    ask
+                     interactively.
+ --oneabund <q1,...> It also only has effect  with  --onept,
+                     a  list  of  the  abundances   of   the
+                     different isotopes. If  it  is  omitted
+                     or doesn't have  the  right  amount  of
+                     values,   the    program    will    ask
+                     interactively. Note that the  order  of
+                     isotopes is the same given in the  TWII
+                     data file.
+ --onept-interactive Wants to give abundances  and  pressure
+                     and temperature  interactively  through
+                     terminal input.
+ --allowq <value>    How much less than one is accepted,  so
+                     that   no   warning   is   issued    if
+                     abundances don't ad up to that.
+
+WAVELENGTH OPTIONS (all in nanometers)
+ -w
+ --wavelength        Interactively     input      wavelength
+                     parameters.
+ --wl-low <wavel>    Lower wavelength. 0 if you want to  use
+                     line data minimum.
+ --wl-high <wavel>   Upper wavelength. 0 if you want to  use
+                     line data maximum.
+ --wl-delt <spacing> Wavelength spacing. 0 if  you  want  to
+                     use line data spacing.
+ --wl-osamp <integer> Wavelength oversampling.
+ --wl-marg <boundary> Not  trustable  range  in  microns  at
+                     boundary  of   line   databases.   Also
+                     transitions this  much  away  from  the
+                     requested range will be considered.
+
+WAVENUMBER OPTIONS (all in cm-1)
+ -n
+ --wavenumber        Interactively     input      wavenumber
+                     parameters.
+ --wn-low <waven>    Lower wavenumber. 0 if you want to  use
+                     equivalent of the wavelength maximum.
+ --wn-high <waven>   Upper wavenumber. 0 if you want to  use
+                     equivalent of the wavelength minimum.
+ --wn-delt <spacing> Wavenumber spacing. 0 if  you  want  to
+                     have the same number of  points  as  in
+                     the wavelength sampling.
+ --wn-osamp <integer> Wavenumber  oversampling.  0  if   you
+                     want  the  same  value   as   for   the
+                     wavelengths.
+ --wn-marg <boundary> Not  trustable  range   in   cm-1   at
+                     boundaries. Transitions this much  away
+                     from  the  requested  range   will   be
+                     considered.
+
+EXTINCTION CALCULATION OPTIONS:
+ -f <integer>
+ --finebin <integer> Number of fine-bins  to  calculate  the
+                     Voigt function.
+ -a <number>
+ --nwidth <number>   Number of the max-widths  (the  greater
+                     of Voigt or Doppler widths)  that  need
+                     to be contained in a  calculated  Voigt
+                     profile.
+ -u <uncert>
+ --maxratio <uncert> Maximum allowed uncertainty in  doppler
+                     width before recalculating profile.
+ --per-iso           Calculates  extinction   per   isotope,
+                     this  allow   displaying   contribution
+                     from  different  isotopes,   but   also
+                     consumes more memory.
+ --no-per-iso        Do   not   calculate   extinction   per
+                     isotope.  Saves  memory  (this  is  the
+                     default) .
+
+GEOMETRY PARAMETERS
+ --g-orbpar <smaxis,time,incl,ecc,long_node,arg_per> Orbita-
+                     l parameters, in the  above  order,  to
+                     use  the  default  of  any   of   these
+                     (1,0,0,0,0,0), leave the  corresponding
+                     field blank.
+ --g-orbpar <unitsof:smaxis,time,incl,ecc,long_node,arg_per> field blank
+                     .
+
+RESULTING RAY OPTIONS:
+ -s <sol_name>
+ --solution <sol_name> Name of the kind of  output  solution
+                     ('slant path'  is  currently  the  only
+                     availabale alternative).
+ --outtau            Output  is  optical  depth  instead  of
+                     modulation.  It  will  be  asked  which
+                     radius to plot .
+
+OBSERVATIONAL OPTIONS:
+ -t <width>
+ --telres <width>    Gaussian width of telescope  resolution
+                     in nm.
+----------------------------------
+Contact Information: Patricio Rojo <pato@astro.cornell.edu>

@@ -25,3 +25,5 @@ transit_2pre2: Inlcudes merge from 1-3. and attempted to get an
 	       allocation to get an observable.
 transit_2pre3: Calculation of tau along a line of sight is working,
                start working in geometry to obtain an observable.
+transit_2-0  : It obtains modulation for the simplest
+               model. 051804. PMR 

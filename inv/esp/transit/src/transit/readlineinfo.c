@@ -1208,7 +1208,9 @@ free_lineinfotrans(struct lineinfo *li,
 
 
 #ifdef DBGREADLINEINFO
-
+/* \fcnfh
+   main function for debugging only
+*/
 int main(int argc, char **argv)
 {
   struct transit tr;
