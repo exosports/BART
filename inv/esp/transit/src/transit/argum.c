@@ -102,6 +102,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_OUTSAMPLE,
     CLA_TAULEVEL,
     CLA_MODLEVEL,
+    CLA_BLOWEX,
   };
 
   //General help-option structure
@@ -254,6 +255,9 @@ int processparameters(int argc, /* number of command line arguments */
     {"no-per-iso",CLA_NOEXTPERISO,no_argument,NULL,
      NULL,"Do not calculate extinction per isotope. Saves memory\n"
      "(this is the default)\n"},
+    {"blowex",CLA_BLOWEX,required_argument,"1",
+     "factor","Blow extinction by factor before computing tau. No\n"
+     "physical significance of this variable, but only debugging"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
@@ -412,21 +416,21 @@ int processparameters(int argc, /* number of command line arguments */
 	if(rn>0)
 	  transiterror(TERR_SERIOUS,
 		       "At least one of the values given for pressure (%g),\n"
-		       "temperature (%g), or number of extra isotopes (%g),\n"
-		       "was not a correct floating point value. Actually, the\n"
-		       "latter should be an integer\n"
+		       " temperature (%g), or number of extra isotopes (%g),\n"
+		       " was not a correct floating point value. Actually,\n"
+		       " the latter should be an integer\n"
 		       ,hints->onept.p,hints->onept.t,rf);
 	else
 	  transiterror(TERR_SERIOUS,
 		       "There was %i comma-separated fields instead of 3 for\n"
-		       "'--onept' option"
+		       " '--onept' option"
 		       ,-rn);
       }
       hints->onept.ne=(int)rf;
       if(rf!=hints->onept.ne)
 	transiterror(TERR_SERIOUS,
-		     "A non integer(%g) number of extra isotopes was given with\n"
-		     "the option --oneptn\n"
+		     "A non integer(%g) number of extra isotopes was given\n"
+		     " with the option --oneptn\n"
 		     ,rf);
       hints->onept.one=1;
       break;
@@ -457,9 +461,10 @@ int processparameters(int argc, /* number of command line arguments */
 	hints->onept.m[i]=strtod(optarg,&lp);
 	if(lp==optarg)
 	  transiterror(TERR_SERIOUS,
-		       "Bad format in the field #%i of --oneextra. It doesn't have\n"
-		       " a valid value for mass. The field should be <mass1><name1>\n"
-		       " with only an optional dash betweeen the mass and name:\n %s\n"
+		       "Bad format in the field #%i of --oneextra. It\n"
+		       " doesn't have a valid value for mass. The field\n"
+		       " should be <mass1><name1> with only an optional\n"
+		       " dash betweeen the mass and name:\n %s\n"
 		       ,i+1,optarg);
 	if(*lp=='-') lp++;
 	strncpy(hints->onept.n[i],lp,maxeisoname);
@@ -468,9 +473,10 @@ int processparameters(int argc, /* number of command line arguments */
 	while(*optarg++);
 	if(lp==optarg)
 	  transiterror(TERR_SERIOUS,
-		       "Bad format in the field #%i of --oneextra. It doesn't have\n"
-		       " a valid isotope name The field should be <mass1><name1>\n"
-		       " with only an optional dash betweeen the mass and name:\n %s\n"
+		       "Bad format in the field #%i of --oneextra. It\n"
+		       " doesn't have a valid isotope name The field should\n"
+		       " be <mass1><name1> with only an optional dash\n"
+		       " betweeen the mass and name:\n %s\n"
 		       ,i+1,optarg);
       }
       hints->onept.nm=rn;
@@ -577,12 +583,17 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case '?':
       rn=optopt;
+      transiterror(TERR_SERIOUS,
+		   "Unknown or unsupported option of code %i(%c) passed\n"
+		   "as argument, use '-h' to see accepted options.\n"
+		   ,rn,(char)rn);
+      break;
     default:			//Ask for syntax help
-      fprintf(stderr,
-	      "Unknown or unsupported option of code %i(%c) passed\n"
-	      "as argument\n"
-	      ,rn,(char)rn);
-      getprochelp(EXIT_FAILURE);
+      transiterror(TERR_CRITICAL,
+		   "Even though option of code %i(%c) had a valid structure\n"
+		   "element, it had no switch control statement. Code\n"
+		   "need to be revised.\n"
+		   ,rn,(char)rn);
       break;
     case 'h':
       getprochelp(EXIT_SUCCESS);
@@ -592,6 +603,9 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_NOEXTPERISO:
       hints->fl&=~TRU_EXTINPERISO;
+      break;
+    case CLA_BLOWEX:
+      hints->blowex=atof(optarg);
       break;
 
     case CLA_GORBPAR:
