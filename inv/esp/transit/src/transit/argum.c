@@ -25,6 +25,10 @@
 #include <version_tr.h>
 #include <math.h>
 #include <util/procopt.h>
+#ifdef _USE_GSL
+# include <gsl/gsl_version.h>
+#endif /* _USE_GSL */
+    
 
 const static transit_ray_solution *raysols[] = {
   &slantpath,
@@ -555,8 +559,11 @@ acceptgenhints(struct transit *tr) /* transit structure */
 {
   struct transithint *th=tr->ds.th;
 
+
+  //Accept output file
   if(th->na&TRH_FO)
     transitaccepthint(tr->f_out,th->f_out,th->fl,TRH_FO);
+
   //Accept hinted solution type if it exists
   if(!(th->na&TRH_ST)||acceptsoltype(&tr->sol,th->solname)!=0){
     transit_ray_solution **sol=(transit_ray_solution **)raysols;
@@ -569,6 +576,13 @@ acceptgenhints(struct transit *tr) /* transit structure */
 		   " %s\n",(*sol++)->name);
     exit(EXIT_FAILURE);
   }
+
+  //Check that version of libgsl is the appropiate
+  if(strncmp(tr->sol->gslver,gsl_version,strlen(tr->sol->gslver))!=0)
+    transiterror(TERR_CRITICAL,
+		 "To speed up, transit's solution '%s' assumed version %s of\n"
+		 "the gsl libraries. Check file '%s' for details\n"
+		 ,tr->sol->name,tr->sol->gslver,tr->sol->file);
 
   return 0;
 }

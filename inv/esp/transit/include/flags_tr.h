@@ -115,7 +115,7 @@
 #define TRPI_IDXREFRAC  0x000100 /* idxrefrac() completed */
 #define TRPI_EXTWN      0x000200 /* extwn() completed */
 #define TRPI_TAU        0x000400 /* tau() completed */
-
+#define TRPI_GEOMETRY   0x000800 /* setgeom() completed */
 
 /* flags for transiterror */
 #define TERR_MESSAGE    0x000000

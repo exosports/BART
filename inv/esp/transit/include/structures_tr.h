@@ -30,6 +30,9 @@ struct geometry;
 
 typedef struct {
   const char *name;
+  const char *file;
+  const char *gslver;
+
   PREC_RES (*tauperb)		/* Optical depth per impact
 				   parameter */
        (PREC_RES b,		/* impact parameter */

@@ -66,6 +66,7 @@ setgeom(struct transit *tr)
   sg->starrad =hg->starrad>0 ?hg->starrad :SUNRADIUS/sg->starradfct;
 
 
+  //set progress indicator and return.
   tr->pi|=TRPI_GEOMETRY;
   return 0;
 }

@@ -23,19 +23,21 @@
 
 #include <transit.h>
 
-#ifdef _USE_GSL
-# include <gsl/gsl_version.h>
-#  warning To speed up, slantpath.txc assumed version 1.4 of gsl utilities. If not, gsl_interp_accel\
- structure might have different components, which will produce erroneus assumptions in totaltau().
-#endif /* _USE_GSL */
+
+/***** Warning:
+       To speed up, slantpath.txc assumed version 1.4 of gsl
+       utilities. If not, structure gsl_interp_accel might have
+       different components, which will produce erroneus assumptions in
+       totaltau(). 
+***************/
 
 /* \fcnfh
  Computes optical depth at a given impact parameter, note that b needs
  to be given in units of 'rad' and the result needs to be multiplied by
  the units 'rad' to be real.
 
- @returns \frac{tau}{units_{rad}} returns optical depth divided by units
-                                  of 'rad'
+ @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
+                                    of 'rad'
 */
 static inline PREC_RES
 totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
@@ -138,7 +140,12 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
 
 }
 
+/* \fcnfh 
+   observable information as it would be seen before any telescope
+   interaction
 
+   @returns modulation obtained
+*/
 static inline PREC_RES
 modulation (PREC_RES *tau,
 	    PREC_RES *b,
@@ -155,6 +162,8 @@ modulation (PREC_RES *tau,
 const transit_ray_solution slantpath =
   {
     "Slant Path",
+    "slantpath.c",
+    "1.4",
     &totaltau,
     &modulation
   };
