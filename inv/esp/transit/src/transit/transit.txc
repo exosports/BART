@@ -249,8 +249,8 @@ int main (int argc,		/* Number of variables */
 		 "extwn() returned error code %i\n"
 		 ,rn);
 
-  printv1(&transit);
 #ifdef TRANSITv1
+  printv1(&transit);
 #endif
 
 

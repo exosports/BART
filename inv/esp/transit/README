@@ -10,7 +10,7 @@ following commands
    make clean
    make dep
    make proto
-   make CFLAGS=TRANSITv1 transit
+   make CFLAGS=-DTRANSITv1 transit
    make lineread
 
 ========================================================================
