@@ -188,15 +188,21 @@ extern int transit_nowarn;
 extern int verblevel;
 
 /* Macros */
-#define stateeqn(q,m,p,t) ((q)*(m)*(p)/(KB)/(t));
+#define stateeqnford(q,m,p,t) ((q)*(m)*(p)/(KB)/(t));
 
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
-#define transitacceptflag(transit,hint,flag) do{       \
-                   transit|=hint&flag;hint&=~(flag);}while(0)
-#define transitaccepthint(transit,hint,flags,flagvalue) do{ \
-                   transit=hint;                    }while(0)
-#define transitprint(thislevel, verblevel, ...) if(thislevel <= verblevel) \
-          fprintf(stderr,__VA_ARGS__)
+#define transitacceptflag(transit,hint,flag) do{                            \
+        transit|=hint&flag;hint&=~(flag);}while(0)
+#define transitaccepthint(transit,hint,flags,flagvalue) do{                 \
+        transit=hint;                    }while(0)
+#define transitprint(thislevel, verblevel, ...) if(thislevel <= verblevel)  \
+        fprintf(stderr,__VA_ARGS__)
+#define transitallocerror(nmb)                                              \
+        transiterror(TERR_CRITICAL,                                         \
+	             "transit:: %s: Allocation failed for %i allocation\n"  \
+	             "units in line %i. Impossible to continue.\n"          \
+	             ,__FILE__,nmb,__LINE__)
+
 
 
 

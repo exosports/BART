@@ -94,7 +94,8 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       st_at.atm.p[0]=hc_pres;
       for(i=0;i<nmb;i++){
 	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
-	st_at.isov[i].d[0]=stateeqn(hc_abund,tr->isof[i].m,hc_pres,hc_t);
+	st_at.isov[i].d[0]=stateeqnford(hc_abund,
+					tr->isof[i].m,hc_pres,hc_t);
 	hc_abund=0;
       }
       break;
@@ -109,8 +110,8 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	  st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
 	  st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
 	  st_at.isov[i].q[0]=onept->q[i];
-	  st_at.isov[i].d[0]=stateeqn(onept->q[i],tr->isof[i].m,
-				      onept->p,onept->t);
+	  st_at.isov[i].d[0]=stateeqnford(onept->q[i],tr->isof[i].m,
+					  onept->p,onept->t);
 	}
 	break;
       }
@@ -154,9 +155,9 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	  fprintf(stderr,"Try again!\n");
 	}
 	st_at.isov[i].q[0]=val;
-	st_at.isov[i].d[0]=stateeqn(val,tr->isof[i].m,
-				    st_at.atm.p[0],
-				    st_at.atm.t[0]);
+	st_at.isov[i].d[0]=stateeqnford(val,tr->isof[i].m,
+					st_at.atm.p[0],
+					st_at.atm.t[0]);
       }
 
       break;

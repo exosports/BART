@@ -25,16 +25,21 @@
 #include <transit.h>
 #include <math.h>
 
-#define checkasctwii(pointer,ignore,fail) do{                                         \
-    while(ignore) pointer++;                                              \
-    if(errno&ERANGE||(fail)){                                             \
-      transiterror(TERR_SERIOUS|TERR_ALLOWCONT,                           \
-		   "Invalid character (%c) or out of range number (%i)\n" \
-		   "found in line %i:\n%s\n"                              \
-		   ,*pointer,(errno&ERANGE)==ERANGE,asciiline,line);      \
-      return -4;                                                          \
-    }                                                                     \
-                               }while(0)
+#define checkprepost(pointer,pre,omit,post) do{                           \
+   if(pre)                                                                \
+     transiterror(TERR_SERIOUS,                                           \
+                  "Pre-condition failed on line %i(%s) while reading:\n"  \
+		  "%s\nTWII_Ascii format most likely invalid\n"           \
+                  ,__LINE__,__FILE__,line);                               \
+   while(omit)                                                            \
+     pointer++;                                                           \
+   if(post)                                                               \
+     transiterror(TERR_SERIOUS,                                           \
+                  "Pre-condition failed on line %i(%s) while reading:\n"  \
+		  "%s\nTWII_Ascii format most likely invalid\n"           \
+                  ,__LINE__,__FILE__,line);                               \
+                                             }while(0)
+
 
 /* TD: data info in a structure */
 
@@ -260,6 +265,7 @@ int readinfo_twii(struct transit *tr,
   //Auxiliary structure pointers
   struct transithint *th=tr->ds.th;
   struct iso_noext *in=tr->ds.in;
+  prop_isov *isov;
 
   //Open info file and transport name into transit from hint (setting
   //corresponding flag) if the file opened succesfully
@@ -316,16 +322,20 @@ int readinfo_twii(struct transit *tr,
     //\begin{verb}
     //<m-database>
     //<DATABASE1-name> <n1-iso> <nt1-temp>
+    //<NAME1> <MASS1> ... <MASSn1> <MASSn1>
     //<TEMP1>    <Z1-1>  ...  <Z1-n1>   <CS1-1>  ...  <CS1-n1>
     //...
     //<TEMPnt1> <Znt1-1> ... <Znt1-n1> <CSnt1-1> ... <CSnt1-n1>
     //<DATABASE2-name> <n2-iso> <nt2-temp>
+    //<NAME1> <MASS1> ... <MASSn2> <MASSn2>
+    //<MASS1> ... <MASSn2>
     //<TEMP1>    <Z1-1>  ...  <Z1-n2>   <CS1-1>  ...  <CS1-n2>
     //...
     //<TEMPnt2> <Znt2-1> ... <Znt2-n2> <CSnt2-1> ... <CSnt2-n2>
     //....
     //....
     //<DATABASEm-name> <nm-iso> <ntm-temp>
+    //<NAME1> <MASS1> ... <MASSnm> <MASSnm>
     //<TEMP1>    <Z1-1>  ...  <Z1-nm>   <CS1-1>  ...  <CS1-nm>
     //...
     //<TEMPntm> <Zntm-1> ... <Zntm-nm> <CSntm-1> ... <CSntm-nm>
@@ -339,7 +349,7 @@ int readinfo_twii(struct transit *tr,
 	  =='#');
     if(!rc) notyet(asciiline,tr->f_line);
     ndb=strtol(line,&lp,0);
-    checkasctwii(lp,*lp==' ',*lp!='\0');
+    checkprepost(lp,errno&ERANGE,*lp==' ',*lp!='\0');
     //Allocate pointers according to the number of databases
     tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
     in->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
@@ -347,26 +357,16 @@ int readinfo_twii(struct transit *tr,
     //for each database
     for(db=0;db<ndb;db++){
       //get name
-      while((rc=fgetupto(lp2=lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
 	    =='#');
       if(!rc) notyet(asciiline,tr->f_line);
-      while(*lp2==' ') {
-	lp2++;
-	lp++;
-      }
-      checkasctwii(lp,*lp&&*lp!=' ',*lp=='\0');
-      rn=lp-line;
-      tr->db[db].n=(char *)calloc(rn+1,sizeof(char));
-      strncpy(lp2=tr->db[db].n,line,rn);
-      tr->db[db].n[rn]='\0';
-      //change '_' per spaces
-      while(*lp2)
-	if(*lp2++=='_')
-	  lp2[-1]=' ';
+      if((tr->db[db].n=readstr_sp(lp,&lp,'_'))==NULL)
+	transitallocerror(0);
+
       //go to next field and get number of temperatures and isotopes
-      checkasctwii(lp,*lp==' '||*lp=='\t',*lp=='\0');
+      checkprepost(lp,0,*lp==' '||*lp=='\t',*lp=='\0');
       rn=getnl(2,' ',lp,&nT,&nIso);
-      checkasctwii(lp,0,rn!=2);
+      checkprepost(lp,rn!=2,0,0);
       in->db[db].t=nT;
       tr->db[db].i=nIso;
 
@@ -381,196 +381,219 @@ int readinfo_twii(struct transit *tr,
       //allocate structure that are going to receive the isotope
       //info. If it is not first database then just reallocate
       if(!db){
-	in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
+	isov=in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
 	tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
 	tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
       }
       else{
-	in->isov=(prop_isov *)realloc(in->isov,tr->n_i*sizeof(prop_isov));
+	isov=in->isov=(prop_isov *)realloc(in->isov,tr->n_i*sizeof(prop_isov));
 	tr->isof=(prop_isof *)realloc(tr->isof,tr->n_i*sizeof(prop_isof));
 	tr->isov=(prop_isov *)realloc(tr->isov,tr->n_i*sizeof(prop_isov));
       }
 
-      /* TD: from here change, this is wrong, it should allocate at the
-	 first isotope for each database, note that isov[0] is not
-	 always that */
-      in->isov[0].z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
-      in->isov[0].c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
-      for(i=0;i<nIso;i++){
+      //Allocate cross section and temperature for this database. set
+      //isov at the beggining of this database
+      isov+=(acumiso=tr->db[db].s);
+      isov->z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
+      isov->c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
+      for(i=1;i<nIso;i++){
+	isov[i].z=isov->z+nT*i;
+	isov[i].c=isov->c+nT*i;
       }
 
+      //get isotope name and mass
+      while((rc=fgetupto(lp2=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+	    =='#');
+      if(!rc) notyet(asciiline,tr->f_line);
+      //for each isotope
+      for(i=0;i<nIso;i++){
+	//get name
+	if((tr->isof[acumiso+i].n=readstr_sp(lp2,&lp,'_'))==NULL)
+	  transitallocerror(0);
+	//get mass
+	tr->isof[acumiso+i].m=strtod(lp,&lp2);
+	if(i!=nIso-1)
+	  checkprepost(lp2,lp!=lp2,*lp==' '||*lp=='\t',*lp=='\0');
+      }
+      //Last isotope has to be followed by an end of string
+      checkprepost(lp2,0,*lp==' '||*lp=='\t',*lp!='\0');
+
       //get for each temperature
-      for(i=0;i<nT;i++){
+      for(rn=0;rn<nT;rn++){
 	//Get a line with temperature, partfcn and cross-sect info
 	while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
 	      =='#');
 	if(!rc) notyet(asciiline,tr->f_line);
 	while(*lp==' ')
 	  lp++;
-	//read temperature points
-	T[i]=strtod(lp,&lp);
-	checkasctwii(lp,*lp==' '||*lp=='\t',*lp=='\0');
+	//read temperature
+	T[rn]=strtod(lp,&lp);
+	checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
 
 	//for each isotope in database, read partition function
-	for(acumiso=0;acumiso<nIso;acumiso++){
-	  T[i]=strtod(lp,&lp);
-	  checkasctwii(lp,*lp==' '||*lp=='\t',*lp=='\0');
-	  
-	  /* TD from here!: read ascii-twii input */
-	}      
+	for(i=0;i<nIso;i++){
+	  isov[i].z[rn]=strtod(lp,&lp);
+	  checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
+	}
+	//and cross section
+	for(i=0;i<nIso-1;i++){
+	  isov[i].c[rn]=strtod(lp,&lp);
+	  checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
+	}
+	//the last field needs a different check at the end
+	isov[i].c[rn]=strtod(lp,&lp);
+	checkprepost(lp,0,*lp==' '||*lp=='\t',*lp!='\0');
       }
+    }
+    //We don't know beforehand what is the range in binary storage
+    iniw=finw=0;
+  }
+  //If binary storage is used.
+  else{
+    
+    //Read datafile name, initial, final wavelength, and
+    //number of datrabases.
+    fread(&li->twii_ver,sizeof(int),1,fp);
+    fread(&li->twii_rev,sizeof(int),1,fp);
+    fread(&iniw,sizeof(double),1,fp);
+    fread(&finw,sizeof(double),1,fp);
+    fread(&ndb,sizeof(int),1,fp);
+
+    //Allocate pointers according to the number of databases
+    tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
+    in->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
+
+    //Read info for each database
+    for(i=0;i<ndb;i++){
+      //Allocate and get DB's name
+      fread(&rn,sizeof(int),1,fp);
+      tr->db[i].n=(char *)calloc(rn+1,sizeof(char));
+      fread(tr->db[i].n,sizeof(char),rn,fp);
+      tr->db[i].n[rn]='\0';
+    
+      //Get number of temperature and isotopes
+      fread(&nT,sizeof(int),1,fp);
+      fread(&nIso,sizeof(int),1,fp);
+      in->db[i].t=nT;
+      tr->db[i].i=nIso;
+
+      //allocate for variable and fixed isotope info as well as for
+      //temperature points.
+      T=in->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
       
+      //read temperature points
+      fread(T,sizeof(PREC_ZREC),nT,fp);
+    
+      //Update acumulated isotope count
+      tr->db[i].s=acumiso;
+      acumiso+=nIso;
     }
+    //read total number of isotopes.
+    fread(&tr->n_i,sizeof(int),1,fp);
+    transitASSERT(tr->n_i!=acumiso,
+		  "Given number of isotopes (%i), doesn't equal\n"
+		  "real total number of isotopes (%i)\n"
+		  ,tr->n_i,acumiso);
 
-    fclose(fp);
-
-    //set progres indicator and return success.
-    tr->pi|=TRPI_READINFO;
-    return 1;
-  }
-    
-  //If binary storage
-  //Read datafile name, initial, final wavelength, and
-  //number of datrabases.
-  fread(&li->twii_ver,sizeof(int),1,fp);
-  fread(&li->twii_rev,sizeof(int),1,fp);
-  fread(&iniw,sizeof(double),1,fp);
-  fread(&finw,sizeof(double),1,fp);
-  fread(&ndb,sizeof(int),1,fp);
-
-  //Allocate pointers according to the number of databases
-  tr->db=(prop_db *)calloc(ndb,sizeof(prop_db));
-  in->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
-
-  //Read info for each database
-  for(i=0;i<ndb;i++){
-    //Allocate and get DB's name
-    fread(&rn,sizeof(int),1,fp);
-    tr->db[i].n=(char *)calloc(rn+1,sizeof(char));
-    fread(tr->db[i].n,sizeof(char),rn,fp);
-    tr->db[i].n[rn]='\0';
-    
-    //Get number of temperature and isotopes
-    fread(&nT,sizeof(int),1,fp);
-    fread(&nIso,sizeof(int),1,fp);
-    in->db[i].t=nT;
-    tr->db[i].i=nIso;
-
-    //allocate for variable and fixed isotope info as well as for
-    //temperature points.
-    T=in->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
-      
-    //read temperature points
-    fread(T,sizeof(PREC_ZREC),nT,fp);
-    
-    //Update acumulated isotope count
-    tr->db[i].s=acumiso;
-    acumiso+=nIso;
-  }
-  //read total number of isotopes.
-  fread(&tr->n_i,sizeof(int),1,fp);
-  transitASSERT(tr->n_i!=acumiso,
-		"Given number of isotopes (%i), doesn't equal\n"
-		"real total number of isotopes (%i)\n"
-		,tr->n_i,acumiso);
-
-  //allocate structure that are going to receive the isotope info.
-  in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
-  tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
-  tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
-  transitDEBUG(21,verblevel,
-	       "Isotopes:%i\n"
-	       "databases: %i\n"
-	       "position %li\n"
-	       ,tr->n_i,ndb,ftell(fp)); 
-
-  //info for each isotope in database
-  for(i=0;i<tr->n_i;i++){
-    transitDEBUG(21,verblevel,"isotope %i/%i\n",i,tr->n_i);
-
-    //read database index
-    fread(&tr->isof[i].d,sizeof(int),1,fp);
-
-    //set auxiliary variables
-    db=tr->isof[i].d;
-    nT=in->db[db].t;
-
+    //allocate structure that are going to receive the isotope info.
+    in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
+    tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
+    tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
     transitDEBUG(21,verblevel,
-		 "belongs to DB %i\n"
-		 "which have %i temperatures %i isotopes\n"
-		 "and starts at isotope %i\n"
-		 ,tr->isof[i].d,in->db[db].t, tr->db[db].i,tr->db[db].s);
-    //if this is first isotope in database then allocate room for
-    //partition function and cross section
-    if(tr->db[db].s==i){
-      nIso=tr->db[db].i;
-      Z=in->isov[i].z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
-      CS=in->isov[i].c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
+		 "Isotopes:%i\n"
+		 "databases: %i\n"
+		 "position %li\n"
+		 ,tr->n_i,ndb,ftell(fp)); 
+
+    //info for each isotope in database
+    for(i=0;i<tr->n_i;i++){
+      transitDEBUG(21,verblevel,"isotope %i/%i\n",i,tr->n_i);
+
+      //read database index
+      fread(&tr->isof[i].d,sizeof(int),1,fp);
+
+      //set auxiliary variables
+      db=tr->isof[i].d;
+      nT=in->db[db].t;
+
       transitDEBUG(21,verblevel,
-		   "allocating %i * %i = %i spaces of Z and CS\n"
-		   " at %p and %p\n"
-		   ,nIso,nT,nIso*nT,(void *)Z,(void *)CS);
-    }
-    //Otherwise, just position the pointer to the appropiate place in
-    //the array. In this part, 'nIso' will indicate the first isotope of
-    //the database.
-    else{
-      nIso=tr->db[db].s;
-      transitASSERT(nIso>=i,
-		    "readinfo_twii():: Somehow the first isotope of\n"
-		    "current database %i, has an index (%i) greater than\n"
-		    "current isotope (%i)\n"
-		    ,db,nIso,i);
-      Z=in->isov[i].z=in->isov[nIso].z+nT*(i-nIso);
-      CS=in->isov[i].c=in->isov[nIso].c+nT*(i-nIso);
+		   "belongs to DB %i\n"
+		   "which have %i temperatures %i isotopes\n"
+		   "and starts at isotope %i\n"
+		   ,tr->isof[i].d,in->db[db].t, tr->db[db].i,tr->db[db].s);
+      //if this is first isotope in database then allocate room for
+      //partition function and cross section
+      if(tr->db[db].s==i){
+	nIso=tr->db[db].i;
+	Z=in->isov[i].z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
+	CS=in->isov[i].c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
+	transitDEBUG(21,verblevel,
+		     "allocating %i * %i = %i spaces of Z and CS\n"
+		     " at %p and %p\n"
+		     ,nIso,nT,nIso*nT,(void *)Z,(void *)CS);
+      }
+      //Otherwise, just position the pointer to the appropiate place in
+      //the array. In this part, 'nIso' will indicate the first isotope of
+      //the database.
+      else{
+	nIso=tr->db[db].i;
+	transitASSERT(nIso>=i,
+		      "readinfo_twii():: Somehow the first isotope of\n"
+		      "current database %i, has an index (%i) greater than\n"
+		      "current isotope (%i)\n"
+		      ,db,nIso,i);
+	Z=in->isov[i].z=in->isov[nIso].z+nT*(i-nIso);
+	CS=in->isov[i].c=in->isov[nIso].c+nT*(i-nIso);
+	transitDEBUG(21,verblevel,
+		     "Partition pointer allocated at %p\n"
+		     "and CS at %p\n"
+		     ,(void *)Z,(void *)CS);
+      }
+
+      //read mass
+      fread(&tr->isof[i].m,sizeof(PREC_ZREC),1,fp);
+      tr->isof[i].m*=AMU;
+
       transitDEBUG(21,verblevel,
-		   "Partition pointer allocated at %p\n"
-		   "and CS at %p\n"
-		   ,(void *)Z,(void *)CS);
+		   "Mass read: %g * %g = %g\n"
+		   "position: %li, size %i\n"
+		   ,tr->isof[i].m/AMU,AMU,tr->isof[i].m
+		   ,ftell(fp),sizeof(tr->isof[i].m));
+
+      //allocate and read isotope names
+      fread(&rn,sizeof(int),1,fp);
+      transitDEBUG(21,verblevel,
+		   "Name's length: %i\n"
+		   "position: %li, size %i\n"
+		   ,rn,ftell(fp),sizeof(int));
+      tr->isof[i].n=(char *)calloc(rn+1,sizeof(char));
+      fread(tr->isof[i].n,sizeof(char),rn,fp);
+      tr->isof[i].n[rn]='\0';
+
+      transitDEBUG(21,verblevel,
+		   "Name: %s\n"
+		   ,tr->isof[i].n);
+
+      //read partition function
+      fread(Z,sizeof(PREC_ZREC),nT,fp);
+
+      /* TD: add cross section in info file */
+      //read cross section
+      for(rn=0;rn<nT;rn++)
+	CS[rn]=SIGWATER;
     }
-
-    //read mass
-    fread(&tr->isof[i].m,sizeof(PREC_ZREC),1,fp);
-    tr->isof[i].m*=AMU;
-
-    transitDEBUG(21,verblevel,
-		 "Mass read: %g * %g = %g\n"
-		 "position: %li, size %i\n"
-		 ,tr->isof[i].m/AMU,AMU,tr->isof[i].m
-		 ,ftell(fp),sizeof(tr->isof[i].m));
-
-    //allocate and read isotope names
-    fread(&rn,sizeof(int),1,fp);
-    transitDEBUG(21,verblevel,
-		 "Name's length: %i\n"
-		 "position: %li, size %i\n"
-		 ,rn,ftell(fp),sizeof(int));
-    tr->isof[i].n=(char *)calloc(rn+1,sizeof(char));
-    fread(tr->isof[i].n,sizeof(char),rn,fp);
-    tr->isof[i].n[rn]='\0';
-
-    transitDEBUG(21,verblevel,
-		 "Name: %s\n"
-		 ,tr->isof[i].n);
-
-    //read partition function
-    fread(Z,sizeof(PREC_ZREC),nT,fp);
-
-    /* TD: add cross section in info file */
-    //read cross section
-    for(rn=0;rn<nT;rn++)
-      CS[rn]=SIGWATER;
   }
 
-  li->endinfo=ftell(fp);
+  //Now for either kind of format, do the closure 
 
   //update structure values
+  li->endinfo=ftell(fp);
   li->wi=iniw;
   li->wf=finw;
   tr->n_db=ndb;
-  fclose(fp);
 
-  //set progres indicator and return success.
+  //close file, set progres indicator and return success.
+  fclose(fp);
   tr->pi|=TRPI_READINFO;
   return 1;
 }

@@ -26,6 +26,49 @@ char *linepad_break="-";
 int printpad_columns=__PADTO_COLUMNS;
 
 /* \fcnfh
+   Returns next string in a newly allocated array, 'fspace', if any,
+   indicates a false space character, which is going to be replaced
+   before returning. It o
+
+   @returns string in a newly allocated array
+            NULL if allocation was not possible
+*/
+char *
+readstr_sp(char *line,		/* Input array */
+	   char **next,		/* pointer to the character after the
+				   last one used */
+	   char fspace)		/* False space character, any ocurrence
+				   of this will be replaced by space
+				   before returning */
+{
+  char *lp;
+  static char *ret;
+  int rn;
+
+  while(*line==' ')
+    line++;
+  lp=line;
+  while(*lp&&*lp!=' '&&*lp!='\t')
+    lp++;
+
+  rn=lp-line;
+  if((ret=(char *)calloc(rn+1,sizeof(char)))==NULL)
+    return NULL;
+  if(next)
+    *next=lp;
+  strncpy(lp=ret,line,rn);
+  ret[rn]='\0';
+  //change 'fspace' per spaces
+  if(fspace)
+    while(*lp)
+      if(*lp++==fspace)
+	lp[-1]=' ';
+
+  return ret;
+}
+
+
+/* \fcnfh
    reads into 'line' from 'fp' up to 'max' characters, it check that the
    last character read is '\n', if not then it assumes error and calls
    errfcn with parameters 'max' and 'name'. If '\n' is found then it

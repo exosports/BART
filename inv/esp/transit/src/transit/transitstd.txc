@@ -6,6 +6,7 @@ static int terr_allown=0;
 int transit_nowarn=0;
 int verblevel;
 
+
 inline void transitdot(int thislevel, int verblevel)
 {
   if(thislevel<=verblevel)
@@ -13,7 +14,7 @@ inline void transitdot(int thislevel, int verblevel)
 }
 
 
-/*
+/*\fcnfh
   transiterror: Error function for Transit package.
 
   @returns Number of characters wrote to the standard error file
