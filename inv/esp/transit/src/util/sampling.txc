@@ -1,7 +1,5 @@
 //\delfh
-#if defined(DBGSPLINE) || defined(DBGSAMPLING)
 #include <transit.h>
-#endif
 //\deluh
 
 /* \fcnfh

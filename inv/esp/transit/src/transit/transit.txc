@@ -27,10 +27,12 @@
 
 #include <transit.h>
 #include <math.h>
+/*
 #include "transitstd.c"
 #include "readlineinfo.c"
 #include "../util/voigt.c"
 #include "../util/sampling.c"
+*/
 
 /* Version history:
    0.3: First light, it only calculates Kappa values of it and of
@@ -61,7 +63,7 @@ static inline double integrateTR(PREC_RES *spectra,
 int main (int argc,		/* Number of variables */
 	  char **argv)		/* Variables*/
 {
-  //Initialization of data structure's pointers. Note that s_lt is not
+  //Initialization of data structure's pointers. Note that s\_lt is not
   //assigned because the array that is going to point has not been
   //initialized yet.
   struct transit transit;
@@ -127,12 +129,12 @@ int main (int argc,		/* Number of variables */
 
   //Initialization of general variables.
   //'rc' and 'rn' are the general auxiliary variables.
-  //'file_out' is the name of the output file, a '-' indicates standard
+  //'file\_out' is the name of the output file, a '-' indicates standard
   //output.
   //'trh.verbnoise' is the noisiest possible verbose level
   //controlled by 'verbose' when in a non-debugging compilation, a value
   //of 10 or more is only used for debugging.
-  //'defile_out' is the default output filename
+  //'defile\_out' is the default output filename
   int rn;
   char rc;
   trh.verbnoise=4;
@@ -147,11 +149,11 @@ int main (int argc,		/* Number of variables */
 #endif /* NODEBUG_TRANSIT */
 
   //Initialization of line database variables. 
-  //'file_line' is the name of the info file that is finally used
+  //'file\_line' is the name of the info file that is finally used
   //'trh.m' is the amount of microns that cannot be trusted at the
   //boundaries of databases range, and also how much extra out of
   //requested range it has to look for transitions.
-  //'defile_line' is the default name of the line info file.
+  //'defile\_line' is the default name of the line info file.
   //(i.e. modifiable by the user)
   trh.m=0.001;
   trh.na|=TRH_WM;
@@ -162,7 +164,7 @@ int main (int argc,		/* Number of variables */
 
 
   //Initialization of atmospheric parameters.
-  //'.f_atm' is the name of the file with the atmospheric parameters,
+  //'.f\_atm' is the name of the file with the atmospheric parameters,
   //a '-' indicates that a one-point solution is desired.
   char defile_atm[]="-";
   trh.f_atm=(char *)calloc(strlen(defile_atm)+1,sizeof(char));
@@ -391,15 +393,15 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   static struct atm_data st_at;
   memset(&st_at,0,sizeof(struct atm_data));
   tr->ds.at=&st_at;
-  //  struct atm_data *at=tr->ds.at;
+  /*  struct atm_data *at=tr->ds.at;*/
 
   //Hard coded values.
-  //'hc_n_e' number of extra isotopes (eiso).
-  //'hc_name' names.
-  //'hc_t' temperature.
-  //'hc_mass' masses.
-  //'hc_cs' cross section.
-  //'hc_dens' density.
+  //'hc\_n\_e' number of extra isotopes (eiso).
+  //'hc\_name' names.
+  //'hc\_t' temperature.
+  //'hc\_mass' masses.
+  //'hc\_cs' cross section.
+  //'hc\_dens' density.
 #define HC_N_E 1
 #define MAX_NAME 30
   int hc_n_e=0;
@@ -523,7 +525,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 /* \fcnfh
    Creates the sample points from hinted values
 
-   @returns TRH_S?<<bitshift for modified input
+   @returns TRH\_S?<<bitshift for modified input
              0 if nothing was changed but there is a sampled array
 	    -1 if hinted initial is bigger than maximum allowed.
 	    -2 if hinted final is smaller than minimum allowed.
@@ -835,16 +837,13 @@ int makeradsample(struct transit *tr)
 
   prop_samp *rad=&tr->rads;
 
-  //getatm() and readinfo_twii() must have been called before
+  //getatm() and readinfo\_twii() must have been called before
   transitcheckcalled(tr->pi,"makeradsample",2,
 		     "getatm",TRPI_GETATM,
 		     "readinfo_twii",TRPI_READINFO);
   transitASSERT(atms->rads.n<1||!ndb||!neiso||!niso,
 		"makeradsample():: called but essential variables are\n"
 		"missing!\n");
-
-  //reset modified hints
-  //  memcpy(rad,&tr->ds.th->rads,sizeof(prop_samp));
 
   //We need to set-up limit so that the hinted values are compatible
   //with the atmosphere.
@@ -1082,7 +1081,7 @@ int extwn (struct transit *tr)
     transitprint(2,verblevel,"Radius %i: %g[planetary radius]\n",r,rad->v[r]);
 
     //Initialization of 2nd dimension of extinction array.
-    //\verblabel{kini}
+    //\linelabel{kini}
     i=extinctperiso?niso:1;
     kiso=ex->k[r]=*ex->k+r*i*nwn;
     alphal=ex->al[r]=*ex->al+r*niso;
@@ -1091,21 +1090,21 @@ int extwn (struct transit *tr)
     //set some auxiliary variables.
     temp=tr->atm.t[r];
 
-    //'propto_adop' is proportional to the doppler width, which in its
+    //'propto\_adop' is proportional to the doppler width, which in its
     //total splendor is
     //\[
     //\alpha_D=\frac{\Wn}{\sqrt{m}}\underbrace{\frac{\sqrt{2k_BT}}{c}}
-    //_{\mthrm{propto_adop}}
+    //_{\mathrm{propto\_adop}}
     //\label{dopbr}
     //\]
     propto_adop=sqrt(2*KB*temp)/LS;
 
-    //'propto_alor' is proportional to the Lorenz width, which in its
+    //'propto\_alor' is proportional to the Lorenz width, which in its
     //total splendor is (From goody's)
     //\[
     //\alpha_L =
     //\underbrace{\frac{1}{c}\sqrt{\frac{2\kb T}{\pi}}}
-    //_{\mathrm{propto_alor}}
+    //_{\mathrm{propto\_alor}}
     //\cdot
     //\sum_{\{\mathrm{collisioners}\}_i}
     //\sigma_{ci} n_i\left(\frac{1}{m}+\frac{1}{m_i}\right)
@@ -1154,9 +1153,9 @@ int extwn (struct transit *tr)
     }
 
     for(ln=0;ln<tr->n_l;ln++){
-      //      if(ln!=10000&&ln!=10702&&ln!=10402)
+      /*      if(ln!=10000&&ln!=10702&&ln!=10402)
       //      if(ln<9000||ln>11000)
-      //	continue;
+      //	continue;*/
 
       wavn=WNU_O_WLU/line[ln].wl;
       /* 
