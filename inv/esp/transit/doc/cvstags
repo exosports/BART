@@ -16,3 +16,4 @@ transit_1-0  : Parameters could be given by atmosphere, command line
 transit_1-1  : Extinction can be computed for more than one radius.
 transit_1-2  : Portability and onept output
                  fixes. (transit_1-1_patches branch)
+transit_2pre1: Just merged from transit_1-2. Started working in tau().
