@@ -63,7 +63,7 @@ DEP_FILES   = $(PROTO_FILES) $(TEST_OBJ:.o=.c)
 #parameters
 CPUOPTION   = -mcpu=athlon-tbird
 #CPUOPTION   = -mcpu=pentium3
-EXTPRM      = -DTRANSIT
+EXTPRM      = -DTRANSIT -static
 WARNFLAGS   = -Wall -Winline
 GSLPRM      = -D_USE_GSL
 GSLLIB      = -lgsl -lblas
