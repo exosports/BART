@@ -44,22 +44,6 @@ static int revision=-1;
 extern int verblevel;              /* verbose level, greater than 10 
 				      is only for debuging */
 
-static inline PREC_ZREC interpolateTR(PREC_ZREC *x,
-				      PREC_ZREC *y,
-				      int n,
-				      PREC_ATM val);
-
-static inline int makegauTR(int *nsmr,
-			    double **smr,
-			    double width,
-			    double dl,
-			    float mgau);
-
-static inline double integrateTR(PREC_RES *spectra,
-				 int osw);
-
-
-
 //\fcnfh
 int main (int argc,		/* Number of variables */
 	  char **argv)		/* Variables*/
@@ -93,7 +77,7 @@ int main (int argc,		/* Number of variables */
   samp->o=100;
   samp->v=NULL;
   samp->fct=0;
-  trh.na|=TRH_WI|TRH_WF|TRH_WD|TRH_WO;
+  trh.na|=TRH_WAV|TRH_WAVO;
 
   //Initialization of radius sampling in planetary radius.
   //Fields from 'trh.rads'.
@@ -109,7 +93,7 @@ int main (int argc,		/* Number of variables */
   samp->v=NULL;
   samp->o=0;
   samp->fct=0;
-  trh.na|=TRH_RI|TRH_RF|TRH_RD;
+  trh.na|=TRH_RAD;
 
   //Initialization of wavenumber sampling in cm-1. Note that the
   //extincitons are calculated in wavenumber and then optionally
@@ -121,16 +105,16 @@ int main (int argc,		/* Number of variables */
   //the same number of points as requested for wavelength are outputted.
   //'o' equal to 0 is necessary to dissable oversampling in radius.
   samp=&trh.wns;
-  samp->i=0;
-  samp->f=0;
   samp->i=5716.5;
   samp->f=5718;
+  samp->i=0;
+  samp->f=0;
   samp->d=0;
   samp->n=0;
   samp->v=NULL;
   samp->o=0;
   samp->fct=0;
-  trh.na|=TRH_WNI|TRH_WNF|TRH_WND|TRH_WNO;
+  trh.na|=TRH_WN|TRH_WNO;
 
   //Initialization of general variables.
   //'rc' and 'rn' are the general auxiliary variables.
@@ -293,6 +277,10 @@ printone(struct transit *tr)
   //open file
   if(tr->f_out)
     out=fopen(tr->f_out,"w");
+
+  transitprint(1,verblevel,
+	       "\nPrinting extinction for one radius (at %gcm) in '%s'\n"
+	       ,tr->rads.v[0],tr->f_out?tr->f_out:"standard output");
 
   //print!
   fprintf(out,

@@ -520,7 +520,7 @@ int checkrange(struct transit *tr, /* General parameters and
 		   ,th->m,li->wi,li->wf);
       return -4;
     }
-    transitaccepthint(margin=tr->m, th->m, th->na, TRH_WM);
+    margin=tr->m=th->m;
   }
   else
     margin=tr->m=0.0;
@@ -548,9 +548,9 @@ int checkrange(struct transit *tr, /* General parameters and
 	       ,hsamp->i,hsamp->f,li->wi,li->wf);
 
   //If final wavelength was not hinted then default it to zero
-  if(!(th->na&TRH_WF)){
+  if(!(th->na&TRH_WAV)||hsamp->f<0){
     hsamp->f=0;
-    th->na|=TRH_WF;
+    th->na|=TRH_WAV;
     transiterror(TERR_WARNING,
 		 "Setting hinted upper wavelength limit before\n"
 		 "extraction as %g. It was not user-hinted.\n"
@@ -588,9 +588,9 @@ int checkrange(struct transit *tr, /* General parameters and
     msamp->f=hsamp->f;
   }
 
-  if(!(th->na&TRH_WI)){
+  if(!(th->na&TRH_WAV)||hsamp->i<0){
     hsamp->i=0;
-    th->na|=TRH_WI;
+    th->na|=TRH_WAV;
     transiterror(TERR_WARNING,
 		 "Setting hinted lower wavelength limit before\n"
 		 "extraction as %g. It was not user-hinted.\n"

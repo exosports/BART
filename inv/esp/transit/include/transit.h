@@ -35,54 +35,16 @@
 
 #define TRH_MASS        0x00000200 /* mass abundance? */
 
-/* Generic flags for sampling to be shifted as below to indicate radius,
-   wavenumber and wavelength spacing, respectively */
-/* According to the current value of TRH\_RADSFT, there are 15 bits used
-   for sampling flags, that leaves 17 bits for other purposes (i.e. the
-   lower half plus one */
-#define TRH_IPSFT                0 /* All of this reference are going to
-				      dissapear, only one flag per
-				      sampling */
-#define TRH_RADSFT         (32-15) /* Number of bits to shift for radius
-				      sample flags */
-#define TRH_WAVSFT         (32-10) /* Number of bits to shift for
-				      wavelength sample flags*/
-#define TRH_WNSFT           (32-5) /* Number of bits to shift for
-				      wavelength sample flags*/
-#define TRH_SI          0x00000001 /* Initial value */
-#define TRH_SF          0x00000002 /* Final value */
-#define TRH_SD          0x00000004 /* value spacing */
-#define TRH_SN          0x00000008 /* Value data number. Implies a
-				      given array */
-#define TRH_SO          0x00000010 /* Value oversampling */
-#define TRH_SBITS       0x0000001f /* Mask for all sample flags */
-#define TRH_SFTNAME(n) (n==TRH_RADSFT?"radius":         \
-			 (n==TRH_WAVSFT?"wavelength":    \
-			  (n==TRH_WNSFT?"wavenumber":    \
-			   "unknown(a.k.a bad 'bitsshift' value)")))
-			 
-
-#define TRH_RI  (TRH_SI<<TRH_RADSFT) /* Initial radius */
-#define TRH_RF  (TRH_SF<<TRH_RADSFT) /* Final radius */
-#define TRH_RD  (TRH_SD<<TRH_RADSFT) /* Radius spacing */
-#define TRH_RN  (TRH_SN<<TRH_RADSFT) /* Radius data number. Implies a
-					given array */
-#define TRH_RO  (TRH_SO<<TRH_RADSFT) /* Radius oversampling */
-
-#define TRH_WI  (TRH_SI<<TRH_WAVSFT) /* Initial wavelength */
-#define TRH_WF  (TRH_SF<<TRH_WAVSFT) /* Final wavelength */
-#define TRH_WD  (TRH_SD<<TRH_WAVSFT) /* Wavelength spacing */
-#define TRH_WN  (TRH_SN<<TRH_WAVSFT) /* Wavelength data number. Implies a
-					given array */
-#define TRH_WO  (TRH_SO<<TRH_WAVSFT) /* Wavelength oversampling */
-
-#define TRH_WNI  (TRH_SI<<TRH_WNSFT) /* Initial wavenumber */
-#define TRH_WNF  (TRH_SF<<TRH_WNSFT) /* Final wavenumber */
-#define TRH_WND  (TRH_SD<<TRH_WNSFT) /* Wavenumber spacing */
-#define TRH_WNN  (TRH_SN<<TRH_WNSFT) /* Wavenumber data number. Implies a
-					given array */
-#define TRH_WNO  (TRH_SO<<TRH_WNSFT) /* Wavenumber oversampling */
-
+#define TRH_WAVO        0x01000000 /* Wavelength oversampling */
+#define TRH_WNO         0x02000000 /* Wavenumber oversampling */
+#define TRH_RAD         0x10000000 /* Radius sample specified */
+#define TRH_WAV         0x20000000 /* Wavelength sample specified */
+#define TRH_WN          0x40000000 /* Wavenumber sample specified */
+#define TRH_IPRM        0x80000000 /* Impact param sample specified */
+#define TRH_NAME(n) (n==TRH_RAD?"radius":            \
+                        (n==TRH_WAV?"wavelength":    \
+                         (n==TRH_WN?"wavenumber":    \
+                          "unknown(a.k.a bad 'fl' value)")))
 
 
 /* Flags for mode of telresconv */
