@@ -108,6 +108,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_CLOUDRAD,
     CLA_CLOUDFCT,
     CLA_CLOUDE,
+    CLA_TRANSPARENT,
   };
 
   //General help-option structure
@@ -313,6 +314,9 @@ int processparameters(int argc, /* number of command line arguments */
      "unitsof:smaxis,time,incl,ecc,long_node,arg_per","Units of orbital"
      " parameters, in the above order, to use the default of any of these"
      " (AU,deg,hours,,deg,deg), leave the corresponding field blank"},
+    {"transparent",CLA_TRANSPARENT,no_argument,NULL,
+     NULL,"If selected the planet will have a maximum optical depth\n"
+     " given by toomuch, it will never be totally opaque"},
 
     {NULL,0,0,NULL,NULL,NULL}
   };
@@ -327,7 +331,7 @@ int processparameters(int argc, /* number of command line arguments */
   memset(&st_trh, 0, sizeof(struct transithint));
   struct transithint *hints = tr->ds.th=&st_trh;
 
-  st_trh.fl|=TRU_ATMASK1P|TRU_SAMPLIN|TRH_MASS;
+  st_trh.fl|=TRU_ATMASK1P|TRU_SAMPSPL|TRH_MASS;
   st_trh.verbnoise=4;
   st_trh.mass=1;
   /* TD: have this option user selectable */
@@ -641,6 +645,10 @@ int processparameters(int argc, /* number of command line arguments */
 	    &hints->sg.smaxisfct,&hints->sg.timefct,&hints->sg.inclfct,
 	    &hints->sg.eccfct,&hints->sg.lnodefct,&hints->sg.aperfct);
       break;
+    case CLA_TRANSPARENT:
+      hints->sg.transpplanet=1;
+      break;
+
     case CLA_TOOMUCH:
       hints->toomuch=atof(optarg);
       break;
