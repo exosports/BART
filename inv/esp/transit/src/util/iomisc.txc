@@ -396,12 +396,13 @@ fprintpad(FILE *fp,		/* File pointer to print */
 /* \fcnfh
    read a double value and optionally return the rest of the string
 
-   @returns 0 on success
-            first character read if it was not appropiate
+   @returns on-success double value read, and -1 on 'c'
+            on-failure 0 returned and first character read on 'c'
 */
 double readds(FILE *fp,
 	      char *c,
-	      char *string,
+	      char *string,	/* NULL if no string return is desired
+				   */ 
 	      int maxstring)	/* includes '\\0' */
 {
   char *str,*cur,car;
@@ -466,7 +467,7 @@ double readds(FILE *fp,
     return 0;
   }
   *cur='\0';
-  if(c) *c=0;
+  if(c) *c=-1;
   return atof(str);
 }
 
@@ -476,15 +477,16 @@ double readds(FILE *fp,
    the field in 'string', a field ends in space and can be separated
    from the number by a dash.
 
-   @returns 0 on success
-            first character read if it was not appropiate
+   @returns on-success double value read, and -1 on 'c'
+            on-failure 0 returned and first character read on 'c'
 */
 double getds(char *in,		/* input field */
 	     char *c,		/* 0 if there is a valid number at the
 				   beggining of the field, otherwie
 				   return here the first character of
 				   the field. Optional  */
-	     char *string,	/* return string here. Optional */
+	     char *string,	/* return string here. Optional: NULL if
+				   no return is desired */
 	     int maxstring)	/* includes '\\0' */
 {
   char *cur,car;
@@ -537,7 +539,7 @@ double getds(char *in,		/* input field */
     if(c) *c=*in;
     return 0;
   }
-  if(c) *c=0;
+  if(c) *c=-1;
   return atof(in);
 }
 
@@ -545,8 +547,8 @@ double getds(char *in,		/* input field */
 /* \fcnfh
    read a long value
 
-   @returns 0 on success
-            first character read if it was not appropiate
+   @returns on-success long value read and -1 on 'c'
+            on-failure 0 returned and first character read on 'c'
 */
 long readl(FILE *fp,
 	   char *c)
@@ -588,7 +590,7 @@ long readl(FILE *fp,
     return 0;
   }
   *cur='\0';
-  if(c) *c=0;
+  if(c) *c=-1;
   return atol(str);
 }
 
