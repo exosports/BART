@@ -354,7 +354,14 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
   }
 
   //Initialize \vr{aint} array
-  aint=(PREC_VOIGT *)calloc(nint,sizeof(PREC_VOIGT));
+  if((aint=(PREC_VOIGT *)calloc(nint,sizeof(PREC_VOIGT)))==NULL){
+    fprintf(stderr,
+	    "\nUnable to allocate memory in voigtxy for %i double\n"
+	    "elements (%.3g MB).\n"
+	    ,nint,(sizeof(PREC_VOIGT)*nint)/1024.0/1024.0);
+    fprintf(stderr,"nwn: %i\n",nwn);
+    exit(EXIT_FAILURE);
+  }
 
   //Work sequentially (index \vr{j}) for each centershift.
   for(j=0;j<m;j++){
@@ -404,6 +411,7 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
     }
 
   }
+  free(aint);
 
   //On success return 1. So far, it is the only answer this function is
   //giving.
