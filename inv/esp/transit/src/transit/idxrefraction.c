@@ -21,6 +21,8 @@
  * 02111-1307, USA.
  */
 
+#include <transit.h>
+
 /* \fcnfh
    Calculates the index of refraction. Right now it only gives 1 to all
    levels.

@@ -41,10 +41,11 @@ tau(struct transit *tr)
   prop_samp *wn=&tr->wns;
   prop_samp *ip=&tr->ips;
   prop_atm *atm=&tr->atm;
+  int maxiterations=50;
 
   //index and final values
   long ii,ri,wi;
-  long wnn,rnn;
+  long inn,rnn,wnn;
   /* 'bb' is the impact parameter, while 'n' is the index of refraction,
      'w' is the wavenumber, 't' is the tau as function of impact
      parameter, 'r' is the radius */
@@ -52,21 +53,21 @@ tau(struct transit *tr)
   PREC_RES *n=tr->ds.ir->n;
   PREC_RES *w=wn->v;
   PREC_RES *t,*r;
-  PREC_RES r0;
+  PREC_RES r0,r0a;
 
   transitcheckcalled(tr->pi,"tau",2,
 		     "idxrefrac",TRPI_IDXREFRAC,
-		     "extwn",TRPI_EXTWN,
+		     "extwn",TRPI_EXTWN
 		     );
 
   //set tau structures' value
-  if(tr->ds.th.na&TRH_TOOMUCH&&tr->ds.th.toomuch>0)
-    tau.toomuch=tr->ds.th.toomuch;
+  if(tr->ds.th->na&TRH_TOOMUCH&&tr->ds.th->toomuch>0)
+    tau.toomuch=tr->ds.th->toomuch;
   tau.first=(long *)calloc(wn->n,sizeof(long));
   tau.t=(PREC_RES **)calloc(wn->n,sizeof(PREC_RES *));
   tau.t[0]=(PREC_RES *)calloc(wn->n*ip->n,sizeof(PREC_RES));
-  for(i=1;i<wn->n;i++)
-    tau.t[i]=tau.t[0]+i*ip->n;
+  for(ii=1;ii<wn->n;ii++)
+    tau.t[ii]=tau.t[0]+ii*ip->n;
 
   //final index or number of elements
   wnn=wn->n;
@@ -82,9 +83,27 @@ tau(struct transit *tr)
       b=bb[ii];
 
       //Look for closest approach radius
+      r0a=b;
+      r0=0;
+      ri=0;
+      while(1){
+	r0=b/interp(r0a,r,n,rnn);
+	if(r0==r0a)
+	  break;
+	if(ri++>maxiterations)
+	  transiterror(TERR_CRITICAL,
+		       "Maximum iterations(%i) reached while looking for\n"
+		       "r0. Convergence not reached (%.6g!=%.6g)\n"
+		       ,maxiterations,r0,r0a);
+	r0a=r0;
+      }
+
       /* TD from here complete iteration and loops */
-      r0=b;
-      r0=b/interp(r0,r,n,rnn);
+      //Now integrate the ray's path from r0 to rad->v[nrad-1] using
+      //\[
+      //\tau_{\wn}(\rho)=2\int_{r_0}^{\infty}
+      //\frac{\extc_{\wn}~n~r}{\sqrt{n^2r^2-\rho^2}}\dd r
+      //\]
     }
   }
 

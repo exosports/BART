@@ -1,6 +1,26 @@
-//\delfh
+/*
+ * sampling.c
+ * sampling.txc - Practical command line option parsing
+ *
+ * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ */
+
 #include <transit.h>
-//\deluh
 
 /* \fcnfh
    Do resampling of arrays. If getingx then process the x axis,
@@ -182,14 +202,19 @@ resample(const int getingx, /* Flag indicating which axis we
    @returns 1 on success
 */
 int 
-lineinterpol(int ndat,
-	     double *x,
-	     double *y,
-	     int n,
-	     long *indx,
-	     float *t,
-	     double *yout,
-	     double *dbgout)
+lineinterpol(int ndat,		/* Length of x,y array */
+	     double *x,		/* x-axis */
+	     double *y,		/* y-axis */
+	     int n,		/* length of output arrays (indx,t,yout)
+				   */
+	     long *indx,	/* Integer x-axis reference index */
+	     float *t,		/* value from 0 to 1 to indicate how far
+				   from the value at 'indx' to the next
+				   value */
+	     double *yout,	/* Answer array were the interpolated
+				   values of x[indx]+t*dx[i] are going to
+				   be stored */
+	     double *dbgout)	/* Not used in linear interpolation */
 {
   int i,idx;
 
@@ -223,14 +248,20 @@ lineinterpol(int ndat,
    It doesn't check for values within the range, that have to be done
    before.
 */
-void natcubspline(int ndat,
-		  double *x,
-		  double *y,
-		  int n,
-		  long *indx,
-		  float *t,
-		  double *yout,
-		  double *dout)
+void natcubspline(int ndat,	/* Length of (x,y) array */
+		  double *x,	/* x-axis */
+		  double *y,	/* y-axis */
+		  int n,	/* length of output arrays
+				   (indx,t,yout) */
+		  long *indx,	/* Integer x-axis reference index */
+		  float *t,	/* value from 0 to 1 to indicate how far
+				   from the value at 'indx' to the next
+				   value */
+		  double *yout,	/* Answer array were the interpolated
+				   values of x[indx]+t*dx[i] are going to
+				   be stored */
+		  double *dout)	/* Stores the second derivative of y(x),
+				   length is 'ndat' */
 {
   float tt;
   double hh;
@@ -274,11 +305,12 @@ void natcubspline(int ndat,
   storing them in 'D'. Requires the 'y' values and the x-axis spacing in
   'h' of the 'n' points dataset.
 */
-inline void natcubsplinecoef(long n, /* Number of data points */
-			     double *x, /* y-axis values */
-			     double *y, /* y-axis values */
-			     double *h, /* x-axis spacing */
-			     double *D) /* 2nd-derivatives values */
+inline void
+natcubsplinecoef(long n,	/* Number of data points */
+		 double *x,	/* y-axis values */
+		 double *y,	/* y-axis values */
+		 double *h,	/* x-axis spacing */
+		 double *D)	/* 2nd-derivatives values */
 {
   long i,n1;
   double u,v,w;
@@ -331,29 +363,44 @@ interp(double refx,		/* Reference x point */
        double *y,		/* y-axis */
        long n)			/* lenght of array */
 {
+  double yout;
+  n--;
 
+  //Initial range is correct?
   if(*x>refx){
     fprintf(stderr,
-	    "interp():: first x-value (%g) is larger\n"
-	    "than refx(%g)\n"
+	    "interp():: First x-value (%g) is larger than refx(%g)\n"
 	    ,*x,refx);
     exit(EXIT_FAILURE);
   }
 
+  //check that enough data points are given
+  if(n<2){
+    fprintf(stderr,
+	    "interp():: Array of length less than 2.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  //go through the arrays
   while(1){
-    if(n<2){
+    //Is final range correct?
+    if(n<1){
       fprintf(stderr,
-	      "interp():: Array of length less than 2 or last\n"
-	      "x-value (%g) is smaller than refx(%g)\n"
+	      "interp():: Last x-value (%g) is smaller than refx(%g)\n"
 	      ,*x,refx);
       exit(EXIT_FAILURE);
     }
     //found!
-    /* TD: from here */
-    if(x[1]>refx){
-      return ;
-    }
+    if(x[1]>refx)
+      break;
+    n--;
+    x++;
+    y++;
   }
+
+  yout=*y+(refx-*x)*(y[1]-*y)/(x[1]-*x);
+  return yout;
+
 }
 
 

@@ -453,6 +453,7 @@ struct transit {		/* Main data structure */
 #include <readatminfo_proto.h>
 #include <makesample_proto.h>
 #include <extinction_proto.h>
+#include <idxrefraction_proto.h>
 #include <tau_proto.h>
 
 

@@ -239,9 +239,9 @@ int main (int argc,		/* Number of variables */
 		 ,rn);
 
   //Computes index of refraction
-  if((rn=idxref(&transit))!=0)
+  if((rn=idxrefrac(&transit))!=0)
     transiterror(TERR_SERIOUS,
-		 "idxref() returned error code %i\n"
+		 "idxrefrac() returned error code %i\n"
 		 ,rn);
 
   //Calculates extinction coefficient

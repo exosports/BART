@@ -1,5 +1,6 @@
 /*
- * procopt.[tx]c - Practical command line option parsing
+ * procopt.c
+ * procopt.txc - Practical command line option parsing
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *
