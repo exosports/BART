@@ -486,6 +486,7 @@ int processparameters(int argc, /* number of command line arguments */
   }
 
 
+  getprocopt_free();
   return 0;
 }
 
