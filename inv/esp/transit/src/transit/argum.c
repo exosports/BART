@@ -538,7 +538,7 @@ int processparameters(int argc, /* number of command line arguments */
       hints->toomuch=atof(optarg);
       break;
     case CLA_OUTTOOMUCH:
-      if(hints->f_toomuch) {free(hints->f_toomuch);hints->f_toomuch=NULL;}
+      if(hints->f_toomuch) free_null(hints->f_toomuch);
       if(*optarg!='\0'){
 	hints->f_toomuch=(char *)calloc(strlen(optarg)+1,sizeof(char));
 	strcpy(hints->f_toomuch,optarg);

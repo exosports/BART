@@ -72,13 +72,13 @@
 	             "transit:: %s: Allocation failed for %i allocation\n"  \
 	             "units in line %i. Impossible to continue.\n"          \
 	             ,__FILE__,nmb,__LINE__)
-#define nullfree(x) do{free(x);x=NULL;}while(0)
+#define free_null(x) do{free(x);x=NULL;}while(0)
 
 #ifdef NODEBUG_TRANSIT
 #define transitDEBUG(...) ((void)0)
 #define transitASSERT(...) ((void)0)
 #else
-#define free(x) nullfree(x)
+#define free(x)  do{free(x);x=NULL;}while(0)
 #define transitASSERT(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitDEBUG(...) transitprint(__VA_ARGS__)
 #endif
