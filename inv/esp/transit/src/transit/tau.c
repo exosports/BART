@@ -124,6 +124,8 @@ totaltau(PREC_RES b,		/* impact parameter */
 	 long wn,		/* wavenumber looked */
 	 gsl_interp_accel *acc)	/* accelerating pointer */
 {
+  float analiticfrac=0.1;
+  PREC_RES res;
   PREC_RES r0a=b;
   PREC_RES r0=0;
   int i;
@@ -144,45 +146,59 @@ totaltau(PREC_RES b,		/* impact parameter */
     r0a=r0;
   }
 
-  //get bin value 'rs' such that r0 is between rad[i] inclusive and
-  //rad[i+1] exclusive. Take one extra impact parameter position if less
+  //get bin value 'rs' such that r0 is between rad[rs] inclusive and
+  //rad[rs+1] exclusive. Take one extra impact parameter position if less
   //than two points are given out to integrate.
   rs=binsearch(rad,0,nrad-1,r0);
   if(rs==nrad-2)
     rs--;
-  transitASSERT(rs==-4,
-		"Number of radius sample(%i) has to be at least 1!\n"
-		,nrad);
+
   if(rs<0)
     transiterror(TERR_CRITICAL,
 		 "Closest approach value(%g) is outside sampled radius\n"
 		 "range(%g - %g)\n"
 		 ,r0,rad[0],rad[nrad-1]);
 
-  //Now integrate the ray's path from r0 to rad->v[nrad-1] using
+  //A fraction 'analiticfrac' of the integration near the closest
+  //appraoach is calcualated analitically, otherwise, I get a division
+  //by zero. In formula\par
   //\[
-  //\tau_{\wn}(\rho)=2\int_{r_0}^{\infty}
+  //\tau_{\wn}(\rho)=
+  //\underbrace{
+  //2\extc_{\wn}r_0\sqrt{2r_0\delta r} 
+  //}_{\mathrm{analitic}} +
+  //\underbrace{
+  //2\int_{r_0+\delta r}^{\infty}
   //\frac{\extc_{\wn}~n~r}{\sqrt{n^2r^2-\rho^2}}\dd r
-  //\]
+  //}_{\mathrm{numerical}}
+  //\]\par
+  //First for the analitical part of the integral
+  analiticfrac*=(rad[rs+1]-rad[rs]);
+  res=ex[i][iso][wn]*sqrt(2*r0*analiticfrac);
+  //And now for the numerical integration.\par
+  //This part currently depends on a proper installation of GSL library
 #ifdef _USE_GSL
   for(i=rs;i<nrad;i++){
     r0a=b/refr[i]/rad[i];
-    dt[i]=2*ex[i][iso][wn]/sqrt(1-r0a*r0a);
+    transitASSERT(r0a>1,
+		  "Oops! assert condition not met, b/(nr)=%g",r0a);
+    if(r0a==1)
+    dt[i]=ex[i][iso][wn]/sqrt(1-r0a*r0a);
   }
 
-  //This part depends on a proper installation of GSL library
+
   acc->cache = 0;
   acc->hit_count = 0;
   acc->miss_count = 0;
   gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
   gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
-  r0a=gsl_spline_eval_integ(spl,r0,rad[nrad-1],acc);
+  res+=gsl_spline_eval_integ(spl,r0+analiticfrac*rad[rs],rad[nrad-1],acc);
   gsl_spline_free(spl);
-  return r0a;
+  return 2*res;
 
+  //Without {\bf GSL} is currently not implemented. Output is dependent in an
+  //appropiate installation of those libraries
 #else
-  //THIS IS NOT IMPLEMENTED, CURRENT OUTPUT IS DEPENDENT IN AN
-  //APPROPIATE GSL INSTALLATION
 #error computation of tau() without GSL is not implemented
 #endif
 }
