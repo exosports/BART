@@ -1100,18 +1100,15 @@ int extwn (struct transit *tr)
     propto_adop=sqrt(2*KB*temp)/LS;
 
     //'propto\_alor' is proportional to the Lorenz width, which in its
-    //total splendor is (From goody's)
+    //total splendor is
     //\[
-    //\alpha_L =
-    //\underbrace{\frac{1}{c}\sqrt{\frac{2\kb T}{\pi}}}
-    //_{\mathrm{propto\_alor}}
-    //\cdot
-    //\sum_{\{\mathrm{collisioners}\}_i}
-    //\sigma_{ci} n_i\left(\frac{1}{m}+\frac{1}{m_i}\right)
-    //^{\frac{1}{2}}
+    //\alpha_L=\frac{\sigma_c}{\pi c}
+    //\sqrt{\frac{2\kb T}{\pi}} \sum_{\mathrm{collisioners}}n_i
+    //\sqrt{\left(\frac{1}{m_r}
+    //+\frac{1}{m_i}\right)}
     //\label{lorwidth}
     //\]
-    propto_alor=sqrt(temp*2*KB/PI)/LS;
+    propto_alor=sqrt(temp*2*KB/PI)/LS/PI;
 
     //Initialize a voigt profile for every isotope as well for the
     //mass, ziso, densiso and csiso arrays
@@ -1127,7 +1124,7 @@ int extwn (struct transit *tr)
       //Calculate lorentz
       alphal[i]=0;
       for(j=0;j<niso;j++)
-	alphal[i]+=densiso[i]*csiso[i]
+	alphal[i]+=densiso[i]*csiso[i]/mass[i]
 	  *sqrt(1/mass[i] + 1/tr->isof[j].m);
       alphal[i]*=propto_alor;
 

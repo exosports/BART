@@ -11,7 +11,6 @@ INCL_UT=$(INCL)/util
 #paths for dependencies
 vpath %.h include
 vpath %.txc $(SRC)/transit:$(SRC)/lineread:$(SRC)/util
-#vpath %.c $(SRC)/transit:$(SRC)/lineread:$(SRC)/util
 
 #programs
 CPROTO  = /usr/bin/cproto
@@ -62,7 +61,7 @@ LIBS  = -lX11 -lP -lm
 
 transit: $(OBJ_TR) $(OBJ_UT) transit.c
 	$(CC) $(STDFLAGS) -o $@ $^ $(LIBS)
-	cp -p transit $(BIN)
+	cp -pf transit $(BIN)
 
 #$(OBJ_UT): %.o: %.c
 #	$(CC) -c $(STDFLAGS) -o $@ $<
@@ -74,7 +73,7 @@ transit: $(OBJ_TR) $(OBJ_UT) transit.c
 	$(CLATEX) $< -sl
 
 clean:
-	rm -f $(OBJ_TR) $(OBJ_UT) $(DEP_FILES)
+	rm -f $(OBJ_TR) $(OBJ_UT) $(DEP_FILES) texput.log transit
 
 dep: $(DEP_FILES)
 	makedepend -Y -f .depen -- $(STDFLAGS) -- $^
