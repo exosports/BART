@@ -408,18 +408,18 @@ int processparameters(int argc, /* number of command line arguments */
       hints->m=atof(optarg);
       break;
     case CLA_WAVNLOW:
-      hints->wavs.i=atof(optarg);
+      hints->wns.i=atof(optarg);
       break;
     case CLA_WAVNHIGH:
-      hints->wavs.f=atof(optarg);
+      hints->wns.f=atof(optarg);
       break;
     case CLA_WAVNDELT:
-      hints->wavs.d=atof(optarg);
-      hints->wavs.n=0;
-      hints->wavs.v=NULL;
+      hints->wns.d=atof(optarg);
+      hints->wns.n=0;
+      hints->wns.v=NULL;
       break;
     case CLA_WAVNOSAMP:
-      hints->wavs.o=atof(optarg);
+      hints->wns.o=atof(optarg);
       break;
     case CLA_WAVNMARGIN:
       hints->wnm=atof(optarg);
