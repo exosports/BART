@@ -520,6 +520,10 @@ getmnfromfile(FILE *fp,
       case 't':
 	at->atm.tfct=atof(line+2);
 	break;
+      default:
+	transiterror(TERR_SERIOUS,
+		     "Invalid unit factor indication in atmosphere file\n");
+	exit(EXIT_FAILURE);
       }
       continue;
     }
