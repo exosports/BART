@@ -483,6 +483,70 @@ int makeradsample(struct transit *tr)
 }
 
 
+/* \fcnfh
+   Prints sample info for a structure
+*/
+static void
+printsample(FILE *out,	/* File pointer to write out */
+	    prop_samp *samp,	/* Sample strucuture to print */
+	    char *desc,		/* Description */
+	    long fl)		/* Various flag */
+{
+  int i;
+
+  fprintf(out,
+	  "############################\n"
+	  "   %-12s Sampling\n"
+	  "----------------------------\n"
+	  ,desc);
+
+  fprintf(out,"Factor to cgs units: %g\n",samp->fct);
+
+  fprintf(out,"Initial value: %g\nFinal value: %g\n",samp->i,samp->f);
+
+  fprintf(out,"Spacing: %g\n",samp->d);
+  if(!(fl&TRF_NOOVERSAMP))
+    fprintf(out,"Oversample: %i\n",samp->o);
+
+  fprintf(out,"Number of elements: %li\n",samp->n);
+
+  if(!(fl&TRF_NOVALUE)){
+    fprintf(out,"Values: ");
+    for(i=0;i<samp->n;i++)
+      fprintf(out," %8.3g",samp->v[i]);
+    fprintf(out,"\n");
+  }
+
+}
+
+/* \fcnfh
+   Prints each of the sample data
+*/
+void
+outsample(struct transit *tr)
+{
+  FILE *out=stdout;
+
+  char *filename=tr->f_outsample;
+
+  if(strcmp(filename,"-")==0)
+    if((out=fopen(filename,"w"))!=NULL){
+      transiterror(TERR_WARNING,
+		   "Cannot open file '%s' for writing sampling data...\n"
+		   ,filename);
+      return;
+    }
+
+  printsample(out,&tr->wns,"Wavenumber",TRF_NOVALUE);
+  printsample(out,&tr->wavs,"Wavelength",TRF_NOVALUE);
+  printsample(out,&tr->rads,"Radius",TRF_NOOVERSAMP);
+  printsample(out,&tr->ips,"Impact parameter",0);
+
+  fclose(out);
+
+}
+
+
 #ifdef DBGSAMPLE
 int
 main(int argc, char *argv[])

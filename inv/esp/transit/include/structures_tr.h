@@ -335,7 +335,7 @@ struct transithint {		/* Structure with user hinted data that
 
 struct transit {		/* Main data structure */
   char *f_atm,*f_line,*f_out,
-    *f_toomuch;			/* Filenames */
+    *f_toomuch,*f_outsample;	/* Filenames */
   FILE *fp_atm,*fp_out,*fp_line;/* Filepointers */
   float allowrq;		/* How much less than one is accepted,
 				   so that no warning is issued if

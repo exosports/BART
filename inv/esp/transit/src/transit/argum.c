@@ -549,10 +549,10 @@ int processparameters(int argc, /* number of command line arguments */
 	      "Unknown or unsupported option of code %i(%c) passed\n"
 	      "as argument\n"
 	      ,rn,(char)rn);
-      prochelp(EXIT_FAILURE);
+      getprochelp(EXIT_FAILURE);
       break;
     case 'h':
-      prochelp(EXIT_SUCCESS);
+      getprochelp(EXIT_SUCCESS);
       break;
     case CLA_EXTPERISO:
       hints->fl|=TRU_EXTINPERISO;

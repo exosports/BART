@@ -61,6 +61,12 @@
                            "unknown(a.k.a bad 'fl' value)"))))
 
 
+/* Internal flags */
+#define TRF_NOOVERSAMP  0x00000001 /* No oversampling in printsample
+				      files */ 
+#define TRF_NOVALUE     0x00000002 /* Do not print each of the values */
+
+
 /* Flags for mode of telresconv */
 #define TRU_CNVFIX      0x00000000 /* Fix width: accepts one
 				      width(float) */ 
