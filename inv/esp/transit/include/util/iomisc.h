@@ -31,6 +31,7 @@
 
 extern char *linepad_break;
 extern int printpad_columns;
+extern char printpad_endpadchar;
 
 #define readd(fp,cp) readds(fp,cp,NULL,0)
 

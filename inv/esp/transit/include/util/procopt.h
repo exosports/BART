@@ -55,6 +55,7 @@ struct optcfg {
   const char *pretitle;
   const char *posttitle;
   const char *postoption;
+  char endpadchar;
   char *files;			/* Configuration file */
   int indentdoc;
   int columns;

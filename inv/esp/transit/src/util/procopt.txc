@@ -363,6 +363,8 @@ getprochelp(int status)		/* either 'EXIT_FAILURE' or
   char *pretitle=(_cfg&&_cfg->pretitle)?(char *)_cfg->pretitle:"\n";
   char *posttitle=(_cfg&&_cfg->posttitle)?(char *)_cfg->posttitle:"\n";
   char *postoption=(_cfg&&_cfg->postoption)?(char *)_cfg->postoption:".\n";
+  if(_cfg&&_cfg->endpadchar)
+    printpad_endpadchar=_cfg->endpadchar;
 
   if(freed){
     fprintf(stderr,

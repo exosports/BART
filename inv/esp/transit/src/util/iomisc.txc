@@ -24,6 +24,7 @@
 
 char *linepad_break="-";
 int printpad_columns=__PADTO_COLUMNS;
+char printpad_endpadchar=' ';
 
 
 /* \fcnfh
@@ -315,8 +316,11 @@ getnl(int n,			/* Number of long fields to accept */
   }
 
   do{
-    if(*ptr==sep||(sep==' '&&*ptr=='\t'))
+    if(*ptr==sep||(sep==' '&&*ptr=='\t')){
       rn++;
+      while(*ptr==sep||(sep==' '&&*ptr=='\t'))
+	ptr++;
+    }
   }while(*ptr++);
   if(ptr-1==str)
     return 0;
@@ -654,13 +658,17 @@ linepad(char *out,		/* output, it has to have a length of at
   wc--;
 
   while(lasto){
-    //if there are spaces to add, but only a single word, then something
-    //weird happened, this should have been noticed in \lin{lastline}
+    //if two words don't fit in the line, then right align the first
+    //word
     if(!wc){
-      fprintf(stderr,
-	      "paralign:: critical error, no spaces, no end\n"
-	      "of string, but spaces are to be addded\n");
-      exit(EXIT_FAILURE);
+      nc=nc-lasto;
+      while(nc--){
+	out[lasto]=*out;
+	out--;
+      }
+      while(lasto)
+	out[lasto--]=printpad_endpadchar;
+      break;
     }
     //if space found, then add 'lasto'/'wc' (+1 if they were not an
     //exact ratio) extra spaces before this word. Diminish 'lasto' by
