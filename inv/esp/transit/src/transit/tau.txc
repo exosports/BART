@@ -124,7 +124,6 @@ totaltau(PREC_RES b,		/* impact parameter */
 	 long wn,		/* wavenumber looked */
 	 gsl_interp_accel *acc)	/* accelerating pointer */
 {
-  float analiticfrac=0.1;
   PREC_RES res;
   PREC_RES r0a=b;
   PREC_RES r0=0;
@@ -146,12 +145,18 @@ totaltau(PREC_RES b,		/* impact parameter */
     r0a=r0;
   }
 
-  //get bin value 'rs' such that r0 is between rad[rs] inclusive and
-  //rad[rs+1] exclusive. Take one extra impact parameter position if less
-  //than two points are given out to integrate.
-  rs=binsearch(rad,0,nrad-1,r0);
-  if(rs==nrad-2)
-    rs--;
+  //get bin value 'rs' such that r0 is between rad[rs-1] inclusive and
+  //rad[rs] exclusive.
+  rs=binsearch(rad,0,nrad-1,r0)+1;
+
+  //return 0 optical depth if it goes to less than three layers (this is
+  //for the spline integration to work, an alternative method could be
+  //installed instead).
+  if(rs>nrad-3){
+    /* TD: Install an alternative integration method for less than 3
+       points */
+    return 0;
+  }
 
   if(rs<0)
     transiterror(TERR_CRITICAL,
@@ -173,8 +178,9 @@ totaltau(PREC_RES b,		/* impact parameter */
   //}_{\mathrm{numerical}}
   //\]\par
   //First for the analitical part of the integral
-  analiticfrac*=(rad[rs+1]-rad[rs]);
+  PREC_RES analiticfrac=(rad[rs]-r0);
   res=ex[i][iso][wn]*sqrt(2*r0*analiticfrac);
+
   //And now for the numerical integration.\par
   //This part currently depends on a proper installation of GSL library
 #ifdef _USE_GSL
@@ -182,7 +188,7 @@ totaltau(PREC_RES b,		/* impact parameter */
     r0a=b/refr[i]/rad[i];
     transitASSERT(r0a>1,
 		  "Oops! assert condition not met, b/(nr)=%g",r0a);
-    if(r0a==1)
+
     dt[i]=ex[i][iso][wn]/sqrt(1-r0a*r0a);
   }
 
@@ -192,7 +198,7 @@ totaltau(PREC_RES b,		/* impact parameter */
   acc->miss_count = 0;
   gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
   gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
-  res+=gsl_spline_eval_integ(spl,r0+analiticfrac*rad[rs],rad[nrad-1],acc);
+  res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],acc);
   gsl_spline_free(spl);
   return 2*res;
 
