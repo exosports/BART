@@ -23,7 +23,6 @@
 
 
 #include <transit.h>
-#include <math.h>
 
 static void asciierr(int max, char *file, int line);
 static void notyet(int lin, char *file);

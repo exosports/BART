@@ -80,9 +80,7 @@
 				      fail if that condition is
 				      reached */
 #define TRU_ATMHARDC1P  0x00000100 /* Use hard coded values */
-#define TRU_ATMGIVEN1P  0x00000200 /* Atmosphere's one point is given
-					in hint */
-#define TRU_ATMASK1P    0x00000300 /* Atmosphere's one point is
+#define TRU_ATMASK1P    0x00000200 /* Atmosphere's one point is
 					obtained from stdin */
 #define TRU_ATM1PBITS   0x00000f00 /* Bits that define one point
 				      atmospheric behavior */
@@ -298,6 +296,8 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
 				   */
   int *isoeq;			/* Isotope to which each atmosphere
 				   datafile column corresponds [iso] */
+  enum isodo *isodo;		/* What is required from each isotope,
+				   it can be given, ignore, or fixed */
   int n_aiso;			/* Number of isotopes in the atmosphere
 				   file */
   char *info;			/* Optional atmosphere file information

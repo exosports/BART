@@ -67,15 +67,6 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   FILE *fp;
   float allowq;
 
-  //Hard coded values.
-  //'hc\_t' temperature.
-  //'hc\_mass' masses.
-  //'hc\_abund' is the abundance of the first isotope, the rest are
-  //just set at zero in the hardcode modality.
-  PREC_ZREC hc_t=1350;
-  PREC_ATM hc_pres=1.0e3;
-  PREC_ATM hc_abund=6.5e-4;
-  PREC_ATM hc_meanmass=2.3;
 
   //Pass atmospheric flags into info struct
   transitacceptflag(tr->fl,th->fl,TRU_ATMBITS);
@@ -105,30 +96,8 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       return -1;
       break;
     case TRU_ATMHARDC1P:	/* wants to use hard-coded values */
-      rads->v=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
-      st_at.atm.t= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
-      st_at.atm.p= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
-      st_at.mm= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
-      rads->v[0]=1.0;
-
-      st_at.n_niso=0;
-      nmb=tr->n_e=tr->n_i+st_at.n_niso;
-      st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
-
-      st_at.atm.t[0]=hc_t;
-      st_at.atm.p[0]=hc_pres;
-      st_at.mm[0]=hc_meanmass;
-      for(i=0;i<nmb;i++){
-	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
-	st_at.isov[i].d[0]=stateeqnford(hc_abund,hc_meanmass,
-					hc_pres,hc_t);
-	hc_abund=0;
-      }
-      telldefaults(tr,&st_at);
+      sethcdef(tr,&st_at,rads);
       return 0;
-      break;
-    case TRU_ATMGIVEN1P:	/* Wants to get it from hints->onept */
-      inp=given;
       break;
     case TRU_ATMASK1P:		/* Wants to get values from standard
 				   input */
@@ -498,6 +467,7 @@ getmnfromfile(FILE *fp,
   enum isodo *isodo=tr->isodo;
 
   at->begline=0;
+  enum isodo atisodo;
   at->isoeq=(int *)calloc(nmb,sizeof(int));
   at->m=(PREC_ZREC *)calloc(nmb,sizeof(PREC_ZREC));
   at->n=(char **)calloc(nmb,sizeof(char *));
@@ -528,6 +498,7 @@ getmnfromfile(FILE *fp,
 
     //for each field
     while(*lp){
+      atisodo=atmfile;
       //Allocate if necessary
       if(iso==nmb){
 	nmb<<=1;
@@ -541,7 +512,12 @@ getmnfromfile(FILE *fp,
 	  at->isoeq[i]=-1;
       }
 
-      //get mass and name, checking that is correct
+      //get mass and name, checking that is correct. First see if this
+      //isotope wants to be ignored.
+      if(*lp=='!'){
+	lp++;
+	atisodo=ignore;
+      }
       at->m[iso]=getds(lp,&rc,at->n[iso],maxeisoname-1);
       if(at->m[iso]<=0||at->n[iso]=='\0'){
 	transiterror(TERR_SERIOUS,
@@ -550,7 +526,8 @@ getmnfromfile(FILE *fp,
 		     ,tr->f_atm,at->begline,lp);
       }
       
-      //now check if that isotope is one of the given in lineinfo file
+      //now check if that isotope is one of the given in the lineinfo
+      //file
       for(i=0;i<tr->n_i;i++){
 	if(strcmp(at->n[iso],isof[i].n)==0){
 	  at->isoeq[iso]=i;
@@ -562,11 +539,14 @@ getmnfromfile(FILE *fp,
 			 ,at->n[iso],tr->f_atm,at->m[iso],
 			 tr->f_line,isof[i].m);
 	  if(isodo[i]!=ignore)
-	    isodo[i]=atmfile;
+	    isodo[i]=atisodo;
 	  break;
 	}
       }
-      iso++;
+      //count this as an isotope from the atmosphere file only if it was
+      //not an ignored one.
+      if(atisodo!=ignore)
+	iso++;
       //skip over recently read field, and go to next field.
       while(*lp!=' '&&*lp!='\0') lp++;
       while(*lp==' '||*lp=='\t') lp++;
@@ -894,4 +874,46 @@ invalidfield(char *line,	/* Contents of the line */
 	       " not a valid value:\n%s\n"
 	       ,nmb,file,fld,fldn,line);
   exit(EXIT_FAILURE);
+}
+
+
+/* \fcnfh
+   Set hard coded values 
+*/
+void
+sethcdef(struct transit *tr,
+	 struct atm_data *at,
+	 prop_samp *rads)
+{
+  //Hard coded values.
+  //'hc\_t' temperature.
+  //'hc\_mass' masses.
+  //'hc\_abund' is the abundance of the first isotope, the rest are
+  //just set at zero in the hardcode modality.
+  PREC_ZREC hc_t=1350;
+  PREC_ATM hc_pres=1.0e3;
+  PREC_ATM hc_abund=6.5e-4;
+  PREC_ATM hc_meanmass=2.3;
+
+  int nrad=rads->n;
+  rads->v=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  at->atm.t= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  at->atm.p= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  at->mm= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  rads->v[0]=1.0;
+
+  at->n_niso=0;
+  int nmb=tr->n_e=tr->n_i+at->n_niso;
+  at->isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
+
+  at->atm.t[0]=hc_t;
+  at->atm.p[0]=hc_pres;
+  at->mm[0]=hc_meanmass;
+  for(int i=0;i<nmb;i++){
+    at->isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+    at->isov[i].d[0]=stateeqnford(hc_abund,hc_meanmass,
+				    hc_pres,hc_t);
+    hc_abund=0;
+  }
+  telldefaults(tr,at);
 }

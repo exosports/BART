@@ -639,7 +639,6 @@ int processparameters(int argc, /* number of command line arguments */
 		     "the option --oneptn\n"
 		     ,rf);
       hints->onept.one=1;
-      hints->fl=(hints->fl&~TRU_ATM1PBITS)|TRU_ATMGIVEN1P;
       break;
     case CLA_ONEABUND:
       if((hints->onept.nq=getad(0,',',optarg,&hints->onept.q))<1)

@@ -10,5 +10,6 @@ extern double checkaddmm P_((double *mm, long r, prop_isov *isov, prop_isof *iso
 extern int getmnfromfile P_((FILE *fp, struct atm_data *at, struct transit *tr, int nmb));
 extern int readatmfile P_((FILE *fp, struct transit *tr, struct atm_data *at, prop_samp *rads, int nrad));
 extern void storename P_((struct atm_data *at, char *line));
+extern void sethcdef P_((struct transit *tr, struct atm_data *at, prop_samp *rads));
 
 #undef P_
