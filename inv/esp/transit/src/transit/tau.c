@@ -21,6 +21,7 @@
  */
 
 #include <transit.h>
+#include <extraext.h>
 
 
 /* \fcnfh
@@ -45,7 +46,6 @@ tau(struct transit *tr)
 
   //index, initial and final values
   long ii,wi,ri;
-  long inn,rnn,wnn;
   int rn;
   //'bb' is the impact parameter, while 'n' is the index of refraction,
   //'w' is the wavenumber, 't' is the tau as function of impact
@@ -64,9 +64,10 @@ tau(struct transit *tr)
   transitacceptflag(tr->fl,tr->ds.th->fl,TRU_TAUBITS);
 
   //number of elements
-  wnn=wn->n;
-  inn=ip->n;
-  rnn=rad->n;
+  long wnn=wn->n;
+  long inn=ip->n;
+  long rnn=rad->n;
+  double wfct=wn->fct;
 
   //set tau structures' value
   struct transithint *trh=tr->ds.th;
@@ -100,7 +101,7 @@ tau(struct transit *tr)
 
   if(ex->periso)
     transitprint(2,verblevel,
-		 " Note that I'm computing only for isotope '%s', others"
+		 " Note that I'm computing only for isotope '%s', others "
 		 "were ignored\n"
 		 ,tr->ds.iso->isof[tr->tauiso].n);
 
@@ -109,6 +110,11 @@ tau(struct transit *tr)
   _Bool *comp=ex->computed;
   int lastr=rnn-1;
   int wnextout=(int)(wnn/10.0);
+  //Following are extinction from scattering and from clouds
+  double e_s[rnn];
+  double e_c[rnn];
+  struct extcloud *cl=tr->ds.cl;
+  struct extscat *sc=tr->ds.sc;
 
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
@@ -122,11 +128,16 @@ tau(struct transit *tr)
       wnextout+=(int)(wnn/10.0);
     }
 
+    //Calculate extinction coming from scattering and clouds for each
+    //level
+    computeextscat(e_s, rnn, sc, temp, tfct, wn->v[wi]*wfct);
+    computeextcloud(e_c, rnn, cl, temp, tfct, wn->v[wi]*wfct);
+
     //Put the extinction values in a new array, the values may be
     //temporarily overwritten by (fnc)(), but they should come back as
     //they went in.
     for(ri=0;ri<rnn;ri++)
-      er[ri]=e[ri][wi]*blowex;
+      er[ri]=e[ri][wi]*blowex+e_s[ri]+e_c[ri];
 
     //For each resultant impact parameter
     for(ri=0;ri<inn;ri++){

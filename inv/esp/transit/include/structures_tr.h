@@ -298,6 +298,13 @@ struct outputray {
 				   with telescope */
 };
 
+struct extcloud {
+  double prm;
+};
+
+struct extscat {
+  double prm;
+};
 
 struct saves {
   char *tau;			/* Save after finalizing tau */
@@ -422,6 +429,8 @@ struct transit {		/* Main data structure */
     struct savefiles *sf;
     struct isotopes *iso;
     struct outputray *out;
+    struct extcloud *cl;
+    struct extscat *sc;
   }ds;
 };
 
