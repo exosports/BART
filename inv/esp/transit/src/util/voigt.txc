@@ -22,11 +22,6 @@ voigt.c: Functions to return a Voigt profile according to the numerical
 //\omitfh
 #include <util/profile.h>
 
-#ifdef DBGVOIGT
-#include "transitstd.c"
-extern int verblevel;
-#endif
-
 #define SQRTLN2 0.83255461115769775635
 #define TWOOSQRTPI 1.12837916709551257389
 #define SQRTLN2PI  0.46971863934982566689
@@ -111,19 +106,21 @@ static double ferf[MAXCONV] = {
 
 #define NFCN(x,y) (x<1?15:(int)(6.842*x+8.0))
 
-static inline int integSimp(PREC_VOIGT *in,
-			    PREC_VOIGT *out,
-			    int ni,
-			    int no,
-			    int ipo,
-			    PREC_VOIGT d);
+static inline int
+meanintegSimp(PREC_VOIGT *in,
+	      PREC_VOIGT *out,
+	      int ni,
+	      int no,
+	      int ipo,
+	      PREC_VOIGT d);
 
-static inline int integTrap(PREC_VOIGT *in,
-			    PREC_VOIGT *out,
-			    int ni,
-			    int no,
-			    int ipo,
-			    PREC_VOIGT d);
+static inline int
+meanintegTrap(PREC_VOIGT *in,
+	      PREC_VOIGT *out,
+	      int ni,
+	      int no,
+	      int ipo,
+	      PREC_VOIGT d);
 
 static inline void voigtxy(double x,
 			   double y,
@@ -395,9 +392,9 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
       //Is this number an odd number?
       //If so, use Simpson's integration, otherwise use trapezoidal. 
       if(i&1)
-	integSimp(aint,vpro[j],nint,nwn,i,dint);
+	meanintegSimp(aint,vpro[j],nint,nwn,i,dint);
       else
-	integTrap(aint,vpro[j],nint,nwn,i,dint);
+	meanintegTrap(aint,vpro[j],nint,nwn,i,dint);
     }
 
   }
@@ -412,12 +409,13 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
   Simpson integration
   @returns 1 if success
 */
-static inline int integSimp(PREC_VOIGT *in, /* Input array */
-		     PREC_VOIGT *out, /* Output array */
-		     int ni,	/* Number of input elements */
-		     int no,	/* Number of output elements */
-		     int ipo,	/* Number of inputs per output */
-		     PREC_VOIGT d)     /* bin width */
+static inline int
+meanintegSimp(PREC_VOIGT *in,	/* Input array */
+	      PREC_VOIGT *out,	/* Output array */
+	      int ni,		/* Number of input elements */
+	      int no,		/* Number of output elements */
+	      int ipo,		/* Number of inputs per output */
+	      PREC_VOIGT d)     /* bin width */
 {
   //Indexes for the in array. To speed up, \vr{ipo} will be the
   //last index in the sub-arrays instead of the number of elements
@@ -435,7 +433,7 @@ static inline int integSimp(PREC_VOIGT *in, /* Input array */
       *out+=in[i];
     *out*=2;
     *out+=*in+in[ipo];
-    *out*=d/3.0;
+    *out/=(ipo*3.0);
     //advance the input array to the next bin and advance in one the
     //return array
     in+=ipo;
@@ -449,12 +447,13 @@ static inline int integSimp(PREC_VOIGT *in, /* Input array */
   Trapezoid integration
   @returns 1 if success.
 */
-static inline int integTrap(PREC_VOIGT *in, /* Input Array */
-		     PREC_VOIGT *out, /* Output Array */
-		     int ni,   /* Number of input elements */	 
-		     int no,   /* Number of output elements */	 
-		     int ipo,  /* Number of inputs per output */
-		     PREC_VOIGT d)     /* bin width */
+static inline int
+meanintegTrap(PREC_VOIGT *in,	/* Input Array */
+	      PREC_VOIGT *out,	/* Output Array */
+	      int ni,		/* Number of input elements */	 
+	      int no,		/* Number of output elements */	 
+	      int ipo,		/* Number of inputs per output */
+	      PREC_VOIGT d)	/* bin width */
 {
   //Index for the in array. To speed up, \vr{ipo} will be the
   //last index in the sub-arrays instead of the number of elements
@@ -467,7 +466,7 @@ static inline int integTrap(PREC_VOIGT *in, /* Input Array */
     *out=0;
     for(i=1;i<ipo;i++)
       *out+=in[i];
-    *out=(*out+(in[0]+in[ipo])/2.0)*d;
+    *out=(*out+(in[0]+in[ipo])/2.0)/(double)ipo;
     //advance the input array to the next bin, and advance in one the
     //return array
     in+=ipo;
@@ -631,7 +630,7 @@ int main(int argc, char **argv)
 
     Pprintf(2,"totals:");
     for(j=0;j<m;j++)
-      Pprintf(2,"%11.4g",res2[j][0]);
+      Pprintf(2,"%11.4g",res2[j][0]*delt);
     Pprintf(2,"\n");
 
   }
@@ -659,177 +658,3 @@ int main(int argc, char **argv)
 #undef B3
 #undef B4
 
-//\delfh
-#if 0 				/* Symmetric filling of an asymetric
-				   array!!  */
-    //Advance the created \vr{aint} pointer half way
-    //through, later we have to bring it back before reusing it (Line
-    //\ref{aint.back}).
-    aint+=ob;
-
-    //If there is an odd number of points, then evaluate mid point, and
-    //set the backward filling pointer \vr{vprod} to the center of the
-    //array.
-    if(nint&1){                  /* odd number of points */
-      transitDEBUG(20,verblevel,"ODD\n");
-      vprod=aint;
-      x=0;
-      voigtxy(x,y,aint,eps,alphaD);
-    }
-    //Else, if there is an even number then set the backward filling
-    //pointer to one position ahead than the forward filling pointer.
-    else{
-      vprod=aint--;
-    }
-
-    //Symmetric filling of answer. \vr{y} is given by $\sqrt{\ln 2}\cdot
-    //|\Delta\wn| /\alpha_D$, where $\Delta\wn$ is with respect to the
-    //shifted center of the spectral line according to the index \vr{j}:
-    //$\Delta\wn= \wn_{bin}-\Wn =
-    //\vrm{ddwn}\cdot\vrm{i}-\vrm{j}\cdot\vrm{dcshft}$, where
-    //$\Wn=\wn_{central-bin}+\wn_{center-shift}$
-    for(i=1;i<=ob;i++){
-      x=SQRTLN2*fabs(dint*i-j*dcshft)/alphaD;
-      transitDEBUG(22,verblevel,"i:%i,x:%g,d:%i\n",i,x,vprod-aint);
-      voigtxy(x,y,aint+i,eps,alphaD);
-      *(vprod-i)=*(aint+i);
-      if(i<20) transitDEBUG(22,verblevel,"aint[%i]:%g <- %g\n",i,aint[i],x);
-    }
-
-    //Bringing back the value of \vr{aint} for its reuse
-    //\linelabel{aint.back}
-    aint=vprod-ob;
-    transitDEBUG(20,verblevel,
-		 "central values= a[%i]:%g\ta[%i]:%g\ta[%i]:%g\n"
-		 ,ob-1,aint[ob-1],ob,aint[ob],ob+1,aint[ob+1]);
-#endif /* Obsolete */
-//\deluh
-
-//\delfh
-#if 0 				/* obsolete */
-/*\fcnfh
-   Computes Voigt Profile at specified wavelength points.
-*/
-inline int voigtwl(int J,      //Number of bins that the profile spans
-			       //in both directions from the center of
-		               //the bin.
-		   float dl,   //wavelength separation `$\Delta\lambda$'.
-		   double lc,  //central dwavelength of the bin
-			       //`$\lambda_c$'.
-		   PREC_VOIGTP alphaL,  //Lorentz width `$\alpha_L$'.
-		   PREC_VOIGTP alphaD,	//Doppler width `$\alpha_D$'.
-		   PREC_VOIGT *vpro)    //Array of length $2J+1$, where
-					//the final profile will be
-					//stored
-{
-  double y;
-
-  //The function voigtxy(x, y, res, eps, alphaD) receives 
-  //$x=\sqrt{\ln 2}(\wn-\wn_0)/\alpha_D$, $y=\sqrt{\ln
-  //2}\alpha_L/\alpha_D$, the array `res' where it is going to store the
-  //result, a factor for resolution `eps' and the doppler width
-  //`alphaD'.\par
-  //We set the value of y:
-  y=SQRTLN2*alphaL/alphaD;
-
-  //We first want to get a fine resolution Voigt profile, it has to be
-  //at least of the bin span set by J
-  //\begin{align}
-  //\Delta\wn_{tot}=& \left|
-  //\frac{1}{\lambda_c+J\Delta\lambda+\Delta\lambda/2} - 
-  //\frac{1}{\lambda_c-J\Delta\lambda-\Delta\lambda/2} \right| \notag\\
-  //=& \frac{1}{\Delta\lambda}\frac{2+J}
-  //{\left(\frac{\lambda_c}{\Delta\lambda}\right)^2 
-  //- \left(J+\frac{1}{2}\right)^2}
-  //\end{align}
-  // and also have a fine resolution
-  //such that it is the minimum of `timesfiner' times finer than the
-  //minimun separation obtained by the given $\Delta\lambda$, or
-  //`timesalpha` times finer than $\alpha_D$. The minimum wavenumber
-  //separation of the bin is at value +J where it is given by\par
-  //\begin{align}
-  //\delta\wn_{min}=&\frac{1}{\lambda_c+J\Delta\lambda-\Delta\lambda/2}
-  //- \frac{1}{\lambda_c} -
-  //\left(\frac{1}{\lambda_c+J\Delta\lambda+\Delta\lambda/2} -
-  //\frac{1}{\lambda_c}\right)\notag\\
-  //=&\frac{1}{\Delta\lambda}\frac{1}{
-  //\left(\frac{\lambda_c}{\Delta\lambda}+J\right)^2 -
-  //\frac{1}{4}}
-  //\end{align}
-
-
-  //If $\lambda_z$ is the bin wavelength that is closest to the center
-  //of the voigt profile, and $\lambda_c$ is the real wavelength center
-  //then the upper and lower wavenumber of the ith bin from the central
-  //one ($\lambda_z$) are
-  //\begin{align}
-  //\wn_{\binomtn{u\\l}}=&\frac{1}{\lambda_z+i\Delta\lambda \mp
-  //\Delta\lambda/2} - \frac{1}{\lambda_c}\\
-  //=&\frac{2\left(\lambda_c-\lambda_z-i\Delta\lambda\right) \pm
-  //\Delta\lambda}{\left(2\lambda_z+2i\Delta\lambda \mp \Delta\lambda
-  //\right) \lambda_c},
-  //\end{align}
-  //now, if
-  //\[
-  //\lambda_c=\lambda_z-\frac{\Delta\lambda}{2}+\frac{m}{M}\Delta\lambda
-  //\]
-  //we get
-  //\begin{align}
-  //\wn_{\binomtn{u\\l}}=&\frac{1}{\Delta\lambda}
-  //\frac{\binomsm{ +1\\-3}\frac{1}{2} + \frac{m}{M}-2i}
-  //{\left(\frac{\lambda_z}{\Delta\lambda}-\left(i \mp
-  //\frac{1}{2}\right) \right) \left(\frac{\lambda_z}{\Delta\lambda} -
-  //\frac{1}{2} + \frac{m}{M}\right)}.
-  //\end{align}
-  //Is between the lower and upper limits in the previous expression
-  //that we have to integrate the Voigt profile to obtain the voigt
-  //modulation for the bin $i$, whence the center of the line is
-  //displaced by $m$ from the real center. $m$ is given by
-  //\[
-  //m=\left\lfloor
-  //M\frac{\lambda_c-\lambda_z+\Delta\lambda/2}{\Delta\lambda}+0.5
-  //\right\rfloor
-  //\]
-  //{\bf \Large{Warning} function not complete!!}
-
-  return 0;
-
-}
-
-
-inline int voigtwl2(int J,float dl,double lc,PREC_VOIGTP alphaL,
-		   PREC_VOIGTP alphaD,PREC_VOIGT *vpro)
-{
-  double y,x;
-  int i;
-
-  y=SQRTLN2*alphaL/alphaD;
-
-  for(i=-J;i<0;i++){
-    x=SQRTLN2*((double)1.0/(lc*(1-lc/(i*dl))))/alphaD;
-    voigtxy(x,y,vpro+i,-1,alphaD);
-    transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
-		 ,i,vpro[i],vpro[-2]);
-    transitDEBUG(23,verblevel,
-		 "XRRX: l:%i D:%g ad:%g al:%g x:%g y:%g %g\n"
-	       ,-2,dl,alphaD,alphaL,25.0,y,vpro[-2]);
-  }
-  i=0;
-  voigtxy(0.0,y,vpro+i,-1,alphaD);
-  transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
-	       ,i,vpro[i],vpro[-2]);
-  for(i=1;i<=J;i++){
-    x=-SQRTLN2*((double)1.0/(lc*(1-lc/(i*dl))))/alphaD;
-    voigtxy(x,y,vpro+i,-1,alphaD);
-    transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
-		 ,i,vpro[i],vpro[-2]);
-  }
-
-  transitDEBUG(21,verblevel,
-	       "XXXX: l:%i D:%g ad:%g al:%g x:%g y:%g %g\n"
-	       ,0,(double)dl,alphaD,alphaL,25.0,y,vpro[0]);
-
-  return 1;
-}
-#endif /* obsolete */
-//\deluh

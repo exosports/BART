@@ -59,7 +59,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   PREC_ZREC hc_t=1350;
   PREC_ATM hc_pres=1.0e3;
   PREC_ATM hc_abund=6.5e-4;
-
+  PREC_ATM hc_meanmass=2.3;
 
   //Pass atmospheric flags into info struct
   transitacceptflag(tr->fl,th->fl,TRU_ATMBITS);
@@ -92,10 +92,11 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     case TRU_ATMHARDC1P:	/* wants to use hard-coded values */
       st_at.atm.t[0]=hc_t;
       st_at.atm.p[0]=hc_pres;
+      st_at.mm=hc_meanmass;
       for(i=0;i<nmb;i++){
 	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
-	st_at.isov[i].d[0]=stateeqnford(hc_abund,
-					tr->isof[i].m,hc_pres,hc_t);
+	st_at.isov[i].d[0]=stateeqnford(hc_abund,hc_meanmass,
+					hc_pres,hc_t);
 	hc_abund=0;
       }
       break;
@@ -104,23 +105,25 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       onept=&th->onept;
       st_at.atm.t[0]=onept->t;
       st_at.atm.p[0]=onept->p;
+      st_at.mm=onept->mm;
 
       if(onept->nq==nmb){
 	for(i=0;i<nmb;i++){
 	  st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
 	  st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
 	  st_at.isov[i].q[0]=onept->q[i];
-	  st_at.isov[i].d[0]=stateeqnford(onept->q[i],tr->isof[i].m,
+	  st_at.isov[i].d[0]=stateeqnford(onept->q[i],st_at.mm,
 					  onept->p,onept->t);
 	}
 	break;
       }
 
     case TRU_ATMASK1P:		/* Wants to get values from standard input */
+      onept=&th->onept;
       if((tr->fl&TRU_ATMASK1P)==TRU_ATMASK1P){
 	while(1){
 	  fprintf(stderr," Atmospheric pressure, cgs units (1e-3cgs=1atm): ");
-	  st_at.atm.p[0]=readd(stdin,&rc);
+	  onept->p=st_at.atm.p[0]=readd(stdin,&rc);
 	  if(!rc) break;
 	  if(rc=='q'){
 	    transitprint(0,verblevel,"User interrupt!\n");
@@ -130,7 +133,17 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	}
 	while(1){
 	  fprintf(stderr," Atmospheric temperature, Kelvin degrees: ");
-	  st_at.atm.t[0]=readd(stdin,&rc);
+	  onept->t=st_at.atm.t[0]=readd(stdin,&rc);
+	  if(!rc) break;
+	  if(rc=='q'){
+	    transitprint(0,verblevel,"User interrupt!\n");
+	    exit(EXIT_SUCCESS);
+	  }
+	  fprintf(stderr,"Try again!\n");
+	}
+	while(1){
+	  fprintf(stderr," Mean molecular mass, in AMU: ");
+	  onept->mm=st_at.mm=readd(stdin,&rc);
 	  if(!rc) break;
 	  if(rc=='q'){
 	    transitprint(0,verblevel,"User interrupt!\n");
@@ -140,13 +153,14 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	}
       }
 
+      onept->q=(PREC_ATM *)calloc(nmb,sizeof(PREC_ATM));
       for(i=0;i<nmb;i++){
 	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
 	st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
 	while(1){
 	  fprintf(stderr," Mass abundance for isotope %s: "
 		  ,tr->isof[i].n);
-	  val=readd(stdin,&rc);
+	  onept->q[i]=val=readd(stdin,&rc);
 	  if(!rc) break;
 	  if(rc=='q'){
 	    transitprint(0,verblevel,"User interrupt!\n");
@@ -155,7 +169,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	  fprintf(stderr,"Try again!\n");
 	}
 	st_at.isov[i].q[0]=val;
-	st_at.isov[i].d[0]=stateeqnford(val,tr->isof[i].m,
+	st_at.isov[i].d[0]=stateeqnford(val,st_at.mm,
 					st_at.atm.p[0],
 					st_at.atm.t[0]);
       }

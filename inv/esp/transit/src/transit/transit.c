@@ -252,7 +252,7 @@ int main (int argc,		/* Number of variables */
       printf("%10.4f%10.4f%15.5g%15.5g\n"
 	     ,transit.wns.v[rn],WNU_O_WLU/transit.wns.v[rn],
 	     transit.ds.ex->k[0][0][rn],
-	     transit.ds.ex->k[0][0][rn]*transit.isof[0].m/transit.isov[0].d[0]);
+	     AMU*transit.ds.ex->k[0][0][rn]*transit.isof[0].m/transit.isov[0].d[0]);
 
 
 
@@ -335,9 +335,9 @@ int processparameters(int argc, /* number of command line arguments */
     {"rad-delt",required_argument,CLA_RADDELT,
      "spacing","Radius spacing. 0 if you want to use atmospheric\n"
      "data spacing"},
-    {"onept",required_argument,CLA_ONEPT,
-     "press,temp","Don't calculate transit spectra, just obtain\n"
-     "spectra for a given pressure and temperature. Unless\n"
+    {"oneptm",required_argument,CLA_ONEPT,
+     "press,temp,meanmass","Don't calculate transit spectra, just\n"
+     "obtain spectra for a given pressure and temperature. Unless\n"
      "oneabund is also specified and has the correct number of\n"
      "isotopes, the abundances will be asked interactively"},
     {"oneabund",required_argument,CLA_ONEABUND,
@@ -487,15 +487,17 @@ int processparameters(int argc, /* number of command line arguments */
       break;
 
     case CLA_ONEPT:
-      if((rn=getnd(2,',',optarg,&hints->onept.p,&hints->onept.t))!=2){
+      if((rn=getnd(3,',',optarg,&hints->onept.p,&hints->onept.t,
+		   &hints->onept.mm))!=3){
 	if(rn==1)
 	  fprintf(stderr,
-		  "At least one of the values given for pressure (%g) or\n"
-		  "temperature (%g), was not a correct floating point value\n"
-		  ,hints->onept.p,hints->onept.t);
+		  "At least one of the values given for pressure (%g),\n"
+		  "temperature (%g), or mean molecular mass (%g),\n"
+		  "was not a correct floating point value\n"
+		  ,hints->onept.p,hints->onept.t,hints->onept.mm);
 	else
 	  fprintf(stderr,
-		  "There was %i comma-separated fields instead of 2 for\n"
+		  "There was %i comma-separated fields instead of 3 for\n"
 		  "'--onept' option"
 		  ,-rn);
       }

@@ -189,7 +189,7 @@ extern int transit_nowarn;
 extern int verblevel;
 
 /* Macros */
-#define stateeqnford(q,m,p,t) (AMU*(q)*(m)*(p)/(KB)/(t));
+#define stateeqnford(q,m,p,t) (AMU*(q)*(m)*(p)/(KB*(t)))
 
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitacceptflag(transit,hint,flag) do{                            \
@@ -274,6 +274,7 @@ struct atm_data{
 				   [isoext] */
   prop_atm atm;			/* Atmospheric properties */
   int n_niso;			/* Number of new isotopes */
+  int mm;			/* Mean molecular mass */
 };
 
 struct extinction{
@@ -312,7 +313,8 @@ struct lineinfo {
 };
 
 struct onept {
-  double p,t;			/* pressure and temperature values */
+  double p,t,mm;		/* pressure, temperature, and mean
+				   molcular mass values */
   double *q;			/* abundances for isotopes */
   int nq;			/* number of given abundances */
   _Bool one;			/* One point is required? */
