@@ -103,6 +103,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_TAULEVEL,
     CLA_MODLEVEL,
     CLA_BLOWEX,
+    CLA_TAUISO,
   };
 
   //General help-option structure
@@ -201,7 +202,7 @@ int processparameters(int argc, /* number of command line arguments */
      "spacing","Wavelength spacing. It cannot be 0 or less"},
     {"wl-osamp",CLA_WAVOSAMP,required_argument,"100",
      "integer","Wavelength oversampling. It cannot be 0 or less"},
-    {"wav-fct",CLA_WAVFCT,required_argument,"0",
+    {"wl-fct",CLA_WAVFCT,required_argument,"0",
      "factor","Wavelength factor. Multiplicating wavelength values by\n"
      "this gives centimeters. If 0 or 1 then use centimeters"},
     {"wl-marg",CLA_WAVMARGIN,required_argument,"0.001",
@@ -267,6 +268,9 @@ int processparameters(int argc, /* number of command line arguments */
     {"toomuch",CLA_TOOMUCH,required_argument,"20",
      "optdepth","If optical depth for a particular path is larger\n"
      "than optdepth, then do not proceed to lower radius"},
+    {"tauiso",CLA_TAUISO,required_argument,"0",
+     "isoid","Compute tau only for isotope indexed in isoid (index which\n"
+     "can actually be different from what you expect)"},
     {"outtau",CLA_OUTTAU,required_argument,"0",
      "#radius","Output is optical depth instead of modulation. It will be\n"
      "asked which radius to plot\n"},
@@ -620,6 +624,9 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_TOOMUCH:
       hints->toomuch=atof(optarg);
+      break;
+    case CLA_TAUISO:
+      hints->tauiso=atoi(optarg);
       break;
     case CLA_TAULEVEL:
       hints->taulevel=atoi(optarg);

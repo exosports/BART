@@ -514,15 +514,15 @@ extwn (struct transit *tr)
   if((ex->e[0][0]=(PREC_RES *)calloc(nrad*nni*nwn,sizeof(PREC_RES)))==NULL)
     transiterror(TERR_CRITICAL|TERR_ALLOC,
 		 "Unable to allocate %li = %li*%li*%li to calculate\n"
-		 "extinction for every radii, %stry to shorten the wavenumber\n"
-		 "range\n"
+		 "extinction for every radii, %stry to shorten the\n"
+		 "wavenumber range\n"
 		 ,nrad*i*nwn,nrad,i,nwn,extinctperiso?"try disabling"
 		 " exctinction per\nisotope (option --no-per-iso), or ":"");
   for(i=0;i<niso;i++){
     ex->e[i]=ex->e[0]+i*nnr;
     if(!i||extinctperiso)
       for(j=0;j<nrad;j++)
-	ex->e[i][j] = ex->e[0][0] + nwn * ( j + nni*i );
+	ex->e[i][j] = ex->e[0][0] + nwn * ( j + nnr *i );
   }
   //Have a local array which will have extinction ready to be used by
   //extradius
