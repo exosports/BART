@@ -22,8 +22,8 @@
  */
 
 #include <transit.h>
-#include "slantpath.c"
 #include <test_common.h>
+#include "slantpath.c"
 
 double maxerr=1e-4;
 long test=0;
@@ -237,10 +237,9 @@ double *mod_itau(double prm, double *res, double star, double ipmax, double firs
   static double *tau;
   tau=(double *)calloc(nip,sizeof(double));
 
-  double delt = (1-first) / --nip;
+  double delt = (1-first) / (nip-1);
   while(nip--)
-    tau[nip] =  prm * ipmax * (first + nip * delt);
-  tau[0]=prm * ipmax * first;
+    tau[nip] =  prm * ipmax * (1 - nip * delt);
 
   return tau;
 }
@@ -266,10 +265,9 @@ double *mod_dtau(double prm, double *res, double star, double ipmax, double firs
   static double *tau;
   tau=(double *)calloc(nip,sizeof(double));
 
-  double delt = (1-first) / --nip;
+  double delt = (1-first) / (nip-1);
   while(nip--)
-    tau[nip] =  prm * ipmax * (1 - first - nip * delt);
-  tau[0]=prm * ipmax * (1 - first);
+    tau[nip] =  prm * ipmax * nip * delt;
 
   return tau;
 }
@@ -448,7 +446,7 @@ mod_tau(double *star,
 {
   int status=0,i;
 
-  test_result("\nTesting MODULATION for %s\n",desc);
+  test_result("\nTesting MODULATION for %s; parameter %g\n",desc,tprm);
   for(i=0;i<nstar;i++)
     status+=mod_star(star[i], ipmax, nipmax, first, nfirst, nip, nnip,
 		     toomuch, tauf, tprm);
