@@ -35,7 +35,7 @@ modulation(struct transit *tr)	/* Main structure */
   static struct outputray st_out;
   tr->ds.out=&st_out;
 
-  transitcheckcalled(tr->pi,"modulation",4,
+  transitcheckcalled(tr->pi,"modulation",3,
 		     "tau",TRPI_TAU,
 		     "makeipsample",TRPI_MAKEIP,
 		     "makewnsample",TRPI_MAKEWN
