@@ -69,8 +69,8 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     transitaccepthint(tr->f_atm,th->f_atm,th->na,TRH_FA);
     st_at.rads.n=1;
     st_at.rads.v=(PREC_ATM *)calloc(st_at.rads.n,sizeof(PREC_ATM));
-    st_at.atm.t=(PREC_ATM *)calloc(st_at.rads.n,sizeof(PREC_ATM));
-    st_at.atm.p=(PREC_ATM *)calloc(st_at.rads.n,sizeof(PREC_ATM));
+    st_at.atm.t=(PREC_ATM  *)calloc(st_at.rads.n,sizeof(PREC_ATM));
+    st_at.atm.p=(PREC_ATM  *)calloc(st_at.rads.n,sizeof(PREC_ATM));
     st_at.rads.v[0]=1.0;
 
     st_at.n_niso=0;
@@ -115,7 +115,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       }
 
     case TRU_ATMASK1P:		/* Wants to get values from standard input */
-      if(tr->fl&TRU_ATMASK1P){
+      if((tr->fl&TRU_ATMASK1P)==TRU_ATMASK1P){
 	while(1){
 	  fprintf(stderr," Atmospheric pressure, cgs units (1e-3cgs=1atm): ");
 	  st_at.atm.p[0]=readd(stdin,&rc);
