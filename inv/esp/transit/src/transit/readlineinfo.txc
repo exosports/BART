@@ -345,16 +345,20 @@ int readinfo_twii(struct transit *tr,
     in->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
 
     //for each database
-    for(i=0;i<ndb;i++){
+    for(db=0;db<ndb;db++){
       //get name
-      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+      while((rc=fgetupto(lp2=lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
 	    =='#');
       if(!rc) notyet(asciiline,tr->f_line);
+      while(*lp2==' ') {
+	lp2++;
+	lp++;
+      }
       checkasctwii(lp,*lp&&*lp!=' ',*lp=='\0');
       rn=lp-line;
-      tr->db[i].n=(char *)calloc(rn+1,sizeof(char));
-      strncpy(lp2=tr->db[i].n,line,rn);
-      tr->db[i].n[rn]='\0';
+      tr->db[db].n=(char *)calloc(rn+1,sizeof(char));
+      strncpy(lp2=tr->db[db].n,line,rn);
+      tr->db[db].n[rn]='\0';
       //change '_' per spaces
       while(*lp2)
 	if(*lp2++=='_')
@@ -363,20 +367,20 @@ int readinfo_twii(struct transit *tr,
       checkasctwii(lp,*lp==' '||*lp=='\t',*lp=='\0');
       rn=getnl(2,' ',lp,&nT,&nIso);
       checkasctwii(lp,0,rn!=2);
-      in->db[i].t=nT;
-      tr->db[i].i=nIso;
+      in->db[db].t=nT;
+      tr->db[db].i=nIso;
 
       //Update acumulated isotope count
-      tr->db[i].s=tr->n_i;
+      tr->db[db].s=tr->n_i;
       tr->n_i+=nIso;
 
       //allocate for variable and fixed isotope info as well as for
       //temperature points.
-      T=in->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
-      
+      T=in->db[db].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
+
       //allocate structure that are going to receive the isotope
-      //info. If it is not first database just reallocate then
-      if(!i){
+      //info. If it is not first database then just reallocate
+      if(!db){
 	in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
 	tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
 	tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
@@ -387,13 +391,34 @@ int readinfo_twii(struct transit *tr,
 	tr->isov=(prop_isov *)realloc(tr->isov,tr->n_i*sizeof(prop_isov));
       }
 
-      //for each isotope in database
-      for(acumiso=0;acumiso<nIso;acumiso++){
+      /* TD: from here change, this is wrong, it should allocate at the
+	 first isotope for each database, note that isov[0] is not
+	 always that */
+      in->isov[0].z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
+      in->isov[0].c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
+      for(i=0;i<nIso;i++){
+      }
 
+      //get for each temperature
+      for(i=0;i<nT;i++){
+	//Get a line with temperature, partfcn and cross-sect info
+	while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+	      =='#');
+	if(!rc) notyet(asciiline,tr->f_line);
+	while(*lp==' ')
+	  lp++;
 	//read temperature points
-	fread(T,sizeof(PREC_ZREC),nT,fp);
-	/* TD from here!: read ascii-twii input */
-      }      
+	T[i]=strtod(lp,&lp);
+	checkasctwii(lp,*lp==' '||*lp=='\t',*lp=='\0');
+
+	//for each isotope in database, read partition function
+	for(acumiso=0;acumiso<nIso;acumiso++){
+	  T[i]=strtod(lp,&lp);
+	  checkasctwii(lp,*lp==' '||*lp=='\t',*lp=='\0');
+	  
+	  /* TD from here!: read ascii-twii input */
+	}      
+      }
       
     }
 

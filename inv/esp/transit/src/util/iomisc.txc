@@ -141,7 +141,8 @@ getad(int n,			/* Number of float field to accept */
    converted. The non-converted doubles are returned untouched.
 
    @returns number of converted values
-            -x if there were 'x' fields separated by car instead of 'n'.
+            -x if there were only 'x' fields separated by car instead 
+	       of 'n'.
 */
 int
 getnd(int n,			/* Number of float field to accept */
@@ -173,7 +174,7 @@ getnd(int n,			/* Number of float field to accept */
   }while(*ptr++);
   if(ptr-1==str)
     return 0;
-  if (rn!=n)
+  if (rn<n)
     return -rn;
   va_start(ap,str);
   for(rn=0;rn<n;rn++){

@@ -259,9 +259,9 @@ int extwn (struct transit *tr)
 
     //Compute the spectra!, proceed for every line.
     for(ln=0;ln<tr->n_l;ln++){
-      /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
+      /*
       if(ln<9000||ln>11000)
 	continue;
       */
@@ -337,8 +337,9 @@ int extwn (struct transit *tr)
 	/mass[i]	        	 //mass
 	/ziso[i];		         //Partition function
 
-      transitDEBUG(21,verblevel,
+      transitDEBUG(20,verblevel,
 		   "i=%i   temp=%g   Elow=%g\n"
+		   "wl=%.10g  wn=%.10g\n"
 		   "k= %10.3g  //densiso[i] \n"
 		   "  *%10.3g  //SIGCTE\n"
 		   "  *%10.3g  //line[ln].gf\n"
@@ -348,6 +349,7 @@ int extwn (struct transit *tr)
 		   "  /%10.3g  //ziso[i]\n"
 		   " = %10.3g   //extinction\n"
 		   ,i,temp,line[ln].elow
+		   ,line[ln].wl,WNU_O_WLU/line[ln].wl
 		   ,densiso[i]
 		   ,SIGCTE
 		   ,line[ln].gf
