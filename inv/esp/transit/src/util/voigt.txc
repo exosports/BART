@@ -139,8 +139,6 @@ static inline void voigtxy(double x,
   if(eps>0) n=MAXCONV;
   else n=NFCN(x,y)+1;
 
-  transitDEBUG(22,verblevel,"x=%f\ty=%f cos2xy:%Lg x2y2:%Lg\n",x,y,cosxy,x2y2);
-
   if(x<3 && y<1.8){       /* Region I   */
     ar=or=y;
     ai=oi=-x;
@@ -150,10 +148,10 @@ static inline void voigtxy(double x,
       nr=or*x2y2-oi*xy2 ;
       if(n==MAXCONV){
         if(i>n){
-          transiterror(TERR_WARNING|TERR_ALLOWCONT,
-	               "No convergence after %i iterations in "
-                       "VOIGTXY() calculations (voigt.c file)\n"
-		       ,MAXCONV);
+          fprintf(stderr,
+		  "%s:: No convergence after %i iterations in "
+		  "VOIGTXY() calculations (voigt.c file)\n"
+		  ,__FILE__,MAXCONV);
           break;
         }
         if(fabs(ferf[i]*(cosxy*nr + sinxy*ni))<eps)
@@ -162,19 +160,13 @@ static inline void voigtxy(double x,
       else if(i>n) break;
       ai+=ni*ferf[i];
       ar+=nr*ferf[i];
-      transitDEBUG(25,verblevel,
-		   "VoigtX: %Lg + i %Lg (%Lg) r:%Lg i:%Lg\n"
-		   ,ar,ai,nr,or,oi);
+
       oi=ni;
       or=nr;
       i++;
     }
-    transitDEBUG(22,verblevel,"VVVV 0.5?: %Lg\t\tn:%i\n",ar*TWOOSQRTPI,n);
     (*(res))=SQRTLN2PI/alphaD*exp(-x2y2)*
               (cosxy*(1-ar*TWOOSQRTPI)-sinxy*ai*TWOOSQRTPI);
-    transitDEBUG(21,verblevel,
-		 "Using %i iterations in x=%g as opposed to %i\n"
-		 ,i-1,x,NFCN(x,y)+1);
   }
   else if(x<5 && y<5){    /* Region II  */
     ar=xy2*xy2;
@@ -300,13 +292,6 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
   y=SQRTLN2*alphaL/alphaD;
   dint=alphaD/(nint-1);
 
-  transitDEBUG(22,verblevel,
-	       "nint:%i,ddwn:%g,dcshft:%g,ob:%i,y:%g,dint:%g\n"
-	       ,nint,ddwn,dcshft,ob,y,dint);
-
-  transitDEBUG(22,verblevel,
-	       "ad:%g,dom:%g\n"
-	       ,alphaD,ddwn/m);
 
   //If only a quick integration is requested, no need to have more than
   //the requested bin. Note that this may cause a binning smaller than
@@ -336,20 +321,12 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
     nint=nwn*nint+1;
     dint=2.0*dwn/(nint-1);
   }
-  transitDEBUG(22,verblevel,
-	       "ni:%i,di:%g,dwn:%g\n"
-	       ,nint,dint,dwn);
 
   //Initialize \vr{aint} array
   aint=(PREC_VOIGT *)calloc(nint,sizeof(PREC_VOIGT));
-  transitDEBUG(22,verblevel,
-	       "n:%i,m:%i,dd:%g,D=%g\n"
-	       ,nwn,m,ddwn,dwn);
 
   //Work sequentially (index \vr{j}) for each centershift.
   for(j=0;j<m;j++){
-    transitDEBUG(22,verblevel,"Testing:%i/%i\n",j,m);
-
     //So that the array with the central value of m have the most
     //centered array
     shft=dwn+(j-m/2)*dcshft;
@@ -361,7 +338,6 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
     for(i=0;i<nint;i++){
       x=SQRTLN2*fabs(dint*i-shft)/alphaD;
       voigtxy(x,y,aint+i,eps,alphaD);
-      transitDEBUG(22,verblevel,"i:%i,x:%g,d:%g\n",i,x,aint[i]);
       /*      if(!(i%100))
 	      getchar();*/
     }
@@ -381,14 +357,12 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
       //\linelabel{aux.ddwn}
       ddwn=(float)(nint-1)/nwn;
       i=(int)ddwn+1;
-      transitASSERT(ddwn+1!=i,
-		    "%s:: There are not an integer number(%f!=%i) of\n"
-		    "fine-bins(%i) for each bin(%i)\n"
-		    ,__FILE__,ddwn+1,i,nint-1,nwn);
+      if(ddwn+1!=i)
+	fprintf(stderr,
+		"%s:: There are not an integer number(%f!=%i) of\n"
+		"fine-bins(%i) for each bin(%i)\n"
+		,__FILE__,ddwn+1,i,nint-1,nwn);
 
-      transitDEBUG(22,verblevel,
-		   "Number of fine-bins per bins: %i\n"
-		   ,i);
       //Is this number an odd number?
       //If so, use Simpson's integration, otherwise use trapezoidal. 
       if(i&1)
@@ -532,9 +506,9 @@ int main(int argc, char **argv)
     case 'm':
       m=atoi(optarg);
       if(m<1)
-	transiterror(TERR_SERIOUS,
-		     "Value of 'm' has to be positive (%i)\n"
-		     ,m);
+	fprintf(stderr,
+		"%s:: Value of 'm' has to be positive (%i)\n"
+		__FILE__,m);
       break;
     case 'h':
       synhelp(eps,lor,dop,m);
@@ -549,8 +523,9 @@ int main(int argc, char **argv)
       }
       else{
 	if((fp=open(optarg,O_RDONLY))==-1)
-	  transiterror(TERR_SERIOUS,"voigt.c:: Cannot open file '%s'\n",
-		       optarg);
+	  fprintf(stderr,
+		  "%s:: Cannot open file '%s'\n"
+		  ,__FILE__,optarg);
       }
       break;
     case 'p':
@@ -580,8 +555,10 @@ int main(int argc, char **argv)
 	if(rc==-1)
 	  break;
 	else{
-	  transiterror(TERR_WARNING|TERR_ALLOWCONT,"Non-numeric line ignored"
-		       " while reading wavenumber file");
+	  fprintf(stderr,
+		  "%s:: Non-numeric line ignored"
+		  " while reading wavenumber file"
+		  ,__FILE__);
 	  continue;
 	}
       }
@@ -604,7 +581,6 @@ int main(int argc, char **argv)
     res2[0]=(PREC_VOIGT *)calloc(nwn*m,sizeof(PREC_VOIGT));
     for(i=1;i<m;i++)
       res2[i]=res2[0]+i*nwn;
-    transitDEBUG(22,verblevel,"0:%f\tl:%f\td:%f\te:%f\n",wn0,lor,dop,eps);
     Pprintf(1,"#Total range:%g, Lorentz width:%g, Doppler Width %g\n",wn0,lor,dop);
 
     voigtn(m,nwn, wn0, lor, dop, res2, eps,0);

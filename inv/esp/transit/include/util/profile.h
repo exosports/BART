@@ -26,11 +26,13 @@
 #define PREC_VOIGT float
 #define PREC_VOIGTP double
 
-#include <transit.h>
 #include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #define VOIGT_QUICK 0x00001   //Quick integration.
 
 #include <proto_voigt.h>
 
 #endif /* _PROFILE_H */
+
