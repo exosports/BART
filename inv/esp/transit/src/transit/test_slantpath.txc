@@ -25,207 +25,170 @@
 #include "slantpath.c"
 #include <test_common.h>
 
-const transit_ray_solution *sol=&slantpath;
-/* Following is number of cases to test for different extinctions:
-   constant, incresing outwards, increasing inwards */
-#define NWN  3
-const char *ktypes[NWN]={"constant",
-			 "increasing outwards",
-			 "increasing inwards"};
-long ntests=0;
+double maxerr=1e-4;
+long test=0;
 FILE *outp=NULL;
 
-/* \fcnfh
-   Call totaltau and compare value returned with what is expected
-   analytically 
-*/
-int
-test_tau_monorad_norefr_now(PREC_RES *b, /* differential impact
-					    parameter with respect to
-					    maximum value */
-			    PREC_RES *rad, /* radius array */
-			    PREC_RES *refr, /* refractivity index */
-			    PREC_RES **exi, /* extinction[wn][rad] */
-			    long nrad, /* number of radii elements */
-			    long wn, /* wavenumber looked */
-			    PREC_RES *res, /* expected result */
-			    int nimp, /* Number of impact parameters */
-			    char **ipdesc, /* Name of impact parameters
-					      */
-			    double acceptrelerror)
+
+double calcex(double alpha, double rm, double ri)
 {
-  long i,status=0;
-  PREC_RES result;
-  PREC_RES *ex=exi[wn];
-
-  test_result("** extinction %s **\n"
-	      ,ktypes[wn]);
-  for(i=0;i<nimp;i++){
-    test_result(" => IP %s(%.3g). Expected result %g\n",ipdesc[i],b[i],res[i]);
-    //test first level of precision (no ray bending)
-    result=totaltau(b[i],rad,refr,ex,nrad,1);
-    test_result("     RefIdx constant technique: observed %13.10g (error %g)\n"
-		,result,fabs(result-res[i])/res[i]);
-    if(fabs(result-res[i])/res[i]>acceptrelerror)
-      status++;
-    ntests++;
-
-    //test with ray bending
-    result=totaltau(b[i],rad,refr,ex,nrad,2);
-    test_result("     Ray bending technique    : observed %13.10g (error %g)\n"
-		,result,fabs(result-res[i])/res[i]);
-    if(fabs(result-res[i])/res[i]>acceptrelerror)
-      status++;
-    ntests++;
-  }
-
-  //return number of fails
-  return status;
+  if(alpha==0)
+    return 1.0;
+  if(alpha<0)
+    return - alpha * (rm - ri);
+  if(alpha<0)
+    return - alpha * (rm - ri);
+  
+  return alpha * ri;
 }
 
 
-/* \fcnfh
-   check monospaced radius
-
-   @returns number of errors
-*/
 int
-test_tau_monorad_constrefr(int nrad,
-			   double alpha,
-			   double spacing)
+tau_dens(double rm,
+	 double ip,
+	 long nrad,
+	 double alpha,
+	 double res)
 {
+  int status=0,i;
+  double rad[nrad],ex[nrad],refr[nrad];
+  double dr=rm/nrad;
+  double result,err;
 
-  test_result("#############################\n"
-	      "Testing totaltau() with alpha=%g, #elements=%i, constant refractivity index\n"
-	      ,alpha,nrad);
-  int ntb=ntests;
-  double acceptrelerror=.0001;
-  PREC_RES refr[nrad], rad[nrad],*ex[NWN];
-  long i,status=0;
-  ex[0]=(PREC_RES *)calloc(nrad*NWN,sizeof(PREC_RES));
-  //Check that memory was really allocated and fill different cases of
-  //extinction 
-  if(!ex[0]){
-    fprintf(stderr,
-	    "Unable to allowcate memory!. I required %i bytes in\n"
-	    "line %i of file %s. ABORTING TEST...\n"
-	    ,nrad*NWN*sizeof(PREC_RES),__LINE__,__FILE__);
-    exit(EXIT_FAILURE);
-  }
-  for(i=0;i<NWN;i++)
-    ex[i]=ex[0]+i*nrad;
-
-  //tests at impact parameters: grazing, interpolated-radius, exact-radius,
-  //lowest-radius 
-#define nimpact 4
-  char *ipdesc[nimpact]={"grazing","interpolated","coincident",
-			 "lowest"};
-  PREC_RES res[nimpact];
-
-  //Print filling of arrays if necessary to debug
+  test_result("      Using %li layers, an interspacing of %g\n",nrad,dr);
   if(outp)
     fprintf(outp,
-	    "#radius        refr          ex_cons       ex_out        ex_in\n");
-  PREC_RES rm=spacing*nrad*1.0;
+	    "\n#rad        extinction  refrac\n");
   for(i=0;i<nrad;i++){
-    //check for equispaced radius skiping 0
-    rad[i]=spacing*(1.0+i);
-    //check for nonbending rays
-    refr[i]=1.0;
-    //extinction: constant
-    ex[0][i]=alpha;
-    //extinction: incresing outward
-    ex[1][i]=alpha*rad[i];
-    //extinction: incresing inward
-    ex[2][i]=alpha*(rm-rad[i]);
-
-    //Print filling of arrays if necessary to debug
+    rad[i]=(i+1)*dr;
+    ex[i]=calcex(alpha, rm, rad[i]);
+    refr[i]=1;
     if(outp)
       fprintf(outp,
-	      "%-14.9g%-14.9g%-14.9g%-14.9g%-14.9g\n"
-	      ,rad[i],refr[i],ex[0][i],ex[1][i],ex[2][i]);
+	      "%12.9g%12.9g%12.9g\n"
+	      ,rad[i],ex[i],refr[i]);
   }
-  PREC_RES b[nimpact]={rad[nrad-2], (rad[(3*nrad)/4-1] + rad[(3*nrad)/4])/2.0,
-		       rad[nrad/2-1], rad[0]};
+  result=totaltau(ip,rad,refr,ex,nrad,1);
+  err=fabs(1-result/res);
+  test_result("      RefIdx constant technique: observed %13.10g (error %g)\n"
+		,result,err);
+  if(err<maxerr)
+    status++;
+  result=totaltau(ip,rad,refr,ex,nrad,2);
+  err=fabs(1-result/res);
+  test_result("      Ray bending technique    : observed %13.10g (error %g)\n"
+		,result,err);
+  if(err<maxerr)
+    status++;
 
-  //Test the atmosphere with constant extinction at different radius
-  //$res=2 ex \sqrt{rm^2-b^2}$
-  for(i=0;i<nimpact;i++)
-    res[i]=2*alpha*sqrt(rm*rm-b[i]*b[i]);
-
-  status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,0
-				      ,res,nimpact,ipdesc,acceptrelerror);
-
-  //Test the atmosphere with increasing extinction outwards
-  //$res=\alpha ( rm\sqrt{rm^2-b^2} + b^2 \log{\sqrt{(rm/b)^2-1}+rm/b})$
-  // Calc function:\par
-  //{\em define
-  //res(b)=alpha*(rm*sqrt(rm*rm-b*b)+b*b*ln(sqrt((rm/b)\^2-1)+rm/b)/ln(10))}
-  //\par $ex=\alpha r$
-  for(i=0;i<nimpact;i++)
-    res[i]=alpha * (rm * sqrt( rm * rm - b[i] * b[i]) + b[i] * b[i] *
-		    log( ( sqrt( rm * rm / b[i] / b[i] - 1) + rm ) / b[i]) );
-
-  status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,1
-				      ,res,nimpact,ipdesc,acceptrelerror);
-
-  //Test the atmosphere with increasing extinction inwards
-  //$res=\alpha ( rm\sqrt{rm^2-b^2} - b^2 \log{\sqrt{(rm/b)^2-1}+rm/b})$
-  // Calc function:\par
-  //{\em define
-  //res(b)=alpha*(rm*sqrt(rm*rm-b*b)-b*b*ln(sqrt((rm/b)\^2-1)+rm/b)/ln(10))}
-  //\par $ex=\alpha (rm-r)$
-  for(i=0;i<nimpact;i++)
-    res[i]=alpha * (rm * sqrt( rm * rm - b[i] * b[i]) - b[i] * b[i] * 
-		    log( ( sqrt( rm * rm / b[i] / b[i] - 1) + rm ) / b[i] ) );
-
-  status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,2
-				      ,res,nimpact,ipdesc,acceptrelerror);
-
-  //Output partial result
-  if (status)
-    test_result("PARTIAL FAIL: %li/%li tests with error bigger than %.5g\n"
-		"################################################\n\n"
-		,status,ntests-ntb,acceptrelerror);
-  else
-    test_result("PARTIAL SUCCEED: all %li tests with error less than %.5g\n"
-		"################################################\n\n"
-		,ntests-ntb,acceptrelerror);
-
-  free(ex[0]);
+  test+=2;
   return status;
 }
 
 
-/* \fcnfh
-   check totaltau funtion
-
-   @returns number of errors
-*/
-int test_tau()
+int
+tau_ip(double rm,
+       double ip,
+       long *nrad,
+       int nr,
+       double alpha,
+       double (*fcn)())
 {
-  long status = 0;
+  int status=0,i;
+  double res=(*fcn)(alpha,rm,ip);
 
-  //First check for monospaced radius with 10,100,1000 samples, alpha=1
-  status += test_tau_monorad_constrefr(10,   1.0, 1.0);
-  status += test_tau_monorad_constrefr(100,  1.0, 0.1);
-  status += test_tau_monorad_constrefr(100,  1.0, 1.0);
-  status += test_tau_monorad_constrefr(1000, 1.0, 0.1);
-  status += test_tau_monorad_constrefr(1000, 1.0, 1.0);
-  status += test_tau_monorad_constrefr(10000,1.0, 0.1);
-  
-  //Now with a different alpha
-  status += test_tau_monorad_constrefr(10,   8.0, 1.0);
-  status += test_tau_monorad_constrefr(100,  8.0, 1.0);
-  status += test_tau_monorad_constrefr(1000, 8.0, 1.0);
-  
-
-  /* TD: test for nonmonospaced radius */
-  /* TD: test for bent rays */
+  test_result("    For rays crossing at %g, expected value is %g\n"
+	      ,ip,res);
+  for(i=0;i<nr;i++)
+    status+=tau_dens(rm,ip,nrad[i],alpha,res);
 
   return status;
 }
 
+
+int
+tau_rad(double rm,
+	double *ip,
+	int ni,
+	long *nrad,
+	int nr,
+	double alpha,
+	double (*fcn)())
+{
+  int status=0,i;
+
+  test_result("  For planets of radius %g\n",rm);
+  for(i=0;i<ni;i++)
+    status += tau_ip(rm,ip[i]*rm,nrad,nr,alpha,fcn);
+
+  return status;
+}
+
+
+
+double const_ex_anal(double alpha, double rm, double ip)
+{
+  return 2 * sqrt( rm*rm - ip*ip );
+}
+
+
+
+double incout_ex_anal(double alpha, double rm, double ip)
+{
+  double rat=rm / ip;
+  return alpha * (rm * ip * sqrt( rat * rat - 1 ) + ip * ip *
+		  log( sqrt( rat* rat - 1) + rat ) );
+}
+
+
+
+double incin_ex_anal(double alpha, double rm, double ip)
+{
+  double rat=rm / ip;
+  return alpha * (rm * ip * sqrt( rat * rat - 1 ) - ip * ip *
+		  log( sqrt( rat* rat - 1) + rat ) );
+}
+
+int
+tau_ex(double *rmax,
+       int nx,
+       double *ip,
+       int ni,
+       long *nrad,
+       int nr,
+       double alpha,
+       char *str)
+{
+  int status=0,i;
+  double (*analres)();
+
+  test_result("\nFor extinction %s, alpha=%g\n",str,alpha);
+  if(alpha==0.0)
+    analres=&const_ex_anal;
+  else if(alpha<0)
+    analres=&incin_ex_anal;
+  else
+    analres=&incout_ex_anal;
+  for(i=0;i<nr;i++)
+    status += tau_rad(rmax[i],ip,ni,nrad,nr,alpha,analres);
+
+  return status;
+}
+
+
+int
+test_tau()
+{
+  int status=0;
+  double rmax[]={10, 100, 1000};
+  long nrad[]={10, 100, 1000};
+  double ip[]  ={0.1, 0.5, 0.75, 0.9};
+
+  status += tau_ex(rmax, 3, ip, 4, nrad, 3, 1.0, "increasing outwards");
+  status += tau_ex(rmax, 3, ip, 4, nrad, 3, -1.0, "increasing inwards");
+  status += tau_ex(rmax, 3, ip, 4, nrad, 3, 0, "kept constant");
+  return status;
+}
 
 
 int 
@@ -238,16 +201,17 @@ main(int argc, char *argv[])
 
   status += test_tau( );
 
-  fclose(outp);
+  if(outp)
+    fclose(outp);
 
   if(status){
     fprintf(stdout,
 	    "\nslantpath.txc result is FAILURE: %i error%s found out of %li test%s\n"
-	    ,status,status>1?"s":"",ntests,ntests>1?"s":"");
+	    ,status,status>1?"s":"",test,test>1?"s":"");
     exit(EXIT_FAILURE);
   }
   fprintf(stdout,
 	  "\nslantpath.txc result is SUCCESS: no errors found out of %li test%s\n"
-	  ,ntests,ntests>1?"s":"");
+	  ,test,test>1?"s":"");
   exit(EXIT_SUCCESS);
 }
