@@ -296,6 +296,11 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     break;
   }
 
+  //set required values in 'rads' structure
+  rads->i=rads->v[0];
+  rads->f=rads->v[rads->n-1];
+  rads->o=1;
+  rads->d=0;
 
   //If one point is being used, then let user know values
   if(nrad==1)

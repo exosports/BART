@@ -178,7 +178,6 @@ int main (int argc,		/* Number of variables */
   trh.timesalpha=50;
   trh.maxratio_doppler=0.001;
   trh.na|=TRH_VF|TRH_TA|TRH_DR;
-  trh.fl|=TRU_EXTINPERISO;
 
   //Presentation
   transitprint(1,verblevel,
@@ -191,6 +190,8 @@ int main (int argc,		/* Number of variables */
     transiterror(TERR_SERIOUS,
 		 "processparameters() returned error code %i\n"
 		 ,rn);
+  if(trh.fl&TRH_FO)
+    transitaccepthint(transit.f_out,trh.f_out,trh.fl,TRH_FO);
 
   //No program warnings if verblevel is 0 or 1
   if(verblevel<2)
@@ -265,13 +266,18 @@ void
 printv1(struct transit *tr)
 {
   int rn;
+  FILE *out=stdout;
 
-  long rad=askforposl("choose radius to print(1 - %li): ",tr->rads.n);
+  if(tr->f_out)
+    out=fopen(tr->f_out,"w");
 
-  printf("#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
+  long rad=askforposl("choose radius to print(1 - %li): ",tr->rads.n)-1;
+
+  fprintf(out,
+	 "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
   for(rn=0;rn<tr->wns.n;rn++)
     /*    if(rn%tr->wns.o==0)*/
-    printf("%10.4f%10.4f%15.5g%15.5g\n"
+    fprintf(out,"%10.4f%10.4f%15.5g%15.5g\n"
 	   ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
 	   tr->ds.ex->k[rad][0][rn],
 	   AMU*tr->ds.ex->k[rad][0][rn]*tr->isof[0].m/tr->isov[0].d[rad]);
@@ -315,6 +321,8 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_ONEEXTRA,
     CLA_NUMBERQ,
     CLA_ALLOWQ,
+    CLA_EXTPERISO,
+    CLA_NOEXTPERISO,
   };
 
   //General help-option structure
@@ -430,7 +438,7 @@ int processparameters(int argc, /* number of command line arguments */
      "be considered"},
 
     {NULL,HELPTITLE,0,
-     NULL,"OPACITY CALCULATION OPTIONS:"},
+     NULL,"EXTINCTION CALCULATION OPTIONS:"},
     {"finebin",required_argument,'f',
      "integer","Number of fine-bins to calculate the Voigt\n"
      "function"},
@@ -441,6 +449,13 @@ int processparameters(int argc, /* number of command line arguments */
     {"maxratio",required_argument,'u',
      "uncert","Maximum allowed uncertainty in doppler width before\n"
      "recalculating profile"},
+    {"per-iso",no_argument,CLA_EXTPERISO,
+     NULL,"Calculates extinction per isotope, this allow displaying\n"
+     "contribution from different isotopes, but also consumes more\n"
+     "memory"},
+    {"no-per-iso",no_argument,CLA_NOEXTPERISO,
+     NULL,"Do not calculate extinction per isotope. Saves memory\n"
+     "(this is the default)\n"},
 
     {NULL,HELPTITLE,0,
      NULL,"OBSERVATIONAL OPTIONS:"},
@@ -695,7 +710,12 @@ int processparameters(int argc, /* number of command line arguments */
     case 'h':
       prochelp(EXIT_SUCCESS,var_docs,&var_cfg);
       break;
-
+    case CLA_EXTPERISO:
+      hints->fl|=TRU_EXTINPERISO;
+      break;
+    case CLA_NOEXTPERISO:
+      hints->fl&=~TRU_EXTINPERISO;
+      break;
     }
   }
 

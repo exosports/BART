@@ -404,7 +404,10 @@ struct transit {		/* Main data structure */
 				   the boundaries, also how much out of
 				   requested range it have to look for
 				   transitions */
-  PREC_RES wnm;			/* Amount of cm-1 not trusted */
+  PREC_RES wnmi;		/* Amount of cm-1 not trusted at the
+				   beginning */
+  PREC_RES wnmf;		/* Amount of cm-1 not trusted at the end
+				   */
   prop_samp rads,wavs,wns;	/* Sampling properties of radius,
 				   wavelength and wavenumber */
   prop_atm atm;			/* Sampled atmospheric data. Height in

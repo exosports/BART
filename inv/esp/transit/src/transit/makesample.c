@@ -1,6 +1,7 @@
 /*
- * makesample.c - create array sampling after initial, final and spacing
- *                parameters. Component of the Transit program.
+ * makesample.c
+ * makesample.txc - create array sampling after initial, final and spacing
+ *                  parameters. Component of the Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -35,29 +36,37 @@
                the referenced.
 	    -6 Not valid oversampling was given by ref when requested.
 */
-int makesample(prop_samp *samp,	/* Resulting sampled data */
-	       prop_samp *hint,	/* Proposed sampling */
-	       prop_samp *ref,	/* Reference values */
-	       const long fl,
-	       const int bitsshift,
-	       const float margin)
+int
+makesample(prop_samp *samp,	/* Resulting sampled data */
+	   prop_samp *hint,	/* Proposed sampling */
+	   prop_samp *ref,	/* Reference values */
+	   const long fl,
+	   const int bitsshift,
+	   const float margini,
+	   const float marginf)
 {
   //'res' is the returned value
   //'n' and 'v' are auxiliary variables to produced sampling array
   int res=0,n;
   PREC_RES *v;
   double osd,si;
+  _Bool nhint,dhint;
+
+  //The ratio of what is acceptable to exceed as upper value and not
+  //removing the last bin.
+  const double okfinalexcess=1e-8;
 
   //check initial value
-  if(!(fl&(TRH_SI<<bitsshift))||hint->i<=0||hint->i<ref->i+margin){
-    samp->i=ref->i+margin;
+  if(!(fl&(TRH_SI<<bitsshift))||hint->i<=0||hint->i<ref->i+margini){
+    samp->i=ref->i+margini;
     res|=TRH_SI;
   }
-  else if(hint->i>ref->f-margin){
+  else if(hint->i>ref->f-marginf){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Hinted initial value for %s sampling, is bigger than\n"
-		 " maximum allowed final value %.8g. Consider margin %.8g\n"
-		 ,TRH_SFTNAME(bitsshift),ref->f-margin,margin);
+		 " maximum allowed final value %.8g. Consider final\n"
+		 "margin %.8g\n"
+		 ,TRH_SFTNAME(bitsshift),ref->f-marginf,marginf);
     return -1;
   }
   else
@@ -65,16 +74,16 @@ int makesample(prop_samp *samp,	/* Resulting sampled data */
   si=samp->i;
 
   //check final value
-  if(!(fl&(TRH_SF<<bitsshift))||hint->f<=0||hint->f>ref->f-margin){
-    samp->f=ref->f-margin;
+  if(!(fl&(TRH_SF<<bitsshift))||hint->f<=0||hint->f>ref->f-marginf){
+    samp->f=ref->f-marginf;
     res|=TRH_SF;
   }
-  else if(hint->f<ref->i+margin){
+  else if(hint->f<ref->i+margini){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Hinted final value for %s sampling is smaller than\n"
 		 "minimum allowed initial value %.8g.\n"
-		 "Consider margin %.8g\n"
-		 ,TRH_SFTNAME(bitsshift),ref->i+margin,margin);
+		 "Consider initial margin %.8g\n"
+		 ,TRH_SFTNAME(bitsshift),ref->i+margini,margini);
     return -2;
   }
   else
@@ -90,12 +99,15 @@ int makesample(prop_samp *samp,	/* Resulting sampled data */
     return -3;
   }
 
-  transitprint(20,verblevel,
+  nhint=(fl&(TRH_SN<<bitsshift))&&hint->n>0;
+  dhint=(fl&(TRH_SD<<bitsshift))&&hint->d>0;
+
+  transitprint(21,verblevel,
 	       "Flags: 0x%lx    hint.d:%g   hint.n:%li\n"
 	       ,fl,hint->d,hint->n);
   //check that only one of spacing or number of elements field have been
   //hinted
-  if((fl&(TRH_SD<<bitsshift))&&(fl&(TRH_SN<<bitsshift))){
+  if(nhint&&dhint){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Both spacing(%g) and number of elements(%i) has\n"
 		 "been hinted. That doesn't makes sense!. %s was being sampled.\n"
@@ -104,17 +116,14 @@ int makesample(prop_samp *samp,	/* Resulting sampled data */
   }
 
   //if none has been hinted then use ref's
-  if((!(fl&(TRH_SD<<bitsshift))||hint->d<=0)&&
-     (!(fl&(TRH_SN<<bitsshift))||hint->n<=0)
-     ){
+  if(!nhint&&!dhint){
     //If none or both of ref's exist then error
     if((ref->d<=0&&ref->n<=0)||(ref->d>0&&ref->n>0)){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		   "Spacing and number of elements were either both(%i) or\n"
-		   "none(%i) in the reference for %s sampling. "
+		   "Spacing(%g) and number of elements(%i) were\n"
+		   "either both or none in the reference for %s sampling.\n"
 		   "And yes, none was hinted.\n"
-		   ,ref->d>0&&ref->n>0,ref->d<=0&&ref->n<=0
-		   ,TRH_SFTNAME(bitsshift));
+		   ,ref->d,ref->n,TRH_SFTNAME(bitsshift));
       return -5;
     }
     //if spacing exists
@@ -132,18 +141,18 @@ int makesample(prop_samp *samp,	/* Resulting sampled data */
 		     "Array of length %i was given as reference\n"
 		     "for %s sampling, but either (or both) the\n"
 		     "initial(%g -> %g) and final(%g -> %g)\n"
-		     "values might have been modified.\n"
+		     "values MIGHT have been modified.\n"
 		     ,ref->n,TRH_SFTNAME(bitsshift)
 		     ,ref->i,si,ref->f,samp->f);
       }
       samp->n=ref->n;
       samp->d=-1;
-      samp->v=(double *)calloc(ref->n,sizeof(double));
-      memcpy(samp->v,ref->v,ref->n*sizeof(double));
+      samp->v=(PREC_RES *)calloc(ref->n,sizeof(PREC_RES));
+      memcpy(samp->v,ref->v,ref->n*sizeof(PREC_RES));
       if(ref->o!=0)
 	transiterror(TERR_WARNING,
 		     "Fixed sampling array of length %i was referenced\n"
-		     "But also oversampling was given (%g). Ignoring in\n"
+		     "But also oversampling was given (%li). Ignoring in\n"
 		     "%s sampling\n"
 		     ,samp->n,ref->o,TRH_SFTNAME(bitsshift));
 
@@ -152,7 +161,7 @@ int makesample(prop_samp *samp,	/* Resulting sampled data */
     }
   }
   //else if spacing was hinted, then it has to be positive at this point
-  else if(fl&(TRH_SD<<bitsshift)){
+  else if(dhint){
     transitASSERT(hint->d<=0,
 		  "OOPS!, logic test 1 failed in %s's makesample()!!\n"
 		  ,TRH_SFTNAME(bitsshift));
@@ -165,12 +174,12 @@ int makesample(prop_samp *samp,	/* Resulting sampled data */
 		  ,TRH_SFTNAME(bitsshift));
     transitaccepthint(samp->n,hint->n,*fl,TRH_SN<<bitsshift);
     samp->d=-1;
-    samp->v=(double *)calloc(hint->n,sizeof(double));
-    memcpy(samp->v,hint->v,hint->n*sizeof(double));
+    samp->v=(PREC_RES *)calloc(hint->n,sizeof(PREC_RES));
+    memcpy(samp->v,hint->v,hint->n*sizeof(PREC_RES));
     if(hint->o!=0)
       transiterror(TERR_WARNING,
-		   "Fixed sampling array of length %i was hinted\n"
-		   "But also oversampling was given (%g). Ignoring in\n"
+		   "Fixed sampling array of length %li was hinted\n"
+		   "But also oversampling was given (%li). Ignoring in\n"
 		   "%s sampling\n"
 		   ,samp->n,hint->o,TRH_SFTNAME(bitsshift));
     return res;
@@ -178,7 +187,7 @@ int makesample(prop_samp *samp,	/* Resulting sampled data */
 
   //At this points make the sampling if it was not given as an
   //array.
-  n=samp->n=(samp->f - si)/samp->d+1;
+  n=samp->n=((1.0+okfinalexcess)*samp->f - si)/samp->d+1;
 
   //if there is an oversampling, check whether a value is not hinted
   if(!(fl&TRH_SO<<bitsshift)||hint->o<=0){
@@ -247,7 +256,7 @@ int makewavsample(struct transit *tr)
 
   //make the sampling
   res=makesample(&tr->wavs,samp,lin,
-		 fl,TRH_WAVSFT,tr->m);
+		 fl,TRH_WAVSFT,tr->m,tr->m);
 
   //set progress indicator if sampling was successful and return status
   if(res>=0)
@@ -274,36 +283,38 @@ int makewnsample(struct transit *tr)
   transitcheckcalled(tr->pi,"makewnsample",1,
 		     "makewavsample",TRPI_MAKEWAV);
 
-  //convert from wavelength maximum
-  fromwav.i=WNU_O_WLU/(wsamp->f+tr->m);
-
-  //convert from wavelength minimum
-  fromwav.f=WNU_O_WLU/(wsamp->i-tr->m);
-
-  //set spacing such that the grid has the same number of points as the
-  //wavelength one.
-  fromwav.d=(fromwav.f-fromwav.i)*wsamp->o/wsamp->n;
-  transitprint(20,verblevel,
-	       "wavenumber spacing: %g "
-	       "  comes from wavelength's number: %li\n"
-	       "  in wavenumber range: %g to %g\n"
-	       ,fromwav.d,wsamp->n,fromwav.i,fromwav.f);
-
   //use wavelength's oversampling
   fromwav.o=wsamp->o;
 
   //don't give a fixed array.
   fromwav.n=-1;
 
-  //'.wnm' is the margin of not trusted wavenumbers, if it is not given
-  if(trh->na&=TRH_WNM && trh->wnm>0)
-    transitaccepthint(tr->wnm, trh->wnm, trh->na, TRH_WNM);
-  else
-    tr->wnm=tr->m*fromwav.f*fromwav.f/WNU_O_WLU;
+  //convert from wavelength maximum
+  fromwav.i=WNU_O_WLU/wsamp->f;
+
+  //convert from wavelength minimum
+  fromwav.f=WNU_O_WLU/wsamp->i;
+
+  //set margin. If not given take it from wavelength's (the bigger side)
+  if(trh->na&=TRH_WNM && trh->wnm>0){
+    transitaccepthint(tr->wnmi, trh->wnm, trh->na, TRH_WNM);
+    tr->wnmf=tr->wnmi;
+  }
+  else{
+    tr->wnmf=tr->m*fromwav.f*fromwav.f/WNU_O_WLU;
+    tr->wnmi=tr->m*fromwav.i*fromwav.i/WNU_O_WLU;
+  }
+
+  //set spacing such that the wavenumber grid has the same number of
+  //points as the wavelength grid. Then change reference initial and
+  //final point to include margin
+  fromwav.d=(fromwav.f-fromwav.i)/((wsamp->n-1)/wsamp->o);
+  fromwav.f+=tr->wnmf;
+  fromwav.i-=tr->wnmi;
 
   //make the sampling
   res=makesample(&tr->wns,nsamp,&fromwav,trh->na,
-		 TRH_WNSFT,tr->wnm);
+		 TRH_WNSFT,tr->wnmi,tr->wnmf);
 
   //set progress indicator if sampling was successful and return status
   if(res>=0)
@@ -371,7 +382,7 @@ int makeradsample(struct transit *tr)
     //maximum.\par
     //do the sampling
     res=makesample(rad,&tr->ds.th->rads,rsamp,
-		   tr->ds.th->na,TRH_RADSFT,0);
+		   tr->ds.th->na,TRH_RADSFT,0,0);
   }
   nrad=rad->n;
 
@@ -435,3 +446,42 @@ int makeradsample(struct transit *tr)
   return res;
 }
 
+
+#ifdef DBGSAMPLE
+int
+main(int argc, char *argv[])
+{
+  prop_samp lim,hint={0,0,0,0,0},res;
+  float mar=0;
+  int i;
+
+  if(argc<5){
+    fprintf(stderr,"Syntax:\n"
+	    "\tdbgsample <ini> <fin> <delt> <oversampling> [<margin>]\n");
+    exit(0);
+  }
+
+  lim.i=atof(argv[1]);
+  lim.f=atof(argv[2]);
+  lim.d=atof(argv[3]);
+  lim.o=atof(argv[4]);
+  lim.n=0;
+  if(argc==6)
+    mar=atof(argv[5]);
+
+  i=makesample(&res,&hint,&lim,TRH_SI|TRH_SF|TRH_SD,0,mar);
+
+  fprintf(stderr,
+	  "Makesample returned %i\n"
+	  "Initial %g, final %g, delta %g, oversamp %i, number %li, margin %g\n"
+	  ,i,res.i,res.f,res.d,res.o,res.n,mar);
+
+  if(i<0)
+    exit(1);
+
+  for(i=0;i<res.n;i++)
+    fprintf(stderr," rad(%i): %g\n",i,res.v[i]);
+
+}
+
+#endif /* debug */

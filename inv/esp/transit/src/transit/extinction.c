@@ -44,9 +44,9 @@ int extwn (struct transit *tr)
   PREC_LNDATA *ltelow=tr->lt.elow;
   PREC_LNDATA *ltwl=tr->lt.wl;
   short *ltisoid=tr->lt.isoid;
-  PREC_RES *k,**kiso,*wn,dwn,wavn,iniwn,wnmar,wni,wnf;
+  PREC_RES *k,**kiso,*wn,dwn,wavn,iniwn,wni,wnf;
   PREC_NSAMP nrad,nwn;
-  int neiso,niso;
+  int neiso,niso,nisoalloc;
   int r,i,ln;
   int w,*wa,subw;
   int j,maxj,minj,*nwnh;
@@ -104,17 +104,23 @@ int extwn (struct transit *tr)
   }
   transitaccepthint(ex->maxratio,tr->ds.th->maxratio_doppler,
 		    tr->ds.th->na,TRH_DR);
-      
-  wnmar=tr->wnm;
+
   iniwn=tr->wns.i;
   wn=tr->wns.v;
-  wni=wn[0]-wnmar;
-  wnf=wn[nwn-1]+wnmar;
+  wni=wn[0]-tr->wnmi;
+  wnf=wn[nwn-1]+tr->wnmf;
   nwn=tr->wns.n;
   dwn=tr->wns.d/tr->wns.o;
   nrad=rad->n;
   neiso=tr->n_e;
-  niso=tr->n_i;
+  nisoalloc=niso=tr->n_i;
+  /*TD: enable nisoalloc, currently alloc is used */
+  //Do not allocate memory in multidimensional arrays if we are ignoring
+  //that particular isotope. We are not using this in unidimensional
+  //arrays because of the extra hassle.
+  for(i=0;i<niso;i++)
+    if(tr->isodo[i]==ignore)
+      nisoalloc--;
   if(nrad<1){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "There are no atmospheric parameters specified\n"
@@ -167,9 +173,16 @@ int extwn (struct transit *tr)
   ex->k=(PREC_RES ***)calloc(nrad,sizeof(PREC_RES **));
   ex->al=(PREC_VOIGTP **)calloc(nrad,sizeof(PREC_VOIGTP *));
   ex->ad=(PREC_VOIGTP **)calloc(nrad,sizeof(PREC_VOIGTP *));
-  kiso=*ex->k=(PREC_RES **)calloc(niso*nrad,sizeof(PREC_RES *));
+  *ex->k=(PREC_RES **)calloc(niso*nrad,sizeof(PREC_RES *));
   i=extinctperiso?niso:1;
-  ex->k[0][0]=(PREC_RES *)calloc(nrad*i*nwn,sizeof(PREC_RES));
+  if((ex->k[0][0]=(PREC_RES *)calloc(nrad*i*nwn,sizeof(PREC_RES)))==NULL)
+    transiterror(TERR_CRITICAL|TERR_ALLOC,
+		 "Unable to allocate %li = %li*%li*%li to calculate\n"
+		 "extinction for every radii, %stry to shorten the wavenumber\n"
+		 "range\n"
+		 ,nrad*i*nwn,nrad,i,nwn,extinctperiso?"try disabling exctinction per\n"
+		 "isotope (option --no-per-iso), or ":"");
+
   *ex->al=(PREC_VOIGTP *)calloc(nrad*niso,sizeof(PREC_VOIGTP));
   *ex->ad=(PREC_VOIGTP *)calloc(nrad*niso,sizeof(PREC_VOIGTP));
 
@@ -181,6 +194,8 @@ int extwn (struct transit *tr)
     //Initialization of 2nd dimension of extinction array.
     //\linelabel{kini}
     kiso=ex->k[r]=*ex->k+r*niso;
+    i=extinctperiso?niso:1;
+    ex->k[r][0]=ex->k[0][0]+r*i*nwn;
     alphal=ex->al[r]=*ex->al+r*niso;
     alphad=ex->ad[r]=*ex->ad+r*niso;
 
@@ -211,6 +226,11 @@ int extwn (struct transit *tr)
     //Initialize a voigt profile for every isotope as well for the
     //mass, ziso, densiso and csiso arrays
     for(i=0;i<niso;i++){
+      //If this isotope is marked as ignore (no density info) continue
+      //with the next one.
+      if(tr->isodo[i]==ignore)
+	continue;
+
       kiso[i]=kiso[0];
       if(extinctperiso)
 	kiso[i]+=nwn*i;
@@ -391,8 +411,10 @@ int extwn (struct transit *tr)
       //'wa[i]' is just the last wavelength per isotope.
       wa[i]=w;
     }
+    //Free the profiles of every non-ignored isotopes
     for(i=0;i<niso;i++)
-      free(profile[i][0]);
+      if(tr->isodo[i]!=ignore)
+	free(profile[i][0]);
   }
 
   return 0;
