@@ -26,24 +26,48 @@
 #include <test_common.h>
 
 const transit_ray_solution *sol=&slantpath;
-#define nrad 10
-#define nwn  3
-#define acceptrelerror .0001
+#define NRAD 10
+#define NWN  3
 
-#define test_tau_monorad_norefr_now(nimp,wn,exttype)   do{      \
-   for(i=0;i<nimp;i++){                                         \
-      result=totaltau(b[i],rad,refr,ex,nrad,wn,&acc);           \
-      test_result("While "exttype" extinction, at %s,\n"        \
-		  "  observed %.10g, expect %.10g, error %g\n"  \
-		  ,ipdesc[i],result,res[i],                     \
-		  fabs(result-res[i])/res[i]);                  \
-      if(fabs(result-res[i])/res[i]>acceptrelerror)             \
-	test_fail(status,"Error bigger than %.5g\n"             \
-                  ,acceptrelerror);                             \
-      else                                                      \
-        test_succeed();                                         \
-    }                                                           \
-                                               }while(0)
+/* \fcnfh
+   Call totaltau and compare value returned with what is expected
+   analytically 
+*/
+void
+test_tau_monorad_norefr_now(PREC_RES *b, /* differential impact
+					    parameter with respect to
+					    maximum value */
+			    PREC_RES *rad, /* radius array */
+			    PREC_RES *refr, /* refractivity index */
+			    PREC_RES **ex, /* extinction[rad][nwn] */
+			    long nrad, /* number of radii elements */
+			    long wn, /* wavenumber looked */
+			    PREC_RES *res,
+			    int nimp,
+			    char *exttype,
+			    char **ipdesc,
+			    int status)
+{
+  double acceptrelerror=.0001;
+  gsl_interp_accel acc={0,0,0};
+  int i;
+  PREC_RES result;
+
+  for(i=0;i<nimp;i++){
+    result=totaltau(b[i],rad,refr,ex,nrad,wn,&acc);
+    test_result("While %s extinction, at %s,\n"
+		"  observed %.10g, expect %.10g, error %g\n"
+		,exttype,ipdesc[i],result,res[i],
+		fabs(result-res[i])/res[i]);
+    if(fabs(result-res[i])/res[i]>acceptrelerror)
+      test_fail(status,"Error bigger than %.5g\n"
+		,acceptrelerror);
+    else
+      test_succeed();
+  }
+
+}
+
 
 /* \fcnfh
    check monospaced radius
@@ -54,11 +78,9 @@ int
 test_tau_monorad_constrefr(PREC_RES **ex)
 {
   //check for nonbending rays
-  PREC_RES refr[nrad]={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-  PREC_RES rad[nrad]={1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-  gsl_interp_accel acc={0,0,0};
-  int i,status=0;
-  PREC_RES result;
+  PREC_RES refr[NRAD]={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+  PREC_RES rad[NRAD]={1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
+  int status=0;
 
   //tests at impact parameters: grazing, interpolated-radius, exact-radius,
   //lowest-radius 
@@ -75,7 +97,9 @@ test_tau_monorad_constrefr(PREC_RES **ex)
 			   17.32050807568877293528,
 			   19.89974874213239909468};
 
-    test_tau_monorad_norefr_now(nimpact,0,"constant");
+    test_tau_monorad_norefr_now(b,rad,refr,ex,NRAD,0
+				,res,nimpact,"constant"
+				,ipdesc,status);
   }
 
   //Test the atmosphere with increasing extinction outwards
@@ -90,7 +114,9 @@ test_tau_monorad_constrefr(PREC_RES **ex)
 			   100.90122906677784957218,
 			   100.79868387584142893220};
 
-    test_tau_monorad_norefr_now(nimpact,1,"increasing outwards");
+    test_tau_monorad_norefr_now(b,rad,refr,ex,NRAD,1
+				,res,nimpact,"increasing outwards"
+				,ipdesc,status);
   }
 
   //Test the atmosphere with increasing extinction inwards
@@ -106,7 +132,9 @@ test_tau_monorad_constrefr(PREC_RES **ex)
 			   72.30385169010987978062,
 			   98.19880354548256201460};
 
-    test_tau_monorad_norefr_now(nimpact,2,"increasing inwards");
+    test_tau_monorad_norefr_now(b,rad,refr,ex,NRAD,2
+				,res,nimpact,"increasing inwards"
+				,ipdesc,status);
   }
 
   return status;
@@ -124,7 +152,7 @@ int test_tau()
   //Common set of extinctions, first wavelength is constant, second
   //wavelength is increasing k=1*r, third wavelength is decreasing with
   //radius k=1*(rm-r)
-  PREC_RES ex[nrad][nwn]={{1.0,  1.0,  9.0},
+  PREC_RES ex[NRAD][NWN]={{1.0,  1.0,  9.0},
 			  {1.0,  2.0,  8.0},
 			  {1.0,  3.0,  7.0},
 			  {1.0,  4.0,  6.0},
@@ -135,8 +163,11 @@ int test_tau()
 			  {1.0,  9.0,  1.0},
 			  {1.0, 10.0,  0.0}};
 
+  PREC_RES *exp[NRAD]={ex[0],ex[1],ex[2],ex[3],ex[4],
+		       ex[5],ex[6],ex[7],ex[8],ex[9]};
+
   //First check for monospaced radius
-  status += test_tau_monorad_constrefr((PREC_RES **)ex);
+  status += test_tau_monorad_constrefr(exp);
   
 
   /* TD: test for nonmonospaced radius */
@@ -144,6 +175,8 @@ int test_tau()
 
   return status;
 }
+
+
 
 int 
 main(int argc, char *argv[])

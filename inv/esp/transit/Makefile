@@ -51,8 +51,8 @@ UT_OBJ    = sampling.o voigt.o iomisc.o procopt.o \
 TEST_OBJ  = test_slantpath.o
 
 TEST_BIN  = $(TEST_OBJ:.o=)
-DEP_FILES = $(UT_OBJ:.o=.c) $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) $(TEST_OBJ:.o=.c)
-PROTO_FILES = $(DEP_FILES)
+PROTO_FILES = $(UT_OBJ:.o=.c) $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c)
+DEP_FILES = $(PROTO_FILES) $(TEST_OBJ:.o=.c)
 
 #make specials
 .PHONY=clean dep proto
