@@ -658,8 +658,15 @@ int processparameters(int argc, /* number of command line arguments */
       if(*optarg!=','||optarg[1]=='\0')
 	transiterror(TERR_SERIOUS,
 		     "Syntax error in option '--cloudrad', parameters need\n"
-		     "to be radup,raddown");
-      hints->cl.rfin=strtod(optarg,NULL);
+		     " to be radup,raddown");
+      hints->cl.rfin=strtod(optarg+1,NULL);
+      if(hints->cl.rini<hints->cl.rfin ||
+	 (hints->cl.rfin<=0&&hints->cl.rini!=0))
+	transiterror(TERR_SERIOUS,
+		     "Syntax error in option '--cloudrad', radup(%g) needs\n"
+		     " to be bigger than raddown (%g) and both greater than\n"
+		     " zero\n"
+		     ,hints->cl.rini,hints->cl.rfin);
       break;
     case CLA_CLOUDFCT:
       hints->cl.rfct=atof(optarg);

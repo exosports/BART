@@ -59,9 +59,11 @@ computeextcloud(double *e,
   double rini = cl->rini * cl->rfct;
   double rfin = cl->rfin * cl->rfct;
 
-  //Don't do anything if there is no cloud of course.
-  if(rini==0)
+  //If there is no clouds, set array to zero
+  if(rini==0){
+    memset(e,0,n*sizeof(double));
     return;
+  }
 
   if(rad->d == 0)
     transiterror(TERR_SERIOUS,
