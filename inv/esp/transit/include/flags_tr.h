@@ -104,30 +104,30 @@
 #define TRU_TAUBITS     0x00f00000
 
 /* Progress indicator flags */
-#define TRPI_READINFO   0x000001 /* readinfofile() completed */
-#define TRPI_READDATA   0x000002 /* readdatarng() completed */
-#define TRPI_CHKRNG     0x000004 /* checkrange() completed */
-#define TRPI_GETATM     0x000008 /* getatm() completed */
-#define TRPI_MAKERAD    0x000010 /* makeradsample() completed */
-#define TRPI_MAKEWAV    0x000020 /* makewavsample() completed */
-#define TRPI_MAKEWN     0x000040 /* makewnsample() completed */
-#define TRPI_MAKEIP     0x000080 /* makeipsample() completed */
-#define TRPI_IDXREFRAC  0x000100 /* idxrefrac() completed */
-#define TRPI_EXTWN      0x000200 /* extwn() completed */
-#define TRPI_TAU        0x000400 /* tau() completed */
-#define TRPI_GEOMETRY   0x000800 /* setgeom() completed */
+#define TRPI_READINFO     0x000001 /* readinfofile() completed */
+#define TRPI_READDATA     0x000002 /* readdatarng() completed */
+#define TRPI_CHKRNG       0x000004 /* checkrange() completed */
+#define TRPI_GETATM       0x000008 /* getatm() completed */
+#define TRPI_MAKERAD      0x000010 /* makeradsample() completed */
+#define TRPI_MAKEWAV      0x000020 /* makewavsample() completed */
+#define TRPI_MAKEWN       0x000040 /* makewnsample() completed */
+#define TRPI_MAKEIP       0x000080 /* makeipsample() completed */
+#define TRPI_IDXREFRAC    0x000100 /* idxrefrac() completed */
+#define TRPI_EXTWN        0x000200 /* extwn() completed */
+#define TRPI_TAU          0x000400 /* tau() completed */
+#define TRPI_GEOMETRY     0x000800 /* setgeom() completed */
+#define TRPI_GEOMETRYHINT 0x001000 /* setgeomhint() completed */
 
 /* flags for transiterror */
-#define TERR_MESSAGE    0x000000
-#define TERR_CRITICAL   0x000001
-#define TERR_SERIOUS    0x000002
-#define TERR_WARNING    0x000003
+#define TERR_MESSAGE      0x000000
+#define TERR_CRITICAL     0x000001
+#define TERR_SERIOUS      0x000002
+#define TERR_WARNING      0x000003
 
-#define TERR_NOFLAGBITS 0x00000f
+#define TERR_NOFLAGBITS   0x00000f
 
-#define TERR_ALLOWCONT  0x000010
-#define TERR_NOPREAMBLE 0x000020
-#define TERR_ALLOC      0x000040
-
+#define TERR_ALLOWCONT    0x000010
+#define TERR_NOPREAMBLE   0x000020
+#define TERR_ALLOC        0x000040
 
 #endif /* _FLAGS_TR_H */

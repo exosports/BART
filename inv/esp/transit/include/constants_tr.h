@@ -35,8 +35,9 @@ defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 #endif
 
 #define PI (3.141592653589793)	//PI!
-#define DEGREES (PI/180.0)	//to make degrees to radian.
-#define HOUR (3600.0)		//1 hour.
+#define DEGREES (PI/180.0)	//to make degrees to radian
+#define GGRAV (6.673e-8)	//Gravitacioinal constants
+#define HOUR (3600.0)		//1 hour
 #define AU (14959786896040.492)	//Astronomical unit
 #define SUNMASS (1.9891e33)	//Solar mass
 #define SUNRADIUS (6.96e10)	//solar volumetric mean radius

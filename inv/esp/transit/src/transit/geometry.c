@@ -29,7 +29,7 @@
   @returns 0 on success
 */
 int
-setgeom(struct transit *tr)
+setgeomhint(struct transit *tr)
 {
   static struct geometry st_sg;
   memset(&st_sg,0,sizeof(struct geometry));
@@ -66,7 +66,53 @@ setgeom(struct transit *tr)
   sg->starrad =hg->starrad>0 ?hg->starrad :SUNRADIUS/sg->starradfct;
 
 
+  //set progressindicator and return
+  tr->pi|=TRPI_GEOMETRYHINT;
+  return 0;
+}
+
+
+/* \fcnfh
+   Set geometry variables
+
+   @returns 0 on success
+*/
+int
+setgeom(struct geometry *sg,	/* geometry structure */
+	double time,		/* time for which to set planet
+				   position, use HUGE_VAL for use the
+				   default value stored in the geometry
+				   structure */
+	int flags)		/* Progress indicator flag */
+{
+  //Auxiliary variables in cgs
+  double smaxis=sg->smaxis*sg->smaxisfct;
+  double ecc=sg->ecc*sg->eccfct;
+  double incl=sg->incl*sg->inclfct;
+  double aper=sg->aper*sg->aperfct;
+  double lnode=sg->lnode*sg->lnodefct;
+  double t=(time<HUGE_VAL?time:sg->time)*sg->timefct;
+  double mass=sg->starmass*sg->starmassfct;
+
+
+  //set mean angular velocity, mean true anomaly
+  double prec2=1e-12;
+  double n=sqrt(GGRAV*mass/smaxis/smaxis/smaxis);
+  double Ea=HUGE_VAL,E=n*time;
+  while((E-Ea)*(E-Ea)>prec2){
+    Ea=E;
+    E=n*t+ecc*sin(E);
+  }
+  double M=smaxis*(1-ecc*ecc);
+  double Delta=smaxis*(1-ecc*cos(E));
+  double v=acos((M-Delta)/ecc/Delta);
+
+  //set X and Y
+  double d=M/(1+ecc*cos(v));
+  
+
+
   //set progress indicator and return.
-  tr->pi|=TRPI_GEOMETRY;
+  flags|=TRPI_GEOMETRY;
   return 0;
 }
