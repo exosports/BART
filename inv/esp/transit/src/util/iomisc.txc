@@ -60,9 +60,9 @@ nchar(char *str,
 
 
 /* \fcnfh
-   Returns next string in a newly allocated array, 'fspace', if any,
+   Returns next string in a newly allocated array. 'fspace', if any,
    indicates a false space character, which is going to be replaced
-   before returning. It o
+   before returning.
 
    @returns string in a newly allocated array
             NULL if allocation was not possible
@@ -160,7 +160,7 @@ fgetupto(char *line,		/* Where input is stored, it has to have
 }
 
 /* \fcnfh
-   get at most 'n' (indefinite if 0) double format numbers from 'str',
+   get at most 'n' (all of them if 0) double format numbers from 'str',
    they are separated by 'sep'. Allocate and store them in 'array'
 
    @returns number of converted values
@@ -216,6 +216,7 @@ getad(int n,			/* Number of float field to accept */
 
   return rn;
 }
+
 
 /* \fcnfh
    get 'n' double format numbers from 'str', they are separated by
@@ -390,6 +391,7 @@ fprintpad(FILE *fp,		/* File pointer to print */
   fprintf(stderr,"%s",top);
 
 }
+
 
 /* \fcnfh
    read a double value and optionally return the rest of the string
@@ -596,8 +598,8 @@ long readl(FILE *fp,
    the position right after the the last word. All newlines and tabs are
    cosidered spaces. It doesn't add a newline at the end of lines.
 
-@returns pointer to the beggining of new word
-         NULL if all is processed, in this case it doesn't do alignement.
+   @returns pointer to the beggining of new word
+            NULL if all is processed, in this case it doesn't do alignement.
 */
 char *
 linepad(char *out,		/* output, it has to have a length of at
@@ -707,6 +709,7 @@ askforposd(char *fmt,		/* Question asked */
   return val;
 }
 
+
 /* \fcnfh
    ask for a positive long value from stdin with the question 'fmt';
    to stderr
@@ -737,6 +740,7 @@ askforposl(char *fmt,		/* Question asked */
 
   return val;
 }
+
 
 /* \fcnfh
    Read a new line and return it in a newly allocated 
