@@ -56,5 +56,11 @@ defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 #define ONEOSQRT2PI (0.3989422804)   // 1.0/sqrt(2pi)
 #define SQRTLN2  0.83255461115769775635 //sqrt(ln(2))
 
+#ifdef __LITTLE_ENDIAN
+/* {0xff-'t',0xff-'r',0xff-'s',0xff-'f'} */
+#define __TR_SAVEFILE_MN__      "\xb5\xb7\xb6\xbd"
+#else
+#define __TR_SAVEFILE_MN__      "\xbd\xb6\xb7\xb5"
+#endif /* Little or big endian */
 
 #endif /* _CONSTANTS_TR_H */

@@ -299,6 +299,11 @@ struct outputray {
 };
 
 
+struct saves {
+  char *tau;			/* Save after finalizing tau */
+};
+
+
 struct transithint {		/* Structure with user hinted data that
 				   should go to the 'struct transit'
 				   upon approval */
@@ -353,6 +358,8 @@ struct transithint {		/* Structure with user hinted data that
   char *solname;		/* Name of the type of solution */
   struct geometry sg;		/* System geometry */
   struct onept onept;		/* Parameters for onept atmosphere */
+  struct saves save;		/* Saves indicator of program stats */
+
 };
 
 
@@ -399,6 +406,7 @@ struct transit {		/* Main data structure */
 				   as it travels to Earth before
 				   telescope */
 
+  struct saves save;		/* Saves indicator of program stats */
 
 
   struct {			/* data structures pointers, this is

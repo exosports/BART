@@ -660,11 +660,14 @@ restextinct(FILE *in,
 
   int nni=ex->periso?niso:1;
 
-  if((ex->e      =(PREC_RES ***)calloc(niso        ,sizeof(PREC_RES **)))==NULL)
+  if((ex->e      =(PREC_RES ***)calloc(niso        ,sizeof(PREC_RES **)))
+     ==NULL)
     return -3;
-  if((ex->e[0]   =(PREC_RES **) calloc(nni*nrad    ,sizeof(PREC_RES * )))==NULL)
+  if((ex->e[0]   =(PREC_RES **) calloc(nni*nrad    ,sizeof(PREC_RES * )))
+     ==NULL)
     return -3;
-  if((ex->e[0][0]=(PREC_RES *)  calloc(nrad*nni*nwn,sizeof(PREC_RES   )))==NULL)
+  if((ex->e[0][0]=(PREC_RES *)  calloc(nrad*nni*nwn,sizeof(PREC_RES   )))
+     ==NULL)
     return -3;
 
   rn=fread(ex->e[0][0],sizeof(PREC_RES),nwn*nni*nrad,in);
@@ -681,6 +684,76 @@ restextinct(FILE *in,
   }
 
   return 0;
+}
+
+
+/* \fcnfh
+   Save program memory after being through tau computation, whether
+   ->save.tau is defined have to be checked before.
+*/
+void
+savefile_exsofar(struct transit *tr)	/* Main structure */
+{
+  FILE *fp;
+
+  if((fp=fopen(tr->save.tau,"w"))==NULL){
+    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		 "\nCannot open file '%s' for saving extinction data.\n"
+		 " Continuing anyways\n\n"
+		 ,tr->save.tau);
+    return;
+  }
+
+  const char *idchar=__TR_SAVEFILE_MN__"extinctionsofar";
+  fwrite(idchar,1,strlen(idchar),fp);
+
+  /* TD: following function is not written! */
+  saveline(fp,tr->ds.li);
+  savesample(fp,&tr->rads);
+  savesample(fp,&tr->wns);
+  saveextinct(fp,tr->rads.n,tr->ds.iso->n_i,tr->wns.n,tr->ds.ex);
+
+  /*		     "readinfo_tli",TRPI_READINFO,
+		     "readdatarng",TRPI_READDATA,*/
+		       
+
+  fclose(fp);
+}
+
+
+/* \fcnfh
+   Restore program memory of calculated extinction, whether
+   ->save.tau is defined have to be checked before.
+*/
+void
+restorefile_exsofar(struct transit *tr)	/* Main structure */
+{
+  FILE *fp;
+
+  if((fp=fopen(tr->save.tau,"r"))==NULL){
+    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		 "\nCannot open file '%s' for restoring extinction data.\n"
+		 " Continuing anyways\n\n"
+		 ,tr->save.tau);
+    return;
+  }
+
+  const char idchar[]=__TR_SAVEFILE_MN__"extinctionsofar";
+  int len=strlen(idchar);
+  char nidchar[len];
+  fread(nidchar,1,len,fp);
+
+  if(strncmp(nidchar,idchar,len)!=0){
+    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		 "\nFile '%s' is invalid for restoring extinction data.\n"
+		 " Continuing anyways\n\n"
+		 ,tr->save.tau);
+    return;
+  }
+
+  restextinct(fp,tr->rads.n,tr->ds.iso->n_i,tr->wns.n,tr->ds.ex);
+
+  fclose(fp);
 }
 
 

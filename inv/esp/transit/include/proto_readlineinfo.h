@@ -14,5 +14,6 @@ extern int readdatarng P_((struct transit *tr, struct lineinfo *li));
 extern int readlineinfo P_((struct transit *tr));
 extern int freemem_isotopes P_((struct isotopes *iso, long *pi));
 extern int freemem_lineinfotrans P_((struct lineinfo *li, long *pi));
+extern void saveline P_((FILE *fp, struct lineinfo li));
 
 #undef P_

@@ -69,11 +69,13 @@ tau(struct transit *tr)
   rnn=rad->n;
 
   //set tau structures' value
-  const double blowex=tr->blowex=tr->ds.th->blowex;
-  const int taulevel=tr->taulevel=tr->ds.th->taulevel;
+  struct transithint *trh=tr->ds.th;
+  tr->save.tau=trh->save.tau;
+  const double blowex=tr->blowex=trh->blowex;
+  const int taulevel=tr->taulevel=trh->taulevel;
   tau.toomuch=50;
   if(tr->ds.th->toomuch>0)
-    tau.toomuch=tr->ds.th->toomuch;
+    tau.toomuch=trh->toomuch;
   tau.last=(long *)calloc(wnn,sizeof(long));
   tau.t=(PREC_RES **)calloc(wnn,sizeof(PREC_RES *));
   tau.t[0]=(PREC_RES *)calloc(wnn*ip->n,sizeof(PREC_RES));
@@ -88,8 +90,9 @@ tau(struct transit *tr)
   //Need at least three radius to calculate a spline interpolation.
   if(inn<4)
     transiterror(TERR_SERIOUS,
-		 "tau(): At least four impact parameters points are required!.\n"
-		 " (three for spline and one for the analitical part)"
+		 "tau(): At least four impact parameters points are\n"
+		 " required! (three for spline and one for the analitical\n"
+		 " part)"
 		 );
 
   transitprint(1,verblevel,
@@ -141,12 +144,14 @@ tau(struct transit *tr)
 	  if(!comp[--lastr]){
 	    //compute a new extinction at given radius printing error if
 	    //something happen
-	    if((rn=computeextradius(lastr,r[lastr]*rfct,temp[lastr]*tfct,ex))!=0)
+	    if((rn=computeextradius(lastr,r[lastr]*rfct,
+				    temp[lastr]*tfct,ex))!=0)
 	      transiterror(TERR_CRITICAL,
 			   "computeextradius() return error code %i while\n"
 			   "computing radius #%i: %g\n"
 			   ,rn,r[lastr]*rfct);
-	    //otherwise, update the value of the extinction at the right place.
+	    //otherwise, update the value of the extinction at the right
+	    //place.
 	    else
 	      er[lastr]=e[lastr][wi]*blowex;
 	  }
@@ -162,6 +167,9 @@ tau(struct transit *tr)
     }
 
   }
+
+  if(tr->save.tau)
+    savefile_exsofar(tr);
 
   transitprint(1,verblevel,
 	       " DONE\nOptical depth calculated up to %g\n"
@@ -184,6 +192,7 @@ tau(struct transit *tr)
 }
 
 
+
 /* \fcnfh
    Print lowest impact parameter before optical depth gets too big
 */
@@ -202,14 +211,15 @@ printtoomuch(char *file, 	/* Filename to save to, a '-' is
     out=fopen(file,"w");
   if(!out)
     transiterror(TERR_WARNING,
-		 "Cannot open '%s' for writing maximum depth before too much\n"
-		 "optical depth.\n"
+		 "Cannot open '%s' for writing maximum depth before too\n"
+		 " much optical depth.\n"
 		 ,out==stdout?"STDOUT":file);
 
   transitprint(1,verblevel,
 	       "\nPrinting in '%s'\n"
 	       " maximum depth before optical depth got larger than %g, and\n"
-	       " therefore impact parameter was not calculated for deeper layers.\n\n"
+	       " therefore impact parameter was not calculated for deeper\n"
+	       " layers.\n\n"
 	       ,file,tau->toomuch);
 
   fprintf(out,"#Wavelength  Maximum_calculated_depth\n");
@@ -247,7 +257,8 @@ printtau(struct transit *tr)
 
   long rad;
   if(tr->ot<0){
-    rad=askforposl("Radius at which you want to print the optical depth(%li - %li): "
+    rad=askforposl("Radius at which you want to print the optical "
+		   "depth(%li - %li): "
 		   ,1,rads->n)-1;
     if(rad>rads->n){
       fprintf(stderr,"Value out of range, try again\n");
@@ -272,8 +283,9 @@ printtau(struct transit *tr)
 	  "#wavenumber[cm-1]\twavelength[nm]\toptical depth[cm-1]\n");
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(out,"%12.6f%14.6f%17.7g\n"
-	    ,tr->wns.fct*tr->wns.v[rn],1/tr->wavs.fct/tr->wns.v[rn]/tr->wns.fct,
-	    rad>last[rn]?toomuch:t[rn][rad]);
+	    ,tr->wns.fct*tr->wns.v[rn]
+	    ,1/tr->wavs.fct/tr->wns.v[rn]/tr->wns.fct
+	    ,rad>last[rn]?toomuch:t[rn][rad]);
 
   exit(EXIT_SUCCESS);
 }

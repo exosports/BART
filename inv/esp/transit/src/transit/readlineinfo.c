@@ -702,7 +702,7 @@ int readinfo_tli(struct transit *tr,
 
   //Open info file and transport name into transit from hint (setting
   //corresponding flag) if the file opened succesfully
-  if(!th->f_atm){
+  if(!th->f_line){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "File information name needs to be hinted...\n"
 		 " it was not\n"
@@ -1248,6 +1248,15 @@ freemem_lineinfotrans(struct lineinfo *li,
   return 0;
 }
 
+
+/* \fcnfh
+   Saves line information
+*/
+void
+saveline(FILE *fp,
+	 struct lineinfo li)
+{
+}
 
 
 #ifdef DBGREADLINEINFO
