@@ -40,12 +40,10 @@ int extwn (struct transit *tr)
   static struct extinction st_ex;
   tr->ds.ex=&st_ex;
   struct extinction *ex=&st_ex;
-  PREC_LNDATA *ltgf=tr->lt.gf;
-  PREC_LNDATA *ltelow=tr->lt.elow;
-  PREC_LNDATA *ltwl=tr->lt.wl;
-  short *ltisoid=tr->lt.isoid;
-  double efct=tr->lt.efct;
-  double wfct=tr->lt.wfct;
+  struct line_transition *line=tr->lt;
+  register struct line_transition *curline=line;
+  double efct=tr->efct;
+  double wfct=tr->wfct;
   PREC_RES *k,**kiso,*wn,dwn,wavn,iniwn,wni,wnf;
   PREC_NSAMP nrad,nwn;
   int neiso,niso,nisoalloc;
@@ -272,8 +270,9 @@ int extwn (struct transit *tr)
       if(ln<9000||ln>11000)
 	continue;
       */
+      curline=line+ln;
 
-      wavn=1.0/wfct/ltwl[ln];
+      wavn=1.0/wfct/curline->wl;
       /* 
 	 when out of borders enabled
 	 if(wavn<wni||wavn>wnf)
@@ -288,16 +287,14 @@ int extwn (struct transit *tr)
       */
       else
 	w=(wavn-iniwn)/dwn;
-      transitDEBUG(21,verblevel,
-		   "wavn:%g lgf:%g\n"
-		   ,wavn,ltgf[ln]);
+
       //If it is beyond the last then just skip that line
       /* out of borders enabled =>change following */
       if(w>=nwn)
 	continue;
 
       subw=ex->vf*(wavn-w*dwn-iniwn)/dwn;
-      i=ltisoid[ln];
+      i=curline->isoid;
       k=kiso[i];
 
       //If this isotope is marked as ignore (no density info) continue
@@ -337,8 +334,8 @@ int extwn (struct transit *tr)
                   _log_ gf */
       propto_k=densiso[i]	//mass density
 	*SIGCTE			//Constant in sigma
-	*ltgf[ln]		//gf
-	*exp(-EXPCTE*efct*ltelow[ln]/temp) //Level population
+	*curline->gf		//gf
+	*exp(-EXPCTE*efct*curline->elow/temp) //Level population
 	*(1-exp(-EXPCTE*wavn/temp)) //induced emission
 	/mass[i]		//mass
 	/ziso[i];		//Partition function
@@ -349,19 +346,19 @@ int extwn (struct transit *tr)
 		   "wl=%.10g  wn=%.10g\n"
 		   "k= %12.5g  //densiso[i] \n"
 		   "  *%12.5g  //SIGCTE\n"
-		   "  *%12.5g  //ltgf[ln]\n"
-		   "  *%12.5g  //exp(-EXPCTE*ltelow[ln]/temp)\n"
+		   "  *%12.5g  //curline->gf\n"
+		   "  *%12.5g  //exp(-EXPCTE*curline->elow/temp)\n"
 		   "  *%12.5g  //(1-exp(-EXPCTE*wavn/temp))\n"
 		   "  /%12.5g  //mass[i]\n"
 		   "  /%12.5g  //ziso[i]\n"
 		   " = %12.5g   //extinction\n\n"
-		   ,i,temp,ltelow[ln]
+		   ,i,temp,curline->elow
 		   ,alphad[i]*wavn,alphal[i]
-		   ,ltwl[ln],1.0/wfct/ltwl[ln]/tr->wavs.fct
+		   ,curline->wl,1.0/wfct/curline->wl/tr->wavs.fct
 		   ,densiso[i]
 		   ,SIGCTE
-		   ,ltgf[ln]
-		   ,exp(-EXPCTE*ltelow[ln]/temp)
+		   ,curline->gf
+		   ,exp(-EXPCTE*curline->elow/temp)
 		   ,(1-exp(-EXPCTE*wavn/temp))
 		   ,mass[i]
 		   ,ziso[i]
