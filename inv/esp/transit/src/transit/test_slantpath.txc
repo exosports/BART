@@ -30,13 +30,28 @@ const transit_ray_solution *sol=&slantpath;
 #define nwn  3
 #define acceptrelerror .0001
 
+#define test_tau_monorad_norefr_now(nimp,wn,exttype)   do{      \
+   for(i=0;i<nimp;i++){                                         \
+      result=totaltau(b[i],rad,refr,ex,nrad,wn,&acc);           \
+      test_result("While "exttype" extinction, at %s,\n"        \
+		  "  observed %.10g, expect %.10g, error %g\n"  \
+		  ,ipdesc[i],result,res[i],                     \
+		  fabs(result-res[i])/res[i]);                  \
+      if(fabs(result-res[i])/res[i]>acceptrelerror)             \
+	test_fail(status,"Error bigger than %.5g\n"             \
+                  ,acceptrelerror);                             \
+      else                                                      \
+        test_succeed();                                         \
+    }                                                           \
+                                               }while(0)
+
 /* \fcnfh
    check monospaced radius
 
    @returns number of errors
 */
 int
-test_tau_monorad_constrefr(double *ex)
+test_tau_monorad_constrefr(PREC_RES **ex)
 {
   //check for nonbending rays
   PREC_RES refr[nrad]={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
@@ -49,8 +64,8 @@ test_tau_monorad_constrefr(double *ex)
   //lowest-radius 
 #define nimpact 4
   PREC_RES b[nimpact]={9.0, 7.5, 5.0, 1.0};
-  char *ipdesc[ninpact]={"grazing IP","interpolated IP","coincident IP",
-			 "lowest IP"}
+  char *ipdesc[nimpact]={"grazing IP","interpolated IP","coincident IP",
+			 "lowest IP"};
 
   //Test the atmosphere with constant extinction at different radius
   //$res=2 ex \sqrt{rm^2-b^2}$
@@ -60,37 +75,22 @@ test_tau_monorad_constrefr(double *ex)
 			   17.32050807568877293528,
 			   19.89974874213239909468};
 
-    for(i=0;i<4;i++){
-      result=totaltau(b[i],rad,refr,ex,nrad,0,acc);
-      if(fabs(result-res[i])/res[i]>acceptrelerror)
-	test_fail(status,
-		  "While constant extinction, at %s,\n"
-		  "  observed %.10g, expect %.10g, error %g"
-		  ,ipdesc[i],result,res[i],fabs(result-res[i])/res[i]);
-    }
+    test_tau_monorad_norefr_now(nimpact,0,"constant");
   }
 
   //Test the atmosphere with increasing extinction outwards
   //$res=\alpha ( rm\sqrt{rm^2-b^2} + b^2 \log{\sqrt{(rm/b)^2-1}+rm/b})$
   // Calc function:\par
   //{\em define
-  //res(b)=alpha*(rm*sqrt(rm*rm-b*b)+b^2*ln(sqrt((rm/b)^2-1)+rm/b)/ln(10))}
+  //res(b)=alpha*(rm*sqrt(rm*rm-b*b)+b*b*ln(sqrt((rm/b)\^2-1)+rm/b)/ln(10))}
   //\par $ex=\alpha r$
-  */
   {
     PREC_RES res[nimpact]={60.02215842946226671978,
 			   85.57381701507597253714,
 			   100.90122906677784957218,
 			   100.79868387584142893220};
 
-    for(i=0;i<4;i++){
-      result=totaltau(b[i],rad,refr,ex,nrad,1,acc);
-      if(fabs(result-res[i])/res[i]>acceptrelerror)
-	test_fail(status,
-		  "While constant extinction, at %s,\n"
-		  "  observed %.10g, expect %.10g, error %g"
-		  ,ipdesc[i],result,res[i],fabs(result-res[i])/res[i]);
-    }
+    test_tau_monorad_norefr_now(nimpact,1,"increasing outwards");
   }
 
   //Test the atmosphere with increasing extinction inwards
@@ -98,7 +98,7 @@ test_tau_monorad_constrefr(double *ex)
   //$res=\alpha ( rm\sqrt{rm^2-b^2} - b^2 \log{\sqrt{(rm/b)^2-1}+rm/b})$
   // Calc function:\par
   //{\em define
-  //res(b)=alpha*(rm*sqrt(rm*rm-b*b)-b^2*ln(sqrt((rm/b)^2-1)+rm/b)/ln(10))}
+  //res(b)=alpha*(rm*sqrt(rm*rm-b*b)-b*b*ln(sqrt((rm/b)\^2-1)+rm/b)/ln(10))}
   //\par $ex=\alpha (rm-r)$
   {
     PREC_RES res[nimpact]={27.15582044135120432502,
@@ -106,14 +106,7 @@ test_tau_monorad_constrefr(double *ex)
 			   72.30385169010987978062,
 			   98.19880354548256201460};
 
-    for(i=0;i<4;i++){
-      result=totaltau(b[i],rad,refr,ex,nrad,2,acc);
-      if(fabs(result-res[i])/res[i]>acceptrelerror)
-	test_fail(status,
-		  "While constant extinction, at %s,\n"
-		  "  observed %.10g, expect %.10g, error %g"
-		  ,ipdesc[i],result,res[i],fabs(result-res[i])/res[i]);
-    }
+    test_tau_monorad_norefr_now(nimpact,2,"increasing inwards");
   }
 
   return status;
@@ -143,7 +136,7 @@ int test_tau()
 			  {1.0, 10.0,  0.0}};
 
   //First check for monospaced radius
-  status += test_monorad_constrefr(ex);
+  status += test_tau_monorad_constrefr((PREC_RES **)ex);
   
 
   /* TD: test for nonmonospaced radius */
@@ -160,9 +153,8 @@ main(int argc, char *argv[])
   status += test_tau( );
 
   if(status){
-    fprintf(stderr,"\nFail: %i error%s found\n",status,status>1?"s","");
+    fprintf(stderr,"\nFail: %i error%s found\n",status,status>1?"s":"");
     exit(EXIT_FAILURE);
   }
   exit(EXIT_SUCCESS);
 }
-

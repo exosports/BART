@@ -26,4 +26,14 @@
 #define test_fail(stat,fmt,...)        do{              \
          stat++;                                        \
          fprintf(stderr,"FAIL: "fmt,__VA_ARGS__);       \
-                                       while(0)
+                                       }while(0)
+
+#define test_result(fmt,...)        do{                 \
+         fprintf(stderr,"Testing... "fmt,__VA_ARGS__);  \
+                                       }while(0)
+
+#define test_succeed()        do{                 \
+         fprintf(stderr,"PASS. ");                \
+                                       }while(0)
+
+#endif
