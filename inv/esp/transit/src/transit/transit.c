@@ -168,7 +168,7 @@ int main (int argc,		/* Number of variables */
   char defile_atm[]="-";
   trh.f_atm=(char *)calloc(strlen(defile_atm)+1,sizeof(char));
   strcpy(trh.f_atm,defile_atm);
-  trh.allowrq=0.1;
+  trh.allowrq=0.01;
   trh.na|=TRH_FA;
   trh.fl|=TRU_ATMASK1P|TRU_SAMPLIN|TRH_MASS;
 

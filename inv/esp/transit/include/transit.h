@@ -161,6 +161,7 @@
 #define transitDEBUG(...) ((void)0)
 #define transitASSERT(...) ((void)0)
 #else
+#define free(x) do{free(x);x=NULL;}while(0)
 #define transitASSERT(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitDEBUG(...) transitprint(__VA_ARGS__)
 #endif

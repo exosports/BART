@@ -242,13 +242,16 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     st_at.isov[i].d=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
     st_at.isov[i].q=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   }
+  tr->isodo=(enum isodo *)realloc(tr->isodo,tr->n_e*sizeof(enum isodo));
 
   //get isotope abundance
   switch(inp){
   case given:
     if(onept->nq==nmb){
-      for(i=0;i<nmb;i++)
+      for(i=0;i<nmb;i++){
 	st_at.isov[i].q[0]=onept->q[i];
+	tr->isodo[i]=fixed;
+      }
       break;
     }
     if(onept->nq>0)
@@ -260,10 +263,13 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	=askforposd(" %s abundance for isotope %s: "
 		    ,st_at.mass?"Mass":"Number",tr->isof[i].n);
       if(onept->q[i]>=1){
-	fprintf(stderr," Abundance for any single isotope has to be"
-		" less than one\n Try Again!\n");
-	i--;
+	transitprint(1,verblevel,
+		     " Abundance given is greater than 1, hence ignoring this\n"
+		     "isotope from now on\n");
+	tr->isodo[i]=ignore;
       }
+      else
+	tr->isodo[i]=fixed;
     }
 
     if((sumq=checkaddmm(st_at.mm,0,st_at.isov,tr->isof,nmb,st_at.mass))
@@ -281,16 +287,19 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     break;
   case file:
     readatmfile(fp,tr,&st_at,rads,nrad,lines);
+    //All the extra isotopes are going to have density from file (cannot
+    //be ignored or fixed.
+    for(i=tr->n_i;i<tr->n_e;i++){
+      transitASSERT(tr->isodo[i]!=unclear,
+		    "Assertion failed in file %s, line %i: %i!=0\n"
+		    ,__FILE__,__LINE__,tr->isodo[i]);
+      tr->isodo[i]=atmfile;
+    }
     break;
   default:
     break;
   }
 
-  //All the extra isotopes are going to have density from file (cannot
-  //be ignored or fixed.
-  tr->isodo=(enum isodo *)realloc(tr->isodo,tr->n_e*sizeof(enum isodo));
-  for(i=tr->n_i;i<tr->n_e;i++)
-    tr->isodo[i]=atmfile;
 
   //If one point is being used, then let user know values
   if(nrad==1)
@@ -402,10 +411,10 @@ askonenpt(struct onept *onept,
 
   //ask for pressure
   if(one)
-    onept->p=askforposd(" Atmospheric pressure, cgs units (1e-3cgs=1atm): ");
+    onept->p=askforposd(" Atmospheric pressure, cgs units (1e6cgs=1atm): ");
   else
     onept->p=askforposd(" Atmsopheric pressure for radius %i%s: "
-			  ,rad,rad?"":". cgs units (1e-3cgs=1atm)");
+			  ,rad,rad?"":". cgs units (1e6cgs=1atm)");
   at->atm.p[rad]=onept->p;
 
   //ask for temperature
