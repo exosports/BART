@@ -33,6 +33,7 @@ const char *ktypes[NWN]={"constant",
 			 "increasing outwards",
 			 "increasing inwards"};
 long ntests=0;
+FILE *outp=NULL;
 
 /* \fcnfh
    Call totaltau and compare value returned with what is expected
@@ -122,8 +123,8 @@ test_tau_monorad_constrefr(int nrad,
   PREC_RES res[nimpact];
 
   //Print filling of arrays if necessary to debug
-  if(0)
-    fprintf(stderr,
+  if(outp)
+    fprintf(outp,
 	    "radius        refr          ex_cons       ex_out        ex_in\n");
   PREC_RES rm=spacing*nrad*1.0;
   for(i=0;i<nrad;i++){
@@ -139,8 +140,9 @@ test_tau_monorad_constrefr(int nrad,
     ex[2][i]=alpha*(rm-rad[i]);
 
     //Print filling of arrays if necessary to debug
-    if(0)
-      fprintf(stderr,"%-14.9g%-14.9g%-14.9g%-14.9g%-14.9g\n"
+    if(outp)
+      fprintf(outp,
+	      "%-14.9g%-14.9g%-14.9g%-14.9g%-14.9g\n"
 	      ,rad[i],refr[i],ex[0][i],ex[1][i],ex[2][i]);
   }
   PREC_RES b[nimpact]={rad[nrad-2], (rad[(3*nrad)/4-1] + rad[(3*nrad)/4])/2.0,
@@ -231,7 +233,12 @@ main(int argc, char *argv[])
 {
   int status = 0;
 
+  if(argc>1)
+    outp=fopen(argv[1],"w");
+
   status += test_tau( );
+
+  fclose(outp);
 
   if(status){
     fprintf(stdout,
