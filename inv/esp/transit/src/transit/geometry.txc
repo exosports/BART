@@ -86,7 +86,7 @@ setgeom(struct geometry *sg,	/* geometry structure */
 	long *flags)		/* Progress indicator flag */
 {
   transitcheckcalled(*flags,"setgeom",1,
-		     "idxrefrac",TRPI_GEOMETRYHINT
+		     "setgeomhint",TRPI_GEOMETRYHINT
 		     );
 
   /* TD: include argument of pericenter and longitud of the node in the

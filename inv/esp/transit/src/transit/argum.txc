@@ -591,5 +591,8 @@ acceptgenhints(struct transit *tr) /* transit structure */
 		 "the gsl libraries. Check file '%s' for details\n"
 		 ,tr->sol->name,tr->sol->gslver,tr->sol->file);
 
+  //set hinted geometry hints
+  setgeomhint(tr);
+
   return 0;
 }

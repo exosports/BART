@@ -393,8 +393,11 @@ int extwn (struct transit *tr)
 	free(profile[i][0]);
   }
 
+  //Set porogress indicator and return
+  tr->pi|=TRPI_EXTWN;
   return 0;
 }
+
 
 /* \fcnfh
    calculates a new voigt profile

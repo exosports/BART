@@ -221,44 +221,33 @@ void transitcheckcalled(const long pi, /* Progress indicator variable */
   //'cfl' is the cumulative flag of functions required.
   va_list ap;
   int i;
-  char mess[1000],*name[n];
-  long flag[n],cfl=0;
+  char mess[1000],*name;
+  long flag;
+  _Bool stop=0;
 
-  //read all arguments
+  //For every argument
+  *mess='\0';
   va_start(ap,n);
   for(i=0;i<n;i++){
-    name[i]=(char *)va_arg(ap,char *);
-    flag[i]=(long)va_arg(ap,long);
-    cfl|=flag[i];
+    name=(char *)va_arg(ap,char *);
+    flag=(long)va_arg(ap,long);
+    //check if it was called before
+    if(!(pi&flag)){
+      if(!stop){
+	strcpy(mess,
+	       "The following function(s) were not executed\n"
+	       "before this execution of '%s()':\n");
+      }
+      strcat(mess,"  ");
+      strcat(mess,name);
+      strcat(mess,"()\n");
+      stop=1;
+    }
   }
   va_end(ap);
-
-  //If the functions were not called
-  if(!pi&cfl){
-    //start building 'mess'. Just for grammar, if it is only one function
-    if(n==1){
-      strcpy(mess,name[i]);
-      strcat(mess,"() was not called before function %s()\n");
-    }
-    //otherwise
-    else{ 
-      strcpy(mess,"Either ");
-      //for each of the functions but the last
-      for(i=0;i<n-1;i++){
-	strcat(mess,name[i]);
-	if(pi&flag[i]) strcat(mess,"(called), ");
-	else strcat(mess,"(not-called), ");
-      }
-      //add `or' for the last one!, of course:D
-      strcat(mess,"or ");
-      strcat(mess,name[i]);
-      if(pi&flag[i]) strcat(mess,"(called) ");
-      else strcat(mess,"(not-called) ");
-      strcat(mess,"were not called before function %s()\n");
-    }
-    //output the error!
+  //output the error!
+  if(stop)
     transiterror(TERR_CRITICAL,mess,fcn);
-  }
 }
 
 
