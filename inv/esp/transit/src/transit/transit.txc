@@ -361,9 +361,12 @@ int main (int argc,		/* Number of variables */
 		 ,rn);
 
 
-  printf("#Wavelength\twaven\textinction\n");
+  printf("#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
   for(rn=0;rn<transit.wns.n;rn++)
-    printf("%10.4f%10.4f%15.5g%15.5g\n",transit.wns.v[rn],WNU_O_WLU/transit.wns.v[rn],transit.ds.ex->k[0][0][rn],transit.ds.ex->k[0][0][rn]/transit.isov[0].d[0]);
+    printf("%10.4f%10.4f%15.5g%15.5g\n"
+	   ,transit.wns.v[rn],WNU_O_WLU/transit.wns.v[rn],
+	   transit.ds.ex->k[0][0][rn],
+	   transit.ds.ex->k[0][0][rn]*transit.isof[0].m/transit.isov[0].d[0]);
 
 
 
@@ -410,7 +413,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   PREC_ZREC hc_mass[HC_N_E]={0};
   PREC_CS hc_cs[HC_N_E]={0};
   PREC_ATM hc_dens[hc_n_e + tr->n_i];
-  PREC_ATM hc_pres=1.0e6;
+  PREC_ATM hc_pres=1.0e3;
   //write defult density for the standard isotopes
     /* TD: Density units */
   hc_dens[0]=6.5e-4*hc_pres*(tr->isof[0].m)/(KB)/(hc_t);
