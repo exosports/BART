@@ -44,5 +44,6 @@ transit_3-0     : Computes all right when extinction is coming just
 transit_3-1-rc1 : Became 3.1
 transit_3-1     : Fixes bug in 3.0 that made appear some unusual peaks
                   in the spectrum due to array overpointing, working in
-                  scattering but not achieved. 092104. PMR
-
+                  scattering but not achieved. Util now in a different
+                  package. 092104. PMR
+transit_3-2-rc1 :
