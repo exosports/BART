@@ -27,3 +27,5 @@ transit_2pre3: Calculation of tau along a line of sight is working,
                start working in geometry to obtain an observable.
 transit_2-0  : It obtains modulation for the simplest
                model. 051804. PMR 
+transit_2-1  : Tau calcualtion is working, debugged
+               throughfully. 071004. PMR.
