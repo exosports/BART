@@ -45,7 +45,7 @@ int extwn (struct transit *tr)
   struct line_transition *lt=&(tr->ds.li->lt);
   PREC_LNDATA *ltgf=lt->gf;
   PREC_LNDATA *ltelow=lt->elow;
-  PREC_LNDATA *ltwl=lt->wl;
+  register PREC_LNDATA *ltwl=lt->wl;
   short *ltisoid=lt->isoid;
   double efct=lt->efct;
   double wfct=lt->wfct;
@@ -178,9 +178,12 @@ int extwn (struct transit *tr)
   alphad=(PREC_VOIGTP *)calloc(niso,sizeof(PREC_VOIGTP));
 
   //For each radius (index 'r')
+  transitprint(1,verblevel,
+	       "Computing extinction for %i radius...\n"
+	       ,nrad);
   for(r=0;r<nrad;r++){
 
-    transitprint(2,verblevel,"Radius %i: %g[cm]\n",r,rad->fct*rad->v[r]);
+    transitprint(2,verblevel,"Radius %i: %g[cm]\n",r+1,rad->fct*rad->v[r]);
 
     //Initialization of 2nd dimension of extinction array.
     //\linelabel{kini}
