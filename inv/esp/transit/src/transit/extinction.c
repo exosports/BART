@@ -677,38 +677,16 @@ extwn (struct transit *tr)
 	       "\nThere are %li radii samples.\n"
 	       ,nrad);
 
-#if 0
-  transitprint(1,verblevel,
-	       "Computing extinction only in the %i outtermost layers"
-	       " for now,\n other layers only if required...\n"
-	       ,3);
-
-  //Initialize radius calculation variables
-  prop_samp *rad=&tr->rads;
-  int r,rn;
-  int nrad=rad->n;
-  int firstthree=nrad-4;
-  if(firstthree<-1)
-    firstthree=-1;
-  for(r=nrad-1;r>firstthree;r--){
-    if((rn=computeextradius(r, rad->fct*rad->v[r],
-			    tr->atm.t[r]*tr->atm.tfct, ex))!=0)
-      transiterror(TERR_CRITICAL,
-		   "computeexradius()returned error code %i\n"
-		   ,rn);
-  }
-#else
   prop_samp *rad=&tr->rads;
   int rn;
   int nrad=rad->n;
   transitprint(1,verblevel,
-	       "Computing extinction only in the outtermost layer\n");
+	       "Computing extinction in the outtermost layer\n");
   if((rn=computeextradius(nrad-1, rad->fct*rad->v[nrad-1],
 			  tr->atm.t[nrad-1]*tr->atm.tfct, ex))!=0)
     transiterror(TERR_CRITICAL,
 		 "computeexradius()returned error code %i\n"
 		 ,rn);
-#endif
 
    //save current status if requested.
   savefile_extwn(tr);
