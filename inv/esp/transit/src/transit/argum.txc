@@ -769,3 +769,17 @@ resthint(FILE *in,
 
   return res;
 }
+
+
+void
+printintro()
+{
+  char rcname[20];
+  if(version_rc>0) snprintf(rcname,20,"-rc%i",version_rc);
+  else rcname[0]='\0';
+  transitprint(1,verblevel,
+	       "-----------------------------------------------\n"
+	       "                TRANSIT v%i.%i%s\n"
+	       "-----------------------------------------------\n"
+	       ,version,revision,rcname);
+}
