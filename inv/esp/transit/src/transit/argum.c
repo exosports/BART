@@ -93,7 +93,7 @@ int processparameters(int argc, /* number of command line arguments */
      "each + or -. 0 is the quietest"},
     {"paramf",ADDPARAMFILE,'p',
      "filename","Use filename to read parameters in addition to\n"
-     "default files: ./.transitrc"PREPEXTRACFGFILES},
+     "default file(s): './.transitrc"PREPEXTRACFGFILES"'"},
 
     {NULL,HELPTITLE,0,
      NULL,"INPUT/OUTPUT"},
