@@ -27,34 +27,34 @@ f & was freed \\
 
 \begin{center}
 {\large Structures in {\bf tr.ds.xxx}}\\[1cm]
-\begin{tabular}{l|ccccccc}
+\begin{tabular}{l|cccccccc}
 function
-  & th & li & at & ir & ex & tau & sg \\
-\hline 	 	    				 
-acceptgenhints			 
-  & a  & .  & .  & .  & .  & .   & a  \\
-readlineinfo			 
-  & u  & a  & .  & .  & .  & .   & .  \\
-getatm 	 	    				 
-  & u  & .  & a  & .  & .  & .   & .  \\
-makewavsample			 
-  & u  & u  & .  & .  & .  & .   & .  \\
-makewnsample			 
-  & u  & .  & .  & .  & .  & .   & .  \\
-makeradsample			 
-  & u  & u  & u  & .  & .  & .   & .  \\
-idxrefrac   			 
-  & u  & .  & uf & a  & .  & .   & .  \\
-extwn  	 	    				 
-  & u  & uf & .  & .  & a  & .   & .  \\
-makeipsample			 
-  & u  & .  & .  & .  & .  & .   & .  \\
-tau    	 	    				 
-  & u  & .  & .  & u  & u  & a   & .  \\
-modulation  			 
-  & u  & .  & .  & f  & f  & uf  & u  \\
-telescope   			 
-  & u  & .  & .  & .  & .  & .   & .  \\
+  & th & li & at & ir & ex & tau & sg & sf \\
+\hline
+acceptgenhints
+  & a  & .  & .  & .  & .  & .   & a  & a  \\
+readlineinfo
+  & u  & a  & .  & .  & .  & .   & .  & .  \\
+getatm
+  & u  & .  & a  & .  & .  & .   & .  & .  \\
+makewavsample
+  & u  & u  & .  & .  & .  & .   & .  & .  \\
+makewnsample
+  & u  & .  & .  & .  & .  & .   & .  & .  \\
+makeradsample
+  & u  & u  & uf & .  & .  & .   & .  & .  \\
+idxrefrac
+  & u  & .  & .  & a  & .  & .   & .  & .  \\
+extwn
+  & u  & uf & .  & .  & a  & .   & .  & u  \\
+makeipsample
+  & u  & .  & .  & .  & .  & .   & .  & .  \\
+tau
+  & u  & .  & .  & u  & u  & a   & .  & u  \\
+modulation
+  & u  & .  & .  & f  & f  & uf  & u  & u  \\
+telescope
+  & u  & .  & .  & .  & .  & .   & .  & .  \\
 \hline
 \end{tabular}
 \end{center}
@@ -65,32 +65,32 @@ telescope
 {\large Structures in {\bf tr.xxx}}\\[1cm]
 \begin{tabular}{l|ccccccccccc}
 function
-   & opt & out & isdo & isf & isv & atm & db & wvs & wns & rds & ips \\
-\hline	       					     	 		     
+   & opt & out & isdo & isf & isv & db & atm & rds & wvs & wns & ips \\
+\hline
 accepgenhints
-   &  .  & .   & .    & .   & .   & .   & .  & .   & .   & .   & .   \\
+   &  .  & .   & .    & .   & .   & .  & .   & .   & .   & .   & .   \\
 readlineinfo
-   &  .  & .   & a    & a   & a   & .   & a  & p   & .   & .   & .   \\
+   &  .  & .   & a    & a   & a   & a  & .   & .   & p   & .   & .   \\
 getatm
-   &  .  & .   & ur   & ur  & ur  & a   & .  & .   & .   & .   & .   \\
+   &  .  & .   & ur   & ur  & ur  & .  & .   & .   & .   & .   & .   \\
 makewavsample
-   &  .  & .   & .    & .   & .   & .   & .  & a   & .   & .   & .   \\
+   &  .  & .   & .    & .   & .   & .  & .   & .   & a   & .   & .   \\
 makewnsample
-   &  .  & .   & .    & .   & .   & .   & .  & u   & a   & .   & .   \\
+   &  .  & .   & .    & .   & .   & .  & .   & .   & u   & a   & .   \\
 makeradsample
-   &  .  & .   & .    & .   & uc  & uc  & u  & .   & .   & a   & .   \\
+   &  .  & .   & .    & .   & uc  & u  & a   & a   & .   & .   & .   \\
 idxrefrac
-   &  .  & .   & .    & .   & .   & .   & .  & .   & .   & u   & .   \\
+   &  .  & .   & .    & .   & .   & .  & u   & u   & .   & .   & .   \\
 extwn
-   &  .  & .   & u    & u   & u   & u   & .  & .   & u   & u   & .   \\
+   &  .  & .   & u    & u   & u   & .  & u   & u   & .   & u   & .   \\
 makeipsample
-   &  .  & .   & .    & .   & .   & .   & .  & .   & .   & u   & a   \\
+   &  .  & .   & .    & .   & .   & .  & .   & u   & .   & .   & a   \\
 tau
-   &  .  & .   & .    & .   & .   & .   & .  & .   & u   & u   & u   \\
+   &  .  & .   & .    & .   & .   & .  & .   & u   & .   & u   & u   \\
 modulation
-   &  a  & .   & .    & .   & .   & .   & .  & .   & u   & .   & u   \\
+   &  a  & .   & .    & .   & .   & .  & .   & .   & .   & u   & u   \\
 telescope
-   &  u  & a   & .    & .   & .   & .   & .  & .   & .   & .   & .   \\
+   &  u  & a   & .    & .   & .   & .  & .   & .   & .   & .   & .   \\
 \hline
 \end{tabular}
 \end{center}
