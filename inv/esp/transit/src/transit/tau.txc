@@ -24,7 +24,7 @@
 
 static inline PREC_RES
 totaltau(PREC_RES b, PREC_RES *rad, PREC_RES *refr, PREC_RES ***ex,
-	 PREC_RES *dt, long nrad, short iso, long wn);
+	 PREC_RES *dt, long nrad, short iso, long wn,gsl_interp_accel *acc);
 
 /* \fcnfh
    Calculates optical depth as a function of radii for a spherical
@@ -82,18 +82,26 @@ tau(struct transit *tr)
   //to temporarily store a per radius info
   PREC_RES dt[wnn];
 
+  //Need at least three radius to calculate a spline interpolation.
+  if(rnn<3)
+    transiterror(TERR_SERIOUS,
+		 "tau(): At least three impact parameters points are required!.\n"
+		 );
+
+  gsl_interp_accel *acc=gsl_interp_accel_alloc();
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
     t=tau.t[wi];
 
     //For each resultant impact parameter
     for(ii=inn-1;ii>=0;ii--){
-      if((t[ii]=totaltau(bb[ii],r,n,e,dt,rnn,tau.iso,wi))>tau.toomuch){
+      if((t[ii]=totaltau(bb[ii],r,n,e,dt,rnn,tau.iso,wi,acc))>tau.toomuch){
 	tau.first[wi]=ii;
 	break;
       }
     }
   }
+  gsl_interp_accel_free(acc);
 
   tr->pi|=TRPI_TAU;
   return 0;
@@ -113,7 +121,8 @@ totaltau(PREC_RES b,		/* impact parameter */
 	 PREC_RES *dt,		/* differential optical depth [rad] */
 	 long nrad,		/* number of radii elements */
 	 short iso,		/* isotope chosen */
-	 long wn)		/* wavenumber looked */
+	 long wn,		/* wavenumber looked */
+	 gsl_interp_accel *acc)	/* accelerating pointer */
 {
   PREC_RES r0a=b;
   PREC_RES r0=0;
@@ -136,8 +145,11 @@ totaltau(PREC_RES b,		/* impact parameter */
   }
 
   //get bin value 'rs' such that r0 is between rad[i] inclusive and
-  //rad[i+1] exclusive
+  //rad[i+1] exclusive. Take one extra impact parameter position if less
+  //than two points are given out to integrate.
   rs=binsearch(rad,0,nrad-1,r0);
+  if(rs==nrad-2)
+    rs--;
   transitASSERT(rs==-4,
 		"Number of radius sample(%i) has to be at least 1!\n"
 		,nrad);
@@ -159,12 +171,13 @@ totaltau(PREC_RES b,		/* impact parameter */
   }
 
   //This part depends on a proper installation of GSL library
-  gsl_interp_accel *acc=gsl_interp_accel_alloc();
+  acc->cache = 0;
+  acc->hit_count = 0;
+  acc->miss_count = 0;
   gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
   gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
   r0a=gsl_spline_eval_integ(spl,r0,rad[nrad-1],acc);
   gsl_spline_free(spl);
-  gsl_interp_accel_free(acc);
   return r0a;
 
 #else
