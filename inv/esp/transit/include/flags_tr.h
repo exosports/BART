@@ -103,6 +103,7 @@
 #define TRU_OUTTAU      0x00100000 /* Print out optical depth */
 #define TRU_TAUBITS     0x00f00000
 
+
 /* Progress indicator flags */
 #define TRPI_READINFO     0x000001 /* readinfofile() completed */
 #define TRPI_READDATA     0x000002 /* readdatarng() completed */
@@ -117,6 +118,7 @@
 #define TRPI_TAU          0x000400 /* tau() completed */
 #define TRPI_GEOMETRY     0x000800 /* setgeom() completed */
 #define TRPI_GEOMETRYHINT 0x001000 /* setgeomhint() completed */
+
 
 /* flags for transiterror */
 #define TERR_MESSAGE      0x000000

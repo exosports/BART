@@ -64,20 +64,21 @@ modulation(struct transit *tr)	/* Main structure */
   transitprint(1,verblevel,
 	       "Integrating for each wavelength. For the current range,\n"
 	       "expect %li dots below...\n"
-	       ,wn->n/16);
+	       ,wn->n/512);
   //integrate for each wavelength
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
   for(w=0;w<wn->n;w++){
     out[w]=sol->obsperwn(tau->t[w],tau->first[w],tau->toomuch,
 			 ip,sg,acc);
 
-    if((w&0xf)==0xf)
+    if((w&0xf)==0x1ff)
       transitdot(1,verblevel);
   }
   gsl_interp_accel_free(acc);
 
   return 0;
 }
+
 
 
 /* \fcnfh

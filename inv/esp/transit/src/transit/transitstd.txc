@@ -251,6 +251,8 @@ void transitcheckcalled(const long pi, /* Progress indicator variable */
 }
 
 
+/* \fcnfh
+   Called by a gsl_error
 void 
 error (int exitstatus,
        int something, 
@@ -269,5 +271,37 @@ error (int exitstatus,
   va_end(ap);
 
   exit(exitstatus);
+}
+*/
+
+
+/* \fcnfh
+   Frees array in prop_isov
+*/
+void
+free_isov(prop_isov *isov)
+{
+  free(isov->z);
+  free(isov->c);
+  free(isov->d);
+  free(isov->q);
+}
+
+/* \fcnfh
+   Frees array in prop_dbnoext
+*/
+void
+free_dbnoext(prop_dbnoext *db)
+{
+  free(db->T);
+}
+
+/* \fcnfh
+   Frees array in prop_samp
+*/
+void
+free_samp(prop_samp *samp)
+{
+  free(samp->v);
 }
 

@@ -11,6 +11,8 @@ extern int vtransiterror P_((int flags, const char *str, va_list ap));
 extern int fileexistopen P_((char *in, FILE **fp));
 extern int verbfileopen P_((char *in, FILE **fp, char *desc));
 extern void transitcheckcalled P_((const long pi, const char *fcn, const int n, ...));
-extern void error P_((int exitstatus, int something, const char *fmt, ...));
+extern void free_isov P_((prop_isov *isov));
+extern void free_dbnoext P_((prop_dbnoext *db));
+extern void free_samp P_((prop_samp *samp));
 
 #undef P_

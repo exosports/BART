@@ -126,6 +126,9 @@ readtwii_bin(FILE *fp,
 		"real total number of isotopes (%i)\n"
 		,tr->n_i,acumiso);
 
+  li->ni=tr->n_i;
+  li->ndb=ndb;
+
   //allocate structure that are going to receive the isotope info.
   li->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
   tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
@@ -1164,6 +1167,46 @@ int readlineinfo(struct transit *transit) /* General parameters and
 }
 
 
+/* \fcnfh
+   frees lineinfo structure 
+
+   @returns 0 on success
+*/
+int
+free_lineinfotrans(struct line_transition *lt,
+		   struct lineinfo *li,
+		   long *pi)
+{
+  int i;
+
+  //free isov, dbnoext and samp in li
+  for(i=0;i<li->ni;i++)
+    free_isov(li->isov+i);
+  free(li->isov);
+
+  for(i=0;i<li->ndb;i++)
+    free_dbnoext(li->db+i);
+  free(li->db);
+
+  free_samp(&li->wavs);
+
+  //free the four arrays of lt
+  free(lt->wl);
+  free(lt->elow);
+  free(lt->gf);
+  free(lt->isoid);
+
+  //zero all the structures 
+  memset(li,0,sizeof(struct lineinfo));
+  memset(lt,0,sizeof(struct line_transition));
+
+  //unset appropiate flags.
+  *pi&=~(TRPI_READDATA|TRPI_READINFO|TRPI_CHKRNG);
+  return 0;
+}
+
+
+
 #ifdef DBGREADLINEINFO
 
 int main(int argc, char **argv)
@@ -1264,3 +1307,4 @@ int main(int argc, char **argv)
   
 }
 #endif
+

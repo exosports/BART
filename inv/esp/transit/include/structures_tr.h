@@ -111,6 +111,7 @@ typedef struct {
 	gsl_interp_accel *acc);
 } transit_ray_solution;
 
+
 struct lineinfo {		/* Used to keep parameters in
 				   readlineinfo() */
   int twii_ver;			/* TWII version */
@@ -125,6 +126,8 @@ struct lineinfo {		/* Used to keep parameters in
 				   file. And the maximum value it gets
 				   is the first line of the transition
 				   info. */
+  int ni;			/* number of isotopes */
+  int ndb;			/* number of databases */
   prop_isov *isov;		/* Variable isotope information (w/temp)
 				   [iso] */
   prop_dbnoext *db;		/* Temperature info from databases [DB]
@@ -132,7 +135,8 @@ struct lineinfo {		/* Used to keep parameters in
 };
 
 
-struct line_transition {	/* One item per transition */
+struct line_transition {	/* One item per transition for the
+				   following arrays */
   PREC_LNDATA *wl;		//Wavelength
   PREC_LNDATA *elow;		//Lower energy level
   PREC_LNDATA *gf;		//gf value

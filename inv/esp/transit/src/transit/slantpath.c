@@ -160,7 +160,7 @@ modulationperwn (PREC_RES *tau,
 
   //Impact parameter and azimuth variables
   long ipn=ip->n,azn;
-  PREC_RES ipd=ip->d,ipv;
+  PREC_RES ipd=ip->d*ip->fct,ipv;
   PREC_RES azz,*az,azd;
 
   //star centered coordinates and counters

@@ -24,7 +24,9 @@
 #include <transit.h>
 
 /*\fcnfh
-  extwn: Scattering parameters should be added at some point here
+  This funciton fills up the extinction information in tr->ds.ex. It
+  uses 
+  extwn: Scattering parameters should be added at some point here.
 
   @returns 0 on success
            -2 if no radii has been specified.
@@ -144,16 +146,16 @@ int extwn (struct transit *tr)
     return -5;
   }
 
-  //following to store isotope dens
-  densiso=(PREC_ATM *) calloc(niso,sizeof(PREC_ATM ));
-  csiso=  (PREC_CS *)  calloc(niso,sizeof(PREC_CS  ));
-  ziso=   (PREC_ZREC *)calloc(niso,sizeof(PREC_ZREC));
-  mass=   (PREC_ZREC *)calloc(niso,sizeof(PREC_ZREC));
-  nwnh=(int *) calloc(niso,sizeof(int));
+  //following to store isotope dens, these are auxiliary variables.
+  densiso=(PREC_ATM *) alloca(niso*sizeof(PREC_ATM ));
+  csiso=  (PREC_CS *)  alloca(niso*sizeof(PREC_CS  ));
+  ziso=   (PREC_ZREC *)alloca(niso*sizeof(PREC_ZREC));
+  mass=   (PREC_ZREC *)alloca(niso*sizeof(PREC_ZREC));
+  nwnh=   (int *)      alloca(niso*sizeof(int));
 
-  //allocate array for the voigt profile
-  wa=(int *)calloc(niso,sizeof(int));
-  wrc=(int *)calloc(niso,sizeof(int));
+  //allocate array for the voigt profile, also auxiliary.
+  wa=(int *) alloca(niso*sizeof(int));
+  wrc=(int *)alloca(niso*sizeof(int));
   profile=(PREC_VOIGT ***)calloc(niso,sizeof(PREC_VOIGT **));
   *profile=(PREC_VOIGT **)calloc(niso*ex->vf,sizeof(PREC_VOIGT *));
   for(i=1;i<niso;i++)
@@ -393,6 +395,11 @@ int extwn (struct transit *tr)
 	free(profile[i][0]);
   }
 
+
+  //free memory that is no longer needed.
+  freemem_extinction(&tr->lt,tr->ds.li,&tr->pi);
+
+
   //Set porogress indicator and return
   tr->pi|=TRPI_EXTWN;
   return 0;
@@ -480,3 +487,22 @@ printone(struct transit *tr)
   exit(EXIT_SUCCESS);
 }
 
+
+/* \fcnfh
+   Frees space that is no longer needed after a succesfull execution of
+   extwn(). It also clear the progress indicator of function that
+   allocated the now freed data.
+
+   @returns 0 on success
+*/
+int
+freemem_extinction(struct line_transition *lt, /* Line transition
+						  structure to be freed
+						  */
+		   struct lineinfo *li,	/* Line information from
+					   readlineinfo() */
+		   long *pi)	/* progress indicator flags from which
+				   to clear */
+{
+  return free_lineinfotrans(lt,li,pi);
+}
