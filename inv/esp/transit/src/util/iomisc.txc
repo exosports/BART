@@ -818,7 +818,7 @@ splitnzero_add(char ***array,	/* Pointer to the already allocated
   //find how many and length of the new strings.
   while(*sp){
     len++;
-    if(*sp==sep)
+    if(*sp++==sep)
       ns++;
   }
 

@@ -273,7 +273,7 @@ getopt_long_files(int argc,	/* number of arguments */
   if(givenparamf>=0&&ret==givenparamf){
     ret=parampointer-paramfiles;
     splitnzero_add(&paramfiles,optarg,',');
-    parampointer+=ret;
+    parampointer=paramfiles+ret;
     if(*parampointer==NULL&&*optarg!='\0'){
       fprintf(stderr,
 	      "procopt internal error: parampointer is null despite\n"
@@ -354,14 +354,18 @@ prochelp(int status)		/* either 'EXIT_FAILURE' or
   if(_cfg&&_cfg->nonopt)
     fprintf(stderr," %s",_cfg->nonopt);
 
+
+  //process options now
   fprintf(stderr,"\n\n");
   if(_opts){
 
+    //print intro
     if(_cfg&&_cfg->intro)
       fprintf(stderr," %s\n",_cfg->intro);
     else
       fprintf(stderr," %s\n",intro);
 
+    //process each option
     while(1){
       currind=0;
       if(_opts->has_arg==HELPTITLE)
@@ -369,9 +373,10 @@ prochelp(int status)		/* either 'EXIT_FAILURE' or
       else if(_opts->name==NULL&&_opts->val==0)
 	break;
       else{
+	//if short form is of a printable character
 	if(_opts->val>0x20 && _opts->val<0x80){
 	  fprintf(stderr," -%c",_opts->val);
-	  if(_opts->has_arg==required_argument)
+	  if(_opts->has_arg==required_argument||_opts->has_arg==ADDPARAMFILE)
 	    fprintf(stderr," <%s>%n",_opts->prm,&currind);
 	  else if(_opts->has_arg!=no_argument){
 	    fprintf(stderr,
@@ -382,6 +387,7 @@ prochelp(int status)		/* either 'EXIT_FAILURE' or
 	  }
 	  currind+=2;
 	}
+	//stop if it is not printable and there is no long alternative
 	else if(!_opts->name){
 	  fprintf(stderr,
 		  "\n\nprocopt error:: in prochelp() only a non displayable\n"
@@ -390,12 +396,13 @@ prochelp(int status)		/* either 'EXIT_FAILURE' or
 		  ,_opts->val,_opts->prm,_opts->doc);
 	  exit(EXIT_FAILURE);
 	}
+	//print long version if there is one
 	if(_opts->name){
 	  if(currind)
 	    fprintf(stderr,"\n");
 	  fprintf(stderr," --%s%n",_opts->name,&currind);
 	  tmp=0;
-	  if(_opts->has_arg==required_argument)
+	  if(_opts->has_arg==required_argument||_opts->has_arg==ADDPARAMFILE)
 	    fprintf(stderr," <%s>%n",_opts->prm,&tmp);
 	  else if(_opts->has_arg!=no_argument){
 	    fprintf(stderr,
