@@ -110,7 +110,7 @@ tau(struct transit *tr)
 
     //For each resultant impact parameter
     for(ii=0;ii<inn;ii++){
-      if((t[ii]=rfct*fcn(bb[ii]*riw,r,n,e,inn,wi,dt,acc))
+      if((t[ii]=rfct*fcn(bb[ii]*riw,r,n,e,rnn,wi,dt,acc))
 	 >tau.toomuch){
 	tau.last[wi]=ii;
 	break;
