@@ -179,6 +179,12 @@ int main (int argc,		/* Number of variables */
   trh.na|=TRH_VF|TRH_TA|TRH_DR;
   trh.fl|=TRU_EXTINPERISO;
 
+  //Presentation
+  transitprint(1,verblevel,
+	       "                TRANSIT v%i.%i\n"
+	       "-----------------------------------------------\n"
+	       ,version,revision);
+
   //Command line parameters' processing
   if((rn=processparameters(argc,argv,&trh))!=0)
     transiterror(TERR_SERIOUS,
@@ -188,12 +194,6 @@ int main (int argc,		/* Number of variables */
   //No program warnings if verblevel is 0 or 1
   if(verblevel<2)
     transit_nowarn=1;
-
-  //Presentation
-  transitprint(1,verblevel,
-	       "                TRANSIT v%i.%i\n"
-	       "-----------------------------------------------\n"
-	       ,version,revision);
 
   //Read line info
   if((rn=readlineinfo(&transit))!=0)
@@ -552,7 +552,7 @@ int processparameters(int argc, /* number of command line arguments */
 		     "%s\n"
 		     ,optarg);
       transitprint(2,verblevel,
-		   "%i abundance isotopes were correctly given: %s"
+		   "%i abundance isotopes were correctly given: %s\n"
 		   ,hints->onept.nq,optarg);
       break;
 

@@ -1,0 +1,27 @@
+    ********* TRANSIT *********
+
+
+     Readme files for any version
+
+------------------------------------------------------------------------
+COMPILATION: to compile from scratch, execute one after the other the
+following commands
+
+   make clean
+   make dep
+   make proto
+   make transit
+
+------------------------------------------------------------------------
+EXECUTING: to get a help of all commands, run
+
+   transit -h
+
+ Note that not all the commands listed in the help might be available.
+
+------------------------------------------------------------------------
+EXAMPLE: 
+
+   transit --oneptn=1.1e3,1340,3 --oneextra 2H2,4He,30CO --oneabund 6.5e-4,1e-10,1e-10,1e-10,.80,.14,.00065 >output.dat
+
+========================================================================
