@@ -401,17 +401,17 @@ int processparameters(int argc, /* number of command line arguments */
   struct optcfg var_cfg={NULL,NULL,NULL,
 			 "Patricio Rojo <pato@astro.cornell.edu>"
 			 ,NULL,NULL,0};
-  int rn;
-  int longidx;
-  promp_samp samp;
-  char *name;
-  double input;
+  int rn,i;
+  //  int longidx;
+  prop_samp *samp;
+  char name[20];
+  char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
 
   opterr=0;
   while(1){
     /* This is for old style
        rn=getopt(argc,argv,"f:Vhv:m:r:w:n:a:s:d:");*/
-    rn=getprocopt(argc,argv,var_docs,&var_cfg,&longidx);
+    rn=getprocopt(argc,argv,var_docs,&var_cfg,NULL);
     if (rn==-1)
       break;
 
@@ -434,25 +434,42 @@ int processparameters(int argc, /* number of command line arguments */
       break;
 
     case 'r':
-      samp=hints->rads;
-      fprintf(stderr,"In units of planetary radius...");
+      samp=&hints->rads;
+      fprintpad(stderr,1,"In units of planetary radius...\n");
+      strcpy(name,"radius");
     case 'w':
-      if(rn!='w'){
-	samp=hints->wavs;
-	fprintf(stderr,"In nanometers units...");
+      if(rn=='w'){
+	samp=&hints->wavs;
+	fprintpad(stderr,1,"In nanometers units...\n");
+	strcpy(name,"wavelength");
       }
     case 'n':
-      if(rn!='n'){
-	samp=hints->wns;
-	fprintf(stderr,"In cm-1 units...");
+      if(rn=='n'){
+	samp=&hints->wns;
+	fprintpad(stderr,1,"In cm-1 units...\n");
+	strcpy(name,"wavenumber");
       }
-      name=var_docs[longidx].name;
 
-      while(1){
-	fprintf(stderr," - Initial %s: ",name);
-	if((rn=readd(stdin,&samp->i))){
+      for(i=0;i<4;i++){
+	if(i==3&&samp==&hints->rads)
+	  break;
+	while(rn){
+	  fprintf(stderr,"- %s %s: ",sampv[i],name);
+	  switch((rn=readd(stdin,&samp->i))){
+	  case 0:
+	    break;
+	    /*
+	      case '?':
+	      fprintpad(stderr,1,"%s\n",var_docs[longidx].doc);
+	    */
+	  default:
+	    fprintf(stderr,"\nTry again\n");
+	  }
 	}
-      }while(!rn);
+	rn=1;
+	/*	longidx++;*/
+      }
+      break;
     case CLA_RADLOW:
       hints->rads.i=atof(optarg);
       break;

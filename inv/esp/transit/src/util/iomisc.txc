@@ -19,9 +19,55 @@
  * 02111-1307, USA.
  */
 
+#include <util/iomisc.h>
+
 char *linepad_break="-";
+int printpad_columns=__PADTO_COLUMNS;
 
+/* \fcnfh
+   Prints a parragraph with justification using linepad, it takes a indent
+   value
+*/
+void
+fprintpad(FILE *fp,		/* File pointer to print */
+	  int indent,		/* Number of blanks to leave at the
+				   beggining */ 
+	  char *fmt,		/* format */
+	  ...)			/* parameters */
+{
+  char *out,*ptr;
+  int cols;
+  int length=80,reall;
+  va_list ap;
 
+  out=getenv("COLUMNS");
+  if(!out||!(cols=atoi(out)))
+    cols=printpad_columns;
+  if(indent>=cols)
+    fprintf(stderr,
+	    "iomisc::fprintpad(): Indent(%i) is bigger than columns(%i)\n"
+	    ,indent,cols);
+
+  char top[cols+1];
+
+  out=(char *)calloc(length,sizeof(char));
+  va_start(ap,fmt);
+  reall=vsnprintf(out,length,fmt,ap);
+  if(reall>=length){
+    out=(char *)realloc(out,(reall+1)*sizeof(char));
+    reall=vsnprintf(out,reall+1,fmt,ap);
+  }
+  va_end(ap);
+
+  ptr=out;
+  fprintf(stderr,"%*s",indent,"");
+  while((ptr=linepad(top,cols-indent,ptr))){
+    fprintf(stderr,"%s\n",top);
+    fprintf(stderr,"%*s",indent,"");
+  }
+  fprintf(stderr,"%s",top);
+
+}
 
 /* \fcnfh
    read a double value
@@ -30,7 +76,7 @@ char *linepad_break="-";
             first character read if it was not appropiate
 */
 char readd(FILE *fp,
-	   double *f);
+	   double *f)
 {
   char *str,*cur,car;
   int salloc=8;
@@ -45,40 +91,44 @@ char readd(FILE *fp,
       cur=(str=(char *)realloc(str,(salloc<<1)*sizeof(char)))+salloc;
       salloc<<=1;
     }
-    if(*cur=='\n')
+    *cur=car;
+    if(car=='\n'){
+      if(!atleast)
+	return *cur;
       break;
-    if(*cur=='e'||*cur=='E'){
+    }
+    if(car=='e'||car=='E'){
       if(!atleast)
 	return *cur;
       if(stage&man)
 	break;
       stage=man|unsig;
     }
-    else if(*cur=='+'||*cur=='-'){
+    else if(car=='+'||car=='-'){
       if(!stage&unsig){
 	if(!atleast)
 	  return *cur;
 	break;
       }
-      stage&=^unsig;
+      stage&=~unsig;
     }
-    else if(*cur=='.'){
+    else if(car=='.'){
       if(!stage&ent)
 	break;
       stage=dec;
     }
-    else if(isdigit(*str)){
+    else if(isdigit(car)){
       atleast=1;
-      stage&=^unsig;
+      stage&=~unsig;
     }
     else
       break;
 
-    *cur++=car;
+    cur++;
   }
 
   *cur='\0';
-  *f=atod(str);
+  *f=atof(str);
   return 0;
 }
 
@@ -165,104 +215,3 @@ linepad(char *out,		/* output, it has to have a length of at
   return in;
 }
 
-
-/* \fcnfh
-   read a double value
-
-   @returns 0 on success
-            first character read if it was not appropiate
-*/
-char readd2(FILE *fp, 
-	    double *f)
-{
-  char car,prim=0;
-  double store=0;
-  enum {ent,dec,man,uman} stage=ent;
-  _Bool atleast=0,atleastman=0;
-  double dlev=10.0;
-  int mant=0,mans=1,ents=1;
-
-  stage=ent;
-  while(fread(&car,1,1,fp)){
-    if(!prim)
-      prim=car;
-    if(car=='.'){
-      if(stage==ent){
-	stage=dec;
-	continue;
-      }
-      *f=ents*store;
-      return 0;
-    }
-    if(car=='+'||car=='-'){
-      switch(stage){
-      case uman:
-	stage=man;
-	mans=','-car;
-	break;
-      case ent:
-	if(!atleast){
-	  ents=','-car;
-	  break;
-	}
-      default:
-	if(!atleast)
-	  return prim;
-	*f=ents*store;
-	return 0;
-      }
-    }
-    if(car=='e'||car=='E'){
-      if(stage!=man&&stage!=uman&&atleast){
-	stage=uman;
-	continue;
-      }
-      if(!atleast)
-	return prim;
-      *f=ents*store;
-      return 0;
-    }
-    if(car<'0'||car>'9'){
-      if(!atleast)
-	return prim;
-      *f=ents*store;
-      return 0;
-    }
-    atleast=1;
-    switch(stage){
-    case ent:
-      store=store*10+car-'0';
-      break;
-    case dec:
-      store=store+(car-'0')/dlev;
-      dlev*=10;
-      break;
-    case uman:
-      stage=man;
-    case man:
-      mant=mant*9+car-'0';
-      store=store*powi(10,mans*mant);
-      break;
-
-    }
-  }
-}
-
-
-
-double powi(double x, int n)
-{
-  double y;
-
-  y=1;
-
-  for(;n>0;--n){
-    while((n&1)==0){
-      x*=x;
-      n>>=1;
-    }
-    y=y*x;
-  }
-
-  return y;
-}
