@@ -96,8 +96,6 @@ typedef struct {
 	PREC_RES **ex,		/* extinction[rad][iso][nwn] */
 	long nrad,		/* number of radii elements */
 	long wn,		/* wavenumber looked */
-	PREC_RES *dt,		/* differential optical depth [rad].
-				   Auxiliary array */
 	gsl_interp_accel *acc);	/* accelerating pointer. Auxiliary array
 				 */
   PREC_RES (*obsperwn)		/* Quantity obtained from

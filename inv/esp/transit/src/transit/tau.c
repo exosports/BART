@@ -41,7 +41,7 @@ tau(struct transit *tr)
   PREC_RES **e=tr->ds.ex->e[tr->tauiso];
   PREC_RES (*fcn)(PREC_RES b,PREC_RES *rad,PREC_RES *refr,
 		  PREC_RES **ex,long nrad,long wn,
-		  PREC_RES *dt, gsl_interp_accel *acc)
+		  gsl_interp_accel *acc)
     =tr->sol->tauperb;
 
 
@@ -80,7 +80,6 @@ tau(struct transit *tr)
 
   //to temporarily store a per radius info, and the ratio of the ip and
   //rad units
-  PREC_RES dt[wnn];
   double rfct=rad->fct;
   double riw=ip->fct/rfct;
 
@@ -110,7 +109,7 @@ tau(struct transit *tr)
 
     //For each resultant impact parameter
     for(ii=0;ii<inn;ii++){
-      if((t[ii]=rfct*fcn(bb[ii]*riw,r,n,e,rnn,wi,dt,acc))
+      if((t[ii]=rfct*fcn(bb[ii]*riw,r,n,e,rnn,wi,acc))
 	 >tau.toomuch){
 	tau.last[wi]=ii;
 	break;

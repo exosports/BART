@@ -54,13 +54,10 @@ totaltau(PREC_RES b,		/* differential impact parameter with
 	 PREC_RES **ex,		/* extinction[rad][nwn] */
 	 long nrad,		/* number of radii elements */
 	 long wn,		/* wavenumber looked */
-	 PREC_RES *dt,		/* differential optical depth [rad].
-				   Auxiliary array */
 	 gsl_interp_accel *acc)	/* accelerating pointer. Auxiliary array
 				   */
 {
-  /* TD: Check that giving dt instead of declaring here dt[nrad] is
-     really the fastest method */
+  PREC_RES dt[nrad];
   PREC_RES r0a=b;
   PREC_RES r0=0;
   int i;
@@ -92,7 +89,8 @@ totaltau(PREC_RES b,		/* differential impact parameter with
 		 "Closest approach value(%g) is outside sampled radius\n"
 		 "range(%g - %g)\n"
 		 ,r0,rad[0],rad[nrad-1]);
-  //advance the index to point as desired
+  //advance the index to point as desired. Now nrad-rs indicates the
+  //number of points available for integration.
   rs++;
 
   //A fraction 'analiticfrac' of the integration near the closest
@@ -120,17 +118,32 @@ totaltau(PREC_RES b,		/* differential impact parameter with
   for(i=rs;i<nrad;i++){
     r0a=b/refr[i]/rad[i];
     transitASSERT(r0a>1,
-		  "Oops! assert condition not met, b/(nr)=%g",r0a);
+		  "Oops! assert condition not met, b/(nr)=%g > 1\n"
+		  ,r0a);
 
     dt[i]=ex[i][wn]/sqrt(1-r0a*r0a);
   }
 
-  //Integrate Simpson if enough elements.
+  //Integrate!\par
+  //Use spline if GSL is available along with at least 3 points
+#ifdef _USE_GSL
+  if(nrad-rs>2){
+    if(acc)
+      acc->cache = 0;
+    gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
+    gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
+    res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],acc);
+    gsl_spline_free(spl);
+  }
+  //Only integrate Trapezium if there is only two points available.
+  else
+#endif /* _USE_GSL */
+  //Integrate Simpson-Trapezium if enough(w/o GSL) or not enough(w/ GSL)
+  //elements. 
   if(nrad-rs>1)
     res+=integ_trasim(rad[1]-rad[0],dt+rs,nrad-rs);
 
   return 2*(res);
-
 }
 
 
