@@ -313,11 +313,14 @@ struct lineinfo {
 };
 
 struct onept {
-  double p,t,mm;		/* pressure, temperature, and mean
-				   molcular mass values */
+  double p,t;			/* pressure, temperature */
   double *q;			/* abundances for isotopes */
   int nq;			/* number of given abundances */
   _Bool one;			/* One point is required? */
+  char **n;			/* Names of extra isotopes */
+  PREC_ZREC *m;			/* Mass of extra isotopes */
+  int nm;			/* number of given name and masses */
+  int ne;			/* Number of extra isotopes */
 };
 
 struct transithint {		/* Structure with user hinted data that

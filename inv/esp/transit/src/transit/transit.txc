@@ -292,6 +292,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_ONEPT,
     CLA_ONEABUND,
     CLA_ONEINT,
+    CLA_ONEEXTRA,
   };
 
   //General help-option structure
@@ -335,13 +336,18 @@ int processparameters(int argc, /* number of command line arguments */
     {"rad-delt",required_argument,CLA_RADDELT,
      "spacing","Radius spacing. 0 if you want to use atmospheric\n"
      "data spacing"},
-    {"oneptm",required_argument,CLA_ONEPT,
-     "press,temp,meanmass","Don't calculate transit spectra, just\n"
+    {"oneptn",required_argument,CLA_ONEPT,
+     "press,temp,extra_iso","Don't calculate transit spectra, just\n"
      "obtain spectra for a given pressure and temperature. Unless\n"
      "oneabund is also specified and has the correct number of\n"
      "isotopes, the abundances will be asked interactively"},
+    {"oneextra",required_argument,CLA_ONEEXTRA,
+     "mass1name1,mass2name2,...","It only has effect with --onept,\n"
+     "a list of the atomic mass and names for the hitherto specified\n"
+     "extra isotopes. If it doesn't have the right amount of values,\n"
+     "the program will ask interactively.\n"},
     {"oneabund",required_argument,CLA_ONEABUND,
-     "q1,...","It only has effect with --onept, a list of the\n"
+     "q1,...","It also only has effect with --onept, a list of the\n"
      "abundances of the different isotopes. If it is omitted or\n"
      "doesn't have the right amount of values, the program will\n"
      "ask interactively. Note that the order of isotopes is the\n"
@@ -420,6 +426,7 @@ int processparameters(int argc, /* number of command line arguments */
   prop_samp *samp;
   char name[20],rc;
   char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
+  double rf;
 
   opterr=0;
   while(1){
@@ -488,19 +495,26 @@ int processparameters(int argc, /* number of command line arguments */
 
     case CLA_ONEPT:
       if((rn=getnd(3,',',optarg,&hints->onept.p,&hints->onept.t,
-		   &hints->onept.mm))!=3){
-	if(rn==1)
-	  fprintf(stderr,
-		  "At least one of the values given for pressure (%g),\n"
-		  "temperature (%g), or mean molecular mass (%g),\n"
-		  "was not a correct floating point value\n"
-		  ,hints->onept.p,hints->onept.t,hints->onept.mm);
+		   &rf))!=3){
+	if(rn>0)
+	  transiterror(TERR_SERIOUS,
+		       "At least one of the values given for pressure (%g),\n"
+		       "temperature (%g), or number of extra isotopes (%g),\n"
+		       "was not a correct floating point value. Actually, the\n"
+		       "latter should be an integer\n"
+		       ,hints->onept.p,hints->onept.t,rf);
 	else
-	  fprintf(stderr,
-		  "There was %i comma-separated fields instead of 3 for\n"
-		  "'--onept' option"
-		  ,-rn);
+	  transiterror(TERR_SERIOUS,
+		       "There was %i comma-separated fields instead of 3 for\n"
+		       "'--onept' option"
+		       ,-rn);
       }
+      hints->onept.ne=(int)rf;
+      if(rf!=hints->onept.ne)
+	transiterror(TERR_SERIOUS,
+		     "A non integer(%g) number of extra isotopes was given with\n"
+		     "the option --oneptn\n"
+		     ,rf);
       hints->onept.one=1;
       hints->fl=(hints->fl&~TRU_ATM1PBITS)|TRU_ATMGIVEN1P;
       break;
@@ -514,6 +528,11 @@ int processparameters(int argc, /* number of command line arguments */
 		   "%i abundance isotopes were correctly given: %s"
 		   ,hints->onept.nq,optarg);
       break;
+
+    case CLA_ONEEXTRA:
+      /* TD from here: extra isotope name and mass as parameters */
+      break;
+
     case CLA_ONEINT:
       hints->fl=(hints->fl&~TRU_ATM1PBITS)|TRU_ATMASK1P;
       break;

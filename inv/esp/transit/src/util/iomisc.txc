@@ -359,15 +359,16 @@ fprintpad(FILE *fp,		/* File pointer to print */
 
 }
 
-
 /* \fcnfh
-   read a double value
+   read a double value and optionally return the rest of the string
 
    @returns 0 on success
             first character read if it was not appropiate
 */
-double readd(FILE *fp,
-	     char *c)
+double readds(FILE *fp,
+	      char *c,
+	      char *string,
+	      int maxstring)
 {
   char *str,*cur,car;
   int salloc=8;
@@ -409,9 +410,18 @@ double readd(FILE *fp,
 
     cur++;
   }
-  while(fread(&car,1,1,fp))
-    if(car=='\n')
-      break;
+  if(string){
+    str=string;
+    while(car!='\n' && fread(&car,1,1,fp)){
+      *string++=car;
+      //if line is bigger than wanted, stop storing and discard rest of
+      //line
+      if(string-str>=maxstring)
+	break;
+    }
+    *string='\0';
+  }
+  while(car!='\n' && fread(&car,1,1,fp));
 
   if(!atleast){
     if(c) *c=*cur;
@@ -420,6 +430,57 @@ double readd(FILE *fp,
   *cur='\0';
   if(c) *c=0;
   return atof(str);
+}
+
+
+/* \fcnfh
+   read a long value
+
+   @returns 0 on success
+            first character read if it was not appropiate
+*/
+long readl(FILE *fp,
+	   char *c)
+{
+  char *str,*cur,car;
+  int salloc=8;
+  _Bool atleast=0;
+  _Bool unsig=1;
+
+  cur=str=(char *)calloc(salloc,sizeof(char));
+
+  fflush(fp);
+  while(fread(&car,1,1,fp)){
+    if(cur-str==salloc){
+      cur=(str=(char *)realloc(str,(salloc<<1)*sizeof(char)))+salloc;
+      salloc<<=1;
+    }
+    *cur=car;
+    if(car=='\n')
+      break;
+    if(car=='+'||car=='-'){
+      if(!unsig)
+	break;
+      unsig=0;
+    }
+    else if(isdigit(car)){
+      atleast=1;
+      unsig=0;
+    }
+    else
+      break;
+
+    cur++;
+  }
+  while(car!='\n' && fread(&car,1,1,fp));
+
+  if(!atleast){
+    if(c) *c=*cur;
+    return 0;
+  }
+  *cur='\0';
+  if(c) *c=0;
+  return atol(str);
 }
 
 
