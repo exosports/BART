@@ -115,7 +115,7 @@ tau(struct transit *tr)
 
   //Print lowest impact parameter before optical gets too big
   if(tr->f_toomuch)
-    printtoomuch(tr->f_toomuch,tr->ds.tau, &tr->wns);
+    printtoomuch(tr->f_toomuch,tr->ds.tau, &tr->wns, &tr->rads);
 
 
   //Set progress indicator and output tau if requested, otherwise return
@@ -134,7 +134,8 @@ void
 printtoomuch(char *file, 	/* Filename to save to, a '-' is
 				   standard output */
 	     struct optdepth *tau, /* Tau information */
-	     prop_samp *wn)	/* Wavenumber sampling */
+	     prop_samp *wn,	/* Wavenumber sampling */
+	     prop_samp *rad)	/* Radius sampling */
 {
   long w;
   FILE *out=stdout;
@@ -156,8 +157,9 @@ printtoomuch(char *file, 	/* Filename to save to, a '-' is
 
   fprintf(out,"#Wavelength  Maximum_calculated_depth\n");
   for(w=0;w<wn->n;w++)
-    fprintf(out,"%12.3g%12.3g\n",wn->v[w]*wn->fct,tau->first[w]);
-	       
+    fprintf(out,"%12.3g%12.3g\n",wn->v[w]*wn->fct,
+	    rad->v[tau->first[w]]*rad->fct);
+
 }
 
 
