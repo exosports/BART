@@ -42,14 +42,15 @@
          sequential order and not per database as before. 012504. PMR
    1.3:  Version of TWII is now stored in the .inf file. 021204. PMR
    1.4:  Bug found and corrected that wrote a lot of masses instead of
-         1 per isotope. 041203. PMR.
+         1 per isotope. 031203. PMR.
    1.5:  Change to directory structure and linking (several files
-         instead of one). 040904. PMR.
-   1.6:  Magic bytes are added as the first two in twii. 041504. PMR.
-   1.7:  Two files merged into one, marks are no more. 041604. PMR.
+         instead of one). 030904. PMR.
+   1.6:  Magic bytes are added as the first two in twii. 031504. PMR.
+   1.7:  Two files merged into one, marks are no more. 031604. PMR.
+   1.8:  Help fixed and default ouput changed. 032404. PMR.
 */
 static int lineread_ver=1;
-static int lineread_rev=7;
+static int lineread_rev=8;
 
 
 
@@ -78,20 +79,9 @@ static void synhelp(float deltw,char *datafile, /*char *infofile,
 	  "  -d<delt_wavl>   : range of wavelength in nanometers to be read\n"
 	  "                    and write at once from each database (%.2f).\n"
 	  "  -n              : Dummy run!, do not write anything to files\n"
-	  "  -o              : output file (\"%s\").\n"
-	  /*	
-	    "  -O              : output info file (\"%s\").\n"
-	    "  -m<mark_wavl>   : Generate an index in the info file every this\n"
-	    "                    much nanometers (%.2f)\n\n"
-	  */
-	  "        For any of the previous two options, you can specify"
-	  " a dash '-' to\n"
-	  "     indicate output to be sent to the standard output."
-	  "  Note however, that\n"
-	  "     the output is in binary format  and that at least the"
-	  " output of one of\n"
-	  "     files should be directed to file to be compatible with"
-	  " Transit.\n\n"
+	  "  -o              : output file (\"%s\"). A dash '-' indicates\n"
+	  "                    that the output to be sent to the standard\n"
+	  "                    output.\n"
 	  "  -v and -q       : increase or decrease verbose level(%i).\n"
 	  "  -h              : show this help.\n\n"
 	  ,deltw,datafile/*,deltwmark,infofile*/,verblevel);
@@ -143,7 +133,7 @@ int main(int argc,char *argv[])
   deltw=40;
   verblevel=1;
   datafile=(char *)calloc(20,sizeof(char));
-  strcpy(datafile,"./res/lineread.twii");
+  strcpy(datafile,"-");
   fpout=NULL;
   dummy=0;
 

@@ -37,12 +37,7 @@ static char *isotope[NUM_ISOT]={"1H1H16O","1H1H17O","1H1H18O","1H2H16O"};
 
 static int isoname(char ***isotope, int niso);
 
-/* Following is used by Kuruckz
-static float pands_isotope[NUM_ISOT]={0.9976, 0.0004, 0.0020, 0.00001};
-*/
-
-
-/*
+/* \fcnfh
   databasename: Just return the name of the database in a newly
   allocated string.
 
@@ -65,7 +60,7 @@ int databasename(char **name)
   return 1;
 }
 
-/*
+/* \fcnfh
   read_zpands: Read from file 'filename'(char *), the partition function
   information into 'Z'(PREC_ZREC ***), it is a two dimensional array
   depending on isotope (1st dimension) and temperature(2nd
