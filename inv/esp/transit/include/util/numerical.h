@@ -19,4 +19,11 @@
  * 02111-1307, USA.
  */
 
+#ifndef _NUMERICAL_H
+#define _NUMERICAL_H
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <proto_numerical.h>
+
+#endif
