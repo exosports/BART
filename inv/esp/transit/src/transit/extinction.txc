@@ -143,7 +143,7 @@ extradius(PREC_NREC r,		/* Radius index */
 		 "trying to call computeextradius() before having called\n"
 		 "even once to extwn()\n");
 
-  transitprint(2,verblevel,"Radius %li: %.9g[cm]\n",r+1,rad);
+  transitprint(2,verblevel,"Radius %li: %.9g[cm]... ",r+1,rad);
 
   //'propto\_adop' is proportional to the Doppler width, which in its
   //total splendor is
@@ -342,6 +342,8 @@ extradius(PREC_NREC r,		/* Radius index */
   for(i=0;i<niso;i++)
     if(iso->isodo[i]!=ignore)
       free(profile[i][0]);
+
+  transitprint(2,verblevel,"done\n");
 
   return 0;
 }
@@ -666,6 +668,8 @@ restextinct(FILE *in,
 
   rn=fread(ex->e[0][0],sizeof(PREC_RES),nwn*nni*nrad,in);
   if(rn!=nwn*nni*nrad) return -1;
+  rn=fread(ex->computed,sizeof(PREC_RES),nrad,in);
+  if(rn!=nrad) return -1;
 
   int nnr=ex->periso?nrad:0;
   for(i=0;i<niso;i++){
@@ -704,6 +708,7 @@ saveextinct(FILE *out,
 		 "have to be bigger than 1\n"
 		 ,nrad,niso,nwn);
   fwrite(ex->e[0][0],sizeof(PREC_RES),nrad*n*nwn,out);
+  fwrite(ex->computed,sizeof(_Bool),nrad,out);
 }
 
 
