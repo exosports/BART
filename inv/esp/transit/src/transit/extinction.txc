@@ -357,24 +357,18 @@ extradius(PREC_NREC r,		/* Radius index */
 
    @returns 0 on success
             extradius() return otherwise
-	    1 if radius was computed, in which case it doesn't compute
-              it again.
 */
 inline int
-computeextradius(_Bool *comp,	/* Was this radius computed */
-		 PREC_NREC r,	/* Radius index */
+computeextradius(PREC_NREC r,	/* Radius index */
 		 PREC_RES rad,	/* Radius output */
 		 PREC_ATM temp, /* Temperature */
 		 struct extinction *ex)	/* Extinction parameters */
 {
   int res;
 
-  if(comp[r])
-    return 1;
-
   if((res=extradius(r, rad, kalt[r], temp, 
 		    ex->vf, ex->ta, ex->maxratio))==0)
-    comp[r]=1;
+    ex->computed[r]=1;
 
   return res;
 }
@@ -555,7 +549,7 @@ extwn (struct transit *tr)
   if(firstthree<-1)
     firstthree=-1;
   for(r=nrad-1;r>firstthree;r--){
-    if((rn=computeextradius(ex->computed, r, rad->fct*rad->v[r],
+    if((rn=computeextradius(r, rad->fct*rad->v[r],
 			    tr->atm.t[r]*tr->atm.tfct, ex))!=0)
       transiterror(TERR_CRITICAL,
 		   "computeexradius()returned error code %i\n"
