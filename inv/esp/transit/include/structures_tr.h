@@ -65,6 +65,9 @@ typedef struct {		/* One item per atmospheric conditions
 				   in the atmosphere */
   PREC_ATM *p;			/* Pressure (cgs=dyne/cm2) */
   PREC_ATM *t;			/* Temperature [radius] */
+  PREC_ATM pfct;		/* Pressure factor to convert to cgs. */
+  PREC_ATM tfct;		/* Temperature factor to convert to
+				   Kelvin */
 } prop_atm;
 
 
@@ -130,7 +133,7 @@ struct lineinfo {		/* Used to keep parameters in
   int twii_ver;			/* TWII version */
   int twii_rev;			/* TWII revision */
   prop_samp wavs;		/* wavelength sampling extracted */
-  double wi,wf;			/* initial and final wavelength in the
+  double wi, wf;		/* initial and final wavelength in the
 				   database */
   long endinfo;			/* position at the end of the info part
 				   of the info file */
@@ -323,6 +326,9 @@ struct transithint {		/* Structure with user hinted data that
 				   optical depth for all or some
 				   isotopes, TRU_EXTPERISO has to be
 				   on. */
+  int taulevel;			/* Tau integration level of precision */
+  int modlevel;			/* Modulation integration level of
+				   precision */
   char *solname;		/* Name of the type of solution */
   struct geometry sg;		/* System geometry */
   struct onept onept;		/* Parameters for onept atmosphere */
@@ -350,10 +356,12 @@ struct transit {		/* Main data structure */
   prop_samp ips;		/* Impact parameter sampling, at what
 				   radius sampling does the user wants
 				   ray optical depth to be calculated */
-  prop_atm atm;			/* Sampled atmospheric data. Height in
-				   kilometers. */
+  prop_atm atm;			/* Sampled atmospheric data. */
   short tauiso;			/* Isotope from which to calculate the
 				   optical depth */
+  int taulevel;			/* Tau integration level of precision */
+  int modlevel;			/* Modulation integration level of
+				   precision */
 
   long fl;			/* flags */
   long pi;			/* progress indicator */
