@@ -44,7 +44,7 @@
 
 #define compattwiiversion 2
 
-#include <transit_flags.h>
+#include <flags_tr.h>
 
 /*****   Types     *****/
 #define PREC_NSAMP int		/* Type for radius and wavelength
@@ -82,7 +82,7 @@
 #define transitDEBUG(...) transitprint(__VA_ARGS__)
 #endif
 
-#include <transit_constants.h>
+#include <constants_tr.h>
 
 extern const int maxeisoname;
 extern int transit_nowarn;
@@ -94,7 +94,7 @@ extern int revision;
 
 enum isodo {unclear=0,atmfile,ignore,fixed};
 
-#include <transit_structures.h>
+#include <structures_tr.h>
 
 /***** Prototypes *****/
 #include <transit_proto.h>

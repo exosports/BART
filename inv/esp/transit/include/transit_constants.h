@@ -1,5 +1,5 @@
 /*
- * transit_constants.h - constants for the transit program.
+ * constants_tr.h - constants for the transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -19,8 +19,9 @@
  * 02111-1307, USA.
  */
 
-#ifndef _TRANSIT_CONSTANTS_H
-#define _TRANSIT_CONSTANTS_H
+#ifndef _CONSTANTS_TR_H
+#define _CONSTANTS_TR_H
+
 
 /***** Constants  *****/
 /* units in cgs */
@@ -33,6 +34,8 @@ defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 #error Some of the preprocessor constants I wanted to use were already defined elsewhere!
 #endif
 
+#define PI (3.141592653589793)	//PI!
+#define DEGREES (PI/180.0)	//to make degrees to radian.
 #define HOUR (3600.0)		//1 hour.
 #define AU (14959786896040.492)	//Astronomical unit
 #define SUNMASS (1.9891e33)	//Solar mass
@@ -43,7 +46,6 @@ defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 #define ME (9.1093897e-28)	//Electron mass
 #define KB (1.380658e-16)	//Boltzmann constant
 #define H (6.6260755e-27)	//Planck's constant
-#define PI (3.141592653589793)	//PI!
 #define RWATER (3.2e-8/2.0)	//water molecule radius
 #define HC (H*LS)		//for lower energy conversion
 #define SIGWATER (PI*RWATER*RWATER) //water cross section
@@ -55,4 +57,4 @@ defined(ONEOSQRT2PI) ||defined(SQRTLN2)
 #define SQRTLN2  0.83255461115769775635 //sqrt(ln(2))
 
 
-#endif /* _TRANSIT_CONSTANTS_H */
+#endif /* _CONSTANTS_TR_H */

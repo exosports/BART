@@ -1,6 +1,6 @@
 /*
- * transit_version.h - Header containing version information with
- *                     variable initialization.
+ * version_tr.h - Header containing version information with
+ *                variable initialization.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -20,8 +20,8 @@
  * 02111-1307, USA.
  */
 
-#ifndef _TRANSIT_VERSION_H
-#define _TRANSIT_VERSION_H
+#ifndef _VERSION_TR_H
+#define _VERSION_TR_H
 
 /* Version history:
    0.3: First light, it only calculates Kappa values of it and of
@@ -36,4 +36,4 @@ int version=2;
 int revision=-3;
 
 
-#endif /* _TRANSIT_VERSION_H */
+#endif /* _VERSION_TR_H */

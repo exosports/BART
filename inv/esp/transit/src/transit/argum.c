@@ -22,7 +22,7 @@
 
 
 #include <transit.h>
-#include <transit_version.h>
+#include <version_tr.h>
 #include <math.h>
 #include <util/procopt.h>
 

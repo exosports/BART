@@ -1,5 +1,5 @@
 /*
- * transit_structures.h - Structures definition for the transit program
+ * structures_tr.h - Structures definition for the transit program
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *

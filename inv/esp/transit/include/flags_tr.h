@@ -1,5 +1,5 @@
 /*
- * transit_flags.h - Various flags for the transit program
+ * flags_tr.h - Various flags for the transit program
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -19,8 +19,8 @@
  * 02111-1307, USA.
  */
 
-#ifndef _TRANSIT_FLAGS_H
-#define _TRANSIT_FLAGS_H
+#ifndef _FLAGS_TR_H
+#define _FLAGS_TR_H
 
 
 
@@ -130,4 +130,4 @@
 #define TERR_ALLOC      0x000040
 
 
-#endif /* _TRANSIT_CONSTANTS_H */
+#endif /* _FLAGS_TR_H */
