@@ -99,6 +99,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_RADFCT,
     CLA_WAVFCT,
     CLA_WNFCT,
+    CLA_OUTSAMPLE,
   };
 
   //General help-option structure
@@ -130,6 +131,12 @@ int processparameters(int argc, /* number of command line arguments */
     {"linedb",CLA_LINEDB,required_argument,"./res/lineread.twii",
      "linedb","File containing line information (TWII format,\n"
      "as given by 'lineread'"},
+    {"outtoomuch",CLA_OUTTOOMUCH,required_argument,NULL,
+     "filename","Ouputs depth where toomuch optical depth has been\n"
+     "attained as a function of wavelength\n"},
+    {"outsample",CLA_OUTSAMPLE,required_argument,NULL,
+     "filename","Outputs sampling information. A dash (-) indicates\n"
+     "standard input. By default there is no such output"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RADIUS OPTIONS (planetary radii units, unless stated "
@@ -266,9 +273,6 @@ int processparameters(int argc, /* number of command line arguments */
     {"outtau",CLA_OUTTAU,no_argument,NULL,
      NULL,"Output is optical depth instead of modulation. It will be\n"
      "asked which radius to plot\n"},
-    {"outtoomuch",CLA_OUTTOOMUCH,required_argument,NULL,
-     "filename","Ouputs depth where toomuch optical depth has been\n"
-     "attained as a function of wavelength\n"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"OBSERVATIONAL OPTIONS:"},
@@ -327,6 +331,21 @@ int processparameters(int argc, /* number of command line arguments */
     case 'o':			//output file
       hints->f_out=(char *)realloc(hints->f_out,strlen(optarg)+1);
       strcpy(hints->f_out,optarg);
+      break;
+    case CLA_OUTSAMPLE:
+      if(hints->f_outsample) free_null(hints->f_outsample);
+      hints->f_outsample=(char *)calloc(strlen(optarg)+1,sizeof(char));
+      strcpy(hints->f_outsample,optarg);
+      break;
+    case CLA_OUTTOOMUCH:
+      if(hints->f_toomuch) free_null(hints->f_toomuch);
+      if(*optarg!='\0'){
+	hints->f_toomuch=(char *)calloc(strlen(optarg)+1,sizeof(char));
+	strcpy(hints->f_toomuch,optarg);
+      }
+      break;
+    case CLA_OUTTAU:
+      hints->fl|=TRU_OUTTAU;
       break;
 
     case 'r':
@@ -571,18 +590,8 @@ int processparameters(int argc, /* number of command line arguments */
 	    &hints->sg.smaxisfct,&hints->sg.timefct,&hints->sg.inclfct,
 	    &hints->sg.eccfct,&hints->sg.lnodefct,&hints->sg.aperfct);
       break;
-    case CLA_OUTTAU:
-      hints->fl|=TRU_OUTTAU;
-      break;
     case CLA_TOOMUCH:
       hints->toomuch=atof(optarg);
-      break;
-    case CLA_OUTTOOMUCH:
-      if(hints->f_toomuch) free_null(hints->f_toomuch);
-      if(*optarg!='\0'){
-	hints->f_toomuch=(char *)calloc(strlen(optarg)+1,sizeof(char));
-	strcpy(hints->f_toomuch,optarg);
-      }
       break;
     }
     
@@ -640,6 +649,7 @@ acceptgenhints(struct transit *tr) /* transit structure */
 
   //Accept toomuch output file
   tr->f_toomuch=th->f_toomuch;
+  tr->f_outsample=th->f_outsample;
 
   //Accept hinted solution type if it exists
   if(acceptsoltype(&tr->sol,th->solname)!=0){

@@ -521,21 +521,31 @@ printsample(FILE *out,	/* File pointer to write out */
 
 /* \fcnfh
    Prints each of the sample data
+
+   @returns 0 on success, which may be succesfull writing or writing not
+              requested 
+	    1 if cannot write to file
 */
-void
+int
 outsample(struct transit *tr)
 {
   FILE *out=stdout;
-
   char *filename=tr->f_outsample;
 
-  if(strcmp(filename,"-")==0)
-    if((out=fopen(filename,"w"))!=NULL){
+  if(!filename)
+    return 0;
+
+  if(strcmp(filename,"-")!=0)
+    if((out=fopen(filename,"w"))==NULL){
       transiterror(TERR_WARNING,
 		   "Cannot open file '%s' for writing sampling data...\n"
 		   ,filename);
-      return;
+      return 1;
     }
+
+  transitprint(1,verblevel,
+	       "\nPrinting sampling information in '%s'\n"
+	       ,filename);
 
   printsample(out,&tr->wns,"Wavenumber",TRF_NOVALUE);
   printsample(out,&tr->wavs,"Wavelength",TRF_NOVALUE);
@@ -544,6 +554,7 @@ outsample(struct transit *tr)
 
   fclose(out);
 
+  return 0;
 }
 
 

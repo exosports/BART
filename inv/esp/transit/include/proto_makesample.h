@@ -10,5 +10,6 @@ extern int makewavsample P_((struct transit *tr));
 extern int makewnsample P_((struct transit *tr));
 extern int makeipsample P_((struct transit *tr));
 extern int makeradsample P_((struct transit *tr));
+extern int outsample P_((struct transit *tr));
 
 #undef P_

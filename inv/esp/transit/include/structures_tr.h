@@ -290,7 +290,7 @@ struct transithint {		/* Structure with user hinted data that
 				   should go to the 'struct transit'
 				   upon approval */
   char *f_atm,*f_line,*f_out,
-    *f_toomuch;			/* Filenames */
+    *f_toomuch,*f_outsample;	/* Filenames */
   prop_samp rads,wavs,wns;	/* Sampling properties of
 				   radius, wavelength and
 				   wavenumber */

@@ -140,6 +140,11 @@ int main (int argc,		/* Number of variables */
 		 "to returned flag: 0x%x\n"
 		 ,rn);
 
+  //Prints sampling info
+  if((rn=outsample(&transit))<0)
+    transiterror(TERR_SERIOUS,
+		 "outsample() returned error code %i\n"
+		 ,rn);
 
   //Calculates optical depth
   if((rn=tau(&transit))!=0)
