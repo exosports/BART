@@ -1118,13 +1118,13 @@ int readlineinfo(struct transit *tr) /* General parameters and
   tr->ds.iso=&st_iso;
 
   //Try to read hinted info file
-  transitprint(1,verblevel, "Reading info file '%s'... "
+  transitprint(1,verblevel, "\nReading info file '%s'...\n"
 	       ,th->f_line);
   if((rn= readinfo_tli(tr,&st_li))!=1)
     transiterror(TERR_SERIOUS,
 		 "readinfo_tli() returned an error code %i!\n"
 		 ,rn);
-  transitprint(1,verblevel, "done%c\n",'.');
+  transitprint(1,verblevel, " done%c\n",'.');
 
   //Check the remainder (margin and range) of the hinted values
   //related to line database reading.
@@ -1146,12 +1146,12 @@ int readlineinfo(struct transit *tr) /* General parameters and
 	       ,fct*tr->m);
 
   //read data file
-  transitprint(1,verblevel, "Reading data... ");
+  transitprint(1,verblevel, "\nReading data... ");
   if((rn=readdatarng(tr,&st_li))<1)
     transiterror(TERR_SERIOUS,
 		 "readdatarng() returned an error code %li\n"
 		 ,rn);
-  transitprint(1,verblevel, "done%c\n",'.');
+  transitprint(1,verblevel, " done%c\n",'.');
 
   //Status so far
   transitprint(2,verblevel,

@@ -64,6 +64,10 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   //check initial value
   if(hint->i<=0||(margini!=0&&hint->i<ref->i+margini)){
     samp->i=ref->i+margini;
+    transitprint(4,verblevel,
+		 "Using ref sampling %g (w/margin) for initial"
+		 "value of %s"
+		 ,samp->i,TRH_NAME(fl));
     res|=0x1;
   }
   else if(hint->i>ref->f-marginf){
@@ -81,6 +85,10 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   //check final value
   if(hint->f<=0||(marginf!=0&&hint->f>ref->f-marginf)){
     samp->f=ref->f-marginf;
+    transitprint(4,verblevel,
+		 "Using ref sampling %g (w/margin) for final"
+		 "value of %s"
+		 ,samp->f,TRH_NAME(fl));
     res|=0x2;
   }
   else if(hint->f<ref->i+margini){

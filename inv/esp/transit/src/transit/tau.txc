@@ -195,7 +195,7 @@ tau(struct transit *tr)
     savefile_exsofar(tr);
 
   transitprint(1,verblevel,
-	       " DONE\nOptical depth calculated up to %g\n"
+	       " done\nOptical depth calculated up to %g\n"
 	       ,tr->ds.tau->toomuch);
 
   //Print lowest impact parameter before optical gets too big

@@ -98,7 +98,7 @@ modulation(struct transit *tr)	/* Main structure */
 		   ,(10*(int)(10*w/wn->n+0.9999999999)));
     }
   }
-  transitprint(1,verblevel," DONE\n");
+  transitprint(1,verblevel," done\n");
 
   //frees no longer needed memory.
   freemem_idexrefrac(tr->ds.ir,&tr->pi);

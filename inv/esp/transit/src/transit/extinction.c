@@ -355,6 +355,7 @@ extradius(PREC_NREC r,		/* Radius index */
       k[j]+=propto_k
 	*profwn[j];
 
+#if 0
     if(ltwl[ln]>1696.8267){
       k=5;
     }
@@ -364,6 +365,7 @@ extradius(PREC_NREC r,		/* Radius index */
     else if(ln==2595091){
       k=5;
     }
+#endif
 
     //'wa[i]' is just the last wavelength per isotope.
     wa[i]=w;
@@ -676,7 +678,7 @@ extwn (struct transit *tr)
 
   transitprint(1,verblevel,
 	       "Computing extinction only in the %i outtermost layers"
-	       " for now,\nother layers only if required...\n"
+	       " for now,\n other layers only if required...\n"
 	       ,3);
 
   //Initialize radius calculation variables
