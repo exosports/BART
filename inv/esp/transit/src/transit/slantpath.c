@@ -366,7 +366,7 @@ modulation1 (PREC_RES *tau,
   //\begin{align}
   //1-M=&1-\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
   //             +\int_{r_p}^{R_s}\dd A}
-  //            {\pi R_s^2}\\
+  //            {\pi R_s^2}\\%
   //   =&\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
   //           -Area_{planet}}
   //          {\pi R_s^2}
