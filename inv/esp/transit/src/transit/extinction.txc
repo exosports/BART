@@ -30,6 +30,7 @@
 
 static _Bool extinctperiso,  extwncalledonce=0,gominelow;
 static PREC_VOIGT ***profile;
+//kalt[nrad][niso][nwn]
 static PREC_RES ***kalt,minelow;
 
 //Line info content
@@ -519,7 +520,7 @@ extwn (struct transit *tr)
   tr->ds.ex=&st_ex;
   struct extinction *ex=&st_ex;
 
-  int r,i,j, rn;
+  int i,j;
 
 
   transitcheckcalled(tr->pi,"extwn",4,
@@ -676,6 +677,7 @@ extwn (struct transit *tr)
 	       "\nThere are %li radii samples.\n"
 	       ,nrad);
 
+#if 0
   transitprint(1,verblevel,
 	       "Computing extinction only in the %i outtermost layers"
 	       " for now,\n other layers only if required...\n"
@@ -683,6 +685,7 @@ extwn (struct transit *tr)
 
   //Initialize radius calculation variables
   prop_samp *rad=&tr->rads;
+  int r,rn;
   int nrad=rad->n;
   int firstthree=nrad-4;
   if(firstthree<-1)
@@ -694,6 +697,18 @@ extwn (struct transit *tr)
 		   "computeexradius()returned error code %i\n"
 		   ,rn);
   }
+#else
+  prop_samp *rad=&tr->rads;
+  int rn;
+  int nrad=rad->n;
+  transitprint(1,verblevel,
+	       "Computing extinction only in the outtermost layer\n");
+  if((rn=computeextradius(nrad-1, rad->fct*rad->v[nrad-1],
+			  tr->atm.t[nrad-1]*tr->atm.tfct, ex))!=0)
+    transiterror(TERR_CRITICAL,
+		 "computeexradius()returned error code %i\n"
+		 ,rn);
+#endif
 
    //save current status if requested.
   savefile_extwn(tr);
