@@ -190,6 +190,10 @@ tau_ex(double *rmax,
 }
 
 
+/* \fcnfh
+   This function gives the expect result or the value of tau for an
+   atmosphere where tau remains constant
+*/
 double *mod_ctau(double prm, double *res, double star, double ipmax, double first, long nip, double toomuch)
 {
   //return result if that is what user wanted.
@@ -208,6 +212,34 @@ double *mod_ctau(double prm, double *res, double star, double ipmax, double firs
   while(--nip)
     tau[nip]=prm;
   tau[0]=prm;
+
+  return tau;
+}
+
+
+/* \fcnfh
+   This function gives the expect result or the value of tau for an
+   atmosphere where tau increase outwards.
+*/
+double *mod_itau(double prm, double *res, double star, double ipmax, double first, long nip, double toomuch)
+{
+  //return result if that is what user wanted.
+  if(res){
+    double rath=ipmax/star;
+    double ratl=first*ipmax/star;
+    *res=2*( exp(-prm*ipmax*first)*(ratl+1/prm) - exp(-prm*ipmax)*(rath+1/prm) ) / star / prm
+      + exp(-toomuch)*ratl*ratl
+      + (1-rath*rath);
+    return NULL;
+  }
+
+  static double *tau;
+  tau=(double *)calloc(nip,sizeof(double));
+
+  double delt = (1-first) / --nip;
+  while(nip--)
+    tau[nip] =  prm * ipmax * (first + nip * delt);
+  tau[0]=prm * ipmax * first;
 
   return tau;
 }
@@ -411,6 +443,8 @@ test_mod()
 
   status+=mod_tau(star, n_star, ipmax, n_ipmax, first, n_first, nip, n_nip,
 		  toomuch, &mod_ctau, "Constant Tau", .01);
+  status+=mod_tau(star, n_star, ipmax, n_ipmax, first, n_first, nip, n_nip,
+		  toomuch, &mod_itau, "Increasing Tau", .01);
 
   return status;
 }
