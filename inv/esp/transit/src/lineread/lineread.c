@@ -41,38 +41,27 @@
          sequential order and not per database as before. 012504. PMR
    1.3:  Version of TWII is now stored in the .inf file. 021204. PMR
    1.4:  Bug found and corrected that wrote a lot of masses instead of
-         1 per isotope. 021203. PMR.
+         1 per isotope. 041203. PMR.
+   1.5:  Change to directory structure and linking (several files
+         instead of one). 040904. PMR.
 */
 static int lineread_ver=1;
-static int lineread_rev=4;
+static int lineread_rev=5;
 
 
 
-#ifdef LINEFCN_RUNTIME
-
-/*
-  check_linefcn: NOT IMPLEMENTED YET. So far, this is done by static
-  #definitions in the header file. It look into which reader drivers
-  are available to read. In 'linefcn'(PREC_NREC *(*(*))()) the different
-  function names are returned. Also, the database names are returned in
-  'name'(char ***)
-
-  @returns: n number of functions found
-*/
-int check_nlinefcn(PREC_NREC *(*(*linefcn))(),char ***name)
-{
-}
-
-#else
+short gabby_dbread=0;
 /* Add sources and name for every new reader driver */
-#include "dbread_pands.c"
-
+#define dbread_nfcn 1
+PREC_NREC (*linefcn[dbread_nfcn])(char *,struct linedb **,float,float
+				    ,char *, PREC_ZREC ***,PREC_ZREC **
+				    ,PREC_ZREC **, int *, int *, char ***)={
+				      dbread_pands
+				    };
 char *dname[dbread_nfcn]={
-  "Partridge & Schwenke"
+  "Partridge & Schwenke. Water"
 };
 
-
-#endif
 
 /*
   synhelp: Help on syntax
@@ -128,14 +117,7 @@ int main(int argc,char *argv[])
 			       //file
   char ***isonames;
 
-#ifdef LINEFCN_RUNTIME
-  int dbread_nfcn;
-  PREC_NREC (*(*linefcn))(char *,struct linedb **,float,float
-			 ,char *, PREC_ZREC ***,PREC_ZREC **
-			 ,PREC_ZREC **, int *, int *, char ***);
 
-  dbread_nfcn=check_nlinefcn(linefcn);
-#endif
   if(dbread_nfcn<1)
     transiterror(TERR_CRITICAL,
 		 "No drivers for reading database selected or found!!");

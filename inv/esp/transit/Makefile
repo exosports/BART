@@ -63,6 +63,10 @@ transit: $(OBJ_TR) $(OBJ_UT) transit.c
 	$(CC) $(STDFLAGS) -o $@ $^ $(LIBS)
 	cp -pf transit $(BIN)
 
+lineread: $(OBJ_UT) dbread_pands.o transitstd.o lineread.c
+	$(CC) $(STDFLAGS) -o $@ $^ $(LIBS)
+	cp -pf lineread $(BIN)
+
 #$(OBJ_UT): %.o: %.c
 #	$(CC) -c $(STDFLAGS) -o $@ $<
 

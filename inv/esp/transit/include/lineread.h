@@ -35,16 +35,10 @@ extern struct linedb{
   short isoid;              //Isotope ID (Assumed to be in range)
 } linedb;
 
-short gabby_dbread=0;
+extern short gabby_dbread;
 
 #include <lineread_proto.h>
-
-#ifdef LINEFCN_RUNTIME
-/* To be implemented: Run-time check of available drivers.*/
-
-int check_nlinefcn(PREC_NREC *(*(*linefcn))(),char ***name);
-
-#else
+#include <dbread_pands_proto.h>
 
 /*
   dbread_*: Reading of different line databases.
@@ -57,54 +51,6 @@ int check_nlinefcn(PREC_NREC *(*(*linefcn))(),char ***name);
 	   -5 if final wavelength is too short.
            -6 if memory cannot be allocated
 */
-
-#if 0
-#define LINEREAD_DEF(database)                                           \
-PREC_NREC dbread_ ## database(                                           \
-                    /* If NULL then default value is used */             \
-                       char *filename,                                   \
-		    /* 2 pointers level in order to be able to allocate  
-		       memory */                                         \
-		       struct linedb **lines,                            \
-		    /* wavelengths in nanometer */                       \
-		       float wlbeg,                                      \
-		       float wlend,                                      \
-	            /* Filename for Partition function data, if NULL
-		       then default value is used */                     \
-		       char *Zfilename,                                  \
-		    /* For the following 3 parameter, the memory is
-		       allocated in the dbread_* functions, and the
-		       size is returned in the last parameters. That
-		       also implies an extra level of pointers */        \
-		    /* Partition function(isotope, temperature) */       \
-		       PREC_ZREC ***Z,                                   \
-		    /* Temperatures where Z was sampled. */              \
-		       PREC_ZREC **T,                                    \
-		    /* Isotopes mass in AMUs */                          \
-		       PREC_ZREC **isomass,                              \
-		    /* number of temperature points */                   \
-		       int *nT,                                          \
-		    /* number of isotopes */                             \
-		       int *nIso,                                        \
-		    /* Names of isotopes */                              \
-                       char ***isonames)
-
-/*
-  For every extra function you want lineread to read: Update
-  DBREAD_NFCN, add a LINEREAD_DEF() line and an entry in (*linefcn[]) 
-*/
-
-LINEREAD_DEF(pands);
-#endif
-#define dbread_nfcn 1
-PREC_NREC (*linefcn[dbread_nfcn])(char *,struct linedb **,float,float
-				  ,char *, PREC_ZREC ***,PREC_ZREC **
-				  ,PREC_ZREC **, int *, int *,char ***)={
-				    dbread_pands
-				  };
-
-
-#endif
 
 #endif
 

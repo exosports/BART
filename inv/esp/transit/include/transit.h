@@ -363,7 +363,7 @@ struct transit {		/* Main data structure */
 };
 
 
-/* Inline functions that won't be detected by cproto
+/* Inline functions that are now detected by cproto
 inline void transitdot(int thislevel, int verblevel);
 inline int newprofile(PREC_VOIGT **pr, int vf, int *lw, PREC_RES dwn, 
 PREC_VOIGT dop, PREC_VOIGT lor, float ta);

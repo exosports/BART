@@ -16,10 +16,6 @@
 #define resampley(fl,ny,...);                    \
           resample(0,fl,0,NULL,0,NULL,ny,__VA_ARGS__)
 
-/*
-inline void natcubsplinecoef(long n, double *x, double *y, double *h, double *D);
-inline int resample(const int getingx, const long flag, long nrefx, double *refx, long ndatx, double *datx, long ny, ...);
-*/
 
 #include <sampling_proto.h>
 

@@ -22,9 +22,6 @@
 #include <transit.h>
 #include <lineread.h>
 #include <math.h>
-#ifdef DBGPANDS
-#include "../transit/transitstd.c"
-#endif
 
 /* TD: Is not safe to use structre to read data, because it may
    contain padding */
