@@ -70,8 +70,8 @@ readstr_sp(char *line,		/* Input array */
 
 /* \fcnfh
    reads into 'line' from 'fp' up to 'max' characters, it check that the
-   last character read is '\n', if not then it assumes error and calls
-   errfcn with parameters 'max' and 'name'. If '\n' is found then it
+   last character read is '\\n', if not then it assumes error and calls
+   errfcn with parameters 'max' and 'name'. If '\\n' is found then it
    take it out from the returned value. the idea behind returning the
    first character is to quickly identify comment lines
 
@@ -80,14 +80,13 @@ readstr_sp(char *line,		/* Input array */
 	    -1 should never be returned.
 */
 inline char
-fgetupto(char *line,	/* Where input is stored, it has to have
-			   dimension 'max' */
+fgetupto(char *line,		/* Where input is stored, it has to have
+				   dimension 'max' */
 	 int max, 		/* dimension of 'line' */
 	 FILE *fp,		/* File pointer to read from */
-	 void (*errfcn)(int,char *, int), /* Error funtion to call
-					     in case a newline is
-					     not the last
-					     character read and we
+	 void (*errfcn)(int,char *, int), /* Error funtion to call in
+					     case a newline is not the
+					     last character read and we
 					     reached 'max' */
 	 char *name,	/* Second parameter with which errfcn is
 			   going to be called */
@@ -96,10 +95,9 @@ fgetupto(char *line,	/* Where input is stored, it has to have
   char *lp;
   int n=0;
 
-  lp=fgets(line,max,fp);
-  if(lp!=line)
+  if((lp=fgets(line,max,fp))==NULL)
     return 0;
-  //'n' does not include `\0'
+  //'n' does not include `\\0'
   while(*lp++)
     n++;
 
@@ -111,11 +109,18 @@ fgetupto(char *line,	/* Where input is stored, it has to have
     exit(EXIT_FAILURE);
   }
 
+  //regular line
   if(line[n-1]=='\n'){
     line[--n]='\0';
+    if(!n)
+      return '\n';
     return *line;
   }
+  //End of file without a newline
+  else if(n<max-1)
+    return *line;
 
+  //Line too large
   errfcn(max,name,other);
   return -1;
 }
@@ -372,7 +377,6 @@ double readd(FILE *fp,
   cur=str=(char *)calloc(salloc,sizeof(char));
 
   fflush(fp);
-  tcflush(fileno(fp),TCIFLUSH);
   while(fread(&car,1,1,fp)){
     if(cur-str==salloc){
       cur=(str=(char *)realloc(str,(salloc<<1)*sizeof(char)))+salloc;
@@ -440,7 +444,7 @@ linepad(char *out,		/* output, it has to have a length of at
   out[nc]='\0';
 
   while(o<nc){
-    //\linlabel{lastline}
+    //\linelabel{lastline}
     if(!*in){
       out[o]='\0';
       return NULL;
@@ -461,7 +465,7 @@ linepad(char *out,		/* output, it has to have a length of at
     o++;
   }
   //if there is only one word, which is larger than 'nc' then break with
-  //the string 'linepad_break'.
+  //the string 'linepad\_break'.
   if(!lasto){
     o=strlen(linepad_break);
     strcpy(out+nc-o,linepad_break);
