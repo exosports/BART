@@ -397,7 +397,7 @@ int extwn (struct transit *tr)
 
 
   //free memory that is no longer needed.
-  freemem_extinction(tr->ds.li,&tr->pi);
+  freemem_lineinfotrans(tr->ds.li,&tr->pi);
 
    //save current status if requested.
 
@@ -494,17 +494,21 @@ printone(struct transit *tr)
 
 
 /* \fcnfh
-   Frees space that is no longer needed after a succesfull execution of
-   extwn(). It also clear the progress indicator of function that
-   allocated the now freed data.
+   Frees structure allocated by extwn
 
    @returns 0 on success
 */
 int
-freemem_extinction(struct lineinfo *li,	/* Line information from
-					   readlineinfo() */
+freemem_extinction(struct extinction *ex, /* Extinciton info */
 		   long *pi)	/* progress indicator flags from which
 				   to clear */
 {
-  return free_lineinfotrans(li,pi);
+  //free arrays
+  free(ex->e[0][0]);
+  free(ex->e[0]);
+  free(ex->e);
+
+  //clear indicator and return success
+  *pi&=!(TRPI_EXTWN);
+  return 0;
 }

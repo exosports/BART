@@ -1175,7 +1175,7 @@ int readlineinfo(struct transit *transit) /* General parameters and
    @returns 0 on success
 */
 int
-free_lineinfotrans(struct lineinfo *li,
+freemem_lineinfotrans(struct lineinfo *li,
 		   long *pi)
 {
   int i;

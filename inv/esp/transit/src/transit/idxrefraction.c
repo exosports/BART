@@ -54,3 +54,21 @@ idxrefrac(struct transit *tr)
   tr->pi|=TRPI_IDXREFRAC;
   return 0;
 }
+
+
+/* \fcnfh
+   Fees memory for index of refraction structure
+
+   @returns 0 on success;
+ */
+int
+freemem_idexrefrac(struct idxref *ir,
+		   long *pi)
+{
+  //free arrays
+  free(ir->n);
+
+  //clear progress indicator and return success
+  *pi&=~(TRPI_IDXREFRAC);
+  return 0;
+}

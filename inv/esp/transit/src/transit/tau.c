@@ -163,3 +163,23 @@ printtau(struct transit *tr)
   exit(EXIT_SUCCESS);
 }
 
+
+/* \fcnfh
+   Frees tau structure
+
+   @returns 0 on success
+*/
+int
+freemem_tau(struct optdepth *tau,
+	    long *pi)
+{
+  //frees arrays
+  free(tau->t[0]);
+  free(tau->t);
+  free(tau->first);
+
+  //clear indicator and return success
+  *pi&=!(TRPI_TAU);
+  return 0;
+
+}

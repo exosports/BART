@@ -76,6 +76,10 @@ modulation(struct transit *tr)	/* Main structure */
   }
   gsl_interp_accel_free(acc);
 
+  //frees no longer needed memory.
+  freemem_idexrefrac(tr->ds.ir,&tr->pi);
+  freemem_extinction(tr->ds.ex,&tr->pi);
+  freemem_tau(tr->ds.tau,&tr->pi);
 
   //set progress indicator, and print output
   tr->pi&=TRPI_MODULATION;
@@ -113,3 +117,4 @@ printmod(struct transit *tr)
 
   exit(EXIT_SUCCESS);
 }
+

@@ -12,6 +12,6 @@ extern int checkrange P_((struct transit *tr, struct lineinfo *li));
 extern int readinfo_twii P_((struct transit *tr, struct lineinfo *li));
 extern int readdatarng P_((struct transit *tr, struct lineinfo *li));
 extern int readlineinfo P_((struct transit *transit));
-extern int free_lineinfotrans P_((struct lineinfo *li, long *pi));
+extern int freemem_lineinfotrans P_((struct lineinfo *li, long *pi));
 
 #undef P_
