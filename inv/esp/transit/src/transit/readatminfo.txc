@@ -824,7 +824,7 @@ readatmfile(FILE *fp,		/* File */
     if((sumq=checkaddmm(at->mm+r,r,isov,iso->isof,nmb,at->mass,isodo))
        <allowq)
       transiterror(TERR_WARNING,
-		   "In radius %g(%i), abundances don't add up to 1: %.9g"
+		   "In radius %g(%i), abundances don't add up to 1: %.9g\n"
 		   ,at->rads.v[r],r,sumq);
 
     //Calculate densities

@@ -39,6 +39,11 @@ tau(struct transit *tr)
   prop_samp *wn=&tr->wns;
   prop_samp *ip=&tr->ips;
   PREC_RES **e=tr->ds.ex->e[tr->tauiso];
+  PREC_RES (*fcn)(PREC_RES b,PREC_RES *rad,PREC_RES *refr,
+		  PREC_RES **ex,long nrad,long wn,
+		  PREC_RES *dt, gsl_interp_accel *acc)
+    =tr->sol->tauperb;
+
 
   //index, initial and final values
   long ii,wi;
@@ -62,7 +67,7 @@ tau(struct transit *tr)
   tau.toomuch=50;
   if(tr->ds.th->toomuch>0)
     tau.toomuch=tr->ds.th->toomuch;
-  tau.first=(long *)calloc(wn->n,sizeof(long));
+  tau.last=(long *)calloc(wn->n,sizeof(long));
   tau.t=(PREC_RES **)calloc(wn->n,sizeof(PREC_RES *));
   tau.t[0]=(PREC_RES *)calloc(wn->n*ip->n,sizeof(PREC_RES));
   for(ii=1;ii<wn->n;ii++)
@@ -104,11 +109,10 @@ tau(struct transit *tr)
     t=tau.t[wi];
 
     //For each resultant impact parameter
-    for(ii=inn-1;ii>=0;ii--){
-      if((t[ii]=rfct*tr->sol->tauperb(bb[ii]*riw,r,n,e,inn
-					  ,wi,dt,acc))
+    for(ii=0;ii<inn;ii++){
+      if((t[ii]=rfct*fcn(bb[ii]*riw,r,n,e,inn,wi,dt,acc))
 	 >tau.toomuch){
-	tau.first[wi]=ii;
+	tau.last[wi]=ii;
 	break;
       }
     }
@@ -167,7 +171,7 @@ printtoomuch(char *file, 	/* Filename to save to, a '-' is
   fprintf(out,"#Wavelength  Maximum_calculated_depth\n");
   for(w=0;w<wn->n;w++)
     fprintf(out,"%-14.10g%16.12g\n",wn->v[w]*wn->fct,
-	    rad->v[tau->first[w]]*rad->fct);
+	    rad->v[tau->last[w]]*rad->fct);
 
 }
 
@@ -182,7 +186,7 @@ printtau(struct transit *tr)
   FILE *out=stdout;
   prop_samp *rads=&tr->ips;
   PREC_RES **t=tr->ds.tau->t;
-  long *frst=tr->ds.tau->first;
+  long *last=tr->ds.tau->last;
   PREC_RES toomuch=tr->ds.tau->toomuch;
 
   transitcheckcalled(tr->pi,"printtau",1,
@@ -216,7 +220,7 @@ printtau(struct transit *tr)
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(out,"%12.6f%14.6f%17.7g\n"
 	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
-	    rad<frst[rn]?toomuch:t[rn][rad]);
+	    rad<last[rn]?toomuch:t[rn][rad]);
 
   exit(EXIT_SUCCESS);
 }
@@ -234,7 +238,7 @@ freemem_tau(struct optdepth *tau,
   //frees arrays
   free(tau->t[0]);
   free(tau->t);
-  free(tau->first);
+  free(tau->last);
 
   //clear indicator and return success
   *pi&=!(TRPI_TAU);

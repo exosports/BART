@@ -25,7 +25,7 @@
 
 static inline PREC_RES
 modulation1 (PREC_RES *tau,
-	     long first,
+	     long last,
 	     double toomuch,
 	     prop_samp *ip,
 	     struct geometry *sg,
@@ -47,7 +47,8 @@ modulation1 (PREC_RES *tau,
                                     of 'rad'
 */
 static inline PREC_RES
-totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
+totaltau(PREC_RES b,		/* differential impact parameter with
+				   respect to maximum value */
 	 PREC_RES *rad,		/* radius array */
 	 PREC_RES *refr,	/* refractivity index */
 	 PREC_RES **ex,		/* extinction[rad][nwn] */
@@ -156,7 +157,7 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
 */
 static PREC_RES
 modulationperwn (PREC_RES *tau,
-		 long first,
+		 long last,
 		 double toomuch,
 		 prop_samp *ip,
 		 struct geometry *sg,
@@ -167,7 +168,7 @@ modulationperwn (PREC_RES *tau,
 
   switch(exprlevel){
   case 1:
-    res=modulation1(tau,first,toomuch,ip,sg,acc);
+    res=modulation1(tau,last,toomuch,ip,sg,acc);
     break;
   default:
     res=0;
@@ -188,7 +189,7 @@ modulationperwn (PREC_RES *tau,
 */
 static inline PREC_RES
 modulation1 (PREC_RES *tau,
-	     long first,
+	     long last,
 	     double toomuch,
 	     prop_samp *ip,
 	     struct geometry *sg,
@@ -215,43 +216,37 @@ modulation1 (PREC_RES *tau,
   //\]\par
   //Let's integrate; for each of the planet's layer starting from the
   //outermost until the closest layer
-  first--;
-  for(i=ipn-1;i>first;i--){
-    //take azimuthal spacing equal to the radial spacing. Add one bin so
-    //that integration can be done until $2\pi$
+  last++;
+  for(i=0;i<last;i++){
     ipv[i]=ip->v[i]*ip->fct;
 
     rinteg[i]=exp(-tau[i])*ipv[i]*2.0*PI;
-
   }
   //fill two more lower part bins with 0. Only two to have a nice ending
   //spline and not unnecessary values.
-  first-=2;
-  if(first<0) first=-1;
-  for(;i>first;i--){
+  last+=2;
+  if(last>ipn) last=ipn;
+  for(;i<last;i++){
     ipv[i]=ip->v[i]*ip->fct;
     rinteg[i]=0;
   }
 
-  //set right position from the array beginning and number of items,
-  //check that we have enough layers to integrate, I can't imagine now
-  //how can that check be failed at this point.
-  first++;
-  ipn-=first;
-  if(ipn<3)
+  //Reduce last so that it has the number of elements to integrate
+  last--;
+  if(last<3)
     transiterror(TERR_CRITICAL,
 		 "Condition failed, less than 3 items (only %i) for radial\n"
 		 "integration.\n"
-		 ,first);
+		 ,last);
 
   //integrate in radii
 #ifdef _USE_GSL
   acc->cache = 0;
   acc->hit_count = 0;
   acc->miss_count = 0;
-  gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,ipn);
-  gsl_spline_init(spl,ipv+first,rinteg+first,ipn);
-  res=gsl_spline_eval_integ(spl,ipv[first],ipv[first+ipn-1],acc);
+  gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,last);
+  gsl_spline_init(spl,ipv,rinteg,last);
+  res=gsl_spline_eval_integ(spl,ipv[0],ipv[last-1],acc);
   gsl_spline_free(spl);
 
   //or err without GSL
@@ -270,7 +265,7 @@ modulation1 (PREC_RES *tau,
   //           -Area_{planet}}
   //          {\pi R_s^2}
   //\end{align}
-  res=PI*ipv[first+ipn-1]*ipv[first+ipn-1]-res;
+  res=PI*ipv[0]*ipv[0]-res;
 
   //divide by area of the star
   res/=PI*srad*srad;

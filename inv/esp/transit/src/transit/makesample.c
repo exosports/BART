@@ -47,11 +47,9 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   //'res' is the returned value
   //'n' and 'v' are auxiliary variables to produced sampling array
   int res=0;
-  PREC_NREC n;
   PREC_RES *v;
   double osd,si;
   _Bool nhint,dhint;
-  _Bool diffmax=hint->n<0||(!hint->n&&ref->n<0);
 
   //The ratio of what is acceptable to exceed as upper value and not
   //removing the last bin.
@@ -106,7 +104,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
     return -3;
   }
 
-  nhint=hint->n!=0;
+  nhint=hint->n>0;
   dhint=hint->d!=0;
 
   transitprint(21,verblevel,
@@ -125,7 +123,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   //if none has been hinted then use ref's
   if(!nhint&&!dhint){
     //If none of the ref exists then error
-    if((ref->d==0&&ref->n==0)){
+    if((ref->d==0&&ref->n<=0)){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "Spacing(%g) and number of elements(%i) were\n"
 		   "either both or none in the reference for %s sampling.\n"
@@ -154,9 +152,8 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
       }
       samp->n=ref->n;
       samp->d=0;
-      n=samp->n<0?-samp->n:samp->n;
-      samp->v=(PREC_RES *)calloc(n,sizeof(PREC_RES));
-      memcpy(samp->v,ref->v,n*sizeof(PREC_RES));
+      samp->v=(PREC_RES *)calloc(samp->n,sizeof(PREC_RES));
+      memcpy(samp->v,ref->v,samp->n*sizeof(PREC_RES));
       if(ref->o!=0)
 	transiterror(TERR_WARNING,
 		     "Fixed sampling array of length %i was referenced\n"
@@ -182,9 +179,8 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
 		  ,TRH_NAME(fl));
     samp->n=hint->n;
     samp->d=-1;
-    n=samp->n<0?-samp->n:samp->n;
-    samp->v=(PREC_RES *)calloc(n,sizeof(PREC_RES));
-    memcpy(samp->v,hint->v,n*sizeof(PREC_RES));
+    samp->v=(PREC_RES *)calloc(samp->n,sizeof(PREC_RES));
+    memcpy(samp->v,hint->v,samp->n*sizeof(PREC_RES));
     if(hint->o!=0)
       transiterror(TERR_WARNING,
 		   "Fixed sampling array of length %li was hinted\n"
@@ -196,7 +192,8 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
 
   //At this points make the sampling if it was not given as an
   //array.
-  n=samp->n=((1.0+okfinalexcess)*samp->f - si)/samp->d+1;
+  samp->n=((1.0+okfinalexcess)*samp->f - si)/samp->d+1;
+  if(samp->n<0) samp->n=-samp->n;
 
   //if there is an oversampling, check whether a value is not hinted
   if(hint->o<=0){
@@ -213,15 +210,13 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   else
     samp->o=hint->o;
 
-  n=(samp->n-1)*samp->o+1;
-  samp->n=diffmax?-n:n;
+  samp->n=(samp->n-1)*samp->o+1;
   osd=samp->d/(double)samp->o;
 
   //allocate and fill sampling array
-  v=samp->v=(PREC_RES *)calloc(n,sizeof(PREC_RES));
-  if(diffmax)
-    si=0;
+  v=samp->v=(PREC_RES *)calloc(samp->n,sizeof(PREC_RES));
 
+  PREC_NREC n=samp->n;
   *v=si;
   v+=--n;
   while(n)
@@ -289,7 +284,6 @@ int makewnsample(struct transit *tr)
   prop_samp fromwav;
   memset(&fromwav,0,sizeof(prop_samp));
   struct transithint *trh=tr->ds.th;
-  prop_samp *nsamp=&trh->wns;
   prop_samp *wsamp=&tr->wavs;
 
   transitcheckcalled(tr->pi,"makewnsample",1,
@@ -324,7 +318,7 @@ int makewnsample(struct transit *tr)
   fromwav.i-=tr->wnmi;
 
   //make the sampling
-  res=makesample(&tr->wns,nsamp,&fromwav,
+  res=makesample(&tr->wns,&trh->wns,&fromwav,
 		 TRH_WN,tr->wnmi,tr->wnmf);
 
   //set progress indicator if sampling was successful and return status
@@ -335,32 +329,33 @@ int makewnsample(struct transit *tr)
 
 
 /* \fcnfh
- Calls makesample with the appropiate parameters and set the flags for
- an impact parameter sampling
+   Calls makesample with the appropiate parameters and set the flags for
+   an impact parameter sampling
 
- @returns makesample() output
+   @returns makesample() output
 */
 int makeipsample(struct transit *tr)
 {
   //'res' will be the result status
   int res;
+  //So far, an array of ip cannot be specified it has to be equispaced.
   struct transithint *trh=tr->ds.th;
-  prop_samp *usamp=&trh->ips;
-  prop_samp rsamp={-tr->rads.n, -tr->rads.d, tr->rads.f, tr->rads.i,
+  prop_samp usamp={0, -trh->ips.d, trh->ips.f, trh->ips.i, 
+		   trh->ips.o, NULL, trh->ips.fct};
+  prop_samp rsamp={0, -tr->rads.d, tr->rads.f, tr->rads.i,
 		   tr->rads.o, NULL, tr->rads.fct};
 
-  if(usamp->n>0 || usamp->d>0 || usamp->f>usamp->i)
+  if( usamp.f<usamp.i)
     transiterror(TERR_SERIOUS,
-		 "Wrong specification of impact paameter, spacing has to be\n"
-		 "negative (not %g) amd of course initial(%g) number has to be\n"
-		 "bigger than final(%g)\n"
-		 ,usamp->d,usamp->i,usamp->f);
+		 "Wrong specification of impact parameter, final value(%g)\n"
+		 "has to be bigger than initial(%g)\n"
+		 ,usamp.f,usamp.i);
 
   transitcheckcalled(tr->pi,"makeipsample",1,
 		     "makeradsample",TRPI_MAKERAD);
 
   //make the sampling taking as reference the radius sampling
-  res=makesample(&tr->ips,usamp,&rsamp,
+  res=makesample(&tr->ips,&usamp,&rsamp,
 		 TRH_IPRM,0,0);
 
   //set progress indicator if sampling was successful and return status

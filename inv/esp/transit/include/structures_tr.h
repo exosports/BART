@@ -104,7 +104,7 @@ typedef struct {
 				   integration of optical depth
 				*/ 
        (PREC_RES *tau,
-	long first,
+	long last,
 	PREC_RES toomuch,
 	prop_samp *ip,
 	struct geometry *star,
@@ -220,7 +220,7 @@ struct savefiles {
 
 struct optdepth {
   PREC_RES **t;			/* Optical depth [wn][ip] */
-  long *first;			/* Index of the lowest impact parameter
+  long *last;			/* Index of the lowest impact parameter
 				   value, lower than this the optical
 				   depth is greater than '.toomuch'. It
 				   is naturally assumed that optical
