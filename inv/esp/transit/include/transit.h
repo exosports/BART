@@ -65,6 +65,7 @@
 				      only this isotope. To show all of
 				      them, is it either -1, or 0 if
 				      TRU_EXTINPERISO disabled */
+#define TRH_ST          0x00001000 /* Solution type */
 
 #define TRH_WAVO        0x01000000 /* Wavelength oversampling */
 #define TRH_WNO         0x02000000 /* Wavenumber oversampling */
@@ -223,6 +224,15 @@ enum isodo {unclear=0,atmfile,ignore,fixed};
 
 
 /***** Structures *****/
+
+struct transit;			/* Forward declaration */
+
+typedef struct {
+  const char *name;
+  int (*fcn)(struct transit *tr); /*  */
+} transit_ray_solution;
+extern const transit_ray_solution slantpath;
+
 
 typedef struct {          	/* One item per sampling element */
   PREC_NREC n;			/* number of elements */
@@ -423,6 +433,7 @@ struct transithint {		/* Structure with user hinted data that
 				   optical depth for all or some
 				   isotopes, TRU_EXTPERISO has to be
 				   on. */
+  char *solname;		/* Name of the type of solution */
 };
 
 
@@ -464,6 +475,7 @@ struct transit {		/* Main data structure */
 
   struct line_transition lt;	/* line transition */
 
+  transit_ray_solution *sol;	/* Solution type */
 
   struct {			/* data structures pointers, this is
 				   data that is not required for the
@@ -477,6 +489,7 @@ struct transit {		/* Main data structure */
     struct idxref *ir;
   }ds;
 };
+
 
 
 /***** Prototypes *****/

@@ -44,6 +44,11 @@ static int revision=-1;
 extern int verblevel;              /* verbose level, greater than 10 
 				      is only for debuging */
 
+const static transit_ray_solution *raysols[] = {
+  &slantpath,
+  NULL
+};
+
 //\fcnfh
 int main (int argc,		/* Number of variables */
 	  char **argv)		/* Variables*/
@@ -172,9 +177,11 @@ int main (int argc,		/* Number of variables */
 
 
   //Initialization of optical depth parameters
+  char defsol[]="slant path";
+  trh.solname=strdup(defsol);
   trh.tauiso=0;
   trh.toomuch=20;
-  trh.na|=TRH_TOOMUCH|TRH_TAUISO;
+  trh.na|=TRH_TOOMUCH|TRH_TAUISO|TRH_ST;
   trh.fl|=TRU_OUTTAU;
 
 
@@ -185,6 +192,18 @@ int main (int argc,		/* Number of variables */
 		 ,rn);
   if(trh.na&TRH_FO)
     transitaccepthint(transit.f_out,trh.f_out,trh.fl,TRH_FO);
+  //Accept hinted solution type if it exists
+  if(!(trh.na&TRH_ST)||acceptsoltype(&transit.sol,trh.solname)!=0){
+    transit_ray_solution **sol=(transit_ray_solution **)raysols;
+    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		 "Solution kind '%s' is invalid!\n"
+		 "Currently Accepted are:\n"
+		 ,trh.solname);
+    while(*sol)
+      transiterror(TERR_SERIOUS|TERR_NOPREAMBLE|TERR_ALLOWCONT,
+		   " %s\n",(*sol++)->name);
+    exit(EXIT_FAILURE);
+  }
 
   //Presentation
   char revname[20];
@@ -534,6 +553,12 @@ int processparameters(int argc, /* number of command line arguments */
      "(this is the default)\n"},
 
     {NULL,HELPTITLE,0,
+     NULL,"RESULTING RAY OPTIONS:"},
+    {"solution",required_argument,'s',
+     "sol_name","Name of the kind of output solution ('slant path'\n"
+     "is currently the only availabale alternative)"},
+
+    {NULL,HELPTITLE,0,
      NULL,"OBSERVATIONAL OPTIONS:"},
     {"telres",required_argument,'t',
      "width","Gaussian width of telescope resolution in nm"},
@@ -564,6 +589,10 @@ int processparameters(int argc, /* number of command line arguments */
 		 ,rn,optarg);
 
     switch(rn){
+    case 's':
+      hints->solname=(char *)realloc(hints->solname,strlen(optarg)+1);
+      strcpy(hints->solname,optarg);
+      break;
     case CLA_ATMOSPHERE:	//Atmosphere file
       hints->f_atm=(char *)realloc(hints->f_atm,strlen(optarg)+1);
       strcpy(hints->f_atm,optarg);
@@ -796,4 +825,28 @@ int processparameters(int argc, /* number of command line arguments */
   }
 
   return 0;
+}
+
+
+/* \fcnfh
+   Look for a match in the solution name
+
+   @returns 0 on success
+            -1 if no matching name was available
+ */
+int acceptsoltype(transit_ray_solution **sol,
+		  char *hname)
+{
+  *sol=(transit_ray_solution *)raysols[0];
+  int len;
+
+  len=strlen(hname);
+
+  while(*sol){
+    if(strncasecmp(hname,(*sol)->name,len)==0)
+      return 0;
+    *sol++;
+  }
+
+  return -1;
 }
