@@ -36,6 +36,7 @@ version 4.7b of cproto, which supports inline functions)
    make proto
    make transit
    make lineread
+   make install
 
 ========================================================================
 EXECUTING LINEREAD:
