@@ -11,7 +11,7 @@ extern int getinifinasctwii P_((double *ini, double *fin, FILE *fp, char *file))
 extern int checkrange P_((struct transit *tr, struct lineinfo *li));
 extern int readinfo_twii P_((struct transit *tr, struct lineinfo *li));
 extern int readdatarng P_((struct transit *tr, struct lineinfo *li));
-extern int readlineinfo P_((struct transit *transit));
+extern int readlineinfo P_((struct transit *tr));
 extern int freemem_isotopes P_((struct isotopes *iso, long *pi));
 extern int freemem_lineinfotrans P_((struct lineinfo *li, long *pi));
 
