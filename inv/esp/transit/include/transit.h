@@ -86,19 +86,20 @@
 					obtained from stdin */
 #define TRU_ATM1PBITS   0x00000f00 /* Bits that define one point
 				      atmospheric behavior */
+#define TRU_SAMPBITS    0x00007000
+#define TRU_SAMPLIN	0x00001000
+#define TRU_SAMPSPL     0x00002000
 #define TRU_ATMBITS     0x0000ff00 /* Bits that define atmospheric
 				      parameters */
 
 
-#define TRU_SAMPBITS    0x00007000
-#define TRU_SAMPLIN	0x00001000
-#define TRU_SAMPSPL     0x00002000
-
-#define TRU_EXTBITS     0x00038000
-#define TRU_EXTINPERISO 0x00008000 /* There won't be a calculation of
+#define TRU_EXTINPERISO 0x00010000 /* There won't be a calculation of
 				      extinction in a per isotope array,
 				      all of them should be combined */
+#define TRU_EXTBITS     0x000f0000
 
+#define TRU_OUTTAU      0x00100000 /* Print out optical depth */
+#define TRU_TAUBITS     0x00f00000
 
 /* Progress indicator flags */
 #define TRPI_READINFO   0x000001 /* readinfofile() completed */

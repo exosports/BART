@@ -59,6 +59,8 @@ tau(struct transit *tr)
 		     "extwn",TRPI_EXTWN
 		     );
 
+  transitacceptflag(tr->fl,tr->ds.th->fl,TRU_TAUBITS);
+
   //set tau structures' value
   tau.toomuch=50;
   if(tr->ds.th->na&TRH_TOOMUCH&&tr->ds.th->toomuch>0)
@@ -85,8 +87,12 @@ tau(struct transit *tr)
     t=tau.t[wi];
 
     //For each resultant impact parameter
-    for(ii=inn-1;ii>=0;ii--)
-      t[ii]=totaltau(bb[ii],r,n,e,dt,rnn,tau.iso,wi);
+    for(ii=inn-1;ii>=0;ii--){
+      if((t[ii]=totaltau(bb[ii],r,n,e,dt,rnn,tau.iso,wi))>tau.toomuch){
+	tau.first[wi]=ii;
+	break;
+      }
+    }
   }
 
   tr->pi|=TRPI_TAU;

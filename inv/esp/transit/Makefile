@@ -40,11 +40,12 @@ CPUOPTION   = -mcpu=athlon-tbird
 #CPUOPTION   = -mcpu=pentium3
 EXTPRM      =
 WARNFLAGS   = -Wall -Winline
-GSLPRM      = -D_USE_GSL -lgsl -lblas
+GSLPRM      = -D_USE_GSL
+GSLLIB      = -lgsl -lblas
 #-W -Werror
 INCLFLAGS   = -I/usr/X11R6/include -I/home/devel/include -I$(INCL)
 LIBFLAGS    = -L/usr/X11R6/lib -L/home/devel/lib
-CPROTOFLAGS = $(INCLFLAGS) -f 3 -m -e -i -X 0
+CPROTOFLAGS = $(INCLFLAGS) $(GSLPRM) -f 3 -m -e -i -X 0
 
 NODBGFLAGS  = -O2
 DBGFLAGS    = -g3 -gdwarf-2
@@ -57,7 +58,7 @@ STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic \
 	      -std=c99 $(EXTPRM) $(CPUOPTION) $(GSLPRM) $(CFLAGS)
 
 #libraries to link
-LIBS  = -lX11 -lm
+LIBS  = -lX11 -lm $(GSLLIB)
 
 
 
