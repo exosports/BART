@@ -63,21 +63,21 @@ tau(struct transit *tr)
 
   transitacceptflag(tr->fl,tr->ds.th->fl,TRU_TAUBITS);
 
+  //number of elements
+  wnn=wn->n;
+  inn=ip->n;
+  rnn=rad->n;
+
   //set tau structures' value
   const int taulevel=tr->taulevel=tr->ds.th->taulevel;
   tau.toomuch=50;
   if(tr->ds.th->toomuch>0)
     tau.toomuch=tr->ds.th->toomuch;
-  tau.last=(long *)calloc(wn->n,sizeof(long));
-  tau.t=(PREC_RES **)calloc(wn->n,sizeof(PREC_RES *));
-  tau.t[0]=(PREC_RES *)calloc(wn->n*ip->n,sizeof(PREC_RES));
-  for(ii=1;ii<wn->n;ii++)
+  tau.last=(long *)calloc(wnn,sizeof(long));
+  tau.t=(PREC_RES **)calloc(wnn,sizeof(PREC_RES *));
+  tau.t[0]=(PREC_RES *)calloc(wnn*ip->n,sizeof(PREC_RES));
+  for(ii=1;ii<wnn;ii++)
     tau.t[ii]=tau.t[0]+ii*ip->n;
-
-  //final index or number of elements
-  wnn=wn->n;
-  inn=ip->n;
-  rnn=rad->n;
 
   //to temporarily store a per radius info, and the ratio of the ip and
   //rad units
@@ -132,7 +132,7 @@ tau(struct transit *tr)
 
 	transitprint(3,verblevel,
 		     "Last Tau(bb=%9.3g, wn=%9.3g): %10.4g\n"
-		     ,bb[ri-1],t[ri-1]);
+		     ,bb[ri-1],wn->v[wi],t[ri-1]);
 	//while the extinction at a radius bigger than the impact
 	//parameter is not computed.. go for it
 	do{
