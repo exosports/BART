@@ -540,6 +540,10 @@ getmnfromfile(FILE *fp,
 			 tr->f_line,isof[i].m);
 	  if(isodo[i]!=ignore)
 	    isodo[i]=atisodo;
+	  if(isodo[i]==ignore)
+	    transitprint(2,verblevel,
+			 "Ignoring isotope %s (%g AMU)\n"
+			 ,isof[i].n,isof[i].m);
 	  break;
 	}
       }
