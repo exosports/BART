@@ -43,8 +43,8 @@
    3.0: Extinction due only to molecules is working fine!!
  */
 int version=3;
-int revision=0;
-int version_rc=-1;
+int revision=1;
+int version_rc=1;
 
 
 #endif /* _VERSION_TR_H */
