@@ -109,6 +109,8 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_CLOUDFCT,
     CLA_CLOUDE,
     CLA_TRANSPARENT,
+    CLA_DETEXT,
+    CLA_DETTAU,
   };
 
   //General help-option structure
@@ -267,15 +269,18 @@ int processparameters(int argc, /* number of command line arguments */
     {"minelow",CLA_MINELOW,required_argument,"0",
      "low-energy","Only use transitions with this minimum low energy\n"
      "(in cm-1)"},
-    {"cloudrad",CLA_CLOUDRAD,required_argument,"0,0",
+    {"cloudrad",CLA_CLOUDRAD,required_argument,NULL,
      "radup,raddown","Make a cloud appear linearly from radup to raddown\n"
      "Units specified with '--cloudfct', or use radfct if there is none"},
-    {"cloudfct",CLA_CLOUDFCT,required_argument,"0",
+    {"cloudfct",CLA_CLOUDFCT,required_argument,NULL,
      "factor","cloud radius values specified by '--cloudrad' will be\n"
      " multiplied by this to convert to cgs units\n"},
-    {"cloudext",CLA_CLOUDE,required_argument,"0",
+    {"cloudext",CLA_CLOUDE,required_argument,NULL,
      "extinction","Maximum extinction of the cloud, which opacity will\n"
      "linearly increase from 'radup' to 'raddown'\n"},
+    {"detailext",CLA_DETEXT,required_argument,NULL,
+     "filename:wn1,wn2,...","Save extinction at the particular\n"
+     "wavenumbers in the specified filename"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
@@ -298,6 +303,9 @@ int processparameters(int argc, /* number of command line arguments */
     {"modlevel",CLA_MODLEVEL,required_argument,"1",
      "integer","Do a level integer integration to compute modulation\n"
      "1 doesn't consider limb darkening.\n"},
+    {"detailtau",CLA_DETTAU,required_argument,NULL,
+     "filename:wn1,wn2,...","Save optical depth at the particular\n"
+     "wavenumbers in the specified filename"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"OBSERVATIONAL OPTIONS:"},
@@ -343,6 +351,15 @@ int processparameters(int argc, /* number of command line arguments */
   char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
   double rf;
 
+  //preset values for detailed output
+  struct detailfld *det=&hints->det.tau;
+  strcpy(det->name,"optical depth");
+  det->ref=(double *)calloc(1,sizeof(double));
+  det=&hints->det.ext;
+  strcpy(det->name,"extinction");
+  det->ref=(double *)calloc(1,sizeof(double));
+  
+
   procopt_debug=1;
   opterr=0;
   while(1){
@@ -355,6 +372,29 @@ int processparameters(int argc, /* number of command line arguments */
 		 ,rn,optarg);
 
     switch(rn){
+    case CLA_DETTAU:
+      det=&hints->det.tau;
+    case CLA_DETEXT:
+      if(rn==CLA_DETEXT)
+	det=&hints->det.ext;
+
+      //search for filename and save it
+      free(det->ref);
+      rn=sizeof(det->file);
+      if(strlen(optarg)<rn) rn=strlen(optarg);
+      i=0;
+      while(i<rn)
+	if(optarg[i++]==':') break;
+      optarg[i-1]='\0';
+      strcpy(det->file,optarg);
+      //get wavenumbers to save
+      det->n=getad(0,',',optarg+i,&det->ref);
+      if(det->n<1||i==rn-1)
+	transiterror(TERR_SERIOUS,
+		     "Bad format for detailed %s parameter, no valid"
+		     " wavenumbers\n"
+		     ,det->name);
+      break;
     case CLA_MINELOW:
       hints->minelow=atof(optarg);
       break;
@@ -763,6 +803,12 @@ acceptgenhints(struct transit *tr) /* transit structure */
   //set hinted geometry hints
   setgeomhint(tr);
 
+  //accept hints for detailed output
+  static struct detailout det;
+  memcpy(&det,&th->det,sizeof(struct detailout));
+  tr->ds.det=&det;
+
+  //return success
   return 0;
 }
 
