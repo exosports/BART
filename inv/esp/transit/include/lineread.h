@@ -25,6 +25,7 @@
 
 #include <math.h>
 #include <getopt.h>
+#include <transit.h>
 
 /* DO NOT change the following structures, not even the order of its
    components. Which is used in lineread:: main():: writing loop */
