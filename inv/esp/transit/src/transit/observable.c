@@ -66,7 +66,7 @@ modulation(struct transit *tr)	/* Main structure */
 
   //integrate for each wavelength
   transitprint(1,verblevel,
-	       "Integrating for each wavelength...\n");
+	       "\nIntegrating for each wavelength...\n");
 
   int nextw=wn->n/10;
 
