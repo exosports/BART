@@ -54,7 +54,7 @@ tau(struct transit *tr)
   PREC_RES *n=tr->ds.ir->n;
   PREC_RES *r=rad->v;
   PREC_RES *t;
-  PREC_ATM *temp=tr->ds.at->atm.t,tfct=tr->ds.at->atm.tfct;
+  PREC_ATM *temp=tr->atm.t,tfct=tr->atm.tfct;
 
   transitcheckcalled(tr->pi,"tau",2,
 		     "idxrefrac",TRPI_IDXREFRAC,
@@ -95,7 +95,7 @@ tau(struct transit *tr)
 	       "Calculating optical depth at various radius...\n");
 
   if(ex->periso)
-    transitprint(1,verblevel,
+    transitprint(2,verblevel,
 		 " Note that I'm computing only for isotope '%s', others"
 		 "were ignored\n"
 		 ,tr->ds.iso->isof[tr->tauiso].n);
@@ -103,10 +103,20 @@ tau(struct transit *tr)
   //to store reordered extinction
   PREC_RES er[rnn];
   _Bool *comp=ex->computed;
+  int lastr=rnn-1;
+  int wnextout=(int)(wnn/10.0);
 
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
     t=tau.t[wi];
+
+    //print output every 10\% that is ready
+    if(wi>wnextout){
+      transitprint(2,verblevel,
+		   "\r%li%%"
+		   ,100*wi/wnn);
+      wnextout+=(int)(wnn/10.0);
+    }
 
     //Put the extinction values in a new array, the values may be
     //temporarily overwritten by (fnc)(), but they should come back as
@@ -116,12 +126,28 @@ tau(struct transit *tr)
 
     //For each resultant impact parameter
     for(ri=0;ri<inn;ri++){
-      if(!comp[ri] &&
-	 (rn=computeextradius(ri,r[ri]*rfct,temp[ri]*tfct,ex))!=0)
-	transiterror(TERR_CRITICAL,
-		     "computeextradius() return error code %i while\n"
-		     "computing radius #%i: %g\n"
-		     ,rn,r[ri]*rfct);
+
+      //Compute extinction at new radius if required
+      if(bb[ri]*ip->fct<r[lastr]*rfct){
+
+	//while the extinction at a radius bigger than the impact
+	//parameter is not computed.. go for it
+	do{
+	  if(!comp[--lastr]){
+	    //compute a new extinction at given radius printing error if
+	    //something happen
+	    if((rn=computeextradius(lastr,r[lastr]*rfct,temp[lastr]*tfct,ex))!=0)
+	      transiterror(TERR_CRITICAL,
+			   "computeextradius() return error code %i while\n"
+			   "computing radius #%i: %g\n"
+			   ,rn,r[lastr]*rfct);
+	    //otherwise, update the value of the extinction at the right place.
+	    else
+	      er[lastr]=e[lastr][wi];
+	  }
+	}while(bb[ri]*ip->fct<r[lastr]*rfct);
+      }
+
       if( (t[ri] = rfct * fcn(bb[ri]*riw,r,n,er,rnn,taulevel)) > tau.toomuch){
 	tau.last[wi]=ri;
 	break;
@@ -131,7 +157,7 @@ tau(struct transit *tr)
   }
 
   transitprint(1,verblevel,
-	       "Optical depth calculated up to %g[cm-1]\n"
+	       "\r DONE\nOptical depth calculated up to %g[cm-1]\n"
 	       ,tr->ds.tau->toomuch);
 
   //Print lowest impact parameter before optical gets too big
@@ -174,9 +200,9 @@ printtoomuch(char *file, 	/* Filename to save to, a '-' is
 		 ,out==stdout?"STDOUT":file);
 
   transitprint(1,verblevel,
-	       "\nPrinting in '%s' maximum depth before optical depth got\n"
-	       "larger than %g and therefore impact parameter was not\n"
-	       "calculated for deeper layers.\n"
+	       "\nPrinting in '%s'\n"
+	       "maximum depth before optical depth got larger than %g, and\n"
+	       "therefore impact parameter was not calculated for deeper layers.\n"
 	       ,file,tau->toomuch);
 
   fprintf(out,"#Wavelength  Maximum_calculated_depth\n");
@@ -202,6 +228,7 @@ printtau(struct transit *tr)
 
   transitcheckcalled(tr->pi,"printtau",1,
 		     "tau",TRPI_TAU);
+  tr->ot=tr->ds.th->ot;
 
   //open file
   if(tr->f_out&&tr->f_out[0]!='-')
@@ -211,19 +238,27 @@ printtau(struct transit *tr)
 		 "Cannot open '%s' for writing optical depth.\n"
 		 ,out==stdout?"STDOUT":tr->f_out);
 
-  long rad=
-    askforposl("Radius at which you want to print the optical depth(%li - %li): "
-	       ,1,rads->n)-1;
-  if(rad>rads->n){
-    fprintf(stderr,"Value out of range, try again\n");
-    printtau(tr);
+  long rad;
+  if(tr->ot<0){
+    rad=askforposl("Radius at which you want to print the optical depth(%li - %li): "
+		   ,1,rads->n)-1;
+    if(rad>rads->n){
+      fprintf(stderr,"Value out of range, try again\n");
+      printtau(tr);
+    }
   }
+  else
+    rad=tr->ot;
 
   transitprint(1,verblevel,
-	       "\nPrinting optical depth for radius %li (at %gcm) in '%s'\n"
-	       "Optical depth calculated up to %g[cm-1]\n"
+	       "\nPrinting optical depth for radius %li (at %gcm) in\n"
+	       " '%s'\n"
 	       ,rad+1,rads->fct*rads->v[rad]
-	       ,tr->f_out?tr->f_out:"standard output",toomuch);
+	       ,tr->f_out?tr->f_out:"standard output");
+
+  transitprint(2,verblevel,
+	       "Optical depth calculated up to %g[cm-1]\n"
+	       ,toomuch);
 
   //print!
   fprintf(out,
