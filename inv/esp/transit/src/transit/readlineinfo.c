@@ -33,19 +33,19 @@ static inline void datafileBS(FILE *fp, PREC_NREC initial, PREC_NREC final,
 			      double lookfor, PREC_NREC *resultp,
 			      int reclength); 
 
-#define checkprepost(pointer,pre,omit,post) do{                           \
-   if(pre)                                                                \
-     transiterror(TERR_SERIOUS,                                           \
-                  "Pre-condition failed on line %i(%s) while reading:\n"  \
-		  "%s\nTWII_Ascii format most likely invalid\n"           \
-                  ,__LINE__,__FILE__,line);                               \
-   while(omit)                                                            \
-     pointer++;                                                           \
-   if(post)                                                               \
-     transiterror(TERR_SERIOUS,                                           \
-                  "Pre-condition failed on line %i(%s) while reading:\n"  \
-		  "%s\nTWII_Ascii format most likely invalid\n"           \
-                  ,__LINE__,__FILE__,line);                               \
+#define checkprepost(pointer,pre,omit,post) do{                            \
+   if(pre)                                                                 \
+     transiterror(TERR_SERIOUS,                                            \
+                  "Pre-condition failed on line %i(%s)\n while reading:\n" \
+		  "%s\n\nTWII_Ascii format most likely invalid\n"          \
+                  ,__LINE__,__FILE__,line);                                \
+   while(omit)                                                             \
+     pointer++;                                                            \
+   if(post)                                                                \
+     transiterror(TERR_SERIOUS,                                            \
+                  "Post-condition failed on line %i(%s)\n while reading:\n"\
+		  "%s\n\nTWII_Ascii format most likely invalid\n"          \
+                  ,__LINE__,__FILE__,line);                                \
                                              }while(0)
 
 
@@ -283,7 +283,7 @@ readtwii_ascii(FILE *fp,
 	=='#'||rc=='\n');
   if(!rc) notyet(li->asciiline,tr->f_line);
   ndb=strtol(line,&lp,0);
-  checkprepost(lp,errno&ERANGE,*lp==' ',*lp!='\0');
+  checkprepost(lp,errno&ERANGE,*lp==' '||*lp=='\t',*lp!='\0');
   //Allocate pointers according to the number of databases
   iso->db=(prop_db *)calloc(ndb,sizeof(prop_db));
   li->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
@@ -299,7 +299,7 @@ readtwii_ascii(FILE *fp,
 
     //go to next field and get number of temperatures and isotopes
     checkprepost(lp,0,*lp==' '||*lp=='\t',*lp=='\0');
-    rn=getnl(2,' ',lp,&nT,&nIso);
+    rn=getnl(2,' ',lp,&nIso,&nT);
     checkprepost(lp,rn!=2,0,0);
     li->db[db].t=nT;
     iso->db[db].i=nIso;
@@ -318,11 +318,13 @@ readtwii_ascii(FILE *fp,
       isov=li->isov=(prop_isov *)calloc(iso->n_i,sizeof(prop_isov));
       iso->isof=(prop_isof *)calloc(iso->n_i,sizeof(prop_isof));
       iso->isov=(prop_isov *)calloc(iso->n_i,sizeof(prop_isov));
+      iso->isodo=(enum isodo *)calloc(iso->n_i,sizeof(enum isodo));
     }
     else{
       isov=li->isov=(prop_isov *)realloc(li->isov,iso->n_i*sizeof(prop_isov));
       iso->isof=(prop_isof *)realloc(iso->isof,iso->n_i*sizeof(prop_isof));
       iso->isov=(prop_isov *)realloc(iso->isov,iso->n_i*sizeof(prop_isov));
+      iso->isodo=(enum isodo *)realloc(iso->isodo,iso->n_i*sizeof(enum isodo));
     }
 
     //Allocate cross section and temperature for this database. set
@@ -991,7 +993,7 @@ int readdatarng(struct transit *tr, /* General parameters and
 
     //Warn if EOF was found. This should be OK if you want to read
     //until the very last line.
-    if(!rn){
+    if(!rn||!rc){
       transiterror(TERR_WARNING,
 		   "End-of-file in datafile '%s'.\n"
 		   "Last wavelength read (%f) was in record %i.\n"
@@ -1149,7 +1151,7 @@ int readlineinfo(struct transit *tr) /* General parameters and
 
 
 #ifndef NODEBUG_TRANSIT
-  rn=97; //Some random number to test
+  rn=1; //Some random number to test
   struct line_transition *lt=&tr->ds.li->lt;
   transitDEBUG(21,verblevel,
 	       " * And the record %li has the following info\n"
