@@ -35,13 +35,14 @@
  @returns optical depth
 */
 static inline PREC_RES
-totaltau(PREC_RES b,		/* impact parameter */
+totaltau(PREC_RES b,		/* impact parameter, in cgs */
 	 PREC_RES *rad,		/* radius array */
 	 PREC_RES *refr,	/* refractivity index */
 	 PREC_RES ***ex,	/* extinction[rad][iso][nwn] */
 	 long nrad,		/* number of radii elements */
 	 short iso,		/* isotope chosen */
 	 long wn,		/* wavenumber looked */
+	 PREC_RES fct,		/* factor to make the radii in cgs */
 	 PREC_RES *dt,		/* differential optical depth [rad].
 				   Auxiliary array */
 	 gsl_interp_accel *acc)	/* accelerating pointer. Auxiliary array
@@ -55,10 +56,11 @@ totaltau(PREC_RES b,		/* impact parameter */
   int rs;
 
 
+
   //Look for closest approach radius
   i=0;
   while(1){
-    r0=b/lineinterp(r0a,rad,refr,nrad);
+    r0=b/lineinterp(r0a,rad,refr,nrad)/fct;
     if(r0==r0a)
       break;
     if(i++>maxiterations)
@@ -69,9 +71,9 @@ totaltau(PREC_RES b,		/* impact parameter */
     r0a=r0;
   }
 
-  //get bin value 'rs' such that r0 is between rad[rs-1] inclusive and
-  //rad[rs] exclusive.
-  rs=binsearch(rad,0,nrad-1,r0)+1;
+  //get bin value 'rs' such that r0/fct is between rad[rs-1] inclusive
+  //and rad[rs] exclusive.
+  rs=binsearch(rad,0,nrad-1,r0/fct)+1;
 
   //return 0 optical depth if it goes to less than three layers (this is
   //for the spline integration to work, an alternative method could be
@@ -102,7 +104,7 @@ totaltau(PREC_RES b,		/* impact parameter */
   //}_{\mathrm{numerical}}
   //\]\par
   //First for the analitical part of the integral
-  PREC_RES analiticfrac=(rad[rs]-r0);
+  PREC_RES analiticfrac=(rad[rs]*fct-r0);
   res=ex[i][iso][wn]*sqrt(2*r0*analiticfrac);
 
   //And now for the numerical integration.\par
@@ -110,7 +112,7 @@ totaltau(PREC_RES b,		/* impact parameter */
 #ifdef _USE_GSL
 
   for(i=rs;i<nrad;i++){
-    r0a=b/refr[i]/rad[i];
+    r0a=b/refr[i]/rad[i]/fct;
     transitASSERT(r0a>1,
 		  "Oops! assert condition not met, b/(nr)=%g",r0a);
 
@@ -123,7 +125,7 @@ totaltau(PREC_RES b,		/* impact parameter */
   acc->miss_count = 0;
   gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
   gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
-  res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],acc);
+  res+=fct*gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],acc);
   gsl_spline_free(spl);
 
   //Without {\bf GSL} is currently not implemented. Output is dependent in an

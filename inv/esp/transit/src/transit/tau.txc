@@ -95,7 +95,7 @@ tau(struct transit *tr)
 
     //For each resultant impact parameter
     for(ii=inn-1;ii>=0;ii--){
-      if((t[ii]=tr->sol->tauperb(bb[ii],r,n,e,inn,tau.iso,wi,dt,acc))
+      if((t[ii]=tr->sol->tauperb(bb[ii]*ip->fct,r,n,e,inn,tau.iso,wi,rad->fct,dt,acc))
 	 >tau.toomuch){
 	tau.first[wi]=ii;
 	break;

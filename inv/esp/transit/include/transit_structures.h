@@ -39,6 +39,7 @@ typedef struct {
 	long nrad,		/* number of radii elements */
 	short iso,		/* isotope chosen */
 	long wn,		/* wavenumber looked */
+	PREC_RES fct,		/* factor to make the radii in cgs */
 	PREC_RES *dt,		/* differential optical depth [rad].
 				   Auxiliary array */
 	gsl_interp_accel *acc);	/* accelerating pointer. Auxiliary array
