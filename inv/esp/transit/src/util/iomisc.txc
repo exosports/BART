@@ -19,14 +19,161 @@
  * 02111-1307, USA.
  */
 
+char *linepad_break="-";
+
+
+
 /* \fcnfh
    read a double value
 
    @returns 0 on success
             first character read if it was not appropiate
 */
-char readd(FILE *fp, 
-	   double *f)
+char readd(FILE *fp,
+	   double *f);
+{
+  char *str,*cur,car;
+  int salloc=8;
+  _Bool atleast=0;
+  enum {ent=0x1,dec=0x2,man=0x4,unsig=0x8} stage=ent|unsig;
+
+  cur=str=(char *)calloc(salloc,sizeof(char));
+
+  tcflush(fileno(fp),TCIFLUSH);
+  while(fread(&car,1,1,fp)){
+    if(cur-str==salloc){
+      cur=(str=(char *)realloc(str,(salloc<<1)*sizeof(char)))+salloc;
+      salloc<<=1;
+    }
+    if(*cur=='\n')
+      break;
+    if(*cur=='e'||*cur=='E'){
+      if(!atleast)
+	return *cur;
+      if(stage&man)
+	break;
+      stage=man|unsig;
+    }
+    else if(*cur=='+'||*cur=='-'){
+      if(!stage&unsig){
+	if(!atleast)
+	  return *cur;
+	break;
+      }
+      stage&=^unsig;
+    }
+    else if(*cur=='.'){
+      if(!stage&ent)
+	break;
+      stage=dec;
+    }
+    else if(isdigit(*str)){
+      atleast=1;
+      stage&=^unsig;
+    }
+    else
+      break;
+
+    *cur++=car;
+  }
+
+  *cur='\0';
+  *f=atod(str);
+  return 0;
+}
+
+
+/* \fcnfh
+   Align a line by adding spaces in between words, returns a pointer to
+   the position right after the the last word. All newlines and tabs are
+   cosidered spaces. It doesn't add a newline at the end of lines.
+
+@returns pointer to the beggining of new word
+         NULL if all is processed, in this case it doesn't do alignement.
+*/
+char *
+linepad(char *out,		/* output, it has to have a length of at
+				   least nc+1 */
+	int nc,			/* number of columns */
+	char *in)		/* input array */
+{
+  //word count 'wc' initializes to zero, it will be counting
+  //interspaces.'out' index 'o' also initialize to zero.
+  int wc=0,o=0,lasto=0;
+  _Bool prev;
+  out[nc]='\0';
+
+  while(o<nc){
+    //\linlabel{lastline}
+    if(!*in){
+      out[o]='\0';
+      return NULL;
+    }
+    if(*in==' '||*in=='\n'||*in=='\t'){
+      if(!prev){
+	wc++;
+	out[o]=' ';
+	lasto=o;
+	prev=1;
+      }
+    }
+    else{
+      prev=0;
+      out[o]=*in;
+    }
+    in++;
+    o++;
+  }
+  //if there is only one word, which is larger than 'nc' then break with
+  //the string 'linepad_break'.
+  if(!lasto){
+    o=strlen(linepad_break);
+    strcpy(out+nc-o,linepad_break);
+    return in-o;
+  }
+  //'out' is now in the last position before padding.
+  out+=lasto-1;
+  out[1]='\0';
+  //'lasto' now has the number of spaces that need to be added. 'in'
+  //points to the beggining of the first non-processed word in the input
+  //array
+  lasto=nc-lasto;
+  in-=lasto-1;
+  wc--;
+
+  while(lasto){
+    //if there are spaces to add, but only a single word, then something
+    //weird happened, this should have been noticed in \lin{lastline}
+    if(!wc){
+      fprintf(stderr,
+	      "paralign:: critical error, no spaces, no end\n"
+	      "of string, but spaces are to be addded\n");
+      exit(EXIT_FAILURE);
+    }
+    //if space found, then add 'lasto'/'wc' (+1 if they were not an
+    //exact ratio) extra spaces before this word. Diminish 'lasto' by
+    //those many spaces and 'wc' by 1.
+    if(*out==' '){
+      o=(int)((float)lasto/wc--+0.999999999999);
+      while(o--)
+	out[lasto--]=' ';
+    }
+    out[lasto]=*out;
+    out--;
+  }
+
+  return in;
+}
+
+
+/* \fcnfh
+   read a double value
+
+   @returns 0 on success
+            first character read if it was not appropiate
+*/
+char readd2(FILE *fp, 
+	    double *f)
 {
   char car,prim=0;
   double store=0;
@@ -66,7 +213,7 @@ char readd(FILE *fp,
       }
     }
     if(car=='e'||car=='E'){
-      if(stage!=man&&atleast){
+      if(stage!=man&&stage!=uman&&atleast){
 	stage=uman;
 	continue;
       }

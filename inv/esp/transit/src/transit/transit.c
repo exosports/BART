@@ -448,9 +448,11 @@ int processparameters(int argc, /* number of command line arguments */
       }
       name=var_docs[longidx].name;
 
-      fprintf(stderr," - Initial %s: ",name);
-      if((input=Pgetd(0,&input,10))<0){
-      }
+      while(1){
+	fprintf(stderr," - Initial %s: ",name);
+	if((rn=readd(stdin,&samp->i))){
+	}
+      }while(!rn);
     case CLA_RADLOW:
       hints->rads.i=atof(optarg);
       break;

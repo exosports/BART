@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <util/iomisc.h>
 
 #define HELPTITLE 0xff
 

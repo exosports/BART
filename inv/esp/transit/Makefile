@@ -21,14 +21,15 @@ AR      = ar ru
 #objects and headers
 DEP_FILES = sampling.c voigt.c lineread.c dbread_pands.c \
             readlineinfo.c transitstd.c transit.c procopt.c \
-	    makesample.c extinction.c readatminfo.c 
+	    makesample.c extinction.c readatminfo.c iomisc.c
 PROTO_FILES = $(DEP_FILES)
 TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 	    readatminfo.o extinction.o
 LR_OBJ    = transitstd.o dbread_pands.o
-UT_OBJ    = sampling.o voigt.o procopt.o
+UT_OBJ    = sampling.o voigt.o procopt.o iomisc.o
 
-UT_HDR    = util/sampling.h util/profile.h util/procopt.h
+UT_HDR    = util/sampling.h util/profile.h util/procopt.h \
+	    util/iomisc.h
 
 UT_DEP    = $(UT_OBJ) $(UT_HDR)
 TR_DEP    = $(TR_OBJ) transit.h transit.c
