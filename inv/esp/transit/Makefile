@@ -61,7 +61,8 @@ DEP_FILES   = $(PROTO_FILES) $(TEST_OBJ:.o=.c)
 .PHONY=clean dep proto
 
 #parameters
-CPUOPTION   = -mcpu=athlon-tbird
+CPUOPTION   = -mcpu=athlon-xp
+#CPUOPTION   = -mcpu=athlon-tbird
 #CPUOPTION   = -mcpu=pentium3
 EXTPRM      = -DTRANSIT -static
 WARNFLAGS   = -Wall -Winline
