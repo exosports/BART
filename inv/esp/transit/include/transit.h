@@ -58,6 +58,11 @@
 #define PREC_CS  double		/* Type for cross-section */
 
 /*****   Macros   *****/
+static __inline__ void
+printextprogress(long wi, long wnn)
+{
+}
+
 static __inline__ double
 stateeqnford(_Bool mass,	/* Mass abundance? (as opposed to
 				   abundance by number. */

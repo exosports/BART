@@ -109,7 +109,7 @@ tau(struct transit *tr)
   PREC_RES er[rnn];
   _Bool *comp=ex->computed;
   int lastr=rnn-1;
-  int wnextout=(int)(wnn/10.0);
+  int wnextout=(long)(wnn/10.0);
   //Following are extinction from scattering and from clouds
   double e_s[rnn];
   double e_c[rnn];
@@ -125,7 +125,7 @@ tau(struct transit *tr)
       transitprint(2,verblevel,
 		   "%li%%\r"
 		   ,100*wi/wnn);
-      wnextout+=(int)(wnn/10.0);
+      wnextout+=(long)(wnn/10.0);
     }
 
     //Calculate extinction coming from scattering and clouds for each
