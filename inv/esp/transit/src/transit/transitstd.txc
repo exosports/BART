@@ -1,3 +1,24 @@
+/*
+ * transitstd.c
+ * transitstd.txc - Common routines for the Transit program,
+ *
+ * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ */
 
 #include <transit.h>
 
@@ -14,6 +35,21 @@ inline void transitdot(int thislevel, int verblevel)
 }
 
 
+int
+transiterror (int flags,
+	      const char *str,
+	      ...)
+{
+  va_list ap;
+
+  va_start(ap,str);
+  int ret=vtransiterror(flags,str,ap);
+  va_end(ap);
+
+  return ret;
+}
+
+
 /*\fcnfh
   transiterror: Error function for Transit package.
 
@@ -22,8 +58,7 @@ inline void transitdot(int thislevel, int verblevel)
              execution of program.
 	   0 if it is a warning call and 'transit\_nowarn' is 1
 */
-
-int transiterror(int flags, char *str, ...)
+int vtransiterror(int flags, const char *str, va_list ap)
 {
   char pre_error[]="\nTransit:: ";
   char error[7][20]={"",
@@ -36,7 +71,7 @@ int transiterror(int flags, char *str, ...)
   };
   char *errormessage,*out;
   int len,lenout,xtr;
-  va_list ap;
+
   if(transit_nowarn&&(flags & TERR_NOFLAGBITS)==TERR_WARNING)
     return 0;
 
@@ -55,10 +90,7 @@ int transiterror(int flags, char *str, ...)
   }
   strcat(errormessage,str);
 
-  va_start(ap,str);
-
   xtr=vsnprintf(out,lenout,errormessage,ap)+1;
-  va_end(ap);
 
   if(xtr>lenout){
     out=(char *)realloc(out,xtr+1);
@@ -229,4 +261,19 @@ void transitcheckcalled(const long pi, /* Progress indicator variable */
   }
 }
 
+
+void 
+error (int exitstatus,
+       int something, 
+       const char *fmt,
+       ...)
+{
+  va_list ap;
+
+  va_start(ap,fmt);
+  vtransiterror(TERR_CRITICAL,fmt,ap);
+  va_end(ap);
+
+  exit(exitstatus);
+}
 
