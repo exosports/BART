@@ -4,8 +4,33 @@
   Readme file for last stable version: 1
 
 ========================================================================
-COMPILATION: to compile from scratch, execute one after the other the
-following commands
+DIRECTORIES:
+
+  ./        'Makefile' instructions for complation.
+            'README' this file.
+            It will also contain the uncommented source files and a
+              copy of the binaries after running 'make'.
+
+  ./doc     'template-atmosphere.dat' and 'template-ascii.twii' are
+              template input files for a model atmosphere and the
+              ascii format of a transition database. 
+            'cvstags' contains description of the different releases.
+            All the .dvi files from the differents commented C files
+              (.txc files) will be in this directory after they are
+              compiled.
+
+  ./src     Commented source code is under this directory.
+
+  ./include Headers for the code.
+            Functions prototypes will also be under this directory
+            after running 'make proto'.
+
+
+========================================================================
+COMPILATION: 
+  Edit Makefile to make sure that BIN is the directory where you want
+the binaries to be. Then, execute one after the other the following
+commands.
 
    make clean
    make dep
@@ -14,9 +39,10 @@ following commands
    make lineread
 
 ========================================================================
-EXECUTING LINEREAD: This is used to build the .twii file that transit
-uses, right now it can only read Partridge and Schwenke database as
-prepared by Kurucz. To get a list of options
+EXECUTING LINEREAD:
+  This program is used to build the binary .twii file that transit uses,
+right now it can only read Partridge and Schwenke database as prepared
+by Kurucz. To get a list of options
 
    lineread -h
 
@@ -31,7 +57,8 @@ hence it requires these two files to run
     lineread 1748.5 1828.5 >./res/lineread.twii
 
 ========================================================================
-EXECUTING TRANSIT: to get a help of all commands, run
+EXECUTING TRANSIT:
+ To get a help of all commands, run
 
    transit -h
 
