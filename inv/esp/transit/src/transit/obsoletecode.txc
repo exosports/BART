@@ -1,3 +1,85 @@
+
+/* \fcnfh
+   Computes the extinction in cm-1 given the temperature and the wavenumber
+   sampling
+
+   @returns 0 on succes
+*/
+int
+computecia(double *res,		/* Result is stored in this previously
+				   allocated and zeroed array of size
+				   wn->n */ 
+	   float amagat,
+	   double temp,
+	   prop_samp *wn,
+	   struct cia *ciast)
+{
+  struct ciapair *cia=ciast->p;
+  int np=ciast->n,nt,nwn;
+  PREC_CIA *e;
+  long i,f,l;
+  PREC_RES *wnv=wn->v;
+  PREC_CIA *t,*a;
+
+  //process each of the databases, skiping those which don't have the
+  //right temperature range.
+  while(np--){
+    e=alloca(cia->nwn*sizeof(PREC_CIA));
+    nt=cia->nt;
+    t=cia->t;
+    nwn=cia->nwn;
+    if(temp<t[0]||temp>t[nt-1]||wnv[0]>cia->wn[nwn-1]||
+       wnv[wn->n-1]<cia->wn[0])
+      continue;
+
+    //search for first element
+    f=0;
+    while(cia->wn[f++]<wnv[0]);
+    f--;
+    if(f) f--;
+
+    for(i=f;i<cia->nwn;i++){
+      a=cia->a[i];
+#ifdef _USE_GSL
+      gsl_interp_accel acc={0,0,0};
+      gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,nt);
+      gsl_interp_init(spl,t,a,nt);
+      e[i]=gsl_interp_eval(spl,t,a,temp,&acc);
+      gsl_interp_free(spl);
+#else
+#error We cannot spline interpolate without GSL to obtain CIA opacities
+#endif
+
+      //skip from the last element;
+      if(cia->wn[i]>wnv[nwn-1]){
+	i++;
+	break;
+      }
+    }
+    l=i;
+
+    //interpolate for the right wavenumbers skipping of limits values
+#ifdef _USE_GSL
+    gsl_interp_accel acc={0,0,0};
+    gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,l-f);
+    gsl_interp_init(spl,cia->wn+f,e+f,l-f);
+    for(i=0;i<wn->n;i++){
+      if(wnv[i]<cia->wn[f]||wnv[i]>cia->wn[l])
+	continue;
+      res[i]+=gsl_interp_eval(spl,cia->wn+f,e+f,wnv[i],&acc)*amagat*amagat;
+    }
+    gsl_interp_free(spl);
+#else
+#error We cannot spline interpolate without GSL to obtain CIA opacities
+#endif
+
+    cia++;
+  }
+
+  return 0;
+}
+
+
 #if 0				/* Obsolete */
 
 /* \fcnfh

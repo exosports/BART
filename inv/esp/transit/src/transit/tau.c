@@ -23,6 +23,8 @@
 #include <transit.h>
 #include <extraext.h>
 
+#define CIA_DOFLOAT  2
+#define CIA_RADFIRST 1
 
 /* \fcnfh
    Calculates optical depth as a function of radii for a spherical
@@ -122,8 +124,8 @@ tau(struct transit *tr)
   int lastr=rnn-1;
   int wnextout=(long)(wnn/10.0);
   //Following are extinction from scattering and from clouds
-  double e_s[rnn];
-  double e_c[rnn];
+  double e_s[rnn], e_c[rnn];
+  PREC_CIA **e_cia=tr->ds.cia->e;
   struct extscat *sc=tr->ds.sc;
 
   //for each wavenumber
@@ -138,8 +140,8 @@ tau(struct transit *tr)
       wnextout+=(long)(wnn/10.0);
     }
 
-    //Calculate extinction coming from scattering and clouds for each
-    //level
+    //Calculate extinction coming from scattering, clouds, and CIA for
+    //each level
     computeextscat(e_s, rnn, sc, rad->v, rad->fct, 
 		   temp, tfct, wn->v[wi]*wfct);
     computeextcloud(e_c, rnn, &cl, rad,
@@ -149,7 +151,7 @@ tau(struct transit *tr)
     //temporarily overwritten by (fnc)(), but they should come back as
     //they went in.
     for(ri=0;ri<rnn;ri++)
-      er[ri]=e[ri][wi]*blowex+e_s[ri]+e_c[ri];
+      er[ri]=e[ri][wi]*blowex+e_s[ri]+e_c[ri]+e_cia[wi][ri];
 
     if( wi==5762 )
       rn=56;
@@ -179,7 +181,8 @@ tau(struct transit *tr)
 	    //otherwise, update the value of the extinction at the right
 	    //place.
 	    else
-	      er[lastr]=e[lastr][wi]*blowex+e_s[lastr]+e_c[lastr];
+	      er[lastr]=e[lastr][wi]*blowex + e_s[lastr]
+		+ e_c[lastr] + e_cia[wi][lastr];
 	  }
 	}while(bb[ri]*ip->fct<r[lastr]*rfct);
       }
@@ -202,7 +205,10 @@ tau(struct transit *tr)
   if(tr->ds.det->tau.n)
     detailout(&tr->wns,&tr->ips,&tr->ds.det->tau,tau.t,0);
   if(tr->ds.det->ext.n)
-    detailout(&tr->wns,&tr->rads,&tr->ds.det->ext,e,1);
+    detailout(&tr->wns,&tr->rads,&tr->ds.det->ext,e,CIA_RADFIRST);
+  if(tr->ds.det->cia.n)
+    detailout(&tr->wns,&tr->rads,&tr->ds.det->cia,(double **)e_cia,
+	      CIA_DOFLOAT);
 
   //save current state
   if(tr->save.tau)
@@ -413,12 +419,15 @@ detailout(prop_samp *wn,
 	     prop_samp *rad,
 	     struct detailfld *det,
 	     PREC_RES **arr,
-	     _Bool radfirst)
+	     short flag)
 {
   long i,u,d,m;
+  _Bool radfirst= (_Bool)(flag&CIA_RADFIRST);
+  _Bool dofloat= (_Bool)(flag&CIA_DOFLOAT);
 
   long idx[det->n];
   double val;
+  float **arrf=(float **)arr;
   FILE *out=fopen(det->file,"w");
   if(!out)
     transiterror(TERR_SERIOUS,
@@ -430,7 +439,7 @@ detailout(prop_samp *wn,
 	       " fine detail of %s at selected wavenumbers\n"
 	       ,det->file,det->name);
 
-  fprintf(out,"#Radius        ");
+  fprintf(out,"#Radius-w=>    ");
   for(i=0;i<det->n;i++){
     val=det->ref[i];
     u=wn->n-1;
@@ -448,23 +457,33 @@ detailout(prop_samp *wn,
     }
 
     idx[i]=d;
-    fprintf(out,"w=%-13.5g",wn->v[idx[i]]);
+    fprintf(out,"%-15.8g",wn->v[idx[i]]);
   }
   fprintf(out,"\n");
 
   if(radfirst){
     for(m=0;m<rad->n;m++){
       fprintf(out,"%-15.7g",rad->v[m]);
-      for(i=0;i<det->n;i++)
-	fprintf(out,"%-15.7g",arr[m][idx[i]]);
+      for(i=0;i<det->n;i++){
+	if(dofloat)
+	  val=arrf[m][idx[i]];
+	else
+	  val=arr[m][idx[i]];
+	fprintf(out,"%-15.7g",val);
+      }
       fprintf(out,"\n");
     }
   }
   else{
     for(m=0;m<rad->n;m++){
       fprintf(out,"%-15.7g",rad->v[m]);
-      for(i=0;i<det->n;i++)
-	fprintf(out,"%-15.7g",arr[idx[i]][m]);
+      for(i=0;i<det->n;i++){
+	if(dofloat)
+	  val=arrf[idx[i]][m];
+	else
+	  val=arr[idx[i]][m];
+	fprintf(out,"%-15.7g",val);
+      }
       fprintf(out,"\n");
     }
   }

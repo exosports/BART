@@ -106,6 +106,12 @@ int main (int argc,		/* Number of variables */
 		 "to returned flag: 0x%x\n"
 		 ,rn);
 
+  //Initializes CIA
+  if((rn=interpolatecia(&transit))!=0)
+    transiterror(TERR_SERIOUS,
+		 "readcia() returned error code %i\n"
+		 ,rn);
+
   //Computes index of refraction
   if((rn=idxrefrac(&transit))!=0)
     transiterror(TERR_SERIOUS,

@@ -45,7 +45,8 @@ TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 	    extinction.o transit.o \
 	    tau.o idxrefraction.o argum.o \
 	    slantpath.o geometry.o observable.o \
-	    at_file.o readatm.o at_onept.o
+	    at_file.o readatm.o at_onept.o \
+	    cia.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 TEST_FCN  = slantpath dbread_pands
 

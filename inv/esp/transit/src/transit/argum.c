@@ -110,7 +110,9 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_CLOUDE,
     CLA_TRANSPARENT,
     CLA_DETEXT,
+    CLA_DETCIA,
     CLA_DETTAU,
+    CLA_CIAFILE,
   };
 
   //General help-option structure
@@ -281,6 +283,12 @@ int processparameters(int argc, /* number of command line arguments */
     {"detailext",CLA_DETEXT,required_argument,NULL,
      "filename:wn1,wn2,...","Save extinction at the particular\n"
      "wavenumbers in the specified filename"},
+    {"detailcia",CLA_DETCIA,required_argument,NULL,
+     "filename:wn1,wn2,...","Save extinction due to CIA at the particular\n"
+     "wavenumbers in the specified filename"},
+    {"cia",CLA_CIAFILE,required_argument,NULL,
+     "filenames","Use the following filenames for CIA opacities,\n"
+     "it is a comma separated list"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
@@ -358,6 +366,9 @@ int processparameters(int argc, /* number of command line arguments */
   det=&hints->det.ext;
   strcpy(det->name,"extinction");
   det->ref=(double *)calloc(1,sizeof(double));
+  det=&hints->det.cia;
+  strcpy(det->name,"CIA extinction");
+  det->ref=(double *)calloc(1,sizeof(double));
   
 
   procopt_debug=1;
@@ -372,8 +383,15 @@ int processparameters(int argc, /* number of command line arguments */
 		 ,rn,optarg);
 
     switch(rn){
+    case CLA_CIAFILE:
+      hints->ncia=nchar(optarg,',')+1;
+      hints->ciafile=splitnzero_alloc(optarg,',');
+      break;
+    case CLA_DETCIA:
+      det=&hints->det.cia;
     case CLA_DETTAU:
-      det=&hints->det.tau;
+      if(rn==CLA_DETTAU)
+	det=&hints->det.tau;
     case CLA_DETEXT:
       if(rn==CLA_DETEXT)
 	det=&hints->det.ext;
