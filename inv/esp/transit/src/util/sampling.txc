@@ -124,11 +124,11 @@ resample(const int getingx, /* Flag indicating which axis we
     for(j=0;j<nout;j++){
       val=outx[j];
 
-      if(val<refx[0]||val>refx[nrefx-1])
+      if(val<refx[0]||val>refx[nrefx])
 	transiterror(TERR_CRITICAL,
 		     "resample():: Looking for a value (%g) that is outside\n"
 		     "reference axis (%g - %g)\n"
-		     ,val,refx[0],refx[nrefx-1]);
+		     ,val,refx[0],refx[nrefx]);
 
       //In case the next output element is not bigger than the previous,
       //then start looking from the beginning
