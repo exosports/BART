@@ -267,11 +267,9 @@ isisoline(char *name,		/* Isotope's name */
 		     isof[i].m);
       break;
     }
-    else{
-      if(atisodo==ignore)
-	nfonly++;
-    }
   }
+  if(*isoeq==-1&&atisodo==ignore)
+    nfonly++;
 }
 
 
@@ -293,10 +291,9 @@ getmnfromfile(FILE *fp,
   enum isodo *isodo=iso->isodo;
 
   //Set variable to handle proportional to isotopes
-  int ipi,ipa=at->ipa=4;
+  int ipi=0,ipa=at->ipa=4;
   isolineinatm=(_Bool *)calloc(iso->n_i,sizeof(_Bool));
-  isoprop=at->isoprop
-    =(struct atm_isoprop *)calloc(ipa,sizeof(struct atm_isoprop));
+  isoprop=(struct atm_isoprop *)calloc(ipa,sizeof(struct atm_isoprop));
 
   at->begline=0;
   enum isodo atisodo;
@@ -329,7 +326,8 @@ getmnfromfile(FILE *fp,
     case 'q':			//Whether is mass or number abundance
       lp=line+1;
       while(*lp++==' ');
-      switch(*lp&0x20){
+      lp--;
+      switch(*lp|0x20){
       case 'n':
 	at->mass=0;
 	break;
@@ -353,32 +351,34 @@ getmnfromfile(FILE *fp,
     case 'f':			//An isotope is to be taken as
 				//proportional to other.
       lp=line+1;
+      while(*lp==' '||*lp=='\t') lp++;
+
       if(ipi==ipa)
-	isoprop=(struct atm_isoprop *)realloc(isoprop,
-					  sizeof(struct atm_isoprop));
+	isoprop=(struct atm_isoprop *)realloc(isoprop,(ipa<<=1)*
+					      sizeof(struct atm_isoprop));
       isoprop[ipi].m=getds(lp,0,isoprop[ipi].n,maxeisoname-1);
       //skip over recently read field, and go to next field.
       lp=nextfield(lp);
       //skip an optional equal '=' sign
-      if(*lp=='=' && lp[1]=='\0')
+      if(*lp=='=' && lp[1]==' ')
 	lp=nextfield(lp);
       //get factor, which has to be between 0 and 1
       isoprop[ipi].f=strtod(lp,NULL);
-      if(isoprop[ipi].f<0 || isoprop[ipi].f>1)
+      if(isoprop[ipi].f<0 )
 	transiterror(TERR_CRITICAL,
-		     "Abundance ratio has to be between 0 and 1 in atmosphere\n"
+		     "Abundance ratio has to be positive in atmosphere\n"
 		     "file '%s' in line: %s"
 		     ,atmfilename,line);
       lp=nextfield(lp);
       //get name of reference and increase index
       i=0;
       while(*lp)
-	if(*lp==' '||*lp=='\t')
-	  isoprop[ipi].t[i++]=*lp;
+	isoprop[ipi].t[i++]=*lp++;
       isoprop[ipi].t[i]='\0';
 
       //now check if that isotope is one of the given in the lineinfo
       //file 
+      isoprop[ipi].eq=-1;
       isisoline(isoprop[ipi].n,isoprop[ipi].m,&isoprop[ipi].eq,factor,
 		isof,isodo,iso->n_i);
 
@@ -422,8 +422,9 @@ getmnfromfile(FILE *fp,
 	  at->isodo=(enum isodo *)realloc(at->isoeq,nmb*sizeof(enum isodo));
 	  at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
 	  at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
+	  char *tmp=at->n[0];
 	  at->n=(char **)realloc(at->n,nmb*sizeof(char *));
-	  at->n[0]=(char *)realloc(at->n[0],nmb*maxeisoname*sizeof(char));
+	  at->n[0]=(char *)realloc(tmp,nmb*maxeisoname*sizeof(char));
 	  for(i=1;i<nmb;i++)
 	    at->n[i]=at->n[0]+i*maxeisoname;
 	  for(i=nmb/2;i<nmb;i++)
@@ -437,7 +438,7 @@ getmnfromfile(FILE *fp,
 	  atisodo=ignore;
 	}
 	at->m[ison]=getds(lp,0,at->n[ison],maxeisoname-1);
-	if(at->m[ison]<=0||at->n[ison]=='\0'){
+	if(at->m[ison]<0||at->n[ison]=='\0'){
 	  transiterror(TERR_SERIOUS,
 		       "Invalid field in file %s, line %i while reading isotope"
 		       " info at:\n%s\n"
@@ -448,7 +449,7 @@ getmnfromfile(FILE *fp,
 	//file
 	isisoline(at->n[ison],at->m[ison],at->isoeq+ison,atisodo,
 		  isof,isodo,iso->n_i);
-	at->isodo[ison]=atisodo;
+	at->isodo[ison++]=atisodo;
 
 	//skip over recently read field, and go to next field.
 	while(*lp!=' '&&*lp!='\0') lp++;
@@ -483,16 +484,17 @@ getmnfromfile(FILE *fp,
   at->isodo=(enum isodo *)realloc(at->isodo,nmb*sizeof(enum isodo));
   at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
   at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
+  lp=at->n[0];
   at->n=(char **)realloc(at->n,nmb*sizeof(char *));
-  at->n[0]=(char *)realloc(at->n[0],nmb*maxeisoname*sizeof(char));
+  at->n[0]=(char *)realloc(lp,nmb*maxeisoname*sizeof(char));
   for(i=1;i<nmb;i++)
     at->n[i]=at->n[0]+i*maxeisoname;
 
   //initialize values for the factorized elements
   for(i=ison;i<nmb;i++){
-    at->isoeq[i]=isoprop[i].eq;
-    at->m[i]=isoprop[i].m;
-    strncpy(at->n[i],isoprop[i].n,maxeisoname-1);
+    at->isoeq[i]=isoprop[i-ison].eq;
+    at->m[i]=isoprop[i-ison].m;
+    strncpy(at->n[i],isoprop[i-ison].n,maxeisoname-1);
     at->n[i][maxeisoname-1]='\0';
     at->isodo[i]=factor;
   }
@@ -538,6 +540,7 @@ getmnfromfile(FILE *fp,
 		,__FILE__,__LINE__,nmb,iso->n_e);
 
   free(isolineinatm);
+  at->isoprop=isoprop;
 
   return at->begline;
 }
@@ -617,7 +620,7 @@ readatmfile(FILE *fp,		/* File */
     for(i=0;i<at->n_aiso;i++){
       //stop reading from file if we reach the factorized elements
       if(isodo[i]==factor)
-	break;
+	continue;
       //Read the abundance of the new element. There are two ways:      
       transitASSERT(isoeq[i]<0 || 
 		    (isodo[i]==ignore&&isoeq[i]>=nfonly) || 
@@ -655,6 +658,7 @@ readatmfile(FILE *fp,		/* File */
 	  isov[i].q[r]=isov[i].q[0];
       }
 
+    /* TD: this is WRONG, it goes two loops above. */
     //process the factorized elements if there is any
     if(at->n_aiso>factorfrom){
       double ref;

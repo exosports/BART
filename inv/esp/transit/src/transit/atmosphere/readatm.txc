@@ -422,9 +422,9 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     break;
   case file:
     //All the extra isotopes are going to have density from file (cannot
-    //be ignored or fixed.
-    for(i=iso->n_i;i<iso->n_e;i++)
-      iso->isodo[i]=atmfile;
+    //be ignored or fixed). FALSE, they can be FACTOR!
+    //    for(i=iso->n_i;i<iso->n_e;i++)
+    //      iso->isodo[i]=atmfile;
     nrad=readatmfile(fp,tr,&st_at,rads,nrad);
     break;
   default:
