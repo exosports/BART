@@ -1,0 +1,121 @@
+/*
+ * iomisc.[tx]c - Miscellaneous input/output utilities.
+ *
+ * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ */
+
+/* \fcnfh
+   read a double value
+
+   @returns 0 on success
+            first character read if it was not appropiate
+*/
+char readd(FILE *fp, 
+	   double *f)
+{
+  char car,prim=0;
+  double store=0;
+  enum {ent,dec,man,uman} stage=ent;
+  _Bool atleast=0,atleastman=0;
+  double dlev=10.0;
+  int mant=0,mans=1,ents=1;
+
+  stage=ent;
+  while(fread(&car,1,1,fp)){
+    if(!prim)
+      prim=car;
+    if(car=='.'){
+      if(stage==ent){
+	stage=dec;
+	continue;
+      }
+      *f=ents*store;
+      return 0;
+    }
+    if(car=='+'||car=='-'){
+      switch(stage){
+      case uman:
+	stage=man;
+	mans=','-car;
+	break;
+      case ent:
+	if(!atleast){
+	  ents=','-car;
+	  break;
+	}
+      default:
+	if(!atleast)
+	  return prim;
+	*f=ents*store;
+	return 0;
+      }
+    }
+    if(car=='e'||car=='E'){
+      if(stage!=man&&atleast){
+	stage=uman;
+	continue;
+      }
+      if(!atleast)
+	return prim;
+      *f=ents*store;
+      return 0;
+    }
+    if(car<'0'||car>'9'){
+      if(!atleast)
+	return prim;
+      *f=ents*store;
+      return 0;
+    }
+    atleast=1;
+    switch(stage){
+    case ent:
+      store=store*10+car-'0';
+      break;
+    case dec:
+      store=store+(car-'0')/dlev;
+      dlev*=10;
+      break;
+    case uman:
+      stage=man;
+    case man:
+      mant=mant*9+car-'0';
+      store=store*powi(10,mans*mant);
+      break;
+
+    }
+  }
+}
+
+
+
+double powi(double x, int n)
+{
+  double y;
+
+  y=1;
+
+  for(;n>0;--n){
+    while((n&1)==0){
+      x*=x;
+      n>>=1;
+    }
+    y=y*x;
+  }
+
+  return y;
+}

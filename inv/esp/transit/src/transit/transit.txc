@@ -317,7 +317,7 @@ int processparameters(int argc, /* number of command line arguments */
     {"atmosp",required_argument,CLA_ATMOSPHERE,
      "atmfile","File containing atmospheric info (Radius,\n"
      "pressure, temperature). A dash (-) indicates alternative\n"
-     "input."},
+     "input"},
     {"linedb",required_argument,CLA_LINEDB,
      "linedb","File containing line information (TWII format,\n"
      "as given by 'lineread'"},
@@ -402,12 +402,16 @@ int processparameters(int argc, /* number of command line arguments */
 			 "Patricio Rojo <pato@astro.cornell.edu>"
 			 ,NULL,NULL,0};
   int rn;
+  int longidx;
+  promp_samp samp;
+  char *name;
+  double input;
 
   opterr=0;
   while(1){
     /* This is for old style
        rn=getopt(argc,argv,"f:Vhv:m:r:w:n:a:s:d:");*/
-    rn=getprocopt(argc,argv,var_docs,&var_cfg);
+    rn=getprocopt(argc,argv,var_docs,&var_cfg,&longidx);
     if (rn==-1)
       break;
 
@@ -428,6 +432,25 @@ int processparameters(int argc, /* number of command line arguments */
       hints->f_out=(char *)realloc(hints->f_out,strlen(optarg)+1);
       strcpy(hints->f_out,optarg);
       break;
+
+    case 'r':
+      samp=hints->rads;
+      fprintf(stderr,"In units of planetary radius...");
+    case 'w':
+      if(rn!='w'){
+	samp=hints->wavs;
+	fprintf(stderr,"In nanometers units...");
+      }
+    case 'n':
+      if(rn!='n'){
+	samp=hints->wns;
+	fprintf(stderr,"In cm-1 units...");
+      }
+      name=var_docs[longidx].name;
+
+      fprintf(stderr," - Initial %s: ",name);
+      if((input=Pgetd(0,&input,10))<0){
+      }
     case CLA_RADLOW:
       hints->rads.i=atof(optarg);
       break;
@@ -437,6 +460,7 @@ int processparameters(int argc, /* number of command line arguments */
     case CLA_RADDELT:
       hints->rads.d=atof(optarg);
       break;
+
     case CLA_WAVLOW:
       hints->wavs.i=atof(optarg);
       break;

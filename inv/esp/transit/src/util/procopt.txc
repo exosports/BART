@@ -23,7 +23,7 @@
 
 static char *prgname=NULL;
 _Bool procopt_debug=1;
-int procopt_columns=75;
+int procopt_columns=78;
 
 
 /* \fcnfh
@@ -140,13 +140,13 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
   char *intro=" Where [options] are..";
   char *contintro="----------------------------------\n"
     "Contact Information: %s\n";
-  int indentdoc=20;
+  int indentdoc=21;
   int currind,tmp;
   char *doc;
   int cols;
 
   doc=getenv("COLUMNS");
-  if(!(cols=atoi(doc?doc:"0")))
+  if(!doc||!(cols=atoi(doc)))
     cols=procopt_columns;
 
   char out[cols+1];
@@ -179,7 +179,7 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
       break;
     else{
       if(opts->val>0x20 && opts->val<0x80){
-	fprintf(stderr,"-%c",opts->val);
+	fprintf(stderr," -%c",opts->val);
 	if(opts->has_arg==required_argument)
 	  fprintf(stderr," <%s>%n",opts->prm,&currind);
 	else if(opts->has_arg!=no_argument){
@@ -202,7 +202,7 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
       if(opts->name){
 	if(currind)
 	  fprintf(stderr,"\n");
-	fprintf(stderr,"--%s%n",opts->name,&currind);
+	fprintf(stderr," --%s%n",opts->name,&currind);
 	tmp=0;
 	if(opts->has_arg==required_argument)
 	  fprintf(stderr," <%s>%n",opts->prm,&tmp);
