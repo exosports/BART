@@ -131,7 +131,7 @@ tau(struct transit *tr)
       if(bb[ri]*ip->fct<r[lastr]*rfct){
 
 	transitprint(3,verblevel,
-		     "Last tau(bb=%8.4g): %10.4g\n"
+		     "Last Tau(bb=%9.3g, wn=%9.3g): %10.4g\n"
 		     ,bb[ri-1],t[ri-1]);
 	//while the extinction at a radius bigger than the impact
 	//parameter is not computed.. go for it
