@@ -683,6 +683,41 @@ acceptgenhints(struct transit *tr) /* transit structure */
 */
 void
 savehint(FILE *out,
-	 struct transithint *hint)
+	 struct transithint *hints)
 {
+  //save main structure
+  fwrite(hints,sizeof(struct transithint),1,out);
+
+  //save strings
+  savestr(out,hints->f_atm);
+  savestr(out,hints->f_line);
+  savestr(out,hints->f_out);
+  savestr(out,hints->f_toomuch);
+  savestr(out,hints->f_outsample);
+  savestr(out,hints->solname);
+
+  //save sub-structures
+  savesample(out,&hints->rads);
+  savesample(out,&hints->wavs);
+  savesample(out,&hints->wns);
+  savesample(out,&hints->ips);
+
+  saveonept_arr(out,&hints->onept);
+}
+
+/* \fcnfh
+   Restore hints structure
+
+   @returns 0 on success
+            -1 if not all the expected information is read
+	    -2 if info read is wrong
+	    -3 if cannot allocate memory
+	    1 if information read was suspicious
+*/
+int 
+resthint(FILE *in,
+	 struct transithint **hint)
+{
+
+  return 0;
 }

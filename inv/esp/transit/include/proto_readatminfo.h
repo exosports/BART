@@ -12,5 +12,7 @@ extern int readatmfile P_((FILE *fp, struct transit *tr, struct atm_data *at, pr
 extern void storename P_((struct atm_data *at, char *line));
 extern void sethcdef P_((struct transit *tr, struct atm_data *at, prop_samp *rads));
 extern int freemem_atmosphere P_((struct atm_data *at, long *pi));
+extern void saveonept_arr P_((FILE *out, struct onept *onept));
+extern int restonept_arr P_((FILE *in, struct onept *onept));
 
 #undef P_

@@ -971,3 +971,50 @@ freemem_atmosphere(struct atm_data *at,
   *pi&=~(TRPI_GETATM);
   return 0;
 }
+
+
+/* \fcnfh
+   saves onept structure's array
+*/
+void
+saveonept_arr(FILE *out,
+	      struct onept *onept)
+{
+  fwrite(onept->n[0],1,maxeisoname*onept->ne,out);
+  fwrite(onept->m,sizeof(PREC_ZREC),onept->ne,out);
+}
+
+
+/* \fcnfh
+   restores onept structure's arrays
+
+   @returns 0 on success
+            -1 if not all the expected information is read
+	    -2 if info read is wrong
+	    -3 if cannot allocate memory
+	    1 if information read was suspicious
+*/
+int
+restonept_arr(FILE *in,
+	      struct onept *onept)
+{
+  if(onept->ne<=0)
+    return 0;
+
+  if((onept->n=(char **)calloc(onept->ne,sizeof(char *)))==NULL ||
+     (onept->n[0]=(char *)calloc(onept->ne,sizeof(char)))==NULL ||
+     (onept->m=(PREC_ZREC *)calloc(onept->ne,sizeof(PREC_ZREC)))==NULL)
+    return -3;
+
+  int i;
+  for(i=1;i<onept->ne;i++)
+    onept->n[i]=onept->n[0]+i*maxeisoname;
+
+  if(fread(onept->n[0],1,maxeisoname*onept->ne,in)!=maxeisoname*onept->ne)
+    return -1;
+
+  if(fread(onept->m,sizeof(PREC_ZREC),onept->ne,in)!=onept->ne)
+    return -1;
+
+  return 0;
+}

@@ -360,12 +360,12 @@ savestr(FILE *out,
    Restores a string from a binary open file
 */
 int
-reststr(FILE *out,
+reststr(FILE *in,
 	char **str)
 {
   long len;
 
-  if(fwrite(&len,sizeof(long),1,out)!=1)
+  if(fwrite(&len,sizeof(long),1,in)!=1)
     return -1;
   if(len<0)
     return -2;
@@ -373,7 +373,7 @@ reststr(FILE *out,
     return 1;
   if((*str=(char *)calloc(len,sizeof(char)))==NULL)
     return -3;
-  if(fread(*str,1,len,out)!=len)
+  if(fread(*str,1,len,in)!=len)
     return -1;
 
   return 0;

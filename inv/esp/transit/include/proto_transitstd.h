@@ -19,6 +19,6 @@ extern void free_dbnoext P_((prop_dbnoext *db));
 extern void free_samp P_((prop_samp *samp));
 extern void free_atm P_((prop_atm *atm));
 extern void savestr P_((FILE *out, char *str));
-extern int reststr P_((FILE *out, char **str));
+extern int reststr P_((FILE *in, char **str));
 
 #undef P_

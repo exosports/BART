@@ -543,10 +543,10 @@ savesample(FILE *out,		/* File pointer to write out */
 	    1 if information read was suspicious
 */
 int
-restsample(FILE *out,		/* File pointer to write out */
+restsample(FILE *in,		/* File pointer to read in */
 	   prop_samp *samp)	/* Sample strucuture to restore to */
 {
-  if(fread(samp,sizeof(prop_samp),1,out)!=1)
+  if(fread(samp,sizeof(prop_samp),1,in)!=1)
     return -1;
   if(samp->n<0)
     return -2;
@@ -554,7 +554,7 @@ restsample(FILE *out,		/* File pointer to write out */
     return 1;
   if((samp->v=(PREC_RES *)calloc(samp->n,sizeof(PREC_RES)))==NULL)
     return -3;
-  if(fread(samp->v,sizeof(PREC_RES),samp->n,out)!=samp->n)
+  if(fread(samp->v,sizeof(PREC_RES),samp->n,in)!=samp->n)
     return -1;
 
   return 0;

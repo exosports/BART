@@ -320,7 +320,6 @@ struct transithint {		/* Structure with user hinted data that
 				   are by mass or number */
   long fl;			/* flags */
 
-  struct onept onept;		/* Parameters for onept atmosphere */
   double toomuch;		/* Optical depth values greater than
 				   this won't be calculated: the
 				   extinction is assumed to be zero. */
@@ -330,6 +329,7 @@ struct transithint {		/* Structure with user hinted data that
 				   on. */
   char *solname;		/* Name of the type of solution */
   struct geometry sg;		/* System geometry */
+  struct onept onept;		/* Parameters for onept atmosphere */
 };
 
 
