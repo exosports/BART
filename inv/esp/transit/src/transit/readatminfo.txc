@@ -24,6 +24,10 @@
 #include <transit.h>
 
 
+const int maxeisoname=20;
+static void askonenpt(struct onept *onept, struct atm_data *at, int rad);
+static void askonemn (struct onept *onept, prop_isof *isof, int n, int nf);
+
 /* TD: atmosphere info  retrieval */
 /*\fcnfh
    getatm: Get atmospheric parameters from a given file. It has to get
@@ -41,8 +45,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 {
   //'nmb' auxiliar variable for a number.
   int nmb,i;
-  double val,sumq;
-  char rc;
+  double sumq;
   //'at' and 'hints' are the atmospheric and hint's structure,
   //respectively
   struct transithint *th=tr->ds.th;
@@ -50,8 +53,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   static struct atm_data st_at;
   memset(&st_at,0,sizeof(struct atm_data));
   tr->ds.at=&st_at;
-
-  int maxeisoname=20;
+  enum {invalid=0,given,ask,file} inp=invalid;
 
   //Hard coded values.
   //'hc\_t' temperature.
@@ -65,6 +67,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 
   //Pass atmospheric flags into info struct
   transitacceptflag(tr->fl,th->fl,TRU_ATMBITS);
+  transitaccepthint(st_at.mass,th->mass,th->na,TRH_MASS);
 
   //If filename is not given or is "-", then do not use atmosphere file
   //and use defaults instead. 
@@ -75,10 +78,6 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     st_at.atm.t=(PREC_ATM  *)calloc(st_at.rads.n,sizeof(PREC_ATM));
     st_at.atm.p=(PREC_ATM  *)calloc(st_at.rads.n,sizeof(PREC_ATM));
     st_at.rads.v[0]=1.0;
-
-    transitDEBUG(20,verblevel,
-		 "First isotope: %s\n"
-		 ,tr->isof[0].n);
 
     //See which way does the user wants the default to be handled
     switch(tr->fl&TRU_ATM1PBITS){
@@ -106,49 +105,17 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 
     case TRU_ATMGIVEN1P:	/* Wants to get it from hints->onept */
       onept=&th->onept;
+      inp=given;
 
       st_at.n_niso=onept->ne;
       st_at.atm.t[0]=onept->t;
       st_at.atm.p[0]=onept->p;
 
-
     case TRU_ATMASK1P:		/* Wants to get values from standard input */
       onept=&th->onept;
-      if((tr->fl&TRU_ATMASK1P)==TRU_ATMASK1P){
-	onept->nm=onept->nq=0;
-	while(1){
-	  fprintf(stderr,
-		  " Number of extra isotopes for which only abundance and\n"
-		  "molecular mass has to be given: ");
-	  onept->ne=st_at.n_niso=readl(stdin,&rc);
-	  if(!rc) break;
-	  if(rc=='q'){
-	    transitprint(0,verblevel,"User interrupt!\n");
-	    exit(EXIT_SUCCESS);
-	  }
-	  fprintf(stderr,"Try again!\n");
-	}
-
-	while(1){
-	  fprintf(stderr," Atmospheric pressure, cgs units (1e-3cgs=1atm): ");
-	  onept->p=st_at.atm.p[0]=readd(stdin,&rc);
-	  if(!rc) break;
-	  if(rc=='q'){
-	    transitprint(0,verblevel,"User interrupt!\n");
-	    exit(EXIT_SUCCESS);
-	  }
-	  fprintf(stderr,"Try again!\n");
-	}
-	while(1){
-	  fprintf(stderr," Atmospheric temperature, Kelvin degrees: ");
-	  onept->t=st_at.atm.t[0]=readd(stdin,&rc);
-	  if(!rc) break;
-	  if(rc=='q'){
-	    transitprint(0,verblevel,"User interrupt!\n");
-	    exit(EXIT_SUCCESS);
-	  }
-	  fprintf(stderr,"Try again!\n");
-	}
+      if(inp!=given){
+	inp=ask;
+	askonenpt(onept,&st_at,-1);
       }
 
       nmb=tr->n_e=tr->n_i+st_at.n_niso;
@@ -161,10 +128,12 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
 	st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
       }
+      for(i=1;i<st_at.n_niso;i++)
+	tr->isof[tr->n_i+i].n=tr->isof[tr->n_i].n+i*maxeisoname;
 
       //if there were given an exact number of masses and names for the
       //extra isotopes.
-      if((tr->fl&TRU_ATMGIVEN1P)==TRU_ATMGIVEN1P){
+      if(inp==given){
 	if(onept->nm==onept->ne){
 	  for(i=0;i<st_at.n_niso;i++){
 	    strcpy(tr->isof[i+tr->n_i].n,onept->n[i]);
@@ -179,82 +148,64 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       }
 
       //if there are new isotopes and they were not given exactly
-      if(st_at.n_niso>0&&onept->nm!=st_at.n_niso){
-	//Allocate room in 'onept'
-	onept->n=(char **)calloc(st_at.n_niso,sizeof(char));
-	onept->n[0]=(char *)calloc(st_at.n_niso*maxeisoname,sizeof(char));
-	onept->m=(PREC_ZREC *)calloc(st_at.n_niso,sizeof(PREC_ZREC));
-	
-	//For each isotope ask for mass and name
-	for(i=0;i<st_at.n_niso;i++){
-	  onept->n[i]=onept->n[0]+i*maxeisoname;
-	  tr->isof[i].n=tr->isof[0].n+i*maxeisoname;
-	  while(1){
-	    fprintf(stderr,
-		    " Mass and name of extra isotope #%i (Order mandatory,\n"
-		    "e.g. 12.011Carbon): "
-		    ,i+1);
-	    onept->m[i]=tr->isof[i+tr->n_i].m=readds(stdin,&rc,
-						  onept->n[i],maxeisoname-1);
-	    strcpy(tr->isof[i+tr->n_i].n,onept->n[i]);
-	    if(!rc) break;
-	    if(rc=='q'){
-	      transitprint(0,verblevel,"User interrupt!\n");
-	      exit(EXIT_SUCCESS);
-	    }
-	    fprintf(stderr,"Try again!\n");
-	  }
-	}
-      }
+      if(st_at.n_niso>0&&onept->nm!=st_at.n_niso)
+	askonemn(onept,tr->isof,st_at.n_niso, tr->n_i);
 
-      //if there were given an exact number of isotopes.
-      if((tr->fl&TRU_ATMGIVEN1P)==TRU_ATMGIVEN1P){
+
+      //get isotope abundance
+      switch(inp){
+      case given:
 	if(onept->nq==nmb){
-	  sumq=st_at.mm=0;
-	  for(i=0;i<nmb;i++){
+	  for(i=0;i<nmb;i++)
 	    st_at.isov[i].q[0]=onept->q[i];
-	    st_at.mm+=onept->q[i]*tr->isof[i].m;
-	    sumq+=onept->q[i];
-	  }
+	  break;
 	}
-	else if(onept->nq>0)
+	if(onept->nq>0)
 	  free(onept->q);
-      }
-      //If abundances were not given exactly for each isotope
-      if(onept->nq!=nmb){
+      case ask:
 	onept->q=(PREC_ATM *)calloc(nmb,sizeof(PREC_ATM));
-	sumq=st_at.mm=0;
 	for(i=0;i<nmb;i++){
-	  while(1){
-	    fprintf(stderr," Mass abundance for isotope %s: "
-		    ,tr->isof[i].n);
-	    onept->q[i]=val=readd(stdin,&rc);
-	    if(!rc) break;
-	    if(rc=='q'){
-	      transitprint(0,verblevel,"User interrupt!\n");
-	      exit(EXIT_SUCCESS);
-	    }
-	    fprintf(stderr,"Try again!\n");
+	  st_at.isov[i].q[0]=onept->q[i]
+	    =askforposd(" %s abundance for isotope %s: "
+			,st_at.mass?"Mass":"Number",tr->isof[i].n);
+	  if(onept->q[i]>=1){
+	    fprintf(stderr," Abundance for any single isotope has to be"
+		    " less than one\n Try Again!\n");
+	    i--;
 	  }
-	  st_at.mm+=onept->q[i]*tr->isof[i].m;
-	  sumq+=(st_at.isov[i].q[0]=val);
 	}
+	break;
+      default:
+	transiterror(TERR_SERIOUS,
+		     "Method %i not yet implemented for getting\n"
+		     "atmospheric data\n"
+		     ,inp);
       }
+      sumq=st_at.mm=0;
+      for(i=0;i<nmb;i++){
+	if(st_at.mass)
+	  st_at.mm+=(onept->q[i])/(tr->isof[i].m);
+	else
+	  st_at.mm+=(onept->q[i])*(tr->isof[i].m);
+	sumq+=onept->q[i];
+      }
+      if(st_at.mass)
+	st_at.mm=1.0/st_at.mm;
 
       //Check that abundances make sense
-      if(val>1){
+      if(sumq>1){
 	transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		     "Sum of abundances of isotopes adds up to more\n"
 		     "than 1: %g\n"
 		     ,sumq);
 	return -4;
       }
-      if(val<1)
+      if(sumq<1)
 	transiterror(TERR_WARNING,
 		     "Sum of all abundances add up to less than 1: %.9g\n"
 		     ,sumq);
 
-      //Calculate denisities
+      //Calculate densities
       for(i=0;i<nmb;i++)
 	st_at.isov[i].d[0]=stateeqnford(st_at.isov[i].q[0],
 					st_at.mm,
@@ -274,21 +225,15 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     //Let user know that defaults are being used
     transitprint(1,verblevel,
 		 "You are using one point atmospheric conditions:\n"
-		 " Temperature: %g K\n"
-		 ,st_at.atm.t[0]);
+		 " Temperature:         %g K\n"
+		 " Pressure:            %g (cgs, dyne/cm2)\n"
+		 " Mean molecular mass: %g (AMU)\n"
+		 ,st_at.atm.t[0],st_at.atm.p[0],st_at.mm);
     //Densities for all isotopes
-    for(i=0;i<tr->n_i;i++)
+    for(i=0;i<tr->n_e;i++)
       transitprint(1,verblevel,
-		   " %s: density %8g g/cm3\n"
+		   " %-8s: density %8g g/cm3\n"
 		   ,tr->isof[i].n,st_at.isov[i].d[0]);
-    /* no extra isotopes for one point! 
-    //Density and cross section for extra isotopes
-    for(;i<tr->n_e;i++)
-      transitprint(1,verblevel,
-		   " %s: density %.8g g/cm3\tcross section %8g\n"
-		   ,tr->isof[i].n,st_at.isov[i].d[0],
-		   st_at.isov[i].c[0]);
-    */
 
   }
   //Otherwise if info is to be taken from file.
@@ -301,7 +246,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     transiterror(TERR_CRITICAL,
 		 "Read atmospheric data file not yet implemented!\n");
   }
-  transitASSERT(tr->n_e>tr->n_i,
+  transitASSERT(tr->n_e<tr->n_i,
 		"Uyuyuyy!, number of isotopes after extension (%i)\n"
 		"is smaller than number of isotopes before that (%i)\n"
 		,tr->n_e,tr->n_i);
@@ -310,5 +255,159 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   //Return succes and set progress indicator
   tr->pi|=TRPI_GETATM;
   return 0;
+}
+
+/* \fcnfh
+   ask from standard input for temperature, pressure and number of
+   extraisotopes, it stores both in 'onept' and in 'at' at radius 'rad'
+ */
+static void
+askonenpt(struct onept *onept,
+	  struct atm_data *at,
+	  int rad)		/* Radius at which to store values,
+				   negative if this a one point run */
+{
+  _Bool one=0;
+
+  //If this is a onepoint model
+  if (rad<0){
+    one=1;
+    rad=0;
+  }
+
+  onept->nm=onept->nq=0;
+
+  //ask for number of extra isotopes if this is the zeroth radius only
+  if(!rad)
+    onept->ne=at->n_niso
+      =askforposl(" Number of extra isotopes for which only abundance and\n"
+		  "molecular mass has to be given: ");
+
+  //ask for pressure
+  if(one)
+    onept->p=askforposd(" Atmospheric pressure, cgs units (1e-3cgs=1atm): ");
+  else
+    onept->p=askforposd(" Atmsopheric pressure for radius %i%s: "
+			  ,rad,rad?"":". cgs units (1e-3cgs=1atm)");
+  at->atm.p[rad]=onept->p;
+
+  //ask for temperature
+  if(one)
+    onept->t=askforposd(" Atmospheric temperature, Kelvin degrees: ");
+  else
+    onept->t=askforposd(" Atmsopheric temperature for radius %i%s: "
+			,rad,rad?"":". Kelvin degrees");
+  at->atm.t[rad]=onept->t;
+
+}
+
+/* \fcnfh
+   Ask mass and name for new isotopes
+*/
+static void
+askonemn(struct onept *onept,	/* user given values are going to be
+				   stored here */
+	 prop_isof *isof,	/* Also stored here for use by the
+				   program */
+	 int n,			/* number of new isotopes, only partial
+				   info for these is requested */
+	 int nf)		/* Number of isotopes with full info */
+{
+  int i;
+  char rc;
+
+  //Allocate room in 'onept'. Room in 'isof' should be already be
+  //allocated
+  onept->m=(PREC_ZREC *)calloc(n,sizeof(PREC_ZREC));
+  onept->n=(char **)calloc(n,sizeof(char));
+  onept->n[0]=(char *)calloc(n*maxeisoname,sizeof(char));
+	
+  //For each isotope ask for mass and name
+  for(i=0;i<n;i++){
+    onept->n[i]=onept->n[0]+i*maxeisoname;
+    
+    while(1){
+      fprintf(stderr,
+	      " Mass and name of extra isotope #%i (Order mandatory, "
+	      "e.g. 12.011Carbon):\n  "
+	      ,i+1);
+      onept->m[i]=isof[i+nf].m=readds(stdin,&rc,
+				      onept->n[i],maxeisoname-1);
+      strcpy(isof[i+nf].n,onept->n[i]);
+      if(rc=='q'){
+	transitprint(0,verblevel,"User interrupt!\n");
+	exit(EXIT_SUCCESS);
+      }
+      if(onept->m[i]<=0)
+	fprintf(stderr," Invalid value %g, has to be positive\n",onept->m[i]);
+      else if(!rc)
+	break;
+      fprintf(stderr,"Try again!\n");
+    }
+  }
+}
+
+
+
+/* \fcnfh
+   ask for a positive double value from stdin with the question 'fmt';
+   to stderr
+*/
+double
+askforposd(char *fmt,		/* Question asked */
+	   ...)			/* parameters for the question if any */
+{
+  va_list ap;
+  va_start(ap,fmt);
+  double val;
+  char rc;
+
+  while(1){
+    vfprintf(stderr,fmt,ap);
+    val=readd(stdin,&rc);
+    if(rc=='q'){
+      transitprint(0,verblevel,"User interrupt!\n");
+      exit(EXIT_SUCCESS);
+    }
+    if(val<=0)
+      fprintf(stderr," Invalid value %g, it has to be positive\n",val);
+    else if(!rc)
+      break;
+    fprintf(stderr,"Try again!\n");
+  }
+  va_end(ap);
+
+  return val;
+}
+
+/* \fcnfh
+   ask for a positive long value from stdin with the question 'fmt';
+   to stderr
+*/
+long
+askforposl(char *fmt,		/* Question asked */
+	   ...)			/* parameters for the question if any */
+{
+  va_list ap;
+  va_start(ap,fmt);
+  long val;
+  char rc;
+
+  while(1){
+    vfprintf(stderr,fmt,ap);
+    val=readl(stdin,&rc);
+    if(rc=='q'){
+      transitprint(0,verblevel,"User interrupt!\n");
+      exit(EXIT_SUCCESS);
+    }
+    if(val<=0)
+      fprintf(stderr," Invalid value %li, it has to be positive\n",val);
+    else if(!rc)
+      break;
+    fprintf(stderr,"Try again!\n");
+  }
+  va_end(ap);
+
+  return val;
 }
 

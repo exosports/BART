@@ -337,7 +337,7 @@ int makeradsample(struct transit *tr)
   struct atm_data *atms=tr->ds.at;
   prop_samp *rsamp=&atms->rads;
 
-  struct iso_noext *in=tr->ds.in;
+  struct lineinfo *li=tr->ds.li;
   prop_isov *isovt=tr->isov;
   prop_atm *atmt=&tr->atm;
 
@@ -378,23 +378,27 @@ int makeradsample(struct transit *tr)
   }
 
   //Allocate arrays that will receive the interpolated data
-  isovt->z=(PREC_ZREC *)calloc(nrad*neiso,sizeof(PREC_ZREC));
   isovt->d=(PREC_ATM  *)calloc(nrad*neiso,sizeof(PREC_ATM ));
   isovt->q=(PREC_ATM  *)calloc(nrad*neiso,sizeof(PREC_ATM ));
-  isovt->c=(PREC_CS   *)calloc(nrad*neiso,sizeof(PREC_CS  ));
+  isovt->c=(PREC_CS   *)calloc(nrad*niso,sizeof(PREC_CS  ));
+  isovt->z=(PREC_ZREC *)calloc(nrad*niso,sizeof(PREC_ZREC));
   for(i=1;i<neiso;i++){
-    isovt[i].z=isovt->z+i*nrad;
     isovt[i].d=isovt->d+i*nrad;
     isovt[i].q=isovt->q+i*nrad;
-    isovt[i].c=isovt->c+i*nrad;
+    if(i<niso){
+      isovt[i].c=isovt->c+i*nrad;
+      isovt[i].z=isovt->z+i*nrad;
+    }
   }
   atmt->t=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  atmt->p=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
 
   /* TD: interpolation */
   //interpolate temperature values according to radius
   resamplex(tr->fl,nrad,rad->v,rsamp->n,rsamp->v);
-  resampley(tr->fl,1,
-	    atms->atm.t,atmt->t);
+  resampley(tr->fl,2,
+	    atms->atm.t,atmt->t,
+	    atms->atm.p,atmt->p);
 
   //Now for the isotope. 
   //First, for the isotopes that were added by getatm() (extended). We
@@ -408,21 +412,15 @@ int makeradsample(struct transit *tr)
 	      atms->isov[i].q,isovt[i].q);
   }
 
-  //and cross section of only the extended isotopes. non extended go
-  //below. This is used in calculating lorenz width
-  for(i=niso;i<neiso;i++){
-    resampley(tr->fl,1,atms->isov[i].c,isovt[i].c);
-  }
-
   //Second, non-extended isotopes:
   //We have to go to each database separately
   for(i=0;i<ndb;i++){
     //position in the first isotope of the database
     iso1db=tr->db[i].s;
-    isovs=in->isov+iso1db;
+    isovs=li->isov+iso1db;
 
     //interpolate variable isotope info respect to temperature
-    resamplex(tr->fl,in->db[i].t,in->db[i].T,nrad,atmt->t);
+    resamplex(tr->fl,li->db[i].t,li->db[i].T,nrad,atmt->t);
     for(j=0;j<tr->db[i].i;j++){
       transitASSERT(iso1db+j>niso-1,
 		    "trying to reference an isotope (%i) outside\n"

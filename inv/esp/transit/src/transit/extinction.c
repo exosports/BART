@@ -219,9 +219,9 @@ int extwn (struct transit *tr)
       //Calculate lorentz
       alphal[i]=0;
       for(j=0;j<neiso;j++)
-	alphal[i]+=csiso[i]*tr->isov[j].d[r]/tr->isof[j].m
+	alphal[i]+=tr->isov[j].d[r]/tr->isof[j].m
 	  *sqrt(1/mass[i] + 1/tr->isof[j].m);
-      alphal[i]*=propto_alor;
+      alphal[i]*=csiso[i]*propto_alor;
 
       //Following calculates doppler divided by central wavenumber.
       alphad[i]=propto_adop/sqrt(mass[i]);
@@ -259,9 +259,9 @@ int extwn (struct transit *tr)
 
     //Compute the spectra!, proceed for every line.
     for(ln=0;ln<tr->n_l;ln++){
+      /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
-      /*
       if(ln<9000||ln>11000)
 	continue;
       */
@@ -337,7 +337,7 @@ int extwn (struct transit *tr)
 	/mass[i]	        	 //mass
 	/ziso[i];		         //Partition function
 
-      transitDEBUG(20,verblevel,
+      transitDEBUG(21,verblevel,
 		   "i=%i   temp=%g   Elow=%g\n"
 		   "aD=%.7g   aL=%.7g\n"
 		   "wl=%.10g  wn=%.10g\n"

@@ -1,6 +1,7 @@
 /*
- * transit.c - Models the modulation produced by a Planet crossing in
- *             front of the star. Main component of the Transit program.
+ * transit.c
+ * transit.txc - Models the modulation produced by a Planet crossing in
+ *               front of the star. Main component of the Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -160,13 +161,15 @@ int main (int argc,		/* Number of variables */
 
 
   //Initialization of atmospheric parameters.
+  //'.mass' indicates whether the abundances are by mass or number
   //'.f\_atm' is the name of the file with the atmospheric parameters,
   //a '-' indicates that a one-point solution is desired.
+  trh.mass=1;
   char defile_atm[]="-";
   trh.f_atm=(char *)calloc(strlen(defile_atm)+1,sizeof(char));
   strcpy(trh.f_atm,defile_atm);
   trh.na|=TRH_FA;
-  trh.fl|=TRU_ATMHARDC1P|TRU_SAMPLIN;
+  trh.fl|=TRU_ATMASK1P|TRU_SAMPLIN|TRH_MASS;
 
   //Initialization of extinction parameters.
   //'.voigtfine' is the fine binning of voigt
@@ -245,20 +248,32 @@ int main (int argc,		/* Number of variables */
 		 "extwn() returned error code %i\n"
 		 ,rn);
 
-
-  printf("#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
-  for(rn=0;rn<transit.wns.n;rn++)
-    /*    if(rn%transit.wns.o==0)*/
-      printf("%10.4f%10.4f%15.5g%15.5g\n"
-	     ,transit.wns.v[rn],WNU_O_WLU/transit.wns.v[rn],
-	     transit.ds.ex->k[0][0][rn],
-	     AMU*transit.ds.ex->k[0][0][rn]*transit.isof[0].m/transit.isov[0].d[0]);
-
-
+  printv1(&transit);
+#ifdef TRANSITv1
+#endif
 
 
   return EXIT_SUCCESS;
 }
+
+
+/* \fcnfh
+   Printout for version 1 of transit
+*/
+void
+printv1(struct transit *tr)
+{
+  printf("#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
+  for(rn=0;rn<tr->wns.n;rn++)
+    /*    if(rn%tr->wns.o==0)*/
+    printf("%10.4f%10.4f%15.5g%15.5g\n"
+	   ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
+	   tr->ds.ex->k[0][0][rn],
+	   AMU*tr->ds.ex->k[0][0][rn]*tr->isof[0].m/tr->isov[0].d[0]);
+
+  exit(EXIT_SUCCESS);
+}
+
 
 
 /* \fcnfh
@@ -293,6 +308,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_ONEABUND,
     CLA_ONEINT,
     CLA_ONEEXTRA,
+    CLA_NUMBERQ,
   };
 
   //General help-option structure
@@ -336,6 +352,13 @@ int processparameters(int argc, /* number of command line arguments */
     {"rad-delt",required_argument,CLA_RADDELT,
      "spacing","Radius spacing. 0 if you want to use atmospheric\n"
      "data spacing"},
+
+
+    {NULL,HELPTITLE,0,
+     NULL,"ATMPOSPHERE OPTIONS"},
+    {"number-abund",no_argument,CLA_NUMBERQ,
+     NULL,"Indicates that given abundances are by number rather\n"
+     "than by mass.\n"},
     {"oneptn",required_argument,CLA_ONEPT,
      "press,temp,extra_iso","Don't calculate transit spectra, just\n"
      "obtain spectra for a given pressure and temperature. Unless\n"
@@ -422,12 +445,12 @@ int processparameters(int argc, /* number of command line arguments */
 			 "Patricio Rojo <pato@astro.cornell.edu>"
 			 ,NULL,NULL,0};
   int rn,i;
-  //  int longidx;
   prop_samp *samp;
-  char name[20],rc;
+  char name[20],rc,*lp;
   char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
   double rf;
 
+  procopt_debug=0;
   opterr=0;
   while(1){
     /* This is for old style
@@ -436,7 +459,7 @@ int processparameters(int argc, /* number of command line arguments */
     if (rn==-1)
       break;
 
-    transitDEBUG(20,verblevel,
+    transitDEBUG(21,verblevel,
 		 "Processing option '%c', argum: %s\n"
 		 ,rn,optarg);
 
@@ -493,6 +516,9 @@ int processparameters(int argc, /* number of command line arguments */
       }
       break;
 
+    case CLA_NUMBERQ:
+      hints->mass=0;
+      break;
     case CLA_ONEPT:
       if((rn=getnd(3,',',optarg,&hints->onept.p,&hints->onept.t,
 		   &rf))!=3){
@@ -530,9 +556,34 @@ int processparameters(int argc, /* number of command line arguments */
       break;
 
     case CLA_ONEEXTRA:
-      /* TD from here: extra isotope name and mass as parameters */
-      break;
+      rn=ncharchg(optarg,',','\0')+1;
+      hints->onept.n=(char **)calloc(rn,sizeof(char *));
+      hints->onept.n[0]=(char *)calloc(rn*maxeisoname,sizeof(char));
+      hints->onept.m=(PREC_ZREC *)calloc(rn,sizeof(PREC_ZREC));
 
+      for(i=0;i<rn;i++){
+	hints->onept.n[i]=hints->onept.n[0]+i*maxeisoname;
+	hints->onept.m[i]=strtod(optarg,&lp);
+	if(lp==optarg)
+	  transiterror(TERR_SERIOUS,
+		       "Bad format in the field #%i of --oneextra. It doesn't have\n"
+		       " a valid value for mass. The field should be <mass1><name1>\n"
+		       " with only an optional dash betweeen the mass and name:\n %s\n"
+		       ,i+1,optarg);
+	if(*lp=='-') lp++;
+	strncpy(hints->onept.n[i],lp,maxeisoname);
+	optarg=lp;
+	hints->onept.n[i][maxeisoname-1]='\0';
+	while(*optarg++);
+	if(lp==optarg)
+	  transiterror(TERR_SERIOUS,
+		       "Bad format in the field #%i of --oneextra. It doesn't have\n"
+		       " a valid isotope name The field should be <mass1><name1>\n"
+		       " with only an optional dash betweeen the mass and name:\n %s\n"
+		       ,i+1,optarg);
+      }
+      hints->onept.nm=rn;
+      break;
     case CLA_ONEINT:
       hints->fl=(hints->fl&~TRU_ATM1PBITS)|TRU_ATMASK1P;
       break;

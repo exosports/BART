@@ -18,9 +18,9 @@ inline void transitdot(int thislevel, int verblevel)
   transiterror: Error function for Transit package.
 
   @returns Number of characters wrote to the standard error file
-             descriptor if PERR_ALLOWCONT is set, otherwise, it ends
+             descriptor if PERR\_ALLOWCONT is set, otherwise, it ends
              execution of program.
-	   0 if it is a warning call and 'transit_nowarn' is 1
+	   0 if it is a warning call and 'transit\_nowarn' is 1
 */
 
 int transiterror(int flags, char *str, ...)
@@ -168,7 +168,7 @@ void transitcheckcalled(const long pi, /* Progress indicator variable */
 					   to be called before */
 			...)	/* Pairs of function required to be
 				   called before and their appropiate
-				   TRPI_flag */
+				   TRPI\_flag */
 {
   /* TD: make 'mess' dynamic size */
   //'ap' is the variable argument pointer.

@@ -29,6 +29,8 @@
 #define TRH_TA          0x00000080 /* times of alpha */
 #define TRH_DR          0x00000100 /* max doppler ratio */
 
+#define TRH_MASS        0x00000200 /* mass abundance? */
+
 /* Generic flags for sampling to be shifted as below to indicate radius,
    wavenumber and wavelength spacing, respectively */
 /* According to the current value of TRH\_RADSFT, there are 15 bits used
@@ -185,6 +187,7 @@ defined(EXPCTE) || defined(WNU_O_WLU)
 #define ONEOSQRT2PI (0.3989422804)   // 1.0/sqrt(2pi)
 #define SQRTLN2  0.83255461115769775635 //sqrt(ln(2))
 
+extern const int maxeisoname;
 extern int transit_nowarn;
 extern int verblevel;
 
@@ -219,16 +222,18 @@ typedef struct {          	/* One item per sampling element */
   PREC_RES *v;			/* values of the sampling */
 } prop_samp;
 
+
 typedef struct {          	/* One item per isotope and
 				   miscellaneous conditions, usually
 				   radius or temperature */ 
   PREC_ZREC *z;            	/* Partition function [radius or temp] */
   PREC_CS *c;              	/* Cross section [radius or temp] */
   PREC_ATM *d;			/* Environment: Density [radius], not
-				   used in iso_noext structure */ 
-  PREC_ATM *q;			/* Mass Abundance [radius], not
-				   used in iso_noext structure */ 
+				   used in lineinfo structure */ 
+  PREC_ATM *q;			/* Abundance [radius], not
+				   used in lineinfo structure */ 
 } prop_isov;
+
 
 typedef struct {          	/* One item per isotope */
   int d;			/* Database to which they belong */
@@ -236,11 +241,13 @@ typedef struct {          	/* One item per isotope */
   PREC_ZREC m;			/* Mass */
 } prop_isof;
 
+
 typedef struct {		/* One item per atmospheric conditions
 				   in the atmosphere */
   PREC_ATM *p;			/* Pressure [cgs=dyne/cm2] */
   PREC_ATM *t;			/* Temperature [radius] */
 } prop_atm;
+
 
 typedef struct {          	/* One item per database */
   char *n;			/* Name */
@@ -249,17 +256,33 @@ typedef struct {          	/* One item per database */
 				   belong to this database */
 } prop_db;
 
+
 typedef struct {          	/* One item per database */
   int t;			/* Number of temperatures */
   PREC_ZREC *T;			/* Temperatures */ 
 } prop_dbnoext;
 
-struct iso_noext {
+
+struct lineinfo {		/* Used to keep parameters in
+				   readlineinfo() */
+  int twii_ver;			/* TWII version */
+  int twii_rev;			/* TWII revision */
+  prop_samp wavs;		/* wavelength sampling extracted */
+  double wi,wf;			/* initial and final wavelength in the
+				   database */
+  long endinfo;			/* position at the end of the info part
+				   of the info file */
+  int asciiline;		/* line number in an TWII-ascii file
+				   being read, it is zero if a binary
+				   file. And the maximum value it gets
+				   is the first line of the transition
+				   info. */
   prop_isov *isov;		/* Variable isotope information (w/temp)
 				   [iso] */
   prop_dbnoext *db;		/* Temperature info from databases [DB]
 				   */
 };
+
 
 struct line_transition {	/* One item per transition */
   PREC_LNDATA wl;		//Wavelength in nm.
@@ -268,13 +291,16 @@ struct line_transition {	/* One item per transition */
   short isoid;			//Isotope ID (Assumed to be in range)
 };
 
-struct atm_data{
+
+struct atm_data{		/* Keeps parameters in readatminfo() */
   prop_samp rads;		/* radius sampling */
   prop_isov *isov;		/* variable isotope info
 				   [isoext] */
   prop_atm atm;			/* Atmospheric properties */
   int n_niso;			/* Number of new isotopes */
-  int mm;			/* Mean molecular mass */
+  double mm;			/* Mean molecular mass */
+  _Bool mass;			/* whether the abundances in 'isov' are
+				   mass abundances or not */
 };
 
 struct extinction{
@@ -295,21 +321,6 @@ struct extinction{
   int vf;			/* Fine binning of Voigt function */
   float ta;			/* number of alphas that have to be
 				   contained in the profile */
-};
-
-struct lineinfo {
-  int twii_ver;			/* TWII version */
-  int twii_rev;			/* TWII revision */
-  prop_samp wavs;		/* wavelength sampling extracted */
-  double wi,wf;			/* initial and final wavelength in the
-				   database */
-  long endinfo;			/* position at the end of the info part
-				   of the info file */
-  int asciiline;		/* line number in an TWII-ascii file
-				   being read, it is zero if a binary
-				   file. And the maximum value it gets
-				   is the first line of the transition
-				   info. */
 };
 
 struct onept {
@@ -347,6 +358,8 @@ struct transithint {		/* Structure with user hinted data that
 				   tr.ds.op.vf */
   int verbnoise;		/* noisiest verbose level in a non
 				   debugging run */ 
+  _Bool mass;			/* whether the abundances read by getatm
+				   are by mass or number */
   long fl;			/* flags */
   long na;			/* flags of non-accepted or just changed
 				   hints */

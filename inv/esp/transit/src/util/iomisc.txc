@@ -26,6 +26,24 @@ char *linepad_break="-";
 int printpad_columns=__PADTO_COLUMNS;
 
 /* \fcnfh
+   Count ocurrences of 'car' in 'str', replacing each of them by 'chg'.
+*/
+int
+ncharchg(char *str,
+	 char car,
+	 char chg)
+{
+  int n=0;
+  while(*str)
+    if(*str++==car){
+      str[-1]=chg;
+      n++;
+    }
+  return n;
+}
+
+
+/* \fcnfh
    Returns next string in a newly allocated array, 'fspace', if any,
    indicates a false space character, which is going to be replaced
    before returning. It o
@@ -368,10 +386,10 @@ fprintpad(FILE *fp,		/* File pointer to print */
 double readds(FILE *fp,
 	      char *c,
 	      char *string,
-	      int maxstring)
+	      int maxstring)	/* includes '\0' */
 {
   char *str,*cur,car;
-  int salloc=8;
+  int salloc=8,ns;
   _Bool atleast=0;
   enum {ent=0x1,dec=0x2,man=0x4,unsig=0x8} stage=ent|unsig;
 
@@ -411,13 +429,17 @@ double readds(FILE *fp,
     cur++;
   }
   if(string){
-    str=string;
-    while(car!='\n' && fread(&car,1,1,fp)){
-      *string++=car;
+    ns=0;
+    //an optional dash can separate number from string
+    if(car=='-')
+      fread(&car,1,1,fp);
+    while(car!='\n'){
       //if line is bigger than wanted, stop storing and discard rest of
       //line
-      if(string-str>=maxstring)
+      if(ns++>=maxstring)
 	break;
+      *string++=car;
+      fread(&car,1,1,fp);
     }
     *string='\0';
   }
