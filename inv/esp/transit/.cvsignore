@@ -1,2 +1,3 @@
 *.c  *.o
 transit  .log
+lineread

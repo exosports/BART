@@ -1,5 +1,5 @@
 /*
- * Poptions.c - Practical command line option parsing
+ * procopt.h - Practical command line option parsing
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -23,12 +23,23 @@
 
 #define HELPTITLE 0xff
 
+extern _Bool procopt_debug;
+
 struct optdocs {
   const char *name;
-  int has_arg;
-  int val;
-  char *prm;
-  char *doc;
+  const int has_arg;
+  const int val;
+  const char *prm;
+  const char *doc;
 };
 
 
+struct optcfg {
+  const char *prg;
+  const char *options;
+  const char *nonopt;
+  const char *contact;
+  const char *intro;
+  char *file;			/* Configuration file */
+  int indentdoc;
+};

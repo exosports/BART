@@ -20,7 +20,7 @@ AR      = ar ru
 
 #objects and headers
 DEP_FILES = sampling.c voigt.c lineread.c dbread_pands.c \
-            readlineinfo.c transitstd.c transit.c 
+            readlineinfo.c transitstd.c transit.c procopt.c
 PROTO_FILES = $(DEP_FILES)
 OBJ_UT    = sampling.o voigt.o
 OBJ_TR    = transitstd.o readlineinfo.o

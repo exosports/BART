@@ -27,12 +27,6 @@
 
 #include <transit.h>
 #include <math.h>
-/*
-#include "transitstd.c"
-#include "readlineinfo.c"
-#include "../util/voigt.c"
-#include "../util/sampling.c"
-*/
 
 /* Version history:
    0.3: First light, it only calculates Kappa values of it and of
@@ -61,7 +55,19 @@ static inline double integrateTR(PREC_RES *spectra,
 enum param {
   CLA_DUMMY=128;
   CLA_ATMOSPHERE,
-  CLA_LINEDB
+  CLA_LINEDB,
+  CLA_RADLOW,
+  CLA_RADHIGH,
+  CLA_RADDELT,
+  CLA_WAVLOW,
+  CLA_WAVHIGH,
+  CLA_WAVDELT,
+  CLA_WAVOSAMP,
+  CLA_WAVMARGIN,
+  CLA_WAVNLOW,
+  CLA_WAVNHIGH,
+  CLA_WAVNDELT,
+  CLA_WAVNOSAMP
 };
 
 
@@ -92,98 +98,77 @@ struct optdocs const var_docs[]={
    NULL,"RADIUS OPTIONS (all in planetary radii units)"},
   {"radius",no_argument,'r',
    NULL,"Interactively input radius parameters"},
+  {"rad-low",required_argument,CLA_RADLOW,
+   "radius","Lower radius. 0 if you want to use atmospheric "
+   "data minimum"},
+  {"rad-high",required_argument,CLA_RADHIGH,
+   "radius","Higher radius. 0 if you want to use atmospheric "
+   "data maximum"},
+  {"rad-delt",required_argument,CLA_RADDELT,
+   "spacing","Radius spacing. 0 if you want to use atmospheric "
+   "data spacing"},
+
+  {NULL,HELPTITLE,0,
+   NULL,"WAVELENGTH OPTIONS (all in nanometers)"},
+  {"wavelength",no_argument,'w',
+   NULL,"Interactively input wavelength parameters"},
+  {"wl-low",required_argument,CLA_WAVLOW,
+   "wavel","Lower wavelength. 0 if you want to use line "
+   "data minimum"},
+  {"wl-high",required_argument,CLA_WAVHIGH,
+   "wavel","Upper wavelength. 0 if you want to use line"
+   "data maximum"},
+  {"wl-delt",required_argument,CLA_WAVDELT,
+   "spacing","Wavelength spacing. 0 if you want to use line"
+   "data spacing"},
+  {"wl-osamp",required_argument,CLA_WAVOSAMP,
+   "integer","Wavelength oversampling"},
+  {"wl-margin",required_argument,CLA_WAVMARGIN,
+   "boundary","Not trustable range in microns at boundary "
+   "of line databases. Also transitions this much away from "
+   "the requested range will be considered"},
+
+  {NULL,HELPTITLE,0,
+   NULL,"WAVENUMBER OPTIONS (all in cm-1)"},
+  {"wavenumber",no_argument,'n',
+   NULL,"Interactively input wavenumber parameters"},
+  {"wn-low",required_argument,CLA_WAVNLOW,
+   "waven","Lower wavenumber. 0 if you want to use equivalent "
+   "of the wavelength maximum"},
+  {"wn-high",required_argument,CLA_WAVNHIGH,
+   "waven","Upper wavenumber. 0 if you want to use equivalent "
+   "of the wavelength minimum"},
+  {"wn-delt",required_argument,CLA_WAVNDELT,
+   "spacing","Wavenumber spacing. 0 if you want to have the "
+   "same number of points as in the wavelength sampling"},
+  {"wn-osamp",required_argument,CLA_WAVNOSAMP,
+   "integer","Wavenumber oversampling. 0 if you want the same "
+   "value as for the wavelengths"},
+
+  {NULL,HELPTITLE,0,
+   NULL,"OPACITY CALCULATION OPTIONS:"},
+  {"finebin",required_argument,'f',
+   "integer","Number of fine-bins to calculate the Voigt "
+   "function"},
+  {"nwidth",required_argument,'a',
+   "number","Number of the max-widths (the greater of Voigt "
+   "or Doppler widths) that need to be contained in a calculated "
+   "Voigt profile"},
+  {"maxratio",required_argument,'r',
+   "uncert","Maximum allowed uncertainty in doppler width before "
+   "recalculating profile"},
+
+  {NULL,HELPTITLE,0,
+   NULL,"OBSERVATIONAL OPTIONS:"},
+  {"telres",required_argument,'t',
+   "width","Gaussian width of telescope resolution in nm"},
+
+  {NULL,0,0,NULL,NULL}
 }
 
-/* \fcnfh
-   Output a syntax help message.
-
-   @returns Never It either exit with the syntax help or with a error
-                  message if number of parameters are wrong
-*/
-void synhelp_transit(const char *unknown,const char par,
-		     const struct transithint *th)
-{
-  //Following is the help text  
-  char message[]="Syntax:\n\ttransit [..options..]\n\n"
-    " Where, sorted by effect, the available options are:\n"
-    "\n GENERAL OPTIONS:\n"
-    "  -h              Show this help\n"
-    "  -v [+..][-..]   Increase or decrease verbose level by one per\n"
-    "                  each + or -. 0 is the quietest, %i is the\n"
-    "                  noisiest (%i)\n"
-    "  -V              Show program's version and exit.\n"
-    "\n FILE OPTIONS\n"
-    "  -f a<atm_file>  Name of the atmospheric data file (\"%s\")\n"
-    "  -f l<line_file> Name of the line info file produced by\n"
-    "                  lineread (\"%s\")\n"
-    "  -f o<out_file>  Name of the output file (\"%s\")\n"
-    "\n RADIUS OPTIONS (all in planetary radius units)\n"
-    "  -r i<low_rad>   Lower radius. 0 if you want to use atmospheric\n"
-    "                  data minimum (%g).\n"
-    "  -r f<high_rad>  Upper radius. 0 if you want to use atmospheric\n"
-    "                  data maximum (%g).\n"
-    "  -r d<delta_rad> Radius spacing. 0 if you want to use atmospheric\n"
-    "                  data spacing (%g).\n"
-    "\n WAVELENGTH OPTIONS (all in nanometers)\n"
-    "  -w i<low_wav>   Lower wavelength. 0 if you want to use line\n"
-    "                  data minimum (%g).\n"
-    "  -w f<high_wav>  Upper wavelength. 0 if you want to use line\n"
-    "                  data maximum (%g).\n"
-    "  -w d<delta_wav> Wavelength spacing. 0 if you want to use line\n"
-    "                  data spacing (%g).\n"
-    "  -w o<delta_wav> Wavelength oversampling (%i).\n"
-    "  -m <margin>     Not trustable range in microns at boundary\n"
-    "                  of line databases. Also transitions this\n"
-    "                  much away from the requested range will be\n"
-    "                  considered (%g)\n"
-    "\n WAVENUMBER OPTIONS (all in cm-1)\n"
-    "  -n i<low_wn>    Lower wavenumber. 0 if you want to use\n"
-    "                  equivalent of the wavelength maximum (%g).\n"
-    "  -n f<high_wn>   Upper wavenumber. 0 if you want to use\n"
-    "                  equivalent of the wavelength minimum (%g).\n"
-    "  -n d<delta_wn>  Wavenumber spacing. 0 if you want to have\n"
-    "                  the same number of points as in the\n"
-    "                  wavelength sampling in an equispaced\n"
-    "                  grid. (%g)\n"
-    "  -n o<delta_wn>  Wavenumber oversampling. 0 if you want\n"
-    "                  the same value as for the wavelengths (%i).\n"
-    "\n OPACITY CALCULATION OPTIONS:\n"
-    "  -s <subbinning> Number of fine-bins to calculate the Voigt\n"
-    "                  function (%i)\n"
-    "  -a <timesalpha> Number of the max-alpha (the greater of Voigt\n"
-    "                  or Doppler widths) that need to be contained\n"
-    "                  in a calculated Voigt profile (%g)\n"
-    "  -d <maxratio>   Ratio of maximum allowed doppler change\n"
-    "                  before recalculating profile (%g)\n"
-    "\n OBSERVATIONAL OPTIONS:\n"
-    "  -t <tel_res>    Telescope resolution in nm. (%g)\n"
-    "\n";
-
-  //Check if I'm here because of a bad command. If so complain and
-  //suggest help
-  if(unknown){
-    fprintf(stderr,
-	    "Option '-%c %s' not available. Try 'transit -h' for help\n"
-	    ,par,unknown);
-  }
-  //Else output syntax help
-  else{
-    fprintf(stderr,message, 
-	    th->verbnoise, verblevel, 
-	    th->f_atm,  th->f_line, th->f_out, 
-	    th->rads.i, th->rads.f, th->rads.d,
-	    th->wavs.i, th->wavs.f, th->wavs.d, th->wavs.o, th->m,
-	    th->wns.i,  th->wns.f,  th->wns.d,  th->wns.o,
-	    th->voigtfine, th->timesalpha, th->maxratio_doppler,
-	    th->t
-	    );
-
-  }
-
-  //stop execution of program no matter what.
-  exit(EXIT_FAILURE);
-}
-
+struct optcfg var_cfg={NULL,NULL,NULL,
+		       "Patricio Rojo <pato@astro.cornell.edu>"
+		       ,NULL,NULL,0};
 
 
 //\fcnfh
@@ -311,10 +296,13 @@ int main (int argc,		/* Number of variables */
   //Command line parameters' processing
   opterr=0;
   while(1){
-    rn=getopt(argc,argv,"f:Vhv:m:r:w:n:a:s:d:");
+    /* This is for old style
+       rn=getopt(argc,argv,"f:Vhv:m:r:w:n:a:s:d:");*/
+    rn=getprocopt(argc,argv,var_docs,var_cfg);
     if (rn==-1)
       break;
-
+    /* FH:TD: Change switch to new style with getprocopt and change
+       synhelp for prochelp */
     transitDEBUG(20,verblevel,
 		 "Processing option '%c', argum: %s\n"
 		 ,rn,optarg);
@@ -574,9 +562,9 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       nmb=tr->n_e=tr->n_i+st_at.n_niso;
       tr->isof=(prop_isof *)realloc(tr->isof,nmb*sizeof(prop_isof));
       tr->isov=(prop_isov *)realloc(tr->isov,nmb*sizeof(prop_isov));
-  transitDEBUG(20,verblevel,
-	       "First isotope: %s\n"
-	       ,tr->isof[0].n);
+      transitDEBUG(20,verblevel,
+		   "First isotope: %s\n"
+		   ,tr->isof[0].n);
       st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
       for(i=0;i<nmb;i++){
 	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
