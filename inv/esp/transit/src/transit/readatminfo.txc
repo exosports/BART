@@ -1,0 +1,173 @@
+/*
+ * readatminfo.c - Read atmospheric info. Component of the
+ *                 Transit program.
+ *
+ * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ */
+
+
+/* TD: atmosphere info  retrieval */
+/*\fcnfh
+   getatm: Get atmospheric parameters from a given file. It has to get
+   all the extra isotopes data that was not in line database.
+
+   @returns 0 On success
+            -1 If no atmospheric info file was specified, and no
+               defaults are allowed
+	    -2 Default handling mode inexistent
+	    -3 Something really bad happened!
+*/
+int getatm(struct transit *tr) /* Containing filename of atmosphere
+				       info file */
+{
+  //'nmb' auxiliar variable for a number.
+  int nmb,i;
+  //'at' and 'hints' are the atmospheric and hint's structure,
+  //respectively
+  struct transithint *th=tr->ds.th;
+  static struct atm_data st_at;
+  memset(&st_at,0,sizeof(struct atm_data));
+  tr->ds.at=&st_at;
+  /*  struct atm_data *at=tr->ds.at;*/
+
+  //Hard coded values.
+  //'hc\_n\_e' number of extra isotopes (eiso).
+  //'hc\_name' names.
+  //'hc\_t' temperature.
+  //'hc\_mass' masses.
+  //'hc\_cs' cross section.
+  //'hc\_dens' density.
+#define HC_N_E 1
+#define MAX_NAME 30
+  int hc_n_e=0;
+  char hc_name[HC_N_E][MAX_NAME]={""};
+  PREC_ZREC hc_t=1350;
+  PREC_ZREC hc_mass[HC_N_E]={0};
+  PREC_CS hc_cs[HC_N_E]={0};
+  PREC_ATM hc_dens[hc_n_e + tr->n_i];
+  PREC_ATM hc_pres=1.0e3;
+  //write defult density for the standard isotopes
+    /* TD: Density units */
+  hc_dens[0]=6.5e-4*hc_pres*(tr->isof[0].m)/(KB)/(hc_t);
+  for(i=1;i<(tr->n_i);i++)
+    hc_dens[i]=6e-10*hc_pres*(tr->isof[i].m)/(KB)/(hc_t);
+  //and now for the extra isotopes if any
+  if(hc_n_e){
+    hc_dens[tr->n_i+1]=0;
+  }
+
+#undef HC_N_E
+#undef MAX_NAME
+
+  //Pass atmospheric flags into info struct
+  transitacceptflag(tr->fl,th->fl,TRU_ATMBITS);
+
+  //If filename is not given or is "-", then do not use atmosphere file
+  //and use defaults instead. 
+  if(th->f_atm==NULL||strcmp(th->f_atm,"-")==0){
+    transitaccepthint(tr->f_atm,th->f_atm,th->na,TRH_FA);
+    st_at.rads.n=1;
+    st_at.rads.v=(PREC_ATM *)calloc(st_at.rads.n,sizeof(PREC_ATM));
+    st_at.atm.t=(PREC_ATM *)calloc(st_at.rads.n,sizeof(PREC_ATM));
+    st_at.rads.v[0]=1.0;
+    //See which way does the user wants the default to be handled
+    switch(tr->fl&TRU_ATM1PBITS){
+    case TRU_ATMHARDC1P:	/* wants to use hard-coded values */
+      st_at.atm.t[0]=hc_t;
+      st_at.n_niso=hc_n_e;
+      nmb=tr->n_e=tr->n_i+st_at.n_niso;
+      tr->isof=(prop_isof *)realloc(tr->isof,nmb*sizeof(prop_isof));
+      tr->isov=(prop_isov *)realloc(tr->isov,nmb*sizeof(prop_isov));
+      transitDEBUG(20,verblevel,
+		   "First isotope: %s\n"
+		   ,tr->isof[0].n);
+      st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
+      for(i=0;i<nmb;i++){
+	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+	st_at.isov[i].d[0]=hc_dens[i];
+      }
+      nmb=tr->n_i;
+      for(i=0;i<st_at.n_niso;i++){
+	tr->isof[nmb+i].n=(char *)calloc(strlen(hc_name[i]),
+					 sizeof(char));
+	strcpy(tr->isof[nmb+i].n,hc_name[i]);
+	tr->isof[nmb+i].m=hc_mass[i];
+	st_at.isov[nmb+i].c=(PREC_CS *)calloc(1,sizeof(PREC_CS));
+	st_at.isov[nmb+i].c[0]=hc_cs[i];
+      }
+      
+      break;
+    case TRU_ATMNODEF:		/* Wants an error message */
+      transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		   "getatm():: No atmospheric file specified");
+      return -1;
+      break;
+    case TRU_ATMGIVEN1P:	/* Wants to get it from somewhere */
+    case TRU_ATMASK1P:		/* Wants to give it to standard input */
+      transiterror(TERR_CRITICAL,
+		   "getatm():: Defaults handling mode (0x%x) not\n"
+		   "yet implemented\n"
+		   ,tr->fl&TRU_ATM1PBITS);
+      break;
+    default:			/* Oops */
+      transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
+		   "getatm():: Unexistent default handling mode (0x%x)\n"
+		   "requested\n"
+		   ,tr->fl&TRU_ATM1PBITS);
+      return -2;
+      break;
+    }
+
+    //Let user know that defaults are being used
+    transitprint(1,verblevel,
+		 "You are using one point atmospheric conditions:\n"
+		 " Temperature: %g K\n"
+		 ,st_at.atm.t[0]);
+    //Densities for all isotopes
+    for(i=0;i<tr->n_i;i++)
+      transitprint(1,verblevel,
+		   " %s: density %8g g/cm3\n"
+		   ,tr->isof[i].n,st_at.isov[i].d[0]);
+    //Density and cross section for extra isotopes
+    for(;i<tr->n_e;i++)
+      transitprint(1,verblevel,
+		   " %s: density %.8g g/cm3\tcross section %8g\n"
+		   ,tr->isof[i].n,st_at.isov[i].d[0],
+		   st_at.isov[i].c[0]);
+
+  }
+  //Otherwise if info is to be taken from file.
+  else{
+  /* TD: atmosphere info retrieval */
+    //If a filename was given check its existence and that it can be
+    //opened.
+    verbfileopen(th->f_atm,&tr->fp_atm,"Atmospheric info ");
+
+    transiterror(TERR_CRITICAL,
+		 "Read atmospheric data file not yet implemented!\n");
+  }
+  transitASSERT(tr->n_e>tr->n_i,
+		"Uyuyuyy!, number of isotopes after extension (%i)\n"
+		"is smaller than number of isotopes before that (%i)\n"
+		,tr->n_e,tr->n_i);
+
+  //Return succes and set progress indicator
+  tr->pi|=TRPI_GETATM;
+  return 0;
+}
+

@@ -308,6 +308,7 @@ struct transithint {		/* Structure with user hinted data that
 				   the boundaries, also how much out of
 				   requested range it have to look for
 				   transitions */
+  PREC_RES wnm;			/* Same as above, but for wavenumbers */
   float maxratio_doppler;	/* Maximum doppler width deformation
 				   ratio before recalculate profile */
   float timesalpha;		/* Number of alphas that have to be
@@ -331,7 +332,7 @@ struct transit {		/* Main data structure */
 				   the boundaries, also how much out of
 				   requested range it have to look for
 				   transitions */
-  PREC_RES wnm;
+  PREC_RES wnm;			/* Amount of cm-1 not trusted */
   prop_samp rads,wavs,wns;	/* Sampling properties of radius,
 				   wavelength and wavenumber */
   prop_atm atm;			/* Sampled atmospheric data. Height in

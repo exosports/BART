@@ -96,7 +96,7 @@ int checkrange(struct transit *tr, /* General parameters and
 		 ,th->m,li->wi,li->wf);
     return -4;
   }
-  if(th->na|=TRH_WM)
+  if(th->na&=TRH_WM)
     transitaccepthint(margin=tr->m, th->m, th->na, TRH_WM);
   else
     margin=tr->m=0.0;

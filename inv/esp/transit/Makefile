@@ -20,13 +20,14 @@ AR      = ar ru
 
 #objects and headers
 DEP_FILES = sampling.c voigt.c lineread.c dbread_pands.c \
-            readlineinfo.c transitstd.c transit.c procopt.c
+            readlineinfo.c transitstd.c transit.c procopt.c \
+	    makesample.c extinction.c readatminfo.c
 PROTO_FILES = $(DEP_FILES)
 OBJ_UT    = sampling.o voigt.o
-OBJ_TR    = transitstd.o readlineinfo.o
+OBJ_TR    = transitstd.o readlineinfo.o makesample.o
 
 #make specials
-.PHONY=clean dep transit
+.PHONY=clean dep
 
 #parameters
 EXTPRM      =
