@@ -340,7 +340,7 @@ int makeipsample(struct transit *tr)
   int res;
   struct transithint *trh=tr->ds.th;
   prop_samp *usamp=&trh->ips;
-  prop_samp *rsamp=&tr->wavs;
+  prop_samp *rsamp=&tr->rads;
 
   transitcheckcalled(tr->pi,"makeipsample",1,
 		     "makeradsample",TRPI_MAKERAD);

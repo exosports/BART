@@ -136,6 +136,9 @@ getprocopt(int argc,		/* Number of command line arguments */
     shortopts=(char *)realloc(shortopts,(shortn-1)*sizeof(char));
   }
 
+  /* TD: Put the remainder of the fuinction in the following function */
+  //  getopt_long_def(argc,argv,shortopts,getopts,longidxp,paramfile);
+
   //process file if one is given and it was not finished
   if(paramfile&&!eof){
     //open file if it is first run.

@@ -32,7 +32,7 @@
 int
 idxrefrac(struct transit *tr)
 {
-  static struct idxref idx;
+  static struct idxref st_idx;
   long r;
 
   transitcheckcalled(tr->pi,"idxrefrac",2,
@@ -40,11 +40,11 @@ idxrefrac(struct transit *tr)
 		     "makeradsample",TRPI_MAKERAD
 		     );
 
-  tr->ds.ir=&idx;
+  tr->ds.ir=&st_idx;
 
-  idx.n=(PREC_RES *)calloc(tr->rads.n,sizeof(PREC_RES));
+  st_idx.n=(PREC_RES *)calloc(tr->rads.n,sizeof(PREC_RES));
   for(r=0;r<tr->rads.n;r++)
-    idx.n[r]=1;
+    st_idx.n[r]=1;
 
   tr->pi|=TRPI_IDXREFRAC;
   return 0;

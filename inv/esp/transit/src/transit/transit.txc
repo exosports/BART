@@ -578,8 +578,6 @@ int processparameters(int argc, /* number of command line arguments */
   procopt_debug=0;
   opterr=0;
   while(1){
-    /* This is for old style
-       rn=getopt(argc,argv,"f:Vhv:m:r:w:n:a:s:d:");*/
     rn=getprocopt(argc,argv,"test",var_docs,&var_cfg,NULL);
     if (rn==-1)
       break;
