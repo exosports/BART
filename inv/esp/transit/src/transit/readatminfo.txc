@@ -33,6 +33,8 @@ static int checknonmatch(struct transit *tr, struct atm_data *at,
 			 enum isodo *isodo);
 static void invalidfield(char *line, char *file, int nmb,
 			int fld, char *fldn);
+static inline void checkposvalue(PREC_RES val, int field, char *file,
+				 long line);
 
 
 /* TD: atmosphere info  retrieval */
@@ -99,7 +101,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     switch(tr->fl&TRU_ATM1PBITS){
     case TRU_ATMNODEF:		/* Wants an error message */
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		   "getatm():: No atmospheric file specified");
+		   "getatm():: No atmospheric file specified\n");
       return -1;
       break;
     case TRU_ATMHARDC1P:	/* wants to use hard-coded values */
@@ -608,7 +610,7 @@ getmnfromfile(FILE *fp,
 
   transitASSERT(nmb!=tr->n_e,
 		"Uyuyuyuyu! Problem in file %s, line %i,\n"
-		"assertion failed: %i != %i!!"
+		"assertion failed: %i != %i!!\n"
 		,__FILE__,__LINE__,nmb,tr->n_e);
 
   return at->begline;
@@ -727,6 +729,7 @@ readatmfile(FILE *fp,		/* File */
   //find abundance related quantities for each radius
   int lines=at->begline;
   PREC_NREC r=0;
+  PREC_RES tmp;
   int i,nmb=tr->n_e;
   char rc;
   float allowq=1-tr->allowrq;
@@ -760,15 +763,18 @@ readatmfile(FILE *fp,		/* File */
     if(!rc)
       break;
 
-    rads->v[r]=strtod(lp,&lp2);
+    tmp=rads->v[r]=strtod(lp,&lp2);
+    checkposvalue(tmp,1,tr->f_atm,lines);
     if(lp==lp2) 
     invalidfield(line,tr->f_atm,lines
 		 ,1,"radius");
-    at->atm.p[r]=strtod(lp2,&lp);
+    tmp=at->atm.p[r]=strtod(lp2,&lp);
+    checkposvalue(tmp,2,tr->f_atm,lines);
     if(lp==lp2)
       invalidfield(line,tr->f_atm,lines
 		   ,2,"pressure");
-    at->atm.t[r]=strtod(lp,&lp2);
+    tmp=at->atm.t[r]=strtod(lp,&lp2);
+    checkposvalue(tmp,3,tr->f_atm,lines);
     if(lp==lp2)
       invalidfield(line,tr->f_atm,lines
 		   ,3,"temperature");
@@ -778,7 +784,9 @@ readatmfile(FILE *fp,		/* File */
       transitASSERT(isoeq[i]<0||isoeq[i]>=tr->n_e,
 		    "Assertion failed in file %s, line %i: %i!=[0,%i]\n"
 		    ,__FILE__,__LINE__,isoeq[i],tr->n_e-1);
-      isov[isoeq[i]].q[r]=strtod(lp2,&lp);
+      tmp=isov[isoeq[i]].q[r]=strtod(lp2,&lp);
+      checkposvalue(tmp,i+4,tr->f_atm,lines);
+
       if(lp==lp2)
 	invalidfield(line,tr->f_atm,lines
 			    ,4+i,"isotope abundance");
@@ -831,6 +839,23 @@ readatmfile(FILE *fp,		/* File */
 
   return nrad;
 }
+
+/* \fcnfh
+   Check that val is positive
+*/
+static inline void 
+checkposvalue(PREC_RES val,	/* value to check */
+	      int field,	/* field where it was read */
+	      char *file,	/* file from which it was read */
+	      long line)	/* line from which it was read */
+{
+  if(val<0)
+    transiterror(TERR_SERIOUS,
+		 "While reading the %ith field in line %li of atmosphere\n"
+		 "file %s, a negative value was found (%g)\n"
+		 ,field,line-1,file,val);
+}
+
 
 /* \fcnfh
    Stores info about the atmopshere file

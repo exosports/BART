@@ -5,10 +5,10 @@
 ifndef PREFIX
 PREFIX  = ..
 endif
-SRC     = ./src
-BIN     = $(PREFIX)/bin
-INCL    = ./include
-INCL_UT = $(INCL)/util
+SRC     = ./src/
+BIN     = $(PREFIX)/bin/
+INCL    = ./include/
+INCL_UT = $(INCL)/util/
 
 #paths for dependencies
 vpath %.h include
@@ -23,13 +23,10 @@ CLATEX  = $(HOME)/bin/clatex.pl
 
 #objects and headers
 TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
-	    readatminfo.o extinction.o tau.o transit.o \
-	    idxrefraction.o
+	    readatminfo.o extinction.o transit.o \
+	    tau.o idxrefraction.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o procopt.o iomisc.o
-
-DEP_FILES = $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) $(UT_OBJ:.o=.c)
-PROTO_FILES = $(DEP_FILES)
 
 DEP_FILES = $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) $(UT_OBJ:.o=.c)
 PROTO_FILES = $(DEP_FILES)
@@ -68,6 +65,8 @@ LIBS  = -lX11 -lm
 # $@ target
 # $? modified dependencies
 ################################
+
+default: transit lineread
 
 dbgsample: $(UT_OBJ) transitstd.c makesample.c
 	$(CC) $(STDFLAGS) -DDBGSAMPLE -o $@ $(filter %.c %.o,$^) $(LIBS)

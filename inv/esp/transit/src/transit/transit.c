@@ -175,7 +175,7 @@ int main (int argc,		/* Number of variables */
     transiterror(TERR_SERIOUS,
 		 "processparameters() returned error code %i\n"
 		 ,rn);
-  if(trh.fl&TRH_FO)
+  if(trh.na&TRH_FO)
     transitaccepthint(transit.f_out,trh.f_out,trh.fl,TRH_FO);
 
   //Presentation
@@ -280,7 +280,7 @@ printone(struct transit *tr)
   FILE *out=stdout;
 
   //open file
-  if(tr->f_out)
+  if(tr->f_out&&tr->f_out[0]!='-')
     out=fopen(tr->f_out,"w");
 
   transitprint(1,verblevel,
@@ -292,7 +292,7 @@ printone(struct transit *tr)
 	  "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
   for(rn=0;rn<tr->wns.n;rn++)
     /*    if(rn%tr->wns.o==0)*/
-    fprintf(out,"%10.4f%10.4f%15.5g%15.5g\n"
+    fprintf(out,"%12.6f%14.6f%17.7g%17.7g\n"
 	    ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
 	    tr->ds.ex->k[0][0][rn],
 	    AMU*tr->ds.ex->k[0][0][rn]*tr->isof[0].m/tr->isov[0].d[0]);

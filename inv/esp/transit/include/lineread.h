@@ -23,6 +23,9 @@
 #ifndef _LINEREAD_H_
 #define _LINEREAD_H_
 
+#include <math.h>
+#include <getopt.h>
+
 /* DO NOT change the following structures, not even the order of its
    components. Which is used in lineread:: main():: writing loop */
 

@@ -25,8 +25,6 @@
 
 #include <transit.h>
 #include <lineread.h>
-/*#include "../transit/transitstd.c"*/
-#include <math.h>
 
 /* Version history:
    0.5:  First light of procedure. Oct 7 2003. Patricio Rojo
