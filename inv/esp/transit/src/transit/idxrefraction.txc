@@ -72,3 +72,47 @@ freemem_idexrefrac(struct idxref *ir,
   *pi&=~(TRPI_IDXREFRAC|TRPI_TAU);
   return 0;
 }
+
+
+/* \fcnfh
+   Restore hints structure, the structure needs to have been allocated
+   before
+
+   @returns 0 on success
+            -1 if not all the expected information is read
+	    -2 if info read is wrong
+	    -3 if cannot allocate memory
+	    1 if information read was suspicious
+*/
+int
+restidxref(FILE *in,
+	   PREC_NREC nrad,
+	   struct idxref *ir)
+{
+
+  if(nrad<0)
+    return -2;
+  if(nrad>1000000)
+    return 1;
+  if((ir->n=(PREC_RES *)calloc(nrad,sizeof(PREC_RES)))==NULL)
+    return -3;
+  if(nrad==0)
+    return 0;
+  if(fread(ir->n,sizeof(PREC_RES),nrad,in)!=nrad)
+    return -1;
+
+  return 0;
+}
+
+
+/* \fcnfh
+   Saves index of refraction structure
+*/
+void
+saveidxref(FILE *out,
+	   PREC_NREC nrad,
+	   struct idxref *ir)
+{
+  if(nrad>0)
+    fwrite(ir->n,sizeof(PREC_RES),nrad,out);
+}

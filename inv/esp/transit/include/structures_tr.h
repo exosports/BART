@@ -29,6 +29,7 @@ struct transit;
 struct geometry;
 
 
+/* Structure definitions */
 typedef struct {          	/* One item per sampling element */
   PREC_NREC n;			/* number of elements */
   PREC_RES d;			/* Spacing */
@@ -190,6 +191,7 @@ struct extinction{
 				   function */
   float ta;			/* number of alphas that have to be
 				   contained in the profile */
+  _Bool periso;			/* Extinction per isotope */
 };
 
 

@@ -160,7 +160,7 @@ int extwn (struct transit *tr)
   for(i=1;i<niso;i++)
     profile[i]=*profile+i*ex->vf;
 
-  extinctperiso=(tr->fl&TRU_EXTINPERISO);
+  ex->periso=extinctperiso=(tr->fl&TRU_EXTINPERISO);
   //allocate array for extinctions and widths, initialization of second
   //index will be done in the loop (\lin{kini})
   ex->e=(PREC_RES ***)calloc(nrad,sizeof(PREC_RES **));
@@ -400,7 +400,6 @@ int extwn (struct transit *tr)
 
   //free memory that is no longer needed.
   freemem_lineinfotrans(tr->ds.li,&tr->pi);
-  freemem_isotopes(tr->ds.iso,&tr->pi);
 
    //save current status if requested.
   savefile_extwn(tr);
@@ -519,6 +518,94 @@ freemem_extinction(struct extinction *ex, /* Extinciton info */
 }
 
 
+/* \fcnfh
+   Restore hints structure, the structure needs to have been allocated
+   before
+
+   @returns 0 on success
+            -1 if not all the expected information is read
+	    -2 if info read is wrong
+	    -3 if cannot allocate memory
+	    1 if information read was suspicious
+*/
+int
+restextinct(FILE *in,
+	    PREC_NREC nrad,
+	    short niso,
+	    PREC_NREC nwn,
+	    struct extinction *ex)
+{
+  PREC_NREC nr,nw;
+  short ni;
+  size_t rn;
+
+  rn=fread(&nr,sizeof(PREC_NREC),1,in);
+  if(rn!=1) return -1;
+  rn=fread(&ni,sizeof(short),1,in);
+  if(rn!=1) return -1;
+  rn=fread(&nw,sizeof(PREC_NREC),1,in);
+  if(rn!=1) return -1;
+
+  //no more than 10 000 isotopes, or 10 000 000 of radii or wavelenth
+  if(nr!=nrad||nw!=nwn||ni!=niso||
+     niso>10000||nrad>10000000||nwn>10000000)
+    return -2;
+
+  int n=ex->periso?niso:1;
+
+  if((ex->e      =(PREC_RES ***)calloc(nrad      ,sizeof(PREC_RES **)))==NULL)
+    return -3;
+  if((ex->e[0]   =(PREC_RES **) calloc(niso*nrad ,sizeof(PREC_RES * )))==NULL)
+    return -3;
+  if((ex->e[0][0]=(PREC_RES *)  calloc(nrad*n*nwn,sizeof(PREC_RES   )))==NULL)
+    return -3;
+
+  for(nr=0;nr<nrad;nr++){
+    ex->e[nr]=ex->e[0]+niso*nr;
+    ex->e[nr][0]=ex->e[0][0]+nr*n*nwn;
+    for(ni=1;ni<niso;ni++){
+      ex->e[nr][ni]=ex->e[nr][0];
+      if(ex->periso)
+	ex->e[nr][ni] +=nwn*ni;
+    }
+  }
+
+  rn=fread(ex->e[0][0],sizeof(PREC_RES),nwn*n*nrad,in);
+  if(rn!=nwn*n*nrad) return -1;
+
+  return 0;
+}
+
+
+/* \fcnfh
+   Saves index of refraction structure
+*/
+void
+saveextinct(FILE *out,
+	    PREC_NREC nrad,
+	    short niso,
+	    PREC_NREC nwn,
+	    struct extinction *ex)
+{
+  //save structure
+  fwrite(ex,sizeof(struct extinction),1,out);
+
+  int n=ex->periso?niso:1;
+
+  fwrite(&nrad,sizeof(PREC_NREC),1,out);
+  fwrite(&niso,sizeof(short),1,out);
+  fwrite(&nwn,sizeof(PREC_NREC),1,out);
+
+  if(n<=0&&nrad<=0&&nwn<=0)
+    transiterror(TERR_SERIOUS,
+		 "Quantities of all of radius(%g), isotope(%i) and wavenumber(%i)\n"
+		 "have to be bigger than 1\n"
+		 ,nrad,niso,nwn);
+  fwrite(ex->e[0][0],sizeof(PREC_RES),nrad*n*nwn,out);
+}
+
+
+
 /* \fcnfh 
    Saves all the memory that is going to be used after running extwn()
 
@@ -527,7 +614,7 @@ freemem_extinction(struct extinction *ex, /* Extinciton info */
 int
 savefile_extwn(struct transit *tr)
 {
-
+  
 
   return 0;
 }
