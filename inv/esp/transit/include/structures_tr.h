@@ -93,9 +93,9 @@ typedef struct {
        (PREC_RES b,		/* impact parameter */
 	PREC_RES *rad,		/* radius array */
 	PREC_RES *refr,		/* refractivity index */
-	PREC_RES **ex,		/* extinction[rad][iso][nwn] */
+	PREC_RES *ex,		/* extinction[rad] */
 	long nrad,		/* number of radii elements */
-	long wn);		/* wavenumber looked */
+	int exprlevel);
   PREC_RES (*obsperwn)		/* Quantity obtained from
 				   integration of optical depth
 				*/ 
