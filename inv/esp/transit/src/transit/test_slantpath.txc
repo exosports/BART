@@ -44,37 +44,41 @@ test_tau_monorad_norefr_now(PREC_RES *b, /* differential impact
 					    maximum value */
 			    PREC_RES *rad, /* radius array */
 			    PREC_RES *refr, /* refractivity index */
-			    PREC_RES **ex, /* extinction[rad][nwn] */
+			    PREC_RES **exi, /* extinction[wn][rad] */
 			    long nrad, /* number of radii elements */
 			    long wn, /* wavenumber looked */
-			    PREC_RES *res,
-			    int nimp,
-			    char **ipdesc)
+			    PREC_RES *res, /* expected result */
+			    int nimp, /* Number of impact parameters */
+			    char **ipdesc, /* Name of impact parameters
+					      */
+			    double acceptrelerror)
 {
-  double acceptrelerror=.0001;
-  gsl_interp_accel acc={0,0,0};
-  int i,status=0;
+  long i,status=0;
   PREC_RES result;
+  PREC_RES *ex=exi[wn];
 
-  test_result("Testing tau() computation for %li radii, extinction %s\n"
-	      ,nrad,ktypes[wn]);
+  test_result("** extinction %s **\n"
+	      ,ktypes[wn]);
   for(i=0;i<nimp;i++){
-    result=totaltau(b[i],rad,refr,ex,nrad,wn,&acc);
-    test_result("=> IP %s(%.3g):\n"
-		"    observed %.10g, expected %.10g (error %g)\n"
-		,ipdesc[i],b[i],result,res[i],
-		fabs(result-res[i])/res[i]);
+    test_result(" => IP %s(%.3g). Expected result %g\n",ipdesc[i],b[i],res[i]);
+    //test first level of precision (no ray bending)
+    result=totaltau(b[i],rad,refr,ex,nrad,1);
+    test_result("     RefIdx constant technique: observed %13.10g (error %g)\n"
+		,result,fabs(result-res[i])/res[i]);
+    if(fabs(result-res[i])/res[i]>acceptrelerror)
+      status++;
+    ntests++;
+
+    //test with ray bending
+    result=totaltau(b[i],rad,refr,ex,nrad,2);
+    test_result("     Ray bending technique    : observed %13.10g (error %g)\n"
+		,result,fabs(result-res[i])/res[i]);
     if(fabs(result-res[i])/res[i]>acceptrelerror)
       status++;
     ntests++;
   }
-  if (status)
-    test_result("FAIL: %i tests with error bigger than %.5g\n\n"
-		,status,acceptrelerror);
-  else
-    test_result("SUCCEED: all tests with error less than %.5g\n\n"
-		,acceptrelerror);
 
+  //return number of fails
   return status;
 }
 
@@ -88,9 +92,17 @@ int
 test_tau_monorad_constrefr(int nrad,
 			   double alpha)
 {
-  PREC_RES refr[nrad], rad[nrad],*ex[nrad];
-  int i,status=0;
+
+  test_result("#############################\n"
+	      "Testing totaltau() with alpha=%g, #elements=%i, constant refractivity index\n"
+	      ,alpha,nrad);
+  int ntb=ntests;
+  double acceptrelerror=.0001;
+  PREC_RES refr[nrad], rad[nrad],*ex[NWN];
+  long i,status=0;
   ex[0]=(PREC_RES *)calloc(nrad*NWN,sizeof(PREC_RES));
+  //Check that memory was really allocated and fill different cases of
+  //extinction 
   if(!ex[0]){
     fprintf(stderr,
 	    "Unable to allowcate memory!. I required %i bytes in\n"
@@ -98,6 +110,8 @@ test_tau_monorad_constrefr(int nrad,
 	    ,nrad*NWN*sizeof(PREC_RES),__LINE__,__FILE__);
     exit(EXIT_FAILURE);
   }
+  for(i=0;i<NWN;i++)
+    ex[i]=ex[0]+i*nrad;
 
   //tests at impact parameters: grazing, interpolated-radius, exact-radius,
   //lowest-radius 
@@ -116,19 +130,17 @@ test_tau_monorad_constrefr(int nrad,
     rad[i]=1.0+i;
     //check for nonbending rays
     refr[i]=1.0;
-    //Fill different cases of extinction
-    ex[i]=ex[0]+NWN*i;
     //extinction: constant
-    ex[i][0]=alpha;
+    ex[0][i]=alpha;
     //extinction: incresing outward
-    ex[i][1]=alpha*rad[i];
+    ex[1][i]=alpha*rad[i];
     //extinction: incresing inward
-    ex[i][2]=alpha*(rm-rad[i]);
+    ex[2][i]=alpha*(rm-rad[i]);
 
     //Print filling of arrays if necessary to debug
     if(0)
       fprintf(stderr,"%-14.9g%-14.9g%-14.9g%-14.9g%-14.9g\n"
-	      ,rad[i],refr[i],ex[i][0],ex[i][1],ex[i][2]);
+	      ,rad[i],refr[i],ex[0][i],ex[1][i],ex[2][i]);
   }
   PREC_RES b[nimpact]={rad[nrad-2], (rad[(3*nrad)/4-1] + rad[(3*nrad)/4])/2.0,
 		       rad[nrad/2-1], rad[0]};
@@ -139,7 +151,7 @@ test_tau_monorad_constrefr(int nrad,
     res[i]=2*alpha*sqrt(rm*rm-b[i]*b[i]);
 
   status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,0
-			      ,res,nimpact,ipdesc);
+				      ,res,nimpact,ipdesc,acceptrelerror);
 
   //Test the atmosphere with increasing extinction outwards
   //$res=\alpha ( rm\sqrt{rm^2-b^2} + b^2 \log{\sqrt{(rm/b)^2-1}+rm/b})$
@@ -152,7 +164,7 @@ test_tau_monorad_constrefr(int nrad,
 		  b[i]*b[i]*log(sqrt(rm*rm/b[i]/b[i]-1)+rm/b[i])/log(10.0));
 
   status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,1
-			      ,res,nimpact,ipdesc);
+				      ,res,nimpact,ipdesc,acceptrelerror);
 
   //Test the atmosphere with increasing extinction inwards
   //Test the atmosphere with increasing extinction outwards
@@ -166,7 +178,17 @@ test_tau_monorad_constrefr(int nrad,
 		  b[i]*b[i]*log(sqrt(rm*rm/b[i]/b[i]-1)+rm/b[i])/log(10.0));
 
   status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,2
-			      ,res,nimpact,ipdesc);
+				      ,res,nimpact,ipdesc,acceptrelerror);
+
+  //Output partial result
+  if (status)
+    test_result("PARTIAL FAIL: %li/%li tests with error bigger than %.5g\n"
+		"################################################\n\n"
+		,status,ntests-ntb,acceptrelerror);
+  else
+    test_result("PARTIAL SUCCEED: all %li tests with error less than %.5g\n"
+		"################################################\n\n"
+		,ntests-ntb,acceptrelerror);
 
   free(ex[0]);
   return status;
@@ -180,7 +202,7 @@ test_tau_monorad_constrefr(int nrad,
 */
 int test_tau()
 {
-  int status = 0;
+  long status = 0;
 
   //First check for monospaced radius with 10,100,1000 samples, alpha=1
   status += test_tau_monorad_constrefr(10, 1.0);
