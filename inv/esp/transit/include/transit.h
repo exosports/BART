@@ -308,10 +308,14 @@ struct lineinfo {		/* Used to keep parameters in
 
 
 struct line_transition {	/* One item per transition */
-  PREC_LNDATA wl;		//Wavelength
-  PREC_LNDATA elow;		//Lower energy level
-  PREC_LNDATA gf;		//gf value
-  short isoid;			//Isotope ID (Assumed to be in range)
+  PREC_LNDATA *wl;		//Wavelength
+  PREC_LNDATA *elow;		//Lower energy level
+  PREC_LNDATA *gf;		//gf value
+  short *isoid;			//Isotope ID (Assumed to be in range)
+  double wfct;			//'.wl' multiplied by this factor yields
+				//cgs.
+  double efct;			//'.elow' multiplied by this factor
+				//yields cgs.
 };
 
 
@@ -469,11 +473,7 @@ struct transit {		/* Main data structure */
   long fl;			/* flags */
   long pi;			/* progress indicator */
 
-  struct line_transition *lt;	/* line transition */
-  double wfct;			//'lt->wl' multiplied by this factor yields
-				//cgs.
-  double efct;			//'lt->elow' multiplied by this factor
-				//yields cgs.
+  struct line_transition lt;	/* line transition */
 
   transit_ray_solution *sol;	/* Solution type */
 
