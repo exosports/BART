@@ -34,7 +34,7 @@ WARNFLAGS   = -Wall -Winline
 #-W -Werror
 INCLFLAGS   = -I/usr/X11R6/include -I/home/devel/include -I$(INCL)
 LIBFLAGS    = -L/usr/X11R6/lib -L/home/devel/lib
-CPROTOFLAGS = $(INCLFLAGS) -f 3 -m -e
+CPROTOFLAGS = $(INCLFLAGS) -f 3 -m -e -i
 
 NODBGFLAGS  = -O2
 DBGFLAGS    = -g3 -gdwarf-2

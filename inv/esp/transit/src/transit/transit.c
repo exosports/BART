@@ -1150,9 +1150,9 @@ int extwn (struct transit *tr)
     }
 
     for(ln=0;ln<tr->n_l;ln++){
+      /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
-      /*
       if(ln<9000||ln>11000)
 	continue;
       */
@@ -1695,5 +1695,3 @@ static inline PREC_ZREC interpolateTR(PREC_ZREC *x,
 				 (idxi+idxt)%osw);
 #endif /* obsolete */
 //\deluh
-
-
