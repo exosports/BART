@@ -20,6 +20,8 @@
  * 02111-1307, USA.
  */
 
+#include <transit.h>
+
 /*\fcnfh
   extwn: Scattering parameters should be added at some point here
 
@@ -292,7 +294,7 @@ int extwn (struct transit *tr)
 		     "wavenumber %i, next wavenumber %i/%i\n"
 		     ,i,w,wrc[i],nwn);
 
-	free(profile[i]);
+	free(profile[i][0]);
 
 	if((nwnh[i]=newprofile(profile[i],ex->vf,&ex->lw[w],dwn,
 			       wn[w]*alphad[i],alphal[i],ex->ta)

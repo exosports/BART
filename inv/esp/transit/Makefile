@@ -21,10 +21,18 @@ AR      = ar ru
 #objects and headers
 DEP_FILES = sampling.c voigt.c lineread.c dbread_pands.c \
             readlineinfo.c transitstd.c transit.c procopt.c \
-	    makesample.c extinction.c readatminfo.c
+	    makesample.c extinction.c readatminfo.c 
 PROTO_FILES = $(DEP_FILES)
-OBJ_UT    = sampling.o voigt.o
-OBJ_TR    = transitstd.o readlineinfo.o makesample.o
+TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
+	    readatminfo.o extinction.o
+LR_OBJ    = transitstd.o dbread_pands.o
+UT_OBJ    = sampling.o voigt.o procopt.o
+
+UT_HDR    = sampling.h profile.h procopt.h
+
+UT_DEP    = $(UT_OBJ) $(HDR_UT)
+TR_DEP    = $(TR_OBJ) transit.h transit.c
+LR_DEP    = $(LR_OBJ) lineread.h lineread.c
 
 #make specials
 .PHONY=clean dep
@@ -60,15 +68,15 @@ LIBS  = -lX11 -lP -lm
 ################################
 
 
-transit: $(OBJ_TR) $(OBJ_UT) transit.c
-	$(CC) $(STDFLAGS) -o $@ $^ $(LIBS)
+transit: $(UT_DEP) $(TR_DEP)
+	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf transit $(BIN)
 
-lineread: $(OBJ_UT) dbread_pands.o transitstd.o lineread.c
-	$(CC) $(STDFLAGS) -o $@ $^ $(LIBS)
+lineread: $(UT_DEP) $(LR_DEP)
+	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf lineread $(BIN)
 
-#$(OBJ_UT): %.o: %.c
+#$(UT_OBJ): %.o: %.c
 #	$(CC) -c $(STDFLAGS) -o $@ $<
 
 %.o: %.c
@@ -78,7 +86,7 @@ lineread: $(OBJ_UT) dbread_pands.o transitstd.o lineread.c
 	$(CLATEX) $< -sl
 
 clean:
-	rm -f $(OBJ_TR) $(OBJ_UT) $(DEP_FILES) texput.log transit
+	rm -f $(TR_OBJ) $(UT_OBJ) $(DEP_FILES) texput.log transit
 
 dep: $(DEP_FILES)
 	makedepend -Y -f .depen -- $(STDFLAGS) -- $^

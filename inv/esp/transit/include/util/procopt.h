@@ -20,6 +20,10 @@
  */
 
 #include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 
 #define HELPTITLE 0xff
 
@@ -40,6 +44,9 @@ struct optcfg {
   const char *nonopt;
   const char *contact;
   const char *intro;
+  const char *contintro;
   char *file;			/* Configuration file */
   int indentdoc;
 };
+
+#include <procopt_proto.h>

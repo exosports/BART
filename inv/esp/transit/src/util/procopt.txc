@@ -19,6 +19,8 @@
  * 02111-1307, USA.
  */
 
+#include <procopt.h>
+
 static char *prgname=NULL;
 _Bool procopt_debug=1;
 
@@ -29,7 +31,7 @@ int
 getprocopt(int argc,		/* Number of command line arguments */
 	   char **argv,		/* Command line parameters */
 	   struct optdocs *opts, /* structure with information about
-				    parameter options and syntax */
+					  parameter options and syntax */
 	   struct optcfg *cfg)	/* various configuration parameters for
 				   procopt */
 {
@@ -40,11 +42,15 @@ getprocopt(int argc,		/* Number of command line arguments */
   if(!prgname){
     int getalloc=8,shortalloc=8;
     struct option *co;
-    char *so;
+    char *cs;
     int getn,shortn;
 
-    prgname=(char *)calloc(strlen(*argv)+1,sizeof(char));
-    strcpy(prgname,*argv);
+    if(cs=rindex(*argv,'/'))
+      cs++;
+    else
+      cs=*argv;
+    prgname=(char *)calloc(strlen(cs)+1,sizeof(char));
+    strcpy(prgname,cs);
     co=getopts=(struct option *)calloc(getalloc,sizeof(struct option));
     cs=shortopts=(char *)calloc(shortalloc,sizeof(char));
     //getn starts at zero, but 'shortn' starts at 1 because it has to
@@ -54,7 +60,7 @@ getprocopt(int argc,		/* Number of command line arguments */
     //Analize every element of the structure
     while(1){
       if(opts->name==NULL&&opts->val==0){
-	if(opts->has_arg==HELPTITLE)
+	if(opts++->has_arg==HELPTITLE)
 	  continue;
 	break;
       }
@@ -63,25 +69,27 @@ getprocopt(int argc,		/* Number of command line arguments */
 					 (getalloc<<=1)*sizeof(struct option));
 	co=getopts+getn;
       }
-      if(shortn==shortalloc)
+      if(shortn>shortalloc){
 	shortopts=(char *)realloc(shortopts,(shortalloc<<=1)*sizeof(char));
+	memset(shortopts+shortn,0,shortn);
+      }
 
       //save short options
       if(opts->val>0x20 && opts->val<0x80){
-	so=shortopts;
-	while(*so){
-	  if(*so==(char)opts->val&&procopt_debug){
-	    printf(stderr,
+	cs=shortopts;
+	while(*cs){
+	  if(*cs++==(char)opts->val&&procopt_debug){
+	    fprintf(stderr,
 		   "procopt_debug error:: The short option '%c' appears more than\n"
-		   "once in the given 'struct optdocs'\n"
-		   ,opts->val);
+		   "once in the given 'struct optdocs'. Currently with %s\n"
+		   ,opts->val,opts->name);
 	    exit(EXIT_FAILURE);
 	  }
 	}
-	*so++=(char)opts->val;
+	*cs++=(char)opts->val;
 	shortn++;
 	if(opts->has_arg==required_argument){
-	  *so=':';
+	  *cs=':';
 	  shortn++;
 	}
       }
@@ -91,7 +99,16 @@ getprocopt(int argc,		/* Number of command line arguments */
       co->flag=NULL;
       co->val=opts->val;
       getn++;
+      opts++;
       co++;
+    }
+    if(procopt_debug){
+      fprintf(stderr,
+	      "----------------------------------------------\n"
+	      "procopt_debug message:: Accepted short string '%s'\n"
+	      "   (set procopt_debug=0 if you don't want to see this again).\n"
+	      "----------------------------------------------\n"
+	      ,shortopts);
     }
     co->name=NULL;
     co->has_arg=0;
@@ -119,8 +136,11 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 {
   char *options="[options]";
   char *intro=" Where [options] are..";
-  int indentdoc=15;
+  char *contintro="----------------------------------\n"
+    "Contact Information: %s\n";
+  int indentdoc=20;
   int currind,tmp;
+  char *doc,*fdoc,*docs;
 
   if(cfg->indentdoc)
     indentdoc=cfg->indentdoc;
@@ -135,7 +155,7 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
 
 
   fprintf(stderr,"Usage:\n\t%s %s"
-	  ,cfg->prg?cfg->prg:prgname,cfg->options?cfg_options:options);
+	  ,cfg->prg?cfg->prg:prgname,cfg->options?cfg->options:options);
 
   if(cfg->nonopt)
     fprintf(stderr," %s",cfg->nonopt);
@@ -143,9 +163,9 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
   fprintf(stderr,"\n\n %s\n",cfg->intro?cfg->intro:intro);
 
   while(1){
-    longind=currind=0;
+    currind=0;
     if(opts->has_arg==HELPTITLE)
-      fprintf(stderr,"%s\n",opts->doc);
+      fprintf(stderr,"\n%s\n",opts->doc);
     else if(opts->name==NULL&&opts->val==0)
       break;
     else{
@@ -173,10 +193,10 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
       if(opts->name){
 	if(currind)
 	  fprintf(stderr,"\n");
-	fprintf(stderr,"--%s%n",opts->name,&tmp);
-	currind=tmp;
+	fprintf(stderr,"--%s%n",opts->name,&currind);
+	tmp=0;
 	if(opts->has_arg==required_argument)
-	  fprintf(stderr," <%s>%n",opts->prm,&currind);
+	  fprintf(stderr," <%s>%n",opts->prm,&tmp);
 	else if(opts->has_arg!=no_argument){
 	  fprintf(stderr,
 		  "\n\nprocopt error:: a non-supported value (%i) was given\n"
@@ -189,15 +209,23 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
       currind=indentdoc-currind;
       if(currind>0)
 	fprintf(stderr,"%*s",currind,"");
-      fprintf(stderr," %s\n",opts->doc);
+      doc=docs=(char *)calloc(strlen(opts->doc)+1,sizeof(char));
+      strcpy(doc,opts->doc);
+      while(fdoc=index(doc,'\n')){
+	*fdoc='\0';
+	fprintf(stderr," %s\n",doc);
+	doc=fdoc+1;
+	fprintf(stderr,"%*s",indentdoc,"");
+      }
+      fprintf(stderr," %s.\n",doc);
     }
     opts++;
 
   }
 
   if(cfg->contact)
-    fprintf(stderr,"Contact: %s\n",cfg->contact)
+    fprintf(stderr,cfg->contintro?cfg->contintro:contintro,cfg->contact);
 
-  return status;
+  exit(status);
 }
 

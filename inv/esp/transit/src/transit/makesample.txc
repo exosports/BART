@@ -20,6 +20,7 @@
  * 02111-1307, USA.
  */
 
+#include <transit.h>
 
 /* \fcnfh
    Creates the sample points from hinted values
@@ -295,8 +296,8 @@ int makewnsample(struct transit *tr)
   fromwav.n=-1;
 
   //'.wnm' is the margin of not trusted wavenumbers, if it is not given
-  if(th->na&=TRH_WNM && th->wnm>0)
-    transitaccepthint(tr->wnm, th->wnm, th->na, TRH_WNM);
+  if(trh->na&=TRH_WNM && trh->wnm>0)
+    transitaccepthint(tr->wnm, trh->wnm, trh->na, TRH_WNM);
   else
     tr->wnm=tr->m*fromwav.f*fromwav.f/WNU_O_WLU;
 

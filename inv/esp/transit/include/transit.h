@@ -19,6 +19,7 @@
 #define TRH_FA          0x00000002 /* Atmospheric info file */
 #define TRH_FO          0x00000004 /* Output file */
 
+#define TRH_WNM         0x00000008 /* Wavenumber margin */
 #define TRH_TR          0x00000010 /* Telescope resolution */
 #define TRH_WM          0x00000020 /* Wavelength margin */
 
@@ -372,9 +373,11 @@ PREC_VOIGT dop, PREC_VOIGT lor, float ta);
 */
 
 #include <transit_proto.h>
-#include <sampling_proto.h>
 #include <readlineinfo_proto.h>
 #include <transitstd_proto.h>
+#include <readatminfo_proto.h>
+#include <makesample_proto.h>
+#include <extinction_proto.h>
 
 
 #endif

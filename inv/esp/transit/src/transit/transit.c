@@ -26,6 +26,7 @@
 /* TD: atmosphere info  retrieval */
 
 #include <transit.h>
+#include <procopt.h>
 #include <math.h>
 
 /* Version history:
@@ -132,7 +133,6 @@ int main (int argc,		/* Number of variables */
   //of 10 or more is only used for debugging.
   //'defile\_out' is the default output filename
   int rn;
-  char rc;
   trh.verbnoise=4;
   char defile_out[]="-";
   trh.f_out=(char *)calloc(strlen(defile_out)+1,sizeof(char));
@@ -180,7 +180,7 @@ int main (int argc,		/* Number of variables */
   if((rn=processparameters(argc,argv,&trh))!=0)
     transiterror(TERR_SERIOUS,
 		 "processparameters() returned error code %i\n"
-		 rn);
+		 ,rn);
 
   //No program warnings if verblevel is 0 or 1
   if(verblevel<2)
@@ -271,12 +271,12 @@ int main (int argc,		/* Number of variables */
  */
 int processparameters(int argc, /* number of command line arguments */
 		      char **argv, /* command line arguments */
-		      struct transithint *hint)	/* structure to store
-						   hinted parameters */
+		      struct transithint *hints) /* structure to store
+						    hinted parameters */
 {
   //different non short options
   enum param {
-    CLA_DUMMY=128;
+    CLA_DUMMY=128,
     CLA_ATMOSPHERE,
     CLA_LINEDB,
     CLA_RADLOW,
@@ -295,27 +295,31 @@ int processparameters(int argc, /* number of command line arguments */
   };
 
   //General help-option structure
-  struct optdocs const var_docs[]={
+  struct optdocs var_docs[]={
     {NULL,HELPTITLE,0,
      NULL,"GENERAL ARGUMENTS"},
-    {"version",no_argument,'v',
+    {"version",no_argument,'V',
      NULL,"Prints version number and exit"},
     {"help",no_argument,'h',
      NULL,"Prints list of possible parameters"},
     {"defaults",no_argument,'d',
      NULL,"Prints default values of the different variable"},
+    {"verb",required_argument,'v',
+     "[+..][-..]","Increase or decrease verbose level by one per\n"
+     "each + or -. 0 is the quietest, %i is the\n"
+     "noisiest (%i)"},
 
     {NULL,HELPTITLE,0,
      NULL,"INPUT/OUTPUT"},
     {"output",required_argument,'o',
-     "outfile","Change output file name, a dash (-) "
+     "outfile","Change output file name, a dash (-)\n"
      "directs to standard output"},
-    {"atmosphere",required_argument,CLA_ATMOSPHERE,
-     "atmfile","File containing atmospheric info (Radius, "
-     "pressure, temperature). A dash (-) indicates alternative "
+    {"atmosp",required_argument,CLA_ATMOSPHERE,
+     "atmfile","File containing atmospheric info (Radius,\n"
+     "pressure, temperature). A dash (-) indicates alternative\n"
      "input."},
     {"linedb",required_argument,CLA_LINEDB,
-     "linedb","File containing line information (TWII format, "
+     "linedb","File containing line information (TWII format,\n"
      "as given by 'lineread'"},
 
     {NULL,HELPTITLE,0,
@@ -323,13 +327,13 @@ int processparameters(int argc, /* number of command line arguments */
     {"radius",no_argument,'r',
      NULL,"Interactively input radius parameters"},
     {"rad-low",required_argument,CLA_RADLOW,
-     "radius","Lower radius. 0 if you want to use atmospheric "
+     "radius","Lower radius. 0 if you want to use atmospheric\n"
      "data minimum"},
     {"rad-high",required_argument,CLA_RADHIGH,
-     "radius","Higher radius. 0 if you want to use atmospheric "
+     "radius","Higher radius. 0 if you want to use atmospheric\n"
      "data maximum"},
     {"rad-delt",required_argument,CLA_RADDELT,
-     "spacing","Radius spacing. 0 if you want to use atmospheric "
+     "spacing","Radius spacing. 0 if you want to use atmospheric\n"
      "data spacing"},
 
     {NULL,HELPTITLE,0,
@@ -337,19 +341,19 @@ int processparameters(int argc, /* number of command line arguments */
     {"wavelength",no_argument,'w',
      NULL,"Interactively input wavelength parameters"},
     {"wl-low",required_argument,CLA_WAVLOW,
-     "wavel","Lower wavelength. 0 if you want to use line "
+     "wavel","Lower wavelength. 0 if you want to use line\n"
      "data minimum"},
     {"wl-high",required_argument,CLA_WAVHIGH,
-     "wavel","Upper wavelength. 0 if you want to use line"
+     "wavel","Upper wavelength. 0 if you want to use line\n"
      "data maximum"},
     {"wl-delt",required_argument,CLA_WAVDELT,
-     "spacing","Wavelength spacing. 0 if you want to use line"
+     "spacing","Wavelength spacing. 0 if you want to use line\n"
      "data spacing"},
     {"wl-osamp",required_argument,CLA_WAVOSAMP,
      "integer","Wavelength oversampling"},
-    {"wl-margin",required_argument,CLA_WAVMARGIN,
-     "boundary","Not trustable range in microns at boundary "
-     "of line databases. Also transitions this much away from "
+    {"wl-marg",required_argument,CLA_WAVMARGIN,
+     "boundary","Not trustable range in microns at boundary\n"
+     "of line databases. Also transitions this much away from\n"
      "the requested range will be considered"},
 
     {NULL,HELPTITLE,0,
@@ -357,29 +361,33 @@ int processparameters(int argc, /* number of command line arguments */
     {"wavenumber",no_argument,'n',
      NULL,"Interactively input wavenumber parameters"},
     {"wn-low",required_argument,CLA_WAVNLOW,
-     "waven","Lower wavenumber. 0 if you want to use equivalent "
+     "waven","Lower wavenumber. 0 if you want to use equivalent\n"
      "of the wavelength maximum"},
     {"wn-high",required_argument,CLA_WAVNHIGH,
-     "waven","Upper wavenumber. 0 if you want to use equivalent "
+     "waven","Upper wavenumber. 0 if you want to use equivalent\n"
      "of the wavelength minimum"},
     {"wn-delt",required_argument,CLA_WAVNDELT,
-     "spacing","Wavenumber spacing. 0 if you want to have the "
+     "spacing","Wavenumber spacing. 0 if you want to have the\n"
      "same number of points as in the wavelength sampling"},
     {"wn-osamp",required_argument,CLA_WAVNOSAMP,
-     "integer","Wavenumber oversampling. 0 if you want the same "
+     "integer","Wavenumber oversampling. 0 if you want the same\n"
      "value as for the wavelengths"},
+    {"wn-marg",required_argument,CLA_WAVNMARGIN,
+     "boundary","Not trustable range in cm-1 at boundaries.\n"
+     "Transitions this much away from the requested range will\n"
+     "be considered"},
 
     {NULL,HELPTITLE,0,
      NULL,"OPACITY CALCULATION OPTIONS:"},
     {"finebin",required_argument,'f',
-     "integer","Number of fine-bins to calculate the Voigt "
+     "integer","Number of fine-bins to calculate the Voigt\n"
      "function"},
     {"nwidth",required_argument,'a',
-     "number","Number of the max-widths (the greater of Voigt "
-     "or Doppler widths) that need to be contained in a calculated "
+     "number","Number of the max-widths (the greater of Voigt\n"
+     "or Doppler widths) that need to be contained in a calculated\n"
      "Voigt profile"},
-    {"maxratio",required_argument,'r',
-     "uncert","Maximum allowed uncertainty in doppler width before "
+    {"maxratio",required_argument,'u',
+     "uncert","Maximum allowed uncertainty in doppler width before\n"
      "recalculating profile"},
 
     {NULL,HELPTITLE,0,
@@ -388,21 +396,21 @@ int processparameters(int argc, /* number of command line arguments */
      "width","Gaussian width of telescope resolution in nm"},
 
     {NULL,0,0,NULL,NULL}
-  }
+  };
 
   struct optcfg var_cfg={NULL,NULL,NULL,
 			 "Patricio Rojo <pato@astro.cornell.edu>"
 			 ,NULL,NULL,0};
+  int rn;
 
   opterr=0;
   while(1){
     /* This is for old style
        rn=getopt(argc,argv,"f:Vhv:m:r:w:n:a:s:d:");*/
-    rn=getprocopt(argc,argv,var_docs,var_cfg);
+    rn=getprocopt(argc,argv,var_docs,&var_cfg);
     if (rn==-1)
       break;
-    /* FH:TD: Change switch to new style with getprocopt and change
-       synhelp for prochelp */
+
     transitDEBUG(20,verblevel,
 		 "Processing option '%c', argum: %s\n"
 		 ,rn,optarg);
@@ -437,6 +445,8 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_WAVDELT:
       hints->wavs.d=atof(optarg);
+      hints->wavs.n=0;
+      hints->wavs.v=NULL;
       break;
     case CLA_WAVOSAMP:
       hints->wavs.o=atof(optarg);
@@ -452,6 +462,8 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_WAVNDELT:
       hints->wavs.d=atof(optarg);
+      hints->wavs.n=0;
+      hints->wavs.v=NULL;
       break;
     case CLA_WAVNOSAMP:
       hints->wavs.o=atof(optarg);
@@ -459,61 +471,16 @@ int processparameters(int argc, /* number of command line arguments */
     case CLA_WAVNMARGIN:
       hints->wnm=atof(optarg);
       break;
-    case 'w':			//Change wavelength sampling
-      samp=&hints->wavs;
-    case 'n':			//Change wavenumber sampling
-      if(rn=='n') samp=&hints->wns;
-    case 'r':			//Change radius sampling
-      if(rn=='r') samp=&hints->rads;
-      switch(*optarg++){
-      case 'i':			//initial value
-      case 'f':			//final value
-	samp->f=atof(optarg);
-	break;
-      case 'd':			//spacing
-	samp->d=atof(optarg);
-	samp->n=0;
-	samp->v=NULL;
-	break;
-      case 'o':			//oversampling (only for wavelength)
-	if(rn=='w'){
-	  samp->o=atof(optarg);
-	  break;
-	}
-      default:
-	synhelp_transit(optarg-1,rn,&trh);
-	break;
-      }
-      break;
-
-    case 'f':			//Change filenames.
-      rc=*optarg;
-      while(*++optarg==' ');	//Get rid of extra blanks.
-      switch(rc){
-      case 'a':			//Atmosphere file
-      case 'l':			//Lineinfo file
-      case 'o':			//Output file
-      default:
-	*--optarg=rc;
-	synhelp_transit(optarg,rn,&trh);
-	break;
-      }
-      break;
-
     case 't':			//Telescope resolution
       hints->t=atof(optarg);
       break;
 
-    case 'm':			//Change 'hints->m' margin
-      hints->m=atof(optarg);
-      break;
-
-    case 'd':			//Change Doppler's maximum accepted
+    case 'u':			//Change Doppler's maximum accepted
 				//ratio before recalculating
       hints->maxratio_doppler=atof(optarg);
       break;
 
-    case 's':			//Change voigt fine-binning
+    case 'f':			//Change voigt fine-binning
       hints->voigtfine=atoi(optarg);
       break;
 
@@ -538,14 +505,21 @@ int processparameters(int argc, /* number of command line arguments */
       exit(EXIT_SUCCESS);
       break;
 
+    case 'd':			//show defaults TD!
+      break;
     case '?':
       rn=optopt;
     default:			//Ask for syntax help
-      synhelp_transit(optarg,rn,&trh);
+      fprintf(stderr,
+	      "Unknown or unsupported option of code %i(%c) passed\n"
+	      "as argument\n"
+	      ,rn,(char)rn);
+      prochelp(EXIT_FAILURE,var_docs,&var_cfg);
       break;
     case 'h':
-      synhelp_transit(NULL,0,&trh);
+      prochelp(EXIT_SUCCESS,var_docs,&var_cfg);
       break;
+
     }
   }
 
