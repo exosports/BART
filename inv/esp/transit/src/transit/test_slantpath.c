@@ -125,7 +125,7 @@ test_tau_monorad_constrefr(int nrad,
   //Print filling of arrays if necessary to debug
   if(outp)
     fprintf(outp,
-	    "radius        refr          ex_cons       ex_out        ex_in\n");
+	    "#radius        refr          ex_cons       ex_out        ex_in\n");
   PREC_RES rm=spacing*nrad*1.0;
   for(i=0;i<nrad;i++){
     //check for equispaced radius skiping 0
