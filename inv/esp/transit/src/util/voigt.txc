@@ -235,134 +235,6 @@ inline int voigtf(int nwn,	/* Number of wavenumber bins where the
   return 1;
 }
 
-//\delfh
-#if 0 				/* obsolete */
-/*\fcnfh
-   Computes Voigt Profile at specified wavelength points.
-*/
-inline int voigtwl(int J,      //Number of bins that the profile spans
-			       //in both directions from the center of
-		               //the bin.
-		   float dl,   //wavelength separation `$\Delta\lambda$'.
-		   double lc,  //central dwavelength of the bin
-			       //`$\lambda_c$'.
-		   PREC_VOIGTP alphaL,  //Lorentz width `$\alpha_L$'.
-		   PREC_VOIGTP alphaD,	//Doppler width `$\alpha_D$'.
-		   PREC_VOIGT *vpro)    //Array of length $2J+1$, where
-					//the final profile will be
-					//stored
-{
-  double y;
-
-  //The function voigtxy(x, y, res, eps, alphaD) receives 
-  //$x=\sqrt{\ln 2}(\wn-\wn_0)/\alpha_D$, $y=\sqrt{\ln
-  //2}\alpha_L/\alpha_D$, the array `res' where it is going to store the
-  //result, a factor for resolution `eps' and the doppler width
-  //`alphaD'.\par
-  //We set the value of y:
-  y=SQRTLN2*alphaL/alphaD;
-
-  //We first want to get a fine resolution Voigt profile, it has to be
-  //at least of the bin span set by J
-  //\begin{align}
-  //\Delta\wn_{tot}=& \left|
-  //\frac{1}{\lambda_c+J\Delta\lambda+\Delta\lambda/2} - 
-  //\frac{1}{\lambda_c-J\Delta\lambda-\Delta\lambda/2} \right| \notag\\
-  //=& \frac{1}{\Delta\lambda}\frac{2+J}
-  //{\left(\frac{\lambda_c}{\Delta\lambda}\right)^2 
-  //- \left(J+\frac{1}{2}\right)^2}
-  //\end{align}
-  // and also have a fine resolution
-  //such that it is the minimum of `timesfiner' times finer than the
-  //minimun separation obtained by the given $\Delta\lambda$, or
-  //`timesalpha` times finer than $\alpha_D$. The minimum wavenumber
-  //separation of the bin is at value +J where it is given by\par
-  //\begin{align}
-  //\delta\wn_{min}=&\frac{1}{\lambda_c+J\Delta\lambda-\Delta\lambda/2}
-  //- \frac{1}{\lambda_c} -
-  //\left(\frac{1}{\lambda_c+J\Delta\lambda+\Delta\lambda/2} -
-  //\frac{1}{\lambda_c}\right)\notag\\
-  //=&\frac{1}{\Delta\lambda}\frac{1}{
-  //\left(\frac{\lambda_c}{\Delta\lambda}+J\right)^2 -
-  //\frac{1}{4}}
-  //\end{align}
-
-
-  //If $\lambda_z$ is the bin wavelength that is closest to the center
-  //of the voigt profile, and $\lambda_c$ is the real wavelength center
-  //then the upper and lower wavenumber of the ith bin from the central
-  //one ($\lambda_z$) are
-  //\begin{align}
-  //\wn_{\binomtn{u\\l}}=&\frac{1}{\lambda_z+i\Delta\lambda \mp
-  //\Delta\lambda/2} - \frac{1}{\lambda_c}\\
-  //=&\frac{2\left(\lambda_c-\lambda_z-i\Delta\lambda\right) \pm
-  //\Delta\lambda}{\left(2\lambda_z+2i\Delta\lambda \mp \Delta\lambda
-  //\right) \lambda_c},
-  //\end{align}
-  //now, if
-  //\[
-  //\lambda_c=\lambda_z-\frac{\Delta\lambda}{2}+\frac{m}{M}\Delta\lambda
-  //\]
-  //we get
-  //\begin{align}
-  //\wn_{\binomtn{u\\l}}=&\frac{1}{\Delta\lambda}
-  //\frac{\binomsm{ +1\\-3}\frac{1}{2} + \frac{m}{M}-2i}
-  //{\left(\frac{\lambda_z}{\Delta\lambda}-\left(i \mp
-  //\frac{1}{2}\right) \right) \left(\frac{\lambda_z}{\Delta\lambda} -
-  //\frac{1}{2} + \frac{m}{M}\right)}.
-  //\end{align}
-  //Is between the lower and upper limits in the previous expression
-  //that we have to integrate the Voigt profile to obtain the voigt
-  //modulation for the bin $i$, whence the center of the line is
-  //displaced by $m$ from the real center. $m$ is given by
-  //\[
-  //m=\left\lfloor
-  //M\frac{\lambda_c-\lambda_z+\Delta\lambda/2}{\Delta\lambda}+0.5
-  //\right\rfloor
-  //\]
-  //{\bf \Large{Warning} function not complete!!}
-
-  return 0;
-
-}
-
-
-inline int voigtwl2(int J,float dl,double lc,PREC_VOIGTP alphaL,
-		   PREC_VOIGTP alphaD,PREC_VOIGT *vpro)
-{
-  double y,x;
-  int i;
-
-  y=SQRTLN2*alphaL/alphaD;
-
-  for(i=-J;i<0;i++){
-    x=SQRTLN2*((double)1.0/(lc*(1-lc/(i*dl))))/alphaD;
-    voigtxy(x,y,vpro+i,-1,alphaD);
-    transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
-		 ,i,vpro[i],vpro[-2]);
-    transitDEBUG(23,verblevel,
-		 "XRRX: l:%i D:%g ad:%g al:%g x:%g y:%g %g\n"
-	       ,-2,dl,alphaD,alphaL,25.0,y,vpro[-2]);
-  }
-  i=0;
-  voigtxy(0.0,y,vpro+i,-1,alphaD);
-  transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
-	       ,i,vpro[i],vpro[-2]);
-  for(i=1;i<=J;i++){
-    x=-SQRTLN2*((double)1.0/(lc*(1-lc/(i*dl))))/alphaD;
-    voigtxy(x,y,vpro+i,-1,alphaD);
-    transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
-		 ,i,vpro[i],vpro[-2]);
-  }
-
-  transitDEBUG(21,verblevel,
-	       "XXXX: l:%i D:%g ad:%g al:%g x:%g y:%g %g\n"
-	       ,0,(double)dl,alphaD,alphaL,25.0,y,vpro[0]);
-
-  return 1;
-}
-#endif /* obsolete */
-//\deluh
 
 /*\fcnfh
   Computes voigt profile at equispaced points.
@@ -833,3 +705,131 @@ int main(int argc, char **argv)
 #endif /* Obsolete */
 //\deluh
 
+//\delfh
+#if 0 				/* obsolete */
+/*\fcnfh
+   Computes Voigt Profile at specified wavelength points.
+*/
+inline int voigtwl(int J,      //Number of bins that the profile spans
+			       //in both directions from the center of
+		               //the bin.
+		   float dl,   //wavelength separation `$\Delta\lambda$'.
+		   double lc,  //central dwavelength of the bin
+			       //`$\lambda_c$'.
+		   PREC_VOIGTP alphaL,  //Lorentz width `$\alpha_L$'.
+		   PREC_VOIGTP alphaD,	//Doppler width `$\alpha_D$'.
+		   PREC_VOIGT *vpro)    //Array of length $2J+1$, where
+					//the final profile will be
+					//stored
+{
+  double y;
+
+  //The function voigtxy(x, y, res, eps, alphaD) receives 
+  //$x=\sqrt{\ln 2}(\wn-\wn_0)/\alpha_D$, $y=\sqrt{\ln
+  //2}\alpha_L/\alpha_D$, the array `res' where it is going to store the
+  //result, a factor for resolution `eps' and the doppler width
+  //`alphaD'.\par
+  //We set the value of y:
+  y=SQRTLN2*alphaL/alphaD;
+
+  //We first want to get a fine resolution Voigt profile, it has to be
+  //at least of the bin span set by J
+  //\begin{align}
+  //\Delta\wn_{tot}=& \left|
+  //\frac{1}{\lambda_c+J\Delta\lambda+\Delta\lambda/2} - 
+  //\frac{1}{\lambda_c-J\Delta\lambda-\Delta\lambda/2} \right| \notag\\
+  //=& \frac{1}{\Delta\lambda}\frac{2+J}
+  //{\left(\frac{\lambda_c}{\Delta\lambda}\right)^2 
+  //- \left(J+\frac{1}{2}\right)^2}
+  //\end{align}
+  // and also have a fine resolution
+  //such that it is the minimum of `timesfiner' times finer than the
+  //minimun separation obtained by the given $\Delta\lambda$, or
+  //`timesalpha` times finer than $\alpha_D$. The minimum wavenumber
+  //separation of the bin is at value +J where it is given by\par
+  //\begin{align}
+  //\delta\wn_{min}=&\frac{1}{\lambda_c+J\Delta\lambda-\Delta\lambda/2}
+  //- \frac{1}{\lambda_c} -
+  //\left(\frac{1}{\lambda_c+J\Delta\lambda+\Delta\lambda/2} -
+  //\frac{1}{\lambda_c}\right)\notag\\
+  //=&\frac{1}{\Delta\lambda}\frac{1}{
+  //\left(\frac{\lambda_c}{\Delta\lambda}+J\right)^2 -
+  //\frac{1}{4}}
+  //\end{align}
+
+
+  //If $\lambda_z$ is the bin wavelength that is closest to the center
+  //of the voigt profile, and $\lambda_c$ is the real wavelength center
+  //then the upper and lower wavenumber of the ith bin from the central
+  //one ($\lambda_z$) are
+  //\begin{align}
+  //\wn_{\binomtn{u\\l}}=&\frac{1}{\lambda_z+i\Delta\lambda \mp
+  //\Delta\lambda/2} - \frac{1}{\lambda_c}\\
+  //=&\frac{2\left(\lambda_c-\lambda_z-i\Delta\lambda\right) \pm
+  //\Delta\lambda}{\left(2\lambda_z+2i\Delta\lambda \mp \Delta\lambda
+  //\right) \lambda_c},
+  //\end{align}
+  //now, if
+  //\[
+  //\lambda_c=\lambda_z-\frac{\Delta\lambda}{2}+\frac{m}{M}\Delta\lambda
+  //\]
+  //we get
+  //\begin{align}
+  //\wn_{\binomtn{u\\l}}=&\frac{1}{\Delta\lambda}
+  //\frac{\binomsm{ +1\\-3}\frac{1}{2} + \frac{m}{M}-2i}
+  //{\left(\frac{\lambda_z}{\Delta\lambda}-\left(i \mp
+  //\frac{1}{2}\right) \right) \left(\frac{\lambda_z}{\Delta\lambda} -
+  //\frac{1}{2} + \frac{m}{M}\right)}.
+  //\end{align}
+  //Is between the lower and upper limits in the previous expression
+  //that we have to integrate the Voigt profile to obtain the voigt
+  //modulation for the bin $i$, whence the center of the line is
+  //displaced by $m$ from the real center. $m$ is given by
+  //\[
+  //m=\left\lfloor
+  //M\frac{\lambda_c-\lambda_z+\Delta\lambda/2}{\Delta\lambda}+0.5
+  //\right\rfloor
+  //\]
+  //{\bf \Large{Warning} function not complete!!}
+
+  return 0;
+
+}
+
+
+inline int voigtwl2(int J,float dl,double lc,PREC_VOIGTP alphaL,
+		   PREC_VOIGTP alphaD,PREC_VOIGT *vpro)
+{
+  double y,x;
+  int i;
+
+  y=SQRTLN2*alphaL/alphaD;
+
+  for(i=-J;i<0;i++){
+    x=SQRTLN2*((double)1.0/(lc*(1-lc/(i*dl))))/alphaD;
+    voigtxy(x,y,vpro+i,-1,alphaD);
+    transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
+		 ,i,vpro[i],vpro[-2]);
+    transitDEBUG(23,verblevel,
+		 "XRRX: l:%i D:%g ad:%g al:%g x:%g y:%g %g\n"
+	       ,-2,dl,alphaD,alphaL,25.0,y,vpro[-2]);
+  }
+  i=0;
+  voigtxy(0.0,y,vpro+i,-1,alphaD);
+  transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
+	       ,i,vpro[i],vpro[-2]);
+  for(i=1;i<=J;i++){
+    x=-SQRTLN2*((double)1.0/(lc*(1-lc/(i*dl))))/alphaD;
+    voigtxy(x,y,vpro+i,-1,alphaD);
+    transitDEBUG(21,verblevel,"UUU: i:%i v:%g -> v(-2):%g\n"
+		 ,i,vpro[i],vpro[-2]);
+  }
+
+  transitDEBUG(21,verblevel,
+	       "XXXX: l:%i D:%g ad:%g al:%g x:%g y:%g %g\n"
+	       ,0,(double)dl,alphaD,alphaL,25.0,y,vpro[0]);
+
+  return 1;
+}
+#endif /* obsolete */
+//\deluh

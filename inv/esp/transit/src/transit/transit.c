@@ -1153,9 +1153,11 @@ int extwn (struct transit *tr)
     }
 
     for(ln=0;ln<tr->n_l;ln++){
-      /*      if(ln!=10000&&ln!=10702&&ln!=10402)
-      //      if(ln<9000||ln>11000)
-      //	continue;*/
+      if(ln!=10000&&ln!=10702&&ln!=10402)
+	continue;
+      /*      if(ln<9000||ln>11000)
+	continue;
+      */
 
       wavn=WNU_O_WLU/line[ln].wl;
       /* 
@@ -1199,6 +1201,8 @@ int extwn (struct transit *tr)
 		     "Recalculating voigt for isotope %i... current\n"
 		     "wavenumber %i, next wavenumber %i/%i\n"
 		     ,i,w,wrc[i],nwn);
+
+	free(profile[i]);
 
 	if((nwnh[i]=newprofile(profile[i],ex->vf,&ex->lw[w],dwn,
 			       wn[w]*alphad[i],alphal[i],ex->ta)

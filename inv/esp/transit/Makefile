@@ -80,7 +80,7 @@ transit: $(BIN)/transit
 	$(CLATEX) $< -sl
 
 clean:
-	rm -f $(OBJ_TR) $(OBJ_UT)
+	rm -f $(OBJ_TR) $(OBJ_UT) $(DEP_FILES)
 
 dep: $(DEP_FILES)
 	makedepend -Y -- $(STDFLAGS) -- $^
