@@ -61,6 +61,7 @@ tau(struct transit *tr)
   transitacceptflag(tr->fl,tr->ds.th->fl,TRU_TAUBITS);
 
   //set tau structures' value
+  const int taulevel=tr->taulevel=tr->ds.th->taulevel;
   tau.toomuch=50;
   if(tr->ds.th->toomuch>0)
     tau.toomuch=tr->ds.th->toomuch;
@@ -111,7 +112,7 @@ tau(struct transit *tr)
 
     //For each resultant impact parameter
     for(ii=0;ii<inn;ii++){
-      if( (t[ii] = rfct * fcn(bb[ii]*riw,r,n,er,rnn,1)) > tau.toomuch){
+      if( (t[ii] = rfct * fcn(bb[ii]*riw,r,n,er,rnn,taulevel)) > tau.toomuch){
 	tau.last[wi]=ii;
 	break;
       }
@@ -217,7 +218,7 @@ printtau(struct transit *tr)
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(out,"%12.6f%14.6f%17.7g\n"
 	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
-	    rad<last[rn]?toomuch:t[rn][rad]);
+	    rad>last[rn]?toomuch:t[rn][rad]);
 
   exit(EXIT_SUCCESS);
 }

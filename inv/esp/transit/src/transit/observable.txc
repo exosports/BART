@@ -60,8 +60,9 @@ modulation(struct transit *tr)	/* Main structure */
   struct geometry *sg=tr->ds.sg;
   struct optdepth *tau=tr->ds.tau;
 
-  //set time to the user hinted default
+  //set time to the user hinted default, and other user hints
   setgeom(sg,HUGE_VAL,&tr->pi);
+  const int modlevel=tr->modlevel=tr->ds.th->modlevel;
 
   //integrate for each wavelength
   transitprint(1,verblevel,
@@ -70,7 +71,7 @@ modulation(struct transit *tr)	/* Main structure */
 
   for(w=0;w<wn->n;w++){
     out[w]=sol->obsperwn(tau->t[w],tau->last[w],tau->toomuch,
-			 ip,sg,1);
+			 ip,sg,modlevel);
 
     if((w&0x1ff)==0x1ff)
       transitdot(1,verblevel);

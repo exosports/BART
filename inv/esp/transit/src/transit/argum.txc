@@ -100,6 +100,8 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_WAVFCT,
     CLA_WNFCT,
     CLA_OUTSAMPLE,
+    CLA_TAULEVEL,
+    CLA_MODLEVEL,
   };
 
   //General help-option structure
@@ -273,6 +275,13 @@ int processparameters(int argc, /* number of command line arguments */
     {"outtau",CLA_OUTTAU,no_argument,NULL,
      NULL,"Output is optical depth instead of modulation. It will be\n"
      "asked which radius to plot\n"},
+    {"taulevel",CLA_TAULEVEL,required_argument,"1",
+     "integer","Do a level integer integration for optical depth. 1\n"
+     "is for constant index of refraction (better precision), use 2\n"
+     "if it is variable."},
+    {"modlevel",CLA_MODLEVEL,required_argument,"1",
+     "integer","Do a level integer integration to compute modulation\n"
+     "1 doesn't consider limb darkening.\n"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"OBSERVATIONAL OPTIONS:"},
@@ -592,6 +601,12 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_TOOMUCH:
       hints->toomuch=atof(optarg);
+      break;
+    case CLA_TAULEVEL:
+      hints->taulevel=atoi(optarg);
+      break;
+    case CLA_MODLEVEL:
+      hints->modlevel=atoi(optarg);
       break;
     }
     
