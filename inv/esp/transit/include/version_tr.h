@@ -41,11 +41,14 @@
         reading atmospheric file were done, hence I decided to jump
         straight into version 3.0. 072204. PMR
    3.0: Extinction due only to molecules is working fine!!
-   3.1: Extinction due only to molecules is working fine, but now is true!
+   3.1: Extinction due only to molecules is working fine, but now is
+        true!
+   3.2: Extinction due to fixed tau clouds and CIA is now
+        supported. 111604. PMR
  */
 int version=3;
 int revision=2;
-int version_rc=1;
+int version_rc=-1;
 
 
 #endif /* _VERSION_TR_H */

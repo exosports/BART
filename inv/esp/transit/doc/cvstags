@@ -46,4 +46,7 @@ transit_3-1     : Fixes bug in 3.0 that made appear some unusual peaks
                   in the spectrum due to array overpointing, working in
                   scattering but not achieved. Util now in a different
                   package. 092104. PMR
-transit_3-2-rc1 :
+transit_3-2-rc1 : Became 3.2
+transit_3-2     : Collision induced absorption and fixed tau cluds are
+                  enabled. First really stable release. Results shown
+                  in DPS04. 111604. PMR
