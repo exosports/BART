@@ -76,6 +76,12 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_ALLOWQ,
     CLA_EXTPERISO,
     CLA_NOEXTPERISO,
+    CLA_GORBPAR,
+    CLA_GSORBPARFCT,
+    CLA_GTIME,
+    CLA_GTIMEFCT,
+    CLA_GMASSRAD,
+    CLA_GMASSRADFCT
   };
 
   //General help-option structure
@@ -214,6 +220,17 @@ int processparameters(int argc, /* number of command line arguments */
      "(this is the default)\n"},
 
     {NULL,HELPTITLE,0,
+     NULL,"GEOMETRY PARAMETERS"},
+    {"g-orbpar",required_argument,CLA_GORBPAR,
+     "smaxis,incl,time,ecc,long_node,arg_per","Orbital parameters, in"
+     " the above order, to use the default of any of these (1,0,0,0,0,0),"
+     " leave the corresponding field blank"},
+    {"g-orbpar",required_argument,CLA_GORBPAR,
+     "unitsof:smaxis,incl,time,ecc,long_node,arg_per","Units of orbital"
+     " parameters, in the above order, to use the default of any of these"
+     " (AU,deg,hours,,deg,deg), leave the corresponding field blank"},
+
+    {NULL,HELPTITLE,0,
      NULL,"RESULTING RAY OPTIONS:"},
     {"solution",required_argument,'s',
      "sol_name","Name of the kind of output solution ('slant path'\n"
@@ -231,6 +248,7 @@ int processparameters(int argc, /* number of command line arguments */
   memset(&var_cfg,0,sizeof(var_cfg));
   var_cfg.contact="Patricio Rojo <pato@astro.cornell.edu>";
   var_cfg.files="./.transitrc"PREPEXTRACFGFILES;
+  var_cfg.columns=60;
 
   int rn,i;
   prop_samp *samp;
@@ -485,8 +503,8 @@ int processparameters(int argc, /* number of command line arguments */
     }
   }
 
-
   getprocopt_free();
+
   return 0;
 }
 
