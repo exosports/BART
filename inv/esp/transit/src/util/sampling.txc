@@ -363,16 +363,44 @@ natcubsplinecoef(long n,	/* Number of data points */
 
 
 /* \fcnfh
-   interpolates in arrays (x,y), the value corresponding to 'refx'. 'n'
-   is the arrays' length
+   Interpolates in arrays (x,y), the value corresponding to 'refx'. 'n'
+   is the arrays' length. Uses requested interpolation.
+
+   @returns the interpolated y-value
+ */
+inline double
+interp(double refx,		/* Reference x point */
+       double *x,		/* x-axis */
+       double *y,		/* y-axis */
+       long n,			/* lenght of array */
+       int intkind)		/* Kind of interpolation */
+{
+
+  switch(intkind){
+  case INTERP_LINEAR:
+    return lineinterp(refx,x,y,n);
+  default:
+    break;
+  }
+  fprintf(stderr,
+	  "interp(): Requested interpolation %i, is non existent!\n"
+	  ,intkind);
+  exit(EXIT_FAILURE);
+}
+
+
+
+/* \fcnfh
+   Linearly interpolates in arrays (x,y), the value corresponding to
+   'refx'. 'n' is the arrays' length
 
    @returns the interpolated y-value
  */
 double
-interp(double refx,		/* Reference x point */
-       double *x,		/* x-axis */
-       double *y,		/* y-axis */
-       long n)			/* lenght of array */
+lineinterp(double refx,		/* Reference x point */
+	   double *x,		/* x-axis */
+	   double *y,		/* y-axis */
+	   long n)		/* lenght of array */
 {
   double yout;
   n--;
@@ -380,7 +408,7 @@ interp(double refx,		/* Reference x point */
   //Initial range is correct?
   if(*x>refx){
     fprintf(stderr,
-	    "interp():: First x-value (%g) is larger than refx(%g)\n"
+	    "interpline():: First x-value (%g) is larger than refx(%g)\n"
 	    ,*x,refx);
     exit(EXIT_FAILURE);
   }
@@ -388,14 +416,16 @@ interp(double refx,		/* Reference x point */
   //check that enough data points are given
   if(n<2){
     fprintf(stderr,
-	    "interp():: Array of length less than 2.\n");
+	    "interpline():: Array of length less than 2.\n");
     exit(EXIT_FAILURE);
   }
 
   //go through the arrays
   while(1){
     //Is final range correct?
-    if(n<1){
+    if(!n){
+      if(*x==refx)
+	return *y;
       fprintf(stderr,
 	      "interp():: Last x-value (%g) is smaller than refx(%g)\n"
 	      ,*x,refx);

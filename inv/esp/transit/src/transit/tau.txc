@@ -79,8 +79,8 @@ tau(struct transit *tr)
   inn=ip->n;
   rnn=rad->n;
 
-  //To store info in a per radius basis
-  PREC_RES *dt=(PREC_RES *)calloc(wnn,sizeof(PREC_RES));
+  //to temporarily store a per radius info
+  PREC_RES dt[wnn];
 
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
@@ -124,7 +124,7 @@ totaltau(PREC_RES b,		/* impact parameter */
   //Look for closest approach radius
   i=0;
   while(1){
-    r0=b/interp(r0a,rad,refr,nrad);
+    r0=b/lineinterp(r0a,rad,refr,nrad);
     if(r0==r0a)
       break;
     if(i++>maxiterations)

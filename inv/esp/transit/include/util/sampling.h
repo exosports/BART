@@ -11,6 +11,9 @@
 #define SAMP_SPLINE 0x00000002
 #endif
 
+#define INTERP_LINEAR 0x0000001
+
+
 #define resamplex(fl,nrefx,refx,ndatx,datx)      \
           resample(1,fl,nrefx,refx,ndatx,datx,0)
 #define resampley(fl,ny,...);                    \
