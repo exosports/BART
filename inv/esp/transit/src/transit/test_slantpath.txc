@@ -70,13 +70,13 @@ tau_dens(double rm,
   }
   result=totaltau(ip,rad,refr,ex,nrad,1);
   err=fabs(1-result/res);
-  test_result("      RefIdx constant technique: observed %13.10g (error %g)\n"
+  test_result("        RefIdx constant technique: observed %13.10g (error %g)\n"
 		,result,err);
   if(err<maxerr)
     status++;
   result=totaltau(ip,rad,refr,ex,nrad,2);
   err=fabs(1-result/res);
-  test_result("      Ray bending technique    : observed %13.10g (error %g)\n"
+  test_result("        Ray bending technique    : observed %13.10g (error %g)\n"
 		,result,err);
   if(err<maxerr)
     status++;
@@ -145,8 +145,8 @@ double incout_ex_anal(double alpha, double rm, double ip)
 double incin_ex_anal(double alpha, double rm, double ip)
 {
   double rat=rm / ip;
-  return alpha * (rm * ip * sqrt( rat * rat - 1 ) - ip * ip *
-		  log( sqrt( rat* rat - 1) + rat ) );
+  return - alpha * (rm * ip * sqrt( rat * rat - 1 ) - ip * ip *
+		    log( sqrt( rat* rat - 1) + rat ) );
 }
 
 int
