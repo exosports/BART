@@ -227,9 +227,10 @@ double *mod_itau(double prm, double *res, double star, double ipmax, double firs
   if(res){
     double rath=ipmax/star;
     double ratl=first*ipmax/star;
-    *res=2*( exp(-prm*ipmax*first)*(ratl+1/prm) - exp(-prm*ipmax)*(rath+1/prm) ) / star / prm
-      + exp(-toomuch)*ratl*ratl
-      + (1-rath*rath);
+    *res = 2 * ( exp(-prm*ipmax*first)*(first*ipmax+1/prm) - exp(-prm*ipmax)*(ipmax+1/prm) )
+      / star / star / prm;
+    *res+= exp(-toomuch)*ratl*ratl;
+    *res+= (1-rath*rath);
     return NULL;
   }
 

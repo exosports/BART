@@ -1,0 +1,17 @@
+Integration accuracy:
+=====================
+
+Slant Path method (slantpath.txc)
+---------------------------------
+
+  When integrating optical depth, the numerical precision of the
+result obtained with constant index of refraction is, compared to ray
+bending approach, orders of magnitude better when there are several
+layers and slightly better when the are only a few. 
+  Most probably, the reason is because of using a spline integration
+with a infinity integrand near the closest approach point.
+
+  When integrating the modulation, the errors increase when the planet
+increase size with respect to the star, and also when the atmosphere
+become deeper and deeper.
+
