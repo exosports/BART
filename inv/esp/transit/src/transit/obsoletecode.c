@@ -616,3 +616,28 @@ inline int readdatanext(FILE *fp,
 }
 #endif /*obsolete*/
 //\deluh
+
+}
+
+  //Integrate towards a constant value of extinction if we are in the
+  //outmost layer
+  else{
+    if(ex[1]==ex[0])
+      res= ex[0] * r0 * ( sqrt( rad[1] * rad[1] / r0 / r0 - 1) );
+    else{
+      PREC_RES alpha = ( ex[1] - ex[0] ) / dr;
+      PREC_RES rm    = rad[1];
+      if(alpha<0)
+	res= - alpha * ( (rm + 2*ex[1]/alpha) * sqrt( rm * rm - r0 * r0)
+			 - r0 * r0 * log( sqrt( rm * rm / r0 / r0 - 1) 
+					  + rm / r0 )
+			 ) / 2.0;
+      else
+	res=   alpha * ( (rm - 2*r0 - 2*ex[0]/alpha) * sqrt( rm*rm - r0*r0 )
+			 - 2 * r0 * r0 * log( sqrt( rm * rm / r0 / r0 - 1)
+					      + rm / r0 ) 
+			 - r0*r0 * log( 2*r0 )
+			 ) / 2.0;
+    }
+  }
+
