@@ -51,7 +51,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 				       info file */
 {
   //'nmb' auxiliar variable for a number.
-  int nmb,nrad,i,newiso,lines;
+  int nmb,nrad,i,newiso;
   double sumq;
   //'at' and 'hints' are the atmospheric and hint's structure,
   //respectively
@@ -223,10 +223,10 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     st_at.m=onept->m;
     break;
   case file:
-    if((lines=getmnfromfile(fp,&st_at,tr,nmb))<1){
+    if((i=getmnfromfile(fp,&st_at,tr,nmb))<1){
       transiterror(TERR_SERIOUS,
 		   "getmnfromfile() returned error code %i\n"
-		   ,lines);
+		   ,i);
       exit(EXIT_FAILURE);
     }
     break;
@@ -272,7 +272,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       }
     }
 
-    if((sumq=checkaddmm(st_at.mm,0,st_at.isov,tr->isof,nmb,st_at.mass))
+    if((sumq=checkaddmm(st_at.mm,0,st_at.isov,tr->isof,nmb,st_at.mass,tr->isodo))
        <allowq)
       transiterror(TERR_WARNING,
 		   "Abundances don't add up to 1: %.9g under one\n"
@@ -286,15 +286,11 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 				      st_at.atm.t[0]);
     break;
   case file:
-    readatmfile(fp,tr,&st_at,rads,nrad,lines);
     //All the extra isotopes are going to have density from file (cannot
     //be ignored or fixed.
-    for(i=tr->n_i;i<tr->n_e;i++){
-      transitASSERT(tr->isodo[i]!=unclear,
-		    "Assertion failed in file %s, line %i: %i!=0\n"
-		    ,__FILE__,__LINE__,tr->isodo[i]);
+    for(i=tr->n_i;i<tr->n_e;i++)
       tr->isodo[i]=atmfile;
-    }
+    nrad=readatmfile(fp,tr,&st_at,rads,nrad);
     break;
   default:
     break;
@@ -329,7 +325,8 @@ checkaddmm(double *mm,		/* mean molecular mass stored here */
 	   prop_isov *isov,	/* variable isotope info */
 	   prop_isof *isof,	/* fixed isotope info */
 	   int n,		/* number of isotopes */
-	   _Bool mass)		/* mass abundances? */
+	   _Bool mass,		/* mass abundances? */
+	   enum isodo *isodo)	/* whether to ignore isotopes */
 {
   double sumq;
   int i;
@@ -337,22 +334,23 @@ checkaddmm(double *mm,		/* mean molecular mass stored here */
   //Computes mean molecular mass
   sumq=*mm=0;
   for(i=0;i<n;i++){
-    if(mass)
-      *mm+=(isov[i].q[r])/(isof[i].m);
-    else
-      *mm+=(isov[i].q[r])*(isof[i].m);
-    sumq+=isov[i].q[r];
+    if(isodo[i]!=ignore){
+      if(mass)
+	*mm+=(isov[i].q[r])/(isof[i].m);
+      else
+	*mm+=(isov[i].q[r])*(isof[i].m);
+      sumq+=isov[i].q[r];
+    }
   }
   if(mass)
     *mm=1.0/(*mm);
 
   //Check that abundances make sense
   if(sumq>1){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+    transiterror(TERR_SERIOUS,
 		 "Sum of abundances of isotopes adds up to more\n"
 		 "than 1: %g\n"
 		 ,sumq);
-    return -4;
   }
 
   return sumq;
@@ -377,9 +375,10 @@ telldefaults(struct transit *tr,
 	       ,at->atm.t[0],at->atm.p[0],at->mm[0]);
   //Densities for all isotopes
   for(i=0;i<tr->n_e;i++)
-    transitprint(1,verblevel,
-		 " %-8s: density %8g g/cm3\n"
-		 ,tr->isof[i].n,at->isov[i].d[0]);
+    if(tr->isodo[i]!=ignore)
+      transitprint(1,verblevel,
+		   " %-8s: density %8g g/cm3\n"
+		   ,tr->isof[i].n,at->isov[i].d[0]);
 }
 
 
@@ -445,7 +444,7 @@ askonemn(struct onept *onept,	/* user given values are going to be
   //Allocate room in 'onept'. Room in 'isof' should be already be
   //allocated
   onept->m=(PREC_ZREC *)calloc(n,sizeof(PREC_ZREC));
-  onept->n=(char **)calloc(n,sizeof(char));
+  onept->n=(char **)calloc(n,sizeof(char *));
   onept->n[0]=(char *)calloc(n*maxeisoname,sizeof(char));
 	
   //For each isotope ask for mass and name
@@ -550,15 +549,15 @@ getmnfromfile(FILE *fp,
 	      int nmb)
 {
   char rc;
-  int lines=0;
   char line[maxline],*lp;
   int iso=0,i;
   prop_isof *isof=tr->isof;
   enum isodo *isodo=tr->isodo;
 
+  at->begline=0;
   at->isoeq=(int *)calloc(nmb,sizeof(int));
   at->m=(PREC_ZREC *)calloc(nmb,sizeof(PREC_ZREC));
-  at->n=(char **)calloc(nmb,sizeof(char));
+  at->n=(char **)calloc(nmb,sizeof(char *));
   at->n[0]=(char *)calloc(nmb*maxeisoname,sizeof(char));
   at->isoeq[0]=-1;
   for(i=1;i<nmb;i++){
@@ -568,9 +567,9 @@ getmnfromfile(FILE *fp,
 
   //while t,p data doesn't start
   while(1){
-    while((rc=fgetupto(line,maxline,fp,&atmerr,tr->f_atm,lines++))
+    while((rc=fgetupto(line,maxline,fp,&atmerr,tr->f_atm,at->begline++))
 	  =='#'||rc=='\n');
-    if(!rc) notyet(lines,tr->f_atm);
+    if(!rc) notyet(at->begline,tr->f_atm);
     if(rc=='n'){
       storename(at,line+1);
       continue;
@@ -587,7 +586,7 @@ getmnfromfile(FILE *fp,
 	nmb<<=1;
 	at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
 	at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
-	at->n=(char **)realloc(at->n,nmb*sizeof(char));
+	at->n=(char **)realloc(at->n,nmb*sizeof(char *));
 	at->n[0]=(char *)realloc(at->n[0],nmb*maxeisoname*sizeof(char));
 	for(i=1;i<nmb;i++)
 	  at->n[i]=at->n[0]+i*maxeisoname;
@@ -601,7 +600,7 @@ getmnfromfile(FILE *fp,
 	transiterror(TERR_SERIOUS,
 		     "Invalid field in file %s, line %i while reading isotope"
 		     " info at:\n%s\n"
-		     ,tr->f_atm,lines,lp);
+		     ,tr->f_atm,at->begline,lp);
       }
       
       //now check if that isotope is one of the given in lineinfo file
@@ -610,10 +609,9 @@ getmnfromfile(FILE *fp,
 	  at->isoeq[iso]=i;
 	  if(isof[i].m!=at->m[iso])
 	    transiterror(TERR_WARNING,
-			 "Mass of isotope %s, is not the same in the"
-			 " atmosphere\n"
-			 "file %s(%g) than in the transition info\n"
-			 "file %s(%g)\n"
+			 "Mass of isotope %s, is not the same\n"
+			 "in the atmosphere file %s(%g) than in\n"
+			 "the transition info file %s(%g)\n"
 			 ,at->n[iso],tr->f_atm,at->m[iso],
 			 tr->f_line,isof[i].m);
 	  if(isodo[i]!=ignore)
@@ -627,11 +625,19 @@ getmnfromfile(FILE *fp,
       while(*lp==' '||*lp=='\t') lp++;
     }
   }
+  if(!iso)
+    transiterror(TERR_SERIOUS,
+		 "No isotopes were found in atmosphere file, make sure to\n"
+		 "specify them in a line starting with the letter 'i'.\n"
+		 "First non-comment line read:\n%s\n"
+		 ,line);
+  at->begpos=ftell(fp)-strlen(line)-1;
+
   at->n_aiso=iso;
   nmb=iso;
   at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
   at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
-  at->n=(char **)realloc(at->n,nmb*sizeof(char));
+  at->n=(char **)realloc(at->n,nmb*sizeof(char *));
   at->n[0]=(char *)realloc(at->n[0],nmb*maxeisoname*sizeof(char));
   for(i=1;i<nmb;i++)
     at->n[i]=at->n[0]+i*maxeisoname;
@@ -660,9 +666,7 @@ getmnfromfile(FILE *fp,
 		"assertion failed: %i != %i!!"
 		,__FILE__,__LINE__,nmb,tr->n_e);
 
-  //TD from here: add to tr->isof the new isotopes
-
-  return lines;
+  return at->begline;
 }
 
 
@@ -716,7 +720,7 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
     if(isodo[i]==unclear){
       //If want to match then ask with what, if ignored or fixed it will
       //be dealt with later
-      isodo[i]=askforposl("Isotope %i is not in atmosphere file, what do you\n"
+      isodo[i]=askforposl("\nIsotope %s is not in atmosphere file, what do you\n"
 			  "want to do? (1:match to some isotope, 2:ignore"
 			  " this\nisotope, 3:give a fixed abundance value) "
 			  ,tr->isof[i].n);
@@ -731,7 +735,7 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
 	  for(j=0;j<iso;j++)
 	    if(at->isoeq[j]==-1){
 	      rn=1;
-	      fprintf(stderr,"  (%2i) %s (%gAMU)\n", j+1,at->n[iso],at->m[iso]);
+	      fprintf(stderr,"  %2i: %s (%gAMU)\n", j+1,at->n[j],at->m[j]);
 	    }
 	  if(!rn){
 	    fprintf(stderr,
@@ -741,7 +745,7 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
 	    continue;
 	  }
 	  j=askforposd("Select a isotope number from the above list to\n"
-		       "match %s with: ",at->n[i]);
+		       "match %s with: ",tr->isof[i].n);
 	  if(at->isoeq[j-1]==-1){
 	    at->isoeq[j-1]=i;
 	    break;
@@ -756,7 +760,7 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
   rn=0;
   for(j=0;j<iso;j++)
     if(at->isoeq[j]==-1)
-      at->isoeq[j]=tr->n_i+rn++;
+      rn++;
 
   return rn;
 }
@@ -764,18 +768,19 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
 
 /* \fcnfh
    Read abundances and pressure for each isotope and radius
+
+   @returns number of radius point
 */
-void
+int
 readatmfile(FILE *fp,		/* File */
 	    struct transit *tr, /* transit info */
 	    struct atm_data *at, /* atmosphere info */
 	    prop_samp *rads,	/* radius sampling */
-	    int nrad,		/* number of allocated radii, note that
+	    int nrad)		/* number of allocated radii, note that
 				   is not returned updated */
-	    int lines)		/* number of lines read so far from the
-				   atmosphere file */
 {
   //find abundance related quantities for each radius
+  int lines=at->begline;
   PREC_NREC r=0;
   int i,nmb=tr->n_e;
   char rc;
@@ -786,6 +791,7 @@ readatmfile(FILE *fp,		/* File */
   int *isoeq=at->isoeq;
   enum isodo *isodo=tr->isodo;
 
+  fseek(fp,at->begpos,SEEK_SET);
   while(1){
     //allocate if necessary
     if(r==nrad){
@@ -852,7 +858,7 @@ readatmfile(FILE *fp,		/* File */
 
     //calculate mean molecular mass and check whether abundances add up
     //correctly
-    if((sumq=checkaddmm(at->mm+r,r,isov,tr->isof,nmb,at->mass))
+    if((sumq=checkaddmm(at->mm+r,r,isov,tr->isof,nmb,at->mass,isodo))
        <allowq)
       transiterror(TERR_WARNING,
 		   "In radius %g(%i), abundances don't add up to 1: %.9g\n"
@@ -877,6 +883,8 @@ readatmfile(FILE *fp,		/* File */
     isov[i].q=(PREC_ATM *)realloc(isov[i].q,
 				  nrad*sizeof(PREC_ATM));
   }
+
+  return nrad;
 }
 
 /* \fcnfh

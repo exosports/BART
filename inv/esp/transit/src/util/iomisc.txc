@@ -410,7 +410,7 @@ double readds(FILE *fp,
       stage=man|unsig;
     }
     else if(car=='+'||car=='-'){
-      if(!stage&unsig)
+      if(!(stage&unsig))
 	break;
       stage&=~unsig;
     }
@@ -481,7 +481,7 @@ double getds(char *in,
       stage=man|unsig;
     }
     else if(car=='+'||car=='-'){
-      if(!stage&unsig)
+      if(!(stage&unsig))
 	break;
       stage&=~unsig;
     }

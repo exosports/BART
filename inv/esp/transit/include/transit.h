@@ -313,7 +313,12 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
 				   datafile column corresponds [iso] */
   int n_aiso;			/* Number of isotopes in the atmosphere
 				   file */
-  char *info;			/* Optional atmosphere file info */
+  char *info;			/* Optional atmosphere file information
+				   or label */
+  int begline;			/* line of beginning of radius dependent
+				   info */
+  long begpos;			/* position of beginning of radius
+				   dependent info*/
 };
 
 
