@@ -276,6 +276,7 @@ modulation1 (PREC_RES *tau,
 
   //Impact parameter variables
   long ipn=ip->n;
+  long ipn1=ipn-1;
   long i;
 
   const PREC_RES maxtau=tau[last]>toomuch?tau[last]:toomuch;
@@ -292,17 +293,17 @@ modulation1 (PREC_RES *tau,
   //Let's integrate; for each of the planet's layer starting from the
   //outermost until the closest layer
   for(i=0;i<=last;i++){
-    ipv[i] = ip->v[last-i] * ip->fct;
+    ipv[ipn1-i] = ip->v[i] * ip->fct;
 
-    rinteg[i] = exp(-tau[i]) * ipv[i];
+    rinteg[ipn1-i] = exp(-tau[i]) * ipv[ipn1-i];
   }
   //fill two more lower part bins with 0. Only two to have a nice ending
   //spline and not unnecessary values.
   last+=2;
-  if(last>ipn-1) last=ipn-1;
-  for(;i<last;i++){
-    ipv[i]    = ip->v[last-i] * ip->fct;
-    rinteg[i] = 0;
+  if(last>ipn1) last=ipn1;
+  for(;i<=last;i++){
+    ipv[ipn1-i]    = ip->v[i] * ip->fct;
+    rinteg[ipn1-i] = 0;
   }
 
   //increment last to represent number of elements now, check that we
@@ -317,9 +318,10 @@ modulation1 (PREC_RES *tau,
   //integrate in radii
 #ifdef _USE_GSL
   gsl_interp_accel acc={0,0,0};
-  gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,last);
-  gsl_interp_init(spl,ipv,rinteg,last);
-  res=gsl_interp_eval_integ(spl,ipv,rinteg,ipv[0],ipv[last-1],&acc);
+  gsl_interp *spl=gsl_interp_alloc( gsl_interp_cspline, last );
+  gsl_interp_init( spl, ipv+ipn-last, rinteg+ipn-last, last );
+  res = gsl_interp_eval_integ( spl, ipv+ipn-last, rinteg+ipn-last,
+			       ipv[ipn-last], ipv[ipn1], &acc );
   gsl_interp_free(spl);
 
   //or err without GSL
@@ -338,9 +340,9 @@ modulation1 (PREC_RES *tau,
   //           -Area_{planet}}
   //          {\pi R_s^2}
   //\end{align}
-  res = 2.0 * res 
-    + srad * srad - ipv[last-1] * ipv[last-1]
-    + exp(-maxtau) * ipv[0] * ipv[0];
+  res = exp(-maxtau) * ipv[ipn-last] * ipv[ipn-last]
+    + 2.0 * res 
+    + srad * srad - ipv[ipn1] * ipv[ipn1];
 
   res *= 1.0 / srad / srad;
 
