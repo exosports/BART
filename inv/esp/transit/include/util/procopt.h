@@ -19,6 +19,9 @@
  * 02111-1307, USA.
  */
 
+#ifndef _PROCOPT_H
+#define _PROCOPT_H
+
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,8 +49,14 @@ struct optcfg {
   const char *contact;
   const char *intro;
   const char *contintro;
-  char *file;			/* Configuration file */
+  const char *noinfo;
+  const char *pretitle;
+  const char *posttitle;
+  const char *postoption;
+  char *files;			/* Configuration file */
   int indentdoc;
 };
 
 #include <procopt_proto.h>
+
+#endif /* _PROCOPT_H */

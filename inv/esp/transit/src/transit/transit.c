@@ -44,6 +44,13 @@ static int revision=-2;
 extern int verblevel;              /* verbose level, greater than 10 
 				      is only for debuging */
 
+#ifndef EXTRACFGFILES
+#define PREPEXTRACFGFILES ""
+#else
+#define PREPEXTRACFGFILES ","EXTRACFGFILES
+#endif
+
+
 const static transit_ray_solution *raysols[] = {
   &slantpath,
   NULL
@@ -566,9 +573,11 @@ int processparameters(int argc, /* number of command line arguments */
     {NULL,0,0,NULL,NULL}
   };
 
-  struct optcfg var_cfg={NULL,NULL,NULL,
-			 "Patricio Rojo <pato@astro.cornell.edu>"
-			 ,NULL,NULL,0};
+  struct optcfg var_cfg;
+  memset(&var_cfg,0,sizeof(var_cfg));
+  var_cfg.contact="Patricio Rojo <pato@astro.cornell.edu>";
+  var_cfg.files="./.transitrc"PREPEXTRACFGFILES;
+
   int rn,i;
   prop_samp *samp;
   char name[20],rc,*lp;
@@ -578,7 +587,7 @@ int processparameters(int argc, /* number of command line arguments */
   procopt_debug=0;
   opterr=0;
   while(1){
-    rn=getprocopt(argc,argv,"test",var_docs,&var_cfg,NULL);
+    rn=getprocopt(argc,argv,var_docs,&var_cfg,NULL);
     if (rn==-1)
       break;
 

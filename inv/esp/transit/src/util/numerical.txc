@@ -20,20 +20,6 @@
  * 02111-1307, USA.
  */
 
-/*\fcnfh
-  binsearch() defaults to an inclusive, exclusive search
-
-  @return binsearchie findings.
-*/
-inline int 
-binsearch(double *arr,
-	  long i,
-	  long f,
-	  double val)
-{
-  return binsearchie(arr,i,f,val);
-}
-
 /* \fcnfh
    Search for index such that val is between arr[index] inclusive and
    arr[index+1] exclusive.
@@ -119,4 +105,17 @@ binsearchei(double *arr,	/* Array of length of at least 'f' */
   return i;
 }
 
+/*\fcnfh
+  binsearch() defaults to an inclusive, exclusive search
+
+  @return binsearchie findings.
+*/
+inline int 
+binsearch(double *arr,
+	  long i,
+	  long f,
+	  double val)
+{
+  return binsearchie(arr,i,f,val);
+}
 

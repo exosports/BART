@@ -778,3 +778,71 @@ fgets_alloc(FILE *fp, 		/* where to read from */
   //this never happens.
   return NULL;
 }
+
+
+/* \fcnfh
+   Split strings according to separators, allocating required space fot
+   the 2D array. Last element is a null pointer.
+
+   @returns 2D-array with the splitted data the last element of the
+                     returned array is null.
+*/
+char **
+splitnzero_alloc(char *string,	/* String to split */
+		 char sep)	/* Separator */
+{
+  //'nf' starts at 1 because there at least the starting field. 'len' is
+  //the string's length until the loop in \lin{looplen}
+  static char **multi;
+  char *sp=string;
+  int nf=1,len=0;
+
+  //if string is null, then return an array of 1 NULL element
+  if(!sp){
+    multi=(char **)calloc(1,sizeof(char *));
+    multi[0]=NULL;
+    return multi;
+  }
+
+  //count number of fields, add one each time we find a separator.
+  while(*sp){
+    len++;
+    if(*sp++==sep)
+      nf++;
+  }
+
+  //allocate array to return, allocate nf+1 because of the last NULL
+  //element...
+  multi=(char **)calloc(nf+1,sizeof(char *));
+  *multi=(char *)calloc(len+1,sizeof(char));
+  //\linlabel{looplen}
+  len=nf=0;
+  sp=string;
+  while(sp[len]){
+    if(sp[len]==sep){
+      strncpy(multi[nf],sp,len);
+      multi[nf++][len]='\0';
+      multi[nf]=multi[nf-1]+len+1;
+      sp+=len+1;
+      len=-1;
+    }
+    len++;
+  }
+  strncpy(multi[nf],sp,len);
+  multi[nf][len]='\0';
+  multi[++nf]=NULL;
+
+  return multi;
+}
+
+
+/* \fcnfh
+   Free space allocated by splitnzero_alloc()
+ */
+void
+splitnzero_free(char **multi)
+{
+  if(multi)
+    free(*multi);
+  free(multi);
+}
