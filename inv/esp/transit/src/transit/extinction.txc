@@ -263,14 +263,15 @@ int extwn (struct transit *tr)
     }
 
     //Compute the spectra!, proceed for every line.
+    curline=line;
     for(ln=0;ln<tr->n_l;ln++){
+      curline++;
       /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
       if(ln<9000||ln>11000)
 	continue;
       */
-      curline=line+ln;
 
       wavn=1.0/wfct/curline->wl;
       /* 
