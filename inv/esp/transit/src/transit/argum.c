@@ -373,7 +373,7 @@ int processparameters(int argc, /* number of command line arguments */
   procopt_debug=1;
   opterr=0;
   while(1){
-    rn=getprocopt(argc,argv,var_docs,&var_cfg,NULL);
+    rn=procopt(argc,argv,var_docs,&var_cfg,NULL);
     if (rn==-1)
       break;
 
@@ -680,7 +680,7 @@ int processparameters(int argc, /* number of command line arguments */
 		   ,rn,(char)rn);
       break;
     case 'h':
-      getprochelp(EXIT_SUCCESS);
+      prochelp(EXIT_SUCCESS);
       break;
     case CLA_EXTPERISO:
       hints->fl|=TRU_EXTINPERISO;
@@ -743,7 +743,7 @@ int processparameters(int argc, /* number of command line arguments */
     
   }
 
-  getprocopt_free();
+  procopt_free();
 
   return 0;
 }
