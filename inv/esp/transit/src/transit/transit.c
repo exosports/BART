@@ -141,7 +141,7 @@ int main (int argc,		/* Number of variables */
 #ifdef NODEBUG_TRANSIT
   verblevel=2;
 #else
-  verblevel=20;
+  verblevel=19;
 #endif /* NODEBUG_TRANSIT */
 
   //Initialization of line database variables. 
@@ -292,7 +292,10 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_WAVNHIGH,
     CLA_WAVNDELT,
     CLA_WAVNOSAMP,
-    CLA_WAVNMARGIN
+    CLA_WAVNMARGIN,
+    CLA_ONEPT,
+    CLA_ONEABUND,
+    CLA_ONEINT,
   };
 
   //General help-option structure
@@ -323,7 +326,8 @@ int processparameters(int argc, /* number of command line arguments */
      "as given by 'lineread'"},
 
     {NULL,HELPTITLE,0,
-     NULL,"RADIUS OPTIONS (all in planetary radii units)"},
+     NULL,"RADIUS OPTIONS (planetary radii units, unless stated "
+     "otherwise)"},
     {"radius",no_argument,'r',
      NULL,"Interactively input radius parameters"},
     {"rad-low",required_argument,CLA_RADLOW,
@@ -335,6 +339,20 @@ int processparameters(int argc, /* number of command line arguments */
     {"rad-delt",required_argument,CLA_RADDELT,
      "spacing","Radius spacing. 0 if you want to use atmospheric\n"
      "data spacing"},
+    {"onept",required_argument,CLA_ONEPT,
+     "press,temp","Don't calculate transit spectra, just obtain\n"
+     "spectra for a given pressure and temperature. Unless\n"
+     "oneabund is also specified and has the correct number of\n"
+     "isotopes, the abundances will be asked interactively"},
+    {"oneabund",required_argument,CLA_ONEABUND,
+     "q1,...","It only has effect with --onept, a list of the\n"
+     "abundances of the different isotopes. If it is omitted or\n"
+     "doesn't have the right amount of values, the program will\n"
+     "ask interactively. Note that the order of isotopes is the\n"
+     "same given in the TWII data file"},
+    {"onept-interactive",no_argument,CLA_ONEINT,
+     NULL,"Wants to give abundances and pressure and temperature\n"
+     "interactively through terminal input"},
 
     {NULL,HELPTITLE,0,
      NULL,"WAVELENGTH OPTIONS (all in nanometers)"},
@@ -404,7 +422,7 @@ int processparameters(int argc, /* number of command line arguments */
   int rn,i;
   //  int longidx;
   prop_samp *samp;
-  char name[20];
+  char name[20],rc;
   char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
 
   opterr=0;
@@ -455,7 +473,8 @@ int processparameters(int argc, /* number of command line arguments */
 	  break;
 	while(rn){
 	  fprintf(stderr,"- %s %s: ",sampv[i],name);
-	  switch((rn=readd(stdin,&samp->i))){
+	  samp->i=readd(stdin,&rc);
+	  switch(rc){
 	  case 0:
 	    break;
 	    /*
@@ -469,6 +488,36 @@ int processparameters(int argc, /* number of command line arguments */
 	rn=1;
 	/*	longidx++;*/
       }
+      break;
+
+    case CLA_ONEPT:
+      if((rn=getnd(2,',',optarg,&hints->onept.p,&hints->onept.t))!=2){
+	if(rn==1)
+	  fprintf(stderr,
+		  "At least one of the values given for pressure (%g) or\n"
+		  "temperature (%g), was not a correct floating point value\n"
+		  ,hints->onept.p,hints->onept.t);
+	else
+	  fprintf(stderr,
+		  "There was %i comma-separated fields instead of 2 for\n"
+		  "'--onept' option"
+		  ,-rn);
+      }
+      hints->onept.one=1;
+      hints->fl=(hints->fl&~TRU_ATM1PBITS)|TRU_ATMGIVEN1P;
+      break;
+    case CLA_ONEABUND:
+      if((hints->onept.nq=getad(0,',',optarg,&hints->onept.q))<1)
+	transiterror(TERR_SERIOUS,
+		     "None of the given isotope abundances were accepted\n"
+		     "%s\n"
+		     ,optarg);
+      transitprint(2,verblevel,
+		   "%i abundance isotopes were correctly given: %s"
+		   ,hints->onept.nq,optarg);
+      break;
+    case CLA_ONEINT:
+      hints->fl=(hints->fl&~TRU_ATM1PBITS)|TRU_ATMASK1P;
       break;
     case CLA_RADLOW:
       hints->rads.i=atof(optarg);

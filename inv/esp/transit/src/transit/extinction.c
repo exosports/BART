@@ -176,8 +176,7 @@ int extwn (struct transit *tr)
 
     //Initialization of 2nd dimension of extinction array.
     //\linelabel{kini}
-    i=extinctperiso?niso:1;
-    kiso=ex->k[r]=*ex->k+r*i*nwn;
+    kiso=ex->k[r]=*ex->k+r*niso;
     alphal=ex->al[r]=*ex->al+r*niso;
     alphad=ex->ad[r]=*ex->ad+r*niso;
 
@@ -217,7 +216,7 @@ int extwn (struct transit *tr)
 
       //Calculate lorentz
       alphal[i]=0;
-      for(j=0;j<niso;j++)
+      for(j=0;j<neiso;j++)
 	alphal[i]+=densiso[i]*csiso[i]/mass[i]
 	  *sqrt(1/mass[i] + 1/tr->isof[j].m);
       alphal[i]*=propto_alor;
@@ -392,6 +391,13 @@ inline int newprofile(PREC_VOIGT **pr, /* output 2d profile */
   //is preferred so that the central bin can have a maximum value.
   wvgt=bigalpha*ta;
   *lw=nvgt=2*wvgt/dwn+1;
+
+  //Basic check that 'lor' or 'dop' are within sense
+  if(nvgt<0)
+    transiterror(TERR_CRITICAL,
+		 "Number of voigt bins are not positive!. Possibly out of\n"
+		 "a nonsensical doppler(%g) or Lorenz(%g) profile.\n"
+		 ,dop,lor);
 
   //Initialize array that will hold the profile.
   *pr=(PREC_VOIGT *)calloc(nvgt*vf,sizeof(PREC_VOIGT));

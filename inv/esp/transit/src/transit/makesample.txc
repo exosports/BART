@@ -330,7 +330,7 @@ int makeradsample(struct transit *tr)
   //'isov' and 'atmt' are structure pointers to where the info is going
   //to be stored after resampling.
   int res,i,j,iso1db;
-  int nrad,niso=tr->n_i,neiso=tr->n_e,ndb=tr->n_db;
+  int nrad,neiso=tr->n_e,niso=tr->n_i,ndb=tr->n_db;
 
   prop_isov *isovs;
 
@@ -347,7 +347,7 @@ int makeradsample(struct transit *tr)
   transitcheckcalled(tr->pi,"makeradsample",2,
 		     "getatm",TRPI_GETATM,
 		     "readinfo_twii",TRPI_READINFO);
-  transitASSERT(atms->rads.n<1||!ndb||!neiso||!niso,
+  transitASSERT(atms->rads.n<1||!ndb||!niso||!neiso,
 		"makeradsample():: called but essential variables are\n"
 		"missing!\n");
 
@@ -371,7 +371,6 @@ int makeradsample(struct transit *tr)
     /* TD: more than one atmospheric point: completion of 'limit', don't
        forget to set nrad, set 'rsamp' from 'tr->ds.th.rads' if there
        are zeroes */
-    
     nrad=rad->n=0;
     //do the sampling
     res=makesample(rad,&tr->ds.th->rads,rsamp,
@@ -380,11 +379,13 @@ int makeradsample(struct transit *tr)
 
   //Allocate arrays that will receive the interpolated data
   isovt->z=(PREC_ZREC *)calloc(nrad*neiso,sizeof(PREC_ZREC));
-  isovt->d=(PREC_ATM *)calloc(nrad*neiso,sizeof(PREC_ATM));
-  isovt->c=(PREC_CS *)calloc(nrad*neiso,sizeof(PREC_CS));
-  for(i=0;i<neiso;i++){
+  isovt->d=(PREC_ATM  *)calloc(nrad*neiso,sizeof(PREC_ATM ));
+  isovt->q=(PREC_ATM  *)calloc(nrad*neiso,sizeof(PREC_ATM ));
+  isovt->c=(PREC_CS   *)calloc(nrad*neiso,sizeof(PREC_CS  ));
+  for(i=1;i<neiso;i++){
     isovt[i].z=isovt->z+i*nrad;
     isovt[i].d=isovt->d+i*nrad;
+    isovt[i].q=isovt->q+i*nrad;
     isovt[i].c=isovt->c+i*nrad;
   }
   atmt->t=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
@@ -392,7 +393,8 @@ int makeradsample(struct transit *tr)
   /* TD: interpolation */
   //interpolate temperature values according to radius
   resamplex(tr->fl,nrad,rad->v,rsamp->n,rsamp->v);
-  resampley(tr->fl,1,atms->atm.t,atmt->t);
+  resampley(tr->fl,1,
+	    atms->atm.t,atmt->t);
 
   //Now for the isotope. 
   //First, for the isotopes that were added by getatm() (extended). We
@@ -401,9 +403,13 @@ int makeradsample(struct transit *tr)
   //Density for all the isotopes
   /* TD-BUG: Find out why it fails if I take the brackets away. */
   for(i=0;i<neiso;i++){
-    resampley(tr->fl,1,atms->isov[i].d,isovt[i].d);
+    resampley(tr->fl,2,
+	      atms->isov[i].d,isovt[i].d,
+	      atms->isov[i].q,isovt[i].q);
   }
-  //and cross section of only the extended isotopes.
+
+  //and cross section of only the extended isotopes. non extended go
+  //below. This is used in calculating lorenz width
   for(i=niso;i<neiso;i++){
     resampley(tr->fl,1,atms->isov[i].c,isovt[i].c);
   }
@@ -418,11 +424,12 @@ int makeradsample(struct transit *tr)
     //interpolate variable isotope info respect to temperature
     resamplex(tr->fl,in->db[i].t,in->db[i].T,nrad,atmt->t);
     for(j=0;j<tr->db[i].i;j++){
-      transitASSERT(iso1db+j>neiso-1,
+      transitASSERT(iso1db+j>niso-1,
 		    "trying to reference an isotope (%i) outside\n"
 		    "the extended limit (%i)\n"
-		    ,iso1db+j,neiso-1);
-      resampley(tr->fl,2,isovs[j].z,isovt[iso1db+j].z,
+		    ,iso1db+j,niso-1);
+      resampley(tr->fl,2,
+		isovs[j].z,isovt[iso1db+j].z,
 		isovs[j].c,isovt[iso1db+j].c);
     }
   }

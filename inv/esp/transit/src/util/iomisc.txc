@@ -24,6 +24,128 @@
 char *linepad_break="-";
 int printpad_columns=__PADTO_COLUMNS;
 
+
+/* \fcnfh
+   get at most 'n' (indefinite if 0) double format numbers from 'str',
+   they are separated by 'sep'. Allocate and store them in 'array'
+
+   @returns number of converted values
+            -x if there were 'x' fields separated by car instead of 'n'.
+*/
+int
+getad(int n,			/* Number of float field to accept */
+      char sep,			/* separation character */
+      char *str,		/* String where to look for values */
+      double **array)			/* Pointers to double value */
+{
+  char *ptr=str;
+  int rn=1;
+
+  switch(sep){
+  default:
+    if(!isdigit(sep)) break;
+  case 'e': case 'E': case '.': case '-': case '+':
+    fprintf(stderr,
+	    "iomisc:: getnd: invalid separator '%c'. It cannot be a\n"
+	    "digit, '+', '-', 'e', 'E', nor '.'\n"
+	    ,sep);
+    exit(EXIT_FAILURE);
+  }
+
+  do{
+    if(*ptr==sep)
+      rn++;
+  }while(*ptr++);
+
+  if(ptr-1==str)
+    return 0;
+  if (n&&rn!=n)
+    return -rn;
+  n=rn;
+  *array=(double *)calloc(n,sizeof(double));
+
+  for(rn=0;rn<n;rn++){
+    (*array)[rn]=strtod(str,&ptr);
+
+    while(*ptr!=sep)
+      if(!*ptr++){
+	if(rn!=n-1)
+	  fprintf(stderr,
+		  "iomisc:: getnd: the one with %f was not supposed to\n"
+		  "be the last(%ith) field but it is in: %s\n"
+		  ,(*array)[rn],n,str);
+	else
+	  break;
+      }
+    str=ptr+1;
+  }
+
+  return rn;
+}
+
+/* \fcnfh
+   get 'n' double format numbers from 'str', they are separated by
+   'sep'. There is no way to know which of the 'n' were really
+   converted. The non-converted doubles are returned untouched.
+
+   @returns number of converted values
+            -x if there were 'x' fields separated by car instead of 'n'.
+*/
+int
+getnd(int n,			/* Number of float field to accept */
+      char sep,			/* separation character */
+      char *str,		/* String where to look for values */
+      ...)			/* Pointers to double value */
+{
+  char *ptr=str;
+  int rn=1,nc=0;
+  double out,*in;
+  va_list ap;
+
+  switch(sep){
+  default:
+    if(!isdigit(sep)) break;
+  case 'e': case 'E': case '.': case '-': case '+':
+    fprintf(stderr,
+	    "iomisc:: getnd: invalid separator '%c'. It cannot be a\n"
+	    "digit, '+', '-', 'e', 'E', nor '.'\n"
+	    ,sep);
+    exit(EXIT_FAILURE);
+  }
+
+  do{
+    if(*ptr==sep)
+      rn++;
+  }while(*ptr++);
+  if(ptr-1==str)
+    return 0;
+  if (rn!=n)
+    return -rn;
+  va_start(ap,str);
+  for(rn=0;rn<n;rn++){
+    in=(double *)va_arg(ap,double *);
+    out=strtod(str,&ptr);
+    if(str!=ptr){
+      nc++;
+      *in=out;
+    }
+
+    while(*ptr!=sep)
+      if(!*ptr++){
+	if(rn!=n-1)
+	  fprintf(stderr,
+		  "iomisc:: getnd: the one with %f was not supposed to\n"
+		  "be the last(%ith) field but it is in: %s\n"
+		  ,out,n,str);
+	else
+	  break;
+      }
+    str=ptr+1;
+  }
+  va_end(ap);
+  return nc;
+}
+
 /* \fcnfh
    Prints a parragraph with justification using linepad, it takes a indent
    value
@@ -75,8 +197,8 @@ fprintpad(FILE *fp,		/* File pointer to print */
    @returns 0 on success
             first character read if it was not appropiate
 */
-char readd(FILE *fp,
-	   double *f)
+double readd(FILE *fp,
+	     char *c)
 {
   char *str,*cur,car;
   int salloc=8;
@@ -93,21 +215,27 @@ char readd(FILE *fp,
     }
     *cur=car;
     if(car=='\n'){
-      if(!atleast)
-	return *cur;
+      if(!atleast){
+	if(c) *c=*cur;
+	return 0;
+      }
       break;
     }
     if(car=='e'||car=='E'){
-      if(!atleast)
-	return *cur;
+      if(!atleast){
+	if(c) *c=*cur;
+	return 0;
+      }
       if(stage&man)
 	break;
       stage=man|unsig;
     }
     else if(car=='+'||car=='-'){
       if(!stage&unsig){
-	if(!atleast)
-	  return *cur;
+	if(!atleast){
+	  if(c) *c=*cur;
+	  return 0;
+	}
 	break;
       }
       stage&=~unsig;
@@ -128,8 +256,8 @@ char readd(FILE *fp,
   }
 
   *cur='\0';
-  *f=atof(str);
-  return 0;
+  if(c) *c=0;
+  return atof(str);
 }
 
 

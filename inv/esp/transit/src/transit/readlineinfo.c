@@ -1,6 +1,6 @@
 /*
- * readlineinfo.c - It reads line info as returned by
- *                  lineread. Component of Transit program
+ * readlineinfo.[tx]c - It reads line info as returned by
+ *                      lineread. Component of Transit program
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -244,7 +244,6 @@ int readinfo_twii(struct transit *tr,
   tr->fp_line=fp;
   transitaccepthint(tr->f_line,th->f_line,th->na,TRH_FL);
 
-
   //Read datafile name, mark spacing, initial, final wavelength, and
   //number of datrabases.
   fread(&li->twii_ver,sizeof(int),1,fp);
@@ -297,6 +296,7 @@ int readinfo_twii(struct transit *tr,
   //allocate structure that are going to receive the isotope info.
   in->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
   tr->isof=(prop_isof *)calloc(tr->n_i,sizeof(prop_isof));
+  tr->isov=(prop_isov *)calloc(tr->n_i,sizeof(prop_isov));
   transitDEBUG(20,verblevel,
 	       "Isotopes:%i\n"
 	       "databases: %i\n"

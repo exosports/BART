@@ -39,42 +39,26 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 {
   //'nmb' auxiliar variable for a number.
   int nmb,i;
+  double val;
+  char rc;
   //'at' and 'hints' are the atmospheric and hint's structure,
   //respectively
   struct transithint *th=tr->ds.th;
+  struct onept *onept;
   static struct atm_data st_at;
   memset(&st_at,0,sizeof(struct atm_data));
   tr->ds.at=&st_at;
   /*  struct atm_data *at=tr->ds.at;*/
 
   //Hard coded values.
-  //'hc\_n\_e' number of extra isotopes (eiso).
-  //'hc\_name' names.
   //'hc\_t' temperature.
   //'hc\_mass' masses.
-  //'hc\_cs' cross section.
-  //'hc\_dens' density.
-#define HC_N_E 1
-#define MAX_NAME 30
-  int hc_n_e=0;
-  char hc_name[HC_N_E][MAX_NAME]={""};
+  //'hc\_abund' is the abundance of the first isotope, the rest are
+  //just set at zero in the hardcode modality.
   PREC_ZREC hc_t=1350;
-  PREC_ZREC hc_mass[HC_N_E]={0};
-  PREC_CS hc_cs[HC_N_E]={0};
-  PREC_ATM hc_dens[hc_n_e + tr->n_i];
   PREC_ATM hc_pres=1.0e3;
-  //write defult density for the standard isotopes
-    /* TD: Density units */
-  hc_dens[0]=6.5e-4*hc_pres*(tr->isof[0].m)/(KB)/(hc_t);
-  for(i=1;i<(tr->n_i);i++)
-    hc_dens[i]=6e-10*hc_pres*(tr->isof[i].m)/(KB)/(hc_t);
-  //and now for the extra isotopes if any
-  if(hc_n_e){
-    hc_dens[tr->n_i+1]=0;
-  }
+  PREC_ATM hc_abund=6.5e-4;
 
-#undef HC_N_E
-#undef MAX_NAME
 
   //Pass atmospheric flags into info struct
   transitacceptflag(tr->fl,th->fl,TRU_ATMBITS);
@@ -86,46 +70,96 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     st_at.rads.n=1;
     st_at.rads.v=(PREC_ATM *)calloc(st_at.rads.n,sizeof(PREC_ATM));
     st_at.atm.t=(PREC_ATM *)calloc(st_at.rads.n,sizeof(PREC_ATM));
+    st_at.atm.p=(PREC_ATM *)calloc(st_at.rads.n,sizeof(PREC_ATM));
     st_at.rads.v[0]=1.0;
+
+    st_at.n_niso=0;
+    nmb=tr->n_e=tr->n_i;
+    st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
+    transitDEBUG(20,verblevel,
+		 "First isotope: %s\n"
+		 ,tr->isof[0].n);
+
     //See which way does the user wants the default to be handled
     switch(tr->fl&TRU_ATM1PBITS){
-    case TRU_ATMHARDC1P:	/* wants to use hard-coded values */
-      st_at.atm.t[0]=hc_t;
-      st_at.n_niso=hc_n_e;
-      nmb=tr->n_e=tr->n_i+st_at.n_niso;
-      tr->isof=(prop_isof *)realloc(tr->isof,nmb*sizeof(prop_isof));
-      tr->isov=(prop_isov *)realloc(tr->isov,nmb*sizeof(prop_isov));
-      transitDEBUG(20,verblevel,
-		   "First isotope: %s\n"
-		   ,tr->isof[0].n);
-      st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
-      for(i=0;i<nmb;i++){
-	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
-	st_at.isov[i].d[0]=hc_dens[i];
-      }
-      nmb=tr->n_i;
-      for(i=0;i<st_at.n_niso;i++){
-	tr->isof[nmb+i].n=(char *)calloc(strlen(hc_name[i]),
-					 sizeof(char));
-	strcpy(tr->isof[nmb+i].n,hc_name[i]);
-	tr->isof[nmb+i].m=hc_mass[i];
-	st_at.isov[nmb+i].c=(PREC_CS *)calloc(1,sizeof(PREC_CS));
-	st_at.isov[nmb+i].c[0]=hc_cs[i];
-      }
-      
-      break;
     case TRU_ATMNODEF:		/* Wants an error message */
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "getatm():: No atmospheric file specified");
       return -1;
       break;
-    case TRU_ATMGIVEN1P:	/* Wants to get it from somewhere */
-    case TRU_ATMASK1P:		/* Wants to give it to standard input */
-      transiterror(TERR_CRITICAL,
-		   "getatm():: Defaults handling mode (0x%x) not\n"
-		   "yet implemented\n"
-		   ,tr->fl&TRU_ATM1PBITS);
+
+    case TRU_ATMHARDC1P:	/* wants to use hard-coded values */
+      st_at.atm.t[0]=hc_t;
+      st_at.atm.p[0]=hc_pres;
+      for(i=0;i<nmb;i++){
+	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+	st_at.isov[i].d[0]=stateeqn(hc_abund,tr->isof[i].m,hc_pres,hc_t);
+	hc_abund=0;
+      }
       break;
+
+    case TRU_ATMGIVEN1P:	/* Wants to get it from hints->onept */
+      onept=&th->onept;
+      st_at.atm.t[0]=onept->t;
+      st_at.atm.p[0]=onept->p;
+
+      if(onept->nq==nmb){
+	for(i=0;i<nmb;i++){
+	  st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+	  st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+	  st_at.isov[i].q[0]=onept->q[i];
+	  st_at.isov[i].d[0]=stateeqn(onept->q[i],tr->isof[i].m,
+				      onept->p,onept->t);
+	}
+	break;
+      }
+
+    case TRU_ATMASK1P:		/* Wants to get values from standard input */
+      if(tr->fl&TRU_ATMASK1P){
+	while(1){
+	  fprintf(stderr," Atmospheric pressure, cgs units (1e-3cgs=1atm): ");
+	  st_at.atm.p[0]=readd(stdin,&rc);
+	  if(!rc) break;
+	  if(rc=='q'){
+	    transitprint(0,verblevel,"User interrupt!\n");
+	    exit(EXIT_SUCCESS);
+	  }
+	  fprintf(stderr,"Try again!\n");
+	}
+	while(1){
+	  fprintf(stderr," Atmospheric temperature, Kelvin degrees: ");
+	  st_at.atm.t[0]=readd(stdin,&rc);
+	  if(!rc) break;
+	  if(rc=='q'){
+	    transitprint(0,verblevel,"User interrupt!\n");
+	    exit(EXIT_SUCCESS);
+	  }
+	  fprintf(stderr,"Try again!\n");
+	}
+      }
+
+      for(i=0;i<nmb;i++){
+	st_at.isov[i].d=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+	st_at.isov[i].q=(PREC_ATM *)calloc(1,sizeof(PREC_ATM));
+	while(1){
+	  fprintf(stderr," Mass abundance for isotope %s: "
+		  ,tr->isof[i].n);
+	  val=readd(stdin,&rc);
+	  if(!rc) break;
+	  if(rc=='q'){
+	    transitprint(0,verblevel,"User interrupt!\n");
+	    exit(EXIT_SUCCESS);
+	  }
+	  fprintf(stderr,"Try again!\n");
+	}
+	st_at.isov[i].q[0]=val;
+	st_at.isov[i].d[0]=stateeqn(val,tr->isof[i].m,
+				    st_at.atm.p[0],
+				    st_at.atm.t[0]);
+      }
+
+      break;
+
     default:			/* Oops */
       transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
 		   "getatm():: Unexistent default handling mode (0x%x)\n"
@@ -145,12 +179,14 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       transitprint(1,verblevel,
 		   " %s: density %8g g/cm3\n"
 		   ,tr->isof[i].n,st_at.isov[i].d[0]);
+    /* no extra isotopes for one point! 
     //Density and cross section for extra isotopes
     for(;i<tr->n_e;i++)
       transitprint(1,verblevel,
 		   " %s: density %.8g g/cm3\tcross section %8g\n"
 		   ,tr->isof[i].n,st_at.isov[i].d[0],
 		   st_at.isov[i].c[0]);
+    */
 
   }
   //Otherwise if info is to be taken from file.

@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <util/sampling.h>
 #include <util/profile.h>
+#include <util/iomisc.h>
 
 /* Flags for hintable parameters. Its precense indicates that the
    parameter was changed or not accepted */
@@ -186,6 +187,8 @@ extern int transit_nowarn;
 extern int verblevel;
 
 /* Macros */
+#define stateeqn(q,m,p,t) ((q)*(m)*(p)/(KB)/(t));
+
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitacceptflag(transit,hint,flag) do{       \
                    transit|=hint&flag;hint&=~(flag);}while(0)
@@ -214,6 +217,8 @@ typedef struct {          	/* One item per isotope and
   PREC_ZREC *z;            	/* Partition function [radius or temp] */
   PREC_CS *c;              	/* Cross section [radius or temp] */
   PREC_ATM *d;			/* Environment: Density [radius], not
+				   used in iso_noext structure */ 
+  PREC_ATM *q;			/* Mass Abundance [radius], not
 				   used in iso_noext structure */ 
 } prop_isov;
 
@@ -296,6 +301,13 @@ struct lineinfo {
 				   database */
 };
 
+struct onept {
+  double p,t;			/* pressure and temperature values */
+  double *q;			/* abundances for isotopes */
+  int nq;			/* number of given abundances */
+  _Bool one;			/* One point is required? */
+};
+
 struct transithint {		/* Structure with user hinted data that
 				   should go to the 'struct transit'
 				   upon approval */
@@ -323,6 +335,7 @@ struct transithint {		/* Structure with user hinted data that
   long fl;			/* flags */
   long na;			/* flags of non-accepted or just changed
 				   hints */
+  struct onept onept;		/* Parameters for onept atmosphere */
 };
 
 struct transit {		/* Main data structure */
