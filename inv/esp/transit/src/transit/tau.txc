@@ -25,7 +25,7 @@
 
 /* \fcnfh
    Calculates optical depth as a function of radii for a spherical
-   symmetric planet
+   symmetric planet.
 
    @returns 0 on success
  */
@@ -113,7 +113,7 @@ tau(struct transit *tr)
     //print output every 10\% that is ready
     if(wi>wnextout){
       transitprint(2,verblevel,
-		   "\r%li%%"
+		   "%li%%\r"
 		   ,100*wi/wnn);
       wnextout+=(int)(wnn/10.0);
     }
@@ -148,7 +148,9 @@ tau(struct transit *tr)
 	}while(bb[ri]*ip->fct<r[lastr]*rfct);
       }
 
-      if( (t[ri] = rfct * fcn(bb[ri]*riw,r,n,er,rnn,taulevel)) > tau.toomuch){
+      if( (t[ri] = rfct * 
+	   fcn(bb[ri]*riw,r+lastr,n+lastr,er+lastr,rnn-lastr,taulevel))
+	  > tau.toomuch){
 	tau.last[wi]=ri;
 	break;
       }
@@ -157,7 +159,7 @@ tau(struct transit *tr)
   }
 
   transitprint(1,verblevel,
-	       "\r DONE\nOptical depth calculated up to %g[cm-1]\n"
+	       " DONE\nOptical depth calculated up to %g[cm-1]\n"
 	       ,tr->ds.tau->toomuch);
 
   //Print lowest impact parameter before optical gets too big
@@ -201,8 +203,8 @@ printtoomuch(char *file, 	/* Filename to save to, a '-' is
 
   transitprint(1,verblevel,
 	       "\nPrinting in '%s'\n"
-	       "maximum depth before optical depth got larger than %g, and\n"
-	       "therefore impact parameter was not calculated for deeper layers.\n"
+	       " maximum depth before optical depth got larger than %g, and\n"
+	       " therefore impact parameter was not calculated for deeper layers.\n\n"
 	       ,file,tau->toomuch);
 
   fprintf(out,"#Wavelength  Maximum_calculated_depth\n");

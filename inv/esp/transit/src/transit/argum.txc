@@ -263,7 +263,7 @@ int processparameters(int argc, /* number of command line arguments */
     {"toomuch",CLA_TOOMUCH,required_argument,"20",
      "optdepth","If optical depth for a particular path is larger\n"
      "than optdepth, then do not proceed to lower radius"},
-    {"outtau",CLA_OUTTAU,required_argument,"-1",
+    {"outtau",CLA_OUTTAU,required_argument,"0",
      NULL,"Output is optical depth instead of modulation. It will be\n"
      "asked which radius to plot\n"},
     {"taulevel",CLA_TAULEVEL,required_argument,"1",
@@ -357,7 +357,8 @@ int processparameters(int argc, /* number of command line arguments */
       }
       break;
     case CLA_OUTTAU:
-      hints->fl|=TRU_OUTTAU;
+      if(atoi(optarg))
+	hints->fl|=TRU_OUTTAU;
       hints->ot=atoi(optarg)-1;
       break;
 

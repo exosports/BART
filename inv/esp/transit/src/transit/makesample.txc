@@ -343,7 +343,7 @@ int makeipsample(struct transit *tr)
   struct transithint *trh=tr->ds.th;
   prop_samp usamp={0, -trh->ips.d, trh->ips.f, trh->ips.i, 
 		   trh->ips.o, NULL, trh->ips.fct};
-  prop_samp rsamp={0, -tr->rads.d, tr->rads.f, tr->rads.i,
+  prop_samp rsamp={0, -tr->rads.d, tr->rads.v[tr->rads.n-1], tr->rads.v[0],
 		   tr->rads.o, NULL, tr->rads.fct};
 
   if( usamp.f<usamp.i)
@@ -631,7 +631,7 @@ outsample(struct transit *tr)
     }
 
   transitprint(1,verblevel,
-	       "\nPrinting sampling information in '%s'\n"
+	       "\nPrinting sampling information in '%s'\n\n"
 	       ,filename);
 
   printsample(out,&tr->wns,"Wavenumber",TRF_NOVALUE);

@@ -66,17 +66,22 @@ modulation(struct transit *tr)	/* Main structure */
 
   //integrate for each wavelength
   transitprint(1,verblevel,
-	       "Integrating for each wavelength. Expect %li dots below...\n"
-	       ,wn->n/512);
+	       "Integrating for each wavelength...\n");
+
+  int nextw=wn->n/10;
 
   for(w=0;w<wn->n;w++){
     out[w]=sol->obsperwn(tau->t[w],tau->last[w],tau->toomuch,
 			 ip,sg,modlevel);
 
-    if((w&0x1ff)==0x1ff)
-      transitdot(1,verblevel);
+    if(w==nextw){
+      nextw+=wn->n/10;
+      transitprint(2,verblevel,
+		   "%li%%\r"
+		   ,100*wn->n/w);
+    }
   }
-  transitprint(1,verblevel,"\n");
+  transitprint(1,verblevel," DONE\n");
 
   //frees no longer needed memory.
   freemem_idexrefrac(tr->ds.ir,&tr->pi);
@@ -106,7 +111,7 @@ printmod(struct transit *tr)
 
   transitprint(1,verblevel,
 	       "\nPrinting in-eclipse/out-eclipse ratio for requested\n"
-	       "conditions in '%s'\n"
+	       " conditions in '%s'\n"
 	       ,tr->f_out?tr->f_out:"standard output");
 
   //print!

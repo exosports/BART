@@ -32,13 +32,16 @@
 
 
 /* \fcnfh
- Computes optical depth at a given impact parameter, note that b needs
- to be given in units of 'rad' and the result needs to be multiplied by
- the units 'rad' to be real.
- There is no ray bending, refr=constant
+   Computes optical depth at a given impact parameter, note that b needs
+   to be given in units of 'rad' and the result needs to be multiplied by
+   the units 'rad' to be real.
+   There is no ray bending, refr=constant.
+   It can take nrad values of 1 or bigger. However, if 2 is given then
+   'ex' and 'rad' need to have a referenceable element at position
+   -1; i.e. rad[-1] and ex[-1] exist.
 
- @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
-                                    of 'rad'
+   @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
+                                      of 'rad'
 */
 static inline PREC_RES
 totaltau1(PREC_RES b,		/* impact parameter */
@@ -256,7 +259,7 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
 
 /* \fcnfh
    Computes most basic modulation scheme, obtained when there is no limb
-   darkening or emitted flux 
+   darkening or emitted flux.
 
    @returns modulation obtained
 */
@@ -275,10 +278,13 @@ modulation1 (PREC_RES *tau,
   long ipn=ip->n;
   long i;
 
+  const PREC_RES maxtau=tau[last]>toomuch?tau[last]:toomuch;
+
   PREC_RES rinteg[ipn],ipv[ipn];
 
   //this function calculates 1 minus the ratio of in-transit over out-of-transit
-  //expresion for the simplest case, which is given by (INVALID EXPRESSION!!)
+  //expresion for the simplest case, which is given by (INVALID
+  //EXPRESSION FOLLOWING!!)
   //\[
   //M_{\lambda}^{(0)}=
   //\frac{1}{\pi R_M^2}\int_{R<R_M}\ee^{-\tau( b,\xi)} R \dd R\dd\phi
@@ -334,7 +340,7 @@ modulation1 (PREC_RES *tau,
   //\end{align}
   res = 2.0 * res 
     + srad * srad - ipv[last-1] * ipv[last-1]
-    + exp(-toomuch) * ipv[0] * ipv[0];
+    + exp(-maxtau) * ipv[0] * ipv[0];
 
   res *= 1.0 / srad / srad;
 
