@@ -89,7 +89,6 @@ typedef struct {          	/* One item per database */
 typedef struct {
   const char *name;
   const char *file;
-  const char *gslver;
   const short monoip;
 
   PREC_RES (*tauperb)		/* Optical depth per impact

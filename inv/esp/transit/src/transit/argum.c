@@ -35,7 +35,6 @@ const static transit_ray_solution *raysols[] = {
   NULL
 };
 
-
 #ifndef EXTRACFGFILES
 #  define PREPEXTRACFGFILES ""
 #endif
@@ -810,13 +809,6 @@ acceptgenhints(struct transit *tr) /* transit structure */
 		   " %s\n",(*sol++)->name);
     exit(EXIT_FAILURE);
   }
-
-  //Check that version of libgsl is the appropiate
-  if(strncmp(tr->sol->gslver,gsl_version,strlen(tr->sol->gslver))!=0)
-    transiterror(TERR_CRITICAL,
-		 "To speed up, transit's solution '%s' assumed version %s of\n"
-		 "the gsl libraries. Check file '%s' for details\n"
-		 ,tr->sol->name,tr->sol->gslver,tr->sol->file);
 
   //set hinted geometry hints
   setgeomhint(tr);

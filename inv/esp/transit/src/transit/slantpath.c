@@ -23,12 +23,6 @@
 
 #include <transit.h>
 
-/***** Warning:
-       To speed up, slantpath.txc assumed version 1.4 of gsl
-       utilities. If not, structure gsl_interp_accel might have
-       different components, which will produce erroneus assumptions in
-       totaltau(). 
-***************/
 
 
 /* \fcnfh
@@ -113,11 +107,12 @@ totaltau1(PREC_RES b,		/* impact parameter */
   //Integrate!\par
   //Use spline if GSL is available along with at least 3 points
 #ifdef _USE_GSL
-  gsl_interp_accel acc={0,0,0};
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
   gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,nrad);
   gsl_interp_init(spl,s,ex,nrad);
-  res=gsl_interp_eval_integ(spl,s,ex,0,s[nrad-1],&acc);
+  res=gsl_interp_eval_integ(spl,s,ex,0,s[nrad-1],acc);
   gsl_interp_free(spl);
+  gsl_interp_accel_free (acc);
 #else
 #error non equispaced integration is not implemented without GSL
 #endif /* _USE_GSL */
@@ -230,12 +225,13 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
   //Integrate!\par
   //Use spline if GSL is available along with at least 3 points
 #ifdef _USE_GSL
-  gsl_interp_accel acc={0,0,0};
   if(nrad-rs>2){
+    gsl_interp_accel *acc = gsl_interp_accel_alloc ();
     gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,nrad-rs);
     gsl_spline_init(spl,rad+rs,dt+rs,nrad-rs);
-    res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],&acc);
+    res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],acc);
     gsl_spline_free(spl);
+    gsl_interp_accel_free (acc);
   }
   //Only integrate Trapezium if there is only two points available.
   else
@@ -348,12 +344,13 @@ modulation1 (PREC_RES *tau,
 
   //integrate in radii
 #ifdef _USE_GSL
-  gsl_interp_accel acc={0,0,0};
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
   gsl_interp *spl=gsl_interp_alloc( gsl_interp_cspline, last );
   gsl_interp_init( spl, ipv+ipn-last, rinteg+ipn-last, last );
   res = gsl_interp_eval_integ( spl, ipv+ipn-last, rinteg+ipn-last,
-			       ipv[ipn-last], ipv[ipn1], &acc );
+			       ipv[ipn-last], ipv[ipn1], acc );
   gsl_interp_free(spl);
+  gsl_interp_accel_free (acc);
 
   //or err without GSL
 #else
@@ -458,7 +455,6 @@ const transit_ray_solution slantpath =
   {
     "Slant Path",		/* Name of the solution */
     "slantpath.c",		/* This file name */
-    "1.5",			/* GSL version */
     1,				/* Equispaced impact parameter requested? */
     &totaltau,			/* per impact parameter and per
 				   wavenumber value computation */
