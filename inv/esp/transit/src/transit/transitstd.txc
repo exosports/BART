@@ -343,3 +343,39 @@ free_atm(prop_atm *atm)
   free(atm->t);
 }
 
+/* \fcnfh
+   Saves a string in binary in open file
+*/
+void
+savestr(FILE *out,
+	char *str)
+{
+  long len=strlen(str)+1;
+
+  fwrite(&len,sizeof(long),1,out);
+  fwrite(str,1,len,out);
+}
+
+/* \fcnfh
+   Restores a string from a binary open file
+*/
+int
+reststr(FILE *out,
+	char **str)
+{
+  long len;
+
+  if(fwrite(&len,sizeof(long),1,out)!=1)
+    return -1;
+  if(len<0)
+    return -2;
+  if(len>1000)
+    return 1;
+  if((*str=(char *)calloc(len,sizeof(char)))==NULL)
+    return -3;
+  if(fread(*str,1,len,out)!=len)
+    return -1;
+
+  return 0;
+}
+

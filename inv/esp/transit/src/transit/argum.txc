@@ -676,3 +676,13 @@ acceptgenhints(struct transit *tr) /* transit structure */
 
   return 0;
 }
+
+
+/*\fcnfh
+  Saves hints structure
+*/
+void
+savehint(FILE *out,
+	 struct transithint *hint)
+{
+}

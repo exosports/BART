@@ -519,6 +519,48 @@ printsample(FILE *out,	/* File pointer to write out */
 
 }
 
+
+
+/* \fcnfh
+   Saves in binary the sample structure
+*/
+void
+savesample(FILE *out,		/* File pointer to write out */
+	   prop_samp *samp)	/* Sample strucuture to print */
+{
+  fwrite(samp,sizeof(prop_samp),1,out);
+  fwrite(samp->v,sizeof(PREC_RES),samp->n,out);
+}
+
+
+/* \fcnfh
+   Restore a binary sample structure
+
+   @returns 0 on success
+            -1 if not all the expected information is read
+	    -2 if info read is wrong
+	    -3 if cannot allocate memory
+	    1 if information read was suspicious
+*/
+int
+restsample(FILE *out,		/* File pointer to write out */
+	   prop_samp *samp)	/* Sample strucuture to restore to */
+{
+  if(fread(samp,sizeof(prop_samp),1,out)!=1)
+    return -1;
+  if(samp->n<0)
+    return -2;
+  if(samp->n>1000000)
+    return 1;
+  if((samp->v=(PREC_RES *)calloc(samp->n,sizeof(PREC_RES)))==NULL)
+    return -3;
+  if(fread(samp->v,sizeof(PREC_RES),samp->n,out)!=samp->n)
+    return -1;
+
+  return 0;
+}
+
+
 /* \fcnfh
    Prints each of the sample data
 
@@ -556,6 +598,9 @@ outsample(struct transit *tr)
 
   return 0;
 }
+
+
+
 
 
 #ifdef DBGSAMPLE

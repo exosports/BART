@@ -202,7 +202,7 @@ modulation1 (PREC_RES *tau,
 
   //Impact parameter variables
   long ipn=ip->n;
-  PREC_RES *ipv,ipvv;
+  PREC_RES *ipv;
   long i;
 
   rinteg=(double *)alloca(ipn*sizeof(double));
@@ -220,9 +220,9 @@ modulation1 (PREC_RES *tau,
   for(i=ipn-1;i>first;i--){
     //take azimuthal spacing equal to the radial spacing. Add one bin so
     //that integration can be done until $2\pi$
-    ipvv=ipv[i]=ip->v[i]*ip->fct;
+    ipv[i]=ip->v[i]*ip->fct;
 
-    rinteg[i]=exp(-tau[i])*ipvv*2.0*PI;
+    rinteg[i]=exp(-tau[i])*ipv[i]*2.0*PI;
 
   }
   //fill two more lower part bins with 0. Only two to have a nice ending
