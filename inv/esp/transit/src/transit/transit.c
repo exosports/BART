@@ -58,11 +58,139 @@ static inline int makegauTR(int *nsmr,
 static inline double integrateTR(PREC_RES *spectra,
 				 int osw);
 
+enum param {
+  CLA_DUMMY=128;
+  CLA_ATMOSPHERE,
+  CLA_LINEDB
+};
+
+
+struct optdocs const var_docs[]={
+  {NULL,HELPTITLE,0,
+   NULL,"GENERAL ARGUMENTS"},
+  {"version",no_argument,'v',
+   NULL,"Prints version number and exit"},
+  {"help",no_argument,'h',
+   NULL,"Prints list of possible parameters"},
+  {"defaults",no_argument,'d',
+   NULL,"Prints default values of the different variable"},
+
+  {NULL,HELPTITLE,0,
+   NULL,"INPUT/OUTPUT"},
+  {"output",required_argument,'o',
+   "outfile","Change output file name, a dash (-) "
+   "directs to standard output"},
+  {"atmosphere",required_argument,CLA_ATMOSPHERE,
+   "atmfile","File containing atmospheric info (Radius, "
+   "pressure, temperature). A dash (-) indicates alternative "
+   "input."},
+  {"linedb",required_argument,CLA_LINEDB,
+   "linedb","File containing line information (TWII format, "
+   "as given by 'lineread'"},
+
+  {NULL,HELPTITLE,0,
+   NULL,"RADIUS OPTIONS (all in planetary radii units)"},
+  {"radius",no_argument,'r',
+   NULL,"Interactively input radius parameters"},
+}
+
+/* \fcnfh
+   Output a syntax help message.
+
+   @returns Never It either exit with the syntax help or with a error
+                  message if number of parameters are wrong
+*/
+void synhelp_transit(const char *unknown,const char par,
+		     const struct transithint *th)
+{
+  //Following is the help text  
+  char message[]="Syntax:\n\ttransit [..options..]\n\n"
+    " Where, sorted by effect, the available options are:\n"
+    "\n GENERAL OPTIONS:\n"
+    "  -h              Show this help\n"
+    "  -v [+..][-..]   Increase or decrease verbose level by one per\n"
+    "                  each + or -. 0 is the quietest, %i is the\n"
+    "                  noisiest (%i)\n"
+    "  -V              Show program's version and exit.\n"
+    "\n FILE OPTIONS\n"
+    "  -f a<atm_file>  Name of the atmospheric data file (\"%s\")\n"
+    "  -f l<line_file> Name of the line info file produced by\n"
+    "                  lineread (\"%s\")\n"
+    "  -f o<out_file>  Name of the output file (\"%s\")\n"
+    "\n RADIUS OPTIONS (all in planetary radius units)\n"
+    "  -r i<low_rad>   Lower radius. 0 if you want to use atmospheric\n"
+    "                  data minimum (%g).\n"
+    "  -r f<high_rad>  Upper radius. 0 if you want to use atmospheric\n"
+    "                  data maximum (%g).\n"
+    "  -r d<delta_rad> Radius spacing. 0 if you want to use atmospheric\n"
+    "                  data spacing (%g).\n"
+    "\n WAVELENGTH OPTIONS (all in nanometers)\n"
+    "  -w i<low_wav>   Lower wavelength. 0 if you want to use line\n"
+    "                  data minimum (%g).\n"
+    "  -w f<high_wav>  Upper wavelength. 0 if you want to use line\n"
+    "                  data maximum (%g).\n"
+    "  -w d<delta_wav> Wavelength spacing. 0 if you want to use line\n"
+    "                  data spacing (%g).\n"
+    "  -w o<delta_wav> Wavelength oversampling (%i).\n"
+    "  -m <margin>     Not trustable range in microns at boundary\n"
+    "                  of line databases. Also transitions this\n"
+    "                  much away from the requested range will be\n"
+    "                  considered (%g)\n"
+    "\n WAVENUMBER OPTIONS (all in cm-1)\n"
+    "  -n i<low_wn>    Lower wavenumber. 0 if you want to use\n"
+    "                  equivalent of the wavelength maximum (%g).\n"
+    "  -n f<high_wn>   Upper wavenumber. 0 if you want to use\n"
+    "                  equivalent of the wavelength minimum (%g).\n"
+    "  -n d<delta_wn>  Wavenumber spacing. 0 if you want to have\n"
+    "                  the same number of points as in the\n"
+    "                  wavelength sampling in an equispaced\n"
+    "                  grid. (%g)\n"
+    "  -n o<delta_wn>  Wavenumber oversampling. 0 if you want\n"
+    "                  the same value as for the wavelengths (%i).\n"
+    "\n OPACITY CALCULATION OPTIONS:\n"
+    "  -s <subbinning> Number of fine-bins to calculate the Voigt\n"
+    "                  function (%i)\n"
+    "  -a <timesalpha> Number of the max-alpha (the greater of Voigt\n"
+    "                  or Doppler widths) that need to be contained\n"
+    "                  in a calculated Voigt profile (%g)\n"
+    "  -d <maxratio>   Ratio of maximum allowed doppler change\n"
+    "                  before recalculating profile (%g)\n"
+    "\n OBSERVATIONAL OPTIONS:\n"
+    "  -t <tel_res>    Telescope resolution in nm. (%g)\n"
+    "\n";
+
+  //Check if I'm here because of a bad command. If so complain and
+  //suggest help
+  if(unknown){
+    fprintf(stderr,
+	    "Option '-%c %s' not available. Try 'transit -h' for help\n"
+	    ,par,unknown);
+  }
+  //Else output syntax help
+  else{
+    fprintf(stderr,message, 
+	    th->verbnoise, verblevel, 
+	    th->f_atm,  th->f_line, th->f_out, 
+	    th->rads.i, th->rads.f, th->rads.d,
+	    th->wavs.i, th->wavs.f, th->wavs.d, th->wavs.o, th->m,
+	    th->wns.i,  th->wns.f,  th->wns.d,  th->wns.o,
+	    th->voigtfine, th->timesalpha, th->maxratio_doppler,
+	    th->t
+	    );
+
+  }
+
+  //stop execution of program no matter what.
+  exit(EXIT_FAILURE);
+}
+
+
 
 //\fcnfh
 int main (int argc,		/* Number of variables */
 	  char **argv)		/* Variables*/
 {
+
   //Initialization of data structure's pointers. Note that s\_lt is not
   //assigned because the array that is going to point has not been
   //initialized yet.

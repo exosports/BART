@@ -194,8 +194,9 @@ extern int verblevel;
           fprintf(stderr,__VA_ARGS__)
 
 
-/***** Structures *****/
 
+
+/***** Structures *****/
 
 typedef struct {          	/* One item per sampling element */
   PREC_NREC n;			/* number of elements */
