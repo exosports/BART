@@ -25,15 +25,15 @@
 
 #define test_fail(stat,fmt,...)        do{              \
          stat++;                                        \
-         fprintf(stderr,"FAIL: "fmt"\n",__VA_ARGS__);   \
+         fprintf(stdout,"FAIL: "fmt"\n",__VA_ARGS__);   \
                                        }while(0)
 
 #define test_result(fmt,...)        do{                 \
-         fprintf(stderr,"Testing... "fmt,__VA_ARGS__);  \
+         fprintf(stdout,"Testing... "fmt,__VA_ARGS__);  \
                                        }while(0)
 
 #define test_succeed()        do{                    \
-         fprintf(stderr,"PASS.\n\n");                \
+         fprintf(stdout,"PASS.\n\n");                \
                                        }while(0)
 
 #endif
