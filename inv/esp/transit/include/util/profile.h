@@ -4,7 +4,6 @@
 #define PREC_VOIGT float
 #define PREC_VOIGTP double
 
-#include <P/Putil.h>
 #include <transit.h>
 #include <math.h>
 

@@ -156,11 +156,10 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 
   }
 
-  if(inp==invalid)
-    transiterror(TERR_CRITICAL,
-		 "This shouldn't have happened, 'inp' variable is\n"
-		 "not initialized in file %s, line %i\n"
-		 ,__FILE__,__LINE__);
+  transitassert(inp==invalid,
+		"This shouldn't have happened, 'inp' variable is\n"
+		"not initialized in file %s, line %i\n"
+		,__FILE__,__LINE__);
 
   rads->v=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   st_at.atm.t= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
@@ -197,7 +196,6 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   tr->isof[tr->n_i].n=(char *)calloc(newiso*maxeisoname,sizeof(char));
   for(i=1;i<newiso;i++)
     tr->isof[tr->n_i+i].n=tr->isof[tr->n_i].n+i*maxeisoname;
-  /* TD from here: keep track were I'm allocating nrad */
 
   //set mass and names for the new guys
   switch(inp){
@@ -216,7 +214,8 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
       free(onept->n);
     }
   case ask:
-    //if there are new isotopes and they were not given exactly
+    //if there are new isotopes and they were not given exactly. Note
+    //that no ignoring is possible if using interactive input.
     if(newiso>0&&onept->nm!=newiso)
       askonemn(onept,tr->isof,newiso, tr->n_i);
     st_at.n=onept->n;

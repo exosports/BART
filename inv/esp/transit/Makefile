@@ -1,13 +1,14 @@
 #uncomment for clean compilation without debugging info
 #NODEBUG  = 1
 
-
 #directories
+ifndef PREFIX
 PREFIX=..
-SRC=./src
-BIN=$(PREFIX)/bin
-INCL=./include
-INCL_UT=$(INCL)/util
+endif
+SRC     = ./src
+BIN     = $(PREFIX)/bin
+INCL    = ./include
+INCL_UT = $(INCL)/util
 
 #paths for dependencies
 vpath %.h include
@@ -15,22 +16,19 @@ vpath %.txc $(SRC)/transit:$(SRC)/lineread:$(SRC)/util
 
 #programs
 CPROTO  = /usr/bin/cproto
-CLATEX  = /home/pato/bin/clatex.pl
 RANLIB  = ranlib
 AR      = ar ru
+MAKEDEP = $(CC) -MM
+CLATEX  = $(HOME)/bin/clatex.pl
 
 #objects and headers
 TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
-	    readatminfo.o extinction.o tau.o
-LR_OBJ    = transitstd.o dbread_pands.o
+	    readatminfo.o extinction.o tau.o transit.o
+LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o procopt.o iomisc.o
 
-UT_HDR    = util/sampling.h util/profile.h util/procopt.h \
-	    util/iomisc.h
-
-UT_DEP    = $(UT_OBJ) $(UT_HDR)
-TR_DEP    = $(TR_OBJ) transit.h transit.c
-LR_DEP    = $(LR_OBJ) lineread.h lineread.c
+DEP_FILES = $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) $(UT_OBJ:.o=.c)
+PROTO_FILES = $(DEP_FILES)
 
 DEP_FILES = $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) $(UT_OBJ:.o=.c)
 PROTO_FILES = $(DEP_FILES)
@@ -56,7 +54,7 @@ endif
 STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic -std=c99 $(EXTPRM) $(CFLAGS)
 
 #libraries to link
-LIBS  = -lX11 -lP -lm
+LIBS  = -lX11 -lm
 
 
 
@@ -68,19 +66,19 @@ LIBS  = -lX11 -lP -lm
 # $? modified dependencies
 ################################
 
-dbgsample: $(UT_DEP) transitstd.c makesample.c
+dbgsample: $(UT_OBJ) transitstd.c makesample.c
 	$(CC) $(STDFLAGS) -DDBGSAMPLE -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf dbgsample $(BIN)
 
-dbgreadline: $(UT_DEP) transitstd.c readlineinfo.c
+dbgreadline: $(UT_OBJ) transitstd.c readlineinfo.c
 	$(CC) $(STDFLAGS) -DDBGREADLINEINFO -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf dbgreadline $(BIN)
 
-transit: $(UT_DEP) $(TR_DEP)
+transit: $(UT_OBJ) $(TR_OBJ)
 	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf transit $(BIN)
 
-lineread: $(UT_DEP) $(LR_DEP)
+lineread: $(UT_OBJ) $(LR_OBJ)
 	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
 	cp -pf lineread $(BIN)
 
@@ -90,15 +88,21 @@ lineread: $(UT_DEP) $(LR_DEP)
 %.o: %.c
 	$(CC) -c $(STDFLAGS) -o $@ $<
 
+#if clatex exist then run it, otherwise just copy the file changing
+#extensions
 %.c: %.txc
+ifeq ($(strip $(wildcard $(CLATEX))),)
+	cp -f $< ./$(notdir $(basename $<)).c
+else
 	$(CLATEX) $< -sl
+endif
 
 clean:
 	rm -f $(TR_OBJ) $(UT_OBJ) $(DEP_FILES) texput.log transit
 
 dep: $(DEP_FILES)
 	echo >.depen
-	makedepend -Y -f .depen -- $(STDFLAGS) -- $^
+	$(MAKEDEP) $(STDFLAGS) $^ >.depen
 
 proto: $(PROTO_FILES:.c=.proto)
 

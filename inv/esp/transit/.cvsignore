@@ -1,5 +1,5 @@
 *.c  *.o
 transit  .log
 lineread
-dbgreadline
+dbg*
 .depen

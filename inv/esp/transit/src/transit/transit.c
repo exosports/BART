@@ -37,6 +37,7 @@
    1.0: One dimensional extinction coefficient working with input from
         command line or atmopshere file. 032504. PMR
    1.1: Multi radius working for extinction calculation. 032804. PMR
+   1.2: (1.1 patch) Exportable and fixes on one P,T point. 033104. PMR
  */
 static int version=2;
 static int revision=-1;
@@ -195,6 +196,7 @@ int main (int argc,		/* Number of variables */
   if(revision<0) snprintf(revname,20,"pre%i",-revision);
   else snprintf(revname,20,".%i",revision);
   transitprint(1,verblevel,
+	       "-----------------------------------------------\n"
 	       "                TRANSIT v%i%s\n"
 	       "-----------------------------------------------\n"
 	       ,version,revname);
@@ -256,9 +258,9 @@ int main (int argc,		/* Number of variables */
 		 "extwn() returned error code %i\n"
 		 ,rn);
 
-#ifdef TRANSITv1
-  printv1(&transit);
-#endif
+  //Print and output extinction if one P,T was desired
+  if(trh.onept.one)
+    printone(&transit);
 
   //Calculates optical depth
   if((rn=tau(&transit))!=0)
@@ -272,28 +274,38 @@ int main (int argc,		/* Number of variables */
 
 
 /* \fcnfh
-   Printout for version 1 of transit
+   Printout for one P,T conditions
 */
 void
-printv1(struct transit *tr)
+printone(struct transit *tr)
 {
   int rn;
   FILE *out=stdout;
 
-  if(tr->f_out)
-    out=fopen(tr->f_out,"w");
+  while(1){
+    //open file
+    if(tr->f_out)
+      out=fopen(tr->f_out,"w");
 
-  long rad=askforposl("choose radius to print(1 - %li): ",tr->rads.n)-1;
+    //Get which radius to print
+    long rad=askforposl("choose radius(1 - %li) to print to %s\n"
+			"('q' to finish): "
+			,tr->rads.n,tr->f_out)-1;
+    //This is actually never reached because 'askforposl()' handles
+    //finsihing when 'q' is given.
+    if(!rad)
+      break;
 
-  fprintf(out,
-	 "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
-  for(rn=0;rn<tr->wns.n;rn++)
-    /*    if(rn%tr->wns.o==0)*/
-    fprintf(out,"%10.4f%10.4f%15.5g%15.5g\n"
-	   ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
-	   tr->ds.ex->k[rad][0][rn],
-	   AMU*tr->ds.ex->k[rad][0][rn]*tr->isof[0].m/tr->isov[0].d[rad]);
-
+    //print!
+    fprintf(out,
+	    "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
+    for(rn=0;rn<tr->wns.n;rn++)
+      /*    if(rn%tr->wns.o==0)*/
+      fprintf(out,"%10.4f%10.4f%15.5g%15.5g\n"
+	      ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
+	      tr->ds.ex->k[rad][0][rn],
+	      AMU*tr->ds.ex->k[rad][0][rn]*tr->isof[0].m/tr->isov[0].d[rad]);
+  }
   exit(EXIT_SUCCESS);
 }
 
