@@ -72,11 +72,12 @@ totaltau1(PREC_RES b,		/* impact parameter */
   ex+=rs;
   nrad-=rs;
 
-  //By parabola fitting, interpolate the
-  //value of extinction at the radius of minimum approach and store it
-  //in the sample that corresponded to the closest from below. Store
-  //such value which is to be replaced before returning (\lin{tmpex})
+  //By parabola fitting, interpolate the value of extinction at the
+  //radius of minimum approach and store it in the sample that
+  //corresponded to the closest from below. Store such value and radius,
+  //which are to be replaced before returning (\lin{tmpex})
   const PREC_RES tmpex=*ex;
+  const PREC_RES tmprad=*rad;
   if(nrad==2) *ex=interp_parab(rad-1,ex-1,r0);
   else *ex=interp_parab(rad,ex,r0);
   *rad=r0;
@@ -92,7 +93,7 @@ totaltau1(PREC_RES b,		/* impact parameter */
     s[0]=0;
 
     for(i=1 ; i<nrad ; i++)
-      s[i]=sqrt(cte + (i-1)*Dr*(2*r0 + (i-1)*Dr) );
+      s[i]=sqrt(cte + (i-1)*Dr*(2.0*(r0+dr) + (i-1)*Dr) );
 
     //Integrate!\par
     //Use spline if GSL is available along with at least 3 points
@@ -107,13 +108,29 @@ totaltau1(PREC_RES b,		/* impact parameter */
 #endif /* _USE_GSL */
   }
 
-  //Integrate Trapezium if there are only two points
-  else
-    res=integ_trasim(dr,ex,nrad);
+  //Integrate towards a constant value of extinction if we are in the
+  //outmost layer
+  else{
+    if(ex[1]==ex[0])
+      res= ex[0] * r0 * ( sqrt( rad[1] * rad[1] / r0 / r0 - 1) );
+    else{
+      PREC_RES alpha = ( ex[1] - ex[0] ) / dr;
+      PREC_RES rm    = rad[1];
+      if(alpha<0)
+	res= - alpha * (rm * sqrt( rm * rm - r0 * r0) - r0 * r0 * 
+			log( ( sqrt( rm * rm / r0 / r0 - 1) + rm ) / r0 ) )
+	  / 2.0;
+      else
+	res=   alpha * (rm * sqrt( rm * rm - r0 * r0) + r0 * r0 * 
+			log( ( sqrt( rm * rm / r0 / r0 - 1) + rm ) / r0 ) )
+	  / 2.0;
+    }
+  }
 
   //replace original value of extinction
   //\linelabel{tmpex}
   *ex=tmpex;
+  *rad=tmprad;
 
   //return
   return 2*(res);
@@ -189,10 +206,21 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
   //}_{\mathrm{numerical}}
   //\]\par
   //First for the analitical part of the integral
-  PREC_RES frac=b/refr[rs-1];
-  PREC_RES res=ex[rs-1]*frac
-    *( sqrt(rad[rs]*rad[rs]/frac/frac - 1) -
-       sqrt(r0     *r0     /frac/frac - 1) );
+  PREC_RES res;
+  if(ex[rs-1]==ex[rs])
+    res= ex[rs] * r0 * ( sqrt( rad[rs] * rad[rs] / r0 / r0 - 1) );
+  else{
+    PREC_RES alpha = ( ex[rs] - ex[rs-1] ) / ( rad[rs] - rad[rs-1] );
+    PREC_RES rm    = rad[rs];
+    if(alpha<0)
+      res= - alpha * (rm * sqrt( rm * rm - r0 * r0) - r0 * r0 * 
+		      log( ( sqrt( rm * rm / r0 / r0 - 1) + rm ) / r0 ) )
+	/ 2.0;
+    else
+      res=   alpha * (rm * sqrt( rm * rm - r0 * r0) + r0 * r0 * 
+		      log( ( sqrt( rm * rm / r0 / r0 - 1) + rm ) / r0 ) )
+	/ 2.0;
+  }
 
   //And now for the numerical integration. Set the variables
   for(i=rs;i<nrad;i++){

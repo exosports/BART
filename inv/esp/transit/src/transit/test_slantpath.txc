@@ -90,7 +90,8 @@ test_tau_monorad_norefr_now(PREC_RES *b, /* differential impact
 */
 int
 test_tau_monorad_constrefr(int nrad,
-			   double alpha)
+			   double alpha,
+			   double spacing)
 {
 
   test_result("#############################\n"
@@ -124,10 +125,10 @@ test_tau_monorad_constrefr(int nrad,
   if(0)
     fprintf(stderr,
 	    "radius        refr          ex_cons       ex_out        ex_in\n");
-  PREC_RES rm=nrad*1.0;
+  PREC_RES rm=spacing*nrad*1.0;
   for(i=0;i<nrad;i++){
-    //check for equispaced radius starting from 1.0
-    rad[i]=1.0+i;
+    //check for equispaced radius skiping 0
+    rad[i]=spacing*(1.0+i);
     //check for nonbending rays
     refr[i]=1.0;
     //extinction: constant
@@ -160,22 +161,21 @@ test_tau_monorad_constrefr(int nrad,
   //res(b)=alpha*(rm*sqrt(rm*rm-b*b)+b*b*ln(sqrt((rm/b)\^2-1)+rm/b)/ln(10))}
   //\par $ex=\alpha r$
   for(i=0;i<nimpact;i++)
-    res[i]=alpha*(rm*sqrt(rm*rm-b[i]*b[i]) +
-		  b[i]*b[i]*log(sqrt(rm*rm/b[i]/b[i]-1)+rm/b[i])/log(10.0));
+    res[i]=alpha * (rm * sqrt( rm * rm - b[i] * b[i]) + b[i] * b[i] *
+		    log( ( sqrt( rm * rm / b[i] / b[i] - 1) + rm ) / b[i]) );
 
   status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,1
 				      ,res,nimpact,ipdesc,acceptrelerror);
 
   //Test the atmosphere with increasing extinction inwards
-  //Test the atmosphere with increasing extinction outwards
   //$res=\alpha ( rm\sqrt{rm^2-b^2} - b^2 \log{\sqrt{(rm/b)^2-1}+rm/b})$
   // Calc function:\par
   //{\em define
   //res(b)=alpha*(rm*sqrt(rm*rm-b*b)-b*b*ln(sqrt((rm/b)\^2-1)+rm/b)/ln(10))}
   //\par $ex=\alpha (rm-r)$
   for(i=0;i<nimpact;i++)
-    res[i]=alpha*(rm*sqrt(rm*rm-b[i]*b[i]) -
-		  b[i]*b[i]*log(sqrt(rm*rm/b[i]/b[i]-1)+rm/b[i])/log(10.0));
+    res[i]=alpha * (rm * sqrt( rm * rm - b[i] * b[i]) - b[i] * b[i] * 
+		    log( ( sqrt( rm * rm / b[i] / b[i] - 1) + rm ) / b[i] ) );
 
   status+=test_tau_monorad_norefr_now(b,rad,refr,ex,nrad,2
 				      ,res,nimpact,ipdesc,acceptrelerror);
@@ -205,14 +205,17 @@ int test_tau()
   long status = 0;
 
   //First check for monospaced radius with 10,100,1000 samples, alpha=1
-  status += test_tau_monorad_constrefr(10, 1.0);
-  status += test_tau_monorad_constrefr(100, 1.0);
-  status += test_tau_monorad_constrefr(1000, 1.0);
+  status += test_tau_monorad_constrefr(10,   1.0, 1.0);
+  status += test_tau_monorad_constrefr(100,  1.0, 0.1);
+  status += test_tau_monorad_constrefr(100,  1.0, 1.0);
+  status += test_tau_monorad_constrefr(1000, 1.0, 0.1);
+  status += test_tau_monorad_constrefr(1000, 1.0, 1.0);
+  status += test_tau_monorad_constrefr(10000,1.0, 0.1);
   
   //Now with a different alpha
-  status += test_tau_monorad_constrefr(10, 8.0);
-  status += test_tau_monorad_constrefr(100, 8.0);
-  status += test_tau_monorad_constrefr(1000, 8.0);
+  status += test_tau_monorad_constrefr(10,   8.0, 1.0);
+  status += test_tau_monorad_constrefr(100,  8.0, 1.0);
+  status += test_tau_monorad_constrefr(1000, 8.0, 1.0);
   
 
   /* TD: test for nonmonospaced radius */
@@ -231,12 +234,12 @@ main(int argc, char *argv[])
   status += test_tau( );
 
   if(status){
-    fprintf(stderr,
+    fprintf(stdout,
 	    "\nslantpath.txc result is FAILURE: %i error%s found out of %li test%s\n"
 	    ,status,status>1?"s":"",ntests,ntests>1?"s":"");
     exit(EXIT_FAILURE);
   }
-  fprintf(stderr,
+  fprintf(stdout,
 	  "\nslantpath.txc result is SUCCESS: no errors found out of %li test%s\n"
 	  ,ntests,ntests>1?"s":"");
   exit(EXIT_SUCCESS);
