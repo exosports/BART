@@ -119,7 +119,7 @@ quiet_cmd_txc_c = Clatexing to $@
 quiet_cmd_exec  = Building executable "$@"
       cmd_exec  = $(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
 
-quiet_cmd_proto = Making protoypes for $<
+quiet_cmd_proto = Making prototypes for $<
       cmd_proto = $(CPROTO) $(CPROTOFLAGS) -o $(INCL)/proto_$*.h $<
 
 quiet_cmd_dep   = Making dependencies ...
@@ -197,6 +197,7 @@ dep: $(DEP_FILES)
 
 #making prototype files
 proto: $(PROTO_FILES:.c=.proto)
+	@echo "** Probably reruning 'make proto' will clear any error message above **"
 %.proto: %.c
 	$(call cmd,proto)
 
