@@ -37,3 +37,4 @@ transit_3-0-rc1 :
 transit_3-2-rc2 : Big BUG regarding P&S database decoding was found
                   and exterminated, but the result now is too
                   small. 081304. PMR.
+transit_3-3-rc3 :
