@@ -34,6 +34,7 @@
 #include <util/profile.h>
 #include <util/iomisc.h>
 #include <util/numerical.h>
+#include <util/xmalloc.h>
 #include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -159,10 +160,6 @@
 #define PREC_ATM double		/* Type for atmospheric data */
 #define PREC_CS  double		/* Type for cross-section */
 
-#define malloc(n) xmalloc(n)
-#define realloc(p,n) xrealloc(p,n)
-#define calloc(n,s) xcalloc(n,s)
-#define strdup(p) xstrdup(p)
 
 #ifdef NODEBUG_TRANSIT
 #define transitDEBUG(...) ((void)0)
@@ -501,7 +498,6 @@ struct transit {		/* Main data structure */
 #include <extinction_proto.h>
 #include <idxrefraction_proto.h>
 #include <tau_proto.h>
-#include <xmalloc_proto.h>
 
 
 #endif /* _TRANSIT_H */
