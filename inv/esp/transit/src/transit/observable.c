@@ -135,22 +135,23 @@ printmod(struct transit *tr)
   char wlu[20],wnu[20];
   long nsd=(long)(1e6);
 
-  if((long)(nsd*tr->wns.fct)==nsd) strcpy(wlu,"cm");
+  if((long)(nsd*tr->wns.fct)==nsd) strcpy(wnu,"cm");
   else if((long)(nsd*1e-1*tr->wns.fct)==nsd) strcpy(wnu,"mm");
   else if((long)(nsd*1e-4*tr->wns.fct)==nsd) strcpy(wnu,"um");
   else if((long)(nsd*1e-7*tr->wns.fct)==nsd) strcpy(wnu,"nm");
   else if((long)(nsd*1e-8*tr->wns.fct)==nsd) strcpy(wnu,"a");
-  else sprintf(wnu,"%.2g cm",1/tr->wns.fct);
+  else sprintf(wnu,"%6.1g cm",1/tr->wns.fct);
 
   if((long)(nsd*tr->wavs.fct)==nsd) strcpy(wlu,"cm");
   else if((long)(nsd*1e1*tr->wavs.fct)==nsd) strcpy(wlu,"mm");
   else if((long)(nsd*1e4*tr->wavs.fct)==nsd) strcpy(wlu,"um");
   else if((long)(nsd*1e7*tr->wavs.fct)==nsd) strcpy(wlu,"nm");
   else if((long)(nsd*1e8*tr->wavs.fct)==nsd)  strcpy(wlu,"a");
-  else sprintf(wlu,"%.2g cm",tr->wavs.fct);
+  else sprintf(wlu,"%8.1g cm",tr->wavs.fct);
 
   fprintf(outf,
-	  "#wavenumber[%s-1]\twavelength[%s]\tmodulation\n",wnu,wlu);
+	  "#wvn[%s-1]%*swvl[%s]%*smodulation\n"
+	  ,wnu,9-strlen(wnu),"",wlu,12-strlen(wlu),"");
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(outf,"%-17.9g%-17.9g%-18.9g\n"
 	    ,tr->wns.v[rn]/tr->wns.fct
