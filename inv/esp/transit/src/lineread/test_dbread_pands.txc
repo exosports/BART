@@ -85,7 +85,9 @@ int main(int argc,
   szb=(wl2-wl1)/nbins;
   lp=lines;
   double maxgf=0,mingf=1;
-  long maxgfi,mingfi;
+  long maxgfi,mingfi,maxgfei,mingfei;
+  double mingfe=10000,maxgfe=0;
+  double gfe;
   if(!nbins)
     fprintf(stderr,"  hmmm, you chose 0 bins!\n");
   for(i=0;i<nbins;i++){
@@ -101,6 +103,15 @@ int main(int argc,
 	mingf=lp->lgf;
 	mingfi=lp-lines;
       }
+      gfe=lp->lgf*exp(-lp->elow/2500);
+      if(gfe>maxgfe){
+	maxgfe=gfe;
+	maxgfei=lp-lines;
+      }
+      else if (gfe<mingfe){
+	mingfe=gfe;
+	mingfei=lp-lines;
+      }
       qb[lp->isoid]++;
       lp++;
     }
@@ -112,7 +123,9 @@ int main(int argc,
   fprintf(stderr,
 	  "\nmax GF: %.8g (position %li)\n"
 	  "min GF: %.8g (position %li)\n"
-	  ,maxgf,maxgfi,mingf,mingfi);
+	  "max GF*exp(-E/2500): %.5g (%li)\n"
+	  "min GF*exp(-E/2500): %.5g (%li)\n"
+	  ,maxgf,maxgfi,mingf,mingfi,maxgfe,maxgfei,mingfe,mingfei);
 
   long gfb[nbinsgf];
   long bin;
