@@ -286,14 +286,20 @@ int makewnsample(struct transit *tr)
   memset(&fromwav,0,sizeof(prop_samp));
   struct transithint *trh=tr->ds.th;
   prop_samp *wsamp=&tr->wavs;
-  double wnu_o_wlu=1/tr->ds.li->lt.wfct;
+
+  //check whetheruser has hinted any multiplicative factor for
+  //wavenumber, otherwise use cm.
+  fromwav.fct=1;
+  if(trh->wns.fct>0)
+    fromwav.fct=trh->wns.fct;
+
+  double wnu_o_wlu=fromwav.fct/wsamp->fct;
 
   transitcheckcalled(tr->pi,"makewnsample",1,
 		     "makewavsample",TRPI_MAKEWAV);
 
   //use wavelength's oversampling and multiplicative factor
   fromwav.o=wsamp->o;
-  fromwav.fct=wsamp->fct;
 
   //don't give a fixed array.
   fromwav.n=0;

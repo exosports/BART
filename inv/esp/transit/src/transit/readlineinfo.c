@@ -24,6 +24,9 @@
 
 #include <transit.h>
 
+#define TLI_WAV_UNITS 1e-7
+#define TLI_E_UNITS   1
+
 static void asciierr(int max, char *file, int line);
 static void notyet(int lin, char *file);
 static int invalidfield(char *line, char *file, int nmb,
@@ -515,10 +518,10 @@ int checkrange(struct transit *tr, /* General parameters and
   msamp->fct=1;
 
   //Check that the factor is positive non-zero
-  if(hsamp->fct<=0)
-    msamp->fct=1;
-  else
+  if(hsamp->fct>0)
     msamp->fct=hsamp->fct;
+  double fct=msamp->fct/TLI_WAV_UNITS;
+
 
   //Check that the margin value is reasonable. i.e. whether its
   //leaves a non-zero range if applied to the whole line dataset.
@@ -526,7 +529,7 @@ int checkrange(struct transit *tr, /* General parameters and
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Margin value (%g) is too big for this dataset whose\n"
 		 "range is %g to %g nanometers\n"
-		 ,th->m,li->wi,li->wf);
+		 ,th->m*fct,li->wi,li->wf);
     return -4;
   }
   margin=tr->m=th->m;
@@ -551,7 +554,7 @@ int checkrange(struct transit *tr, /* General parameters and
   transitDEBUG(21,verblevel,
 	       "hinted initial %g, final %g\n"
 	       "Databse max %g and min %g\n"
-	       ,hsamp->i,hsamp->f,li->wi,li->wf);
+	       ,hsamp->i*fct,hsamp->f*fct,li->wi,li->wf);
 
   //If final wavelength was not hinted correctly then default it to zero
   if(hsamp->f<0){
@@ -559,31 +562,32 @@ int checkrange(struct transit *tr, /* General parameters and
     transiterror(TERR_WARNING,
 		 "Setting hinted upper wavelength limit before\n"
 		 "extraction as %g. It was not user-hinted.\n"
-		 ,hsamp->f);
+		 ,hsamp->f*fct);
   }
   //Check final wavelength. If it is 0, modify it. Do not return
   //special value, it is assumed that user knows what he is doing.
   //\linelabel{finalwav}
   if(hsamp->f<=0){
-      msamp->f=dbfin+extra;
+      msamp->f=dbfin/fct + extra;
   }
   //otherwise
   else{
     transitDEBUG(20,verblevel,
 		 "dbini: %g   margin:%g  sampf:%g\n"
-		 ,dbini,margin,hsamp->f);
+		 ,dbini,fct*margin,fct*hsamp->f);
 
     //check that is not below the minimum value
-    if(dbini+margin>hsamp->f){
+    if( dbini > fct*(hsamp->f-margin) ){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "Considering margin, final wavelength (%g) is\n"
 		   " smaller than first allowed value in database\n"
 		   " (%g = %g + %g)\n"
-		   ,hsamp->f,dbini+margin,dbini,margin);
+		   ,hsamp->f*fct,dbini+fct*margin
+		   ,dbini,fct*margin);
       return -3;
     }
     //warn if it is above maximum value with information
-    if(hsamp->f>dbfin-margin)
+    if( (hsamp->f+margin)*fct > dbfin )
       transiterror(TERR_WARNING,
 		   "Final wavelength is above the maximum informative\n"
 		   "value in database\n"
@@ -597,25 +601,26 @@ int checkrange(struct transit *tr, /* General parameters and
     transiterror(TERR_WARNING,
 		 "Setting hinted lower wavelength limit before\n"
 		 "extraction as %g. It was not user-hinted.\n"
-		 ,hsamp->i);
+		 ,hsamp->i*fct);
   }
   //Check initial wavelength. See final wavelength treatment above for
   //more detailed comments about the code (\lin{finalwav})
   if(hsamp->i<=0)
-    msamp->i=dbini-extra;
+    msamp->i = dbini/fct - extra;
   else{
     transitDEBUG(20,verblevel,
 		 "dbfin: %g   margin:%g  sampi:%g\n"
-		 ,dbfin,margin,hsamp->i);
-    if(dbfin-margin<hsamp->i){
+		 ,dbfin,fct*margin,fct*hsamp->i);
+    if( dbfin < fct*(margin+hsamp->i) ){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "Initial wavelength (%g) is larger than larger\n"
 		   "allowed value in database (%g = %g + %g),\n"
 		   "note that current margin was considered\n"
-		   ,hsamp->i,dbfin-margin,dbfin,margin);
+		   ,fct*hsamp->i,dbfin-fct*margin
+		   ,dbfin,margin*fct);
       return -2;
     }
-    if(hsamp->i<dbini+margin)
+    if( fct*(hsamp->i-margin) < dbini )
       transiterror(TERR_WARNING,
 		   "Final wavelength is above the maximum informative\n"
 		   "value in database\n"
@@ -630,7 +635,10 @@ int checkrange(struct transit *tr, /* General parameters and
 		 "initial wavelength (%g). Note that those values\n"
 		 "could have been modified according to the\n"
 		 "database range (%g - %g) and margin (%g)\n"
-		 ,msamp->i+margin,msamp->f-margin,dbini,dbfin,margin);
+		 ,fct*(msamp->i+margin)
+		 ,fct*(msamp->f-margin)
+		 ,dbini,dbfin
+		 ,fct*margin);
     return -1;
   }
 
@@ -771,8 +779,8 @@ int readinfo_tli(struct transit *tr,
   //Wavelength in a TLI file is always in nm and lower energy is always
   //in cm-1.
   struct line_transition *lt=&li->lt;
-  lt->wfct=1e-7;
-  lt->efct=1;
+  lt->wfct=TLI_WAV_UNITS;
+  lt->efct=TLI_E_UNITS;
 
   //close file, set progres indicator and return success.
   fclose(fp);
@@ -840,7 +848,8 @@ int readdatarng(struct transit *tr, /* General parameters and
   PREC_LNDATA *ltwl;
   short *ltisoid;
 
-  PREC_LNDATA iniw=li->wavs.i,finw=li->wavs.f;
+  PREC_LNDATA iniw=li->wavs.i*li->wavs.fct/TLI_WAV_UNITS;
+  PREC_LNDATA finw=li->wavs.f*li->wavs.fct/TLI_WAV_UNITS;
   PREC_LNDATA wltmp;
   PREC_NREC nfields;
   char line[maxline+1],rc,*lp,*lp2;
@@ -1129,12 +1138,12 @@ int readlineinfo(struct transit *tr) /* General parameters and
 		 "checkrange() modified the suggested parameters,\n"
 		 "it returned code 0x%x\n\n"
 		 ,rn);
+  double fct=st_li.wavs.fct/TLI_WAV_UNITS;
   transitprint(2,verblevel,
 	       "   After checking limits, the wavelength range to be\n"
-	       "  used is %g to %g. Including a margin of %g,\n"
-	       "  the range to be extracted is %g to %g\n"
-	       ,tr->ds.li->wavs.i,tr->ds.li->wavs.f
-	       ,tr->m,st_li.wi,st_li.wf);
+	       "  used is %g to %g, including a margin of %g.\n"
+	       ,fct*tr->ds.li->wavs.i,fct*tr->ds.li->wavs.f
+	       ,fct*tr->m);
 
   //read data file
   transitprint(1,verblevel, "Reading data... ");
@@ -1254,7 +1263,7 @@ freemem_lineinfotrans(struct lineinfo *li,
 */
 void
 saveline(FILE *fp,
-	 struct lineinfo li)
+	 struct lineinfo *li)
 {
 }
 
