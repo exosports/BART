@@ -225,8 +225,10 @@ int processparameters(int argc, /* number of command line arguments */
      "integer","Wavenumber oversampling. 0 if you want the same\n"
      "value as for the wavelengths"},
     {"wn-fct",CLA_WNFCT,required_argument,"0",
-     "factor","Wavelength factor. Multiplicating wavelength values by\n"
-     "this gives centimeters. If 0 then use wavelength's value"},
+     "factor","Output wavenumber factor. Multiplicating wavenumber\n"
+     "values by this gives centimeters. If 0 then use wavelength's\n"
+     "value. Note that this only applies to output, internally\n"
+     "wavenumbers will always be in cm-1."},
     {"wn-marg",CLA_WAVNMARGIN,required_argument,NULL,
      "boundary","Not trustable range in cm-1 at boundaries.\n"
      "Transitions this much away from the requested range will\n"
@@ -295,7 +297,7 @@ int processparameters(int argc, /* number of command line arguments */
   memset(&var_cfg,0,sizeof(var_cfg));
   var_cfg.contact="Patricio Rojo <pato@astro.cornell.edu>";
   var_cfg.files=DOTCFGFILE PREPEXTRACFGFILES;
-  var_cfg.columns=60;
+  var_cfg.columns=70;
 
   static struct transithint st_trh;
   memset(&st_trh, 0, sizeof(struct transithint));

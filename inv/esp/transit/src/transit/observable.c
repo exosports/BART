@@ -111,10 +111,10 @@ printmod(struct transit *tr)
 
   //print!
   fprintf(outf,
-	  "#wavenumber[cm-1]\twavelength[nm]\tmodulation\n");
+	  "#wavenumber[%gcm-1]\twavelength[nm]\tmodulation\n",tr->wns.fct);
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(outf,"%12.6f%14.6f%17.7g\n"
-	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
+	    ,tr->wns.v[rn]/tr->wns.fct,WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
 	    outray->o[rn]);
 
   fclose(outf);
