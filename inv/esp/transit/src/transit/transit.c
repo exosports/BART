@@ -93,7 +93,7 @@ int main (int argc,		/* Number of variables */
   samp=&trh.rads;
   samp->i=0;
   samp->f=0;
-  samp->d=0.1;
+  samp->d=0.6;
   samp->n=0;
   samp->v=NULL;
   samp->o=0;
@@ -328,7 +328,7 @@ printtau(struct transit *tr)
 
   long rad=
     askforposl("Radius at which you want to print the optical depth(%li - %li): "
-	       ,rads->v[0]+1,rads->v[rads->n-1]+1)-1;
+	       ,1,rads->n)-1;
   if(rad>rads->v[rads->n-1]){
     fprintf(stderr,"Value out of range, try again\n");
     printtau(tr);
