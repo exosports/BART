@@ -198,25 +198,15 @@ modulation1 (PREC_RES *tau,
   //general variables
   PREC_RES res;
   double srad=sg->starrad*sg->starradfct;
-  double *rinteg,*azinteg,tt;
+  double *rinteg;
 
-  //Impact parameter and azimuth variables
-  long ipn=ip->n,azn;
-  PREC_RES ipd=ip->d*ip->fct,*ipv,ipvv;
-  PREC_RES azz,*az,azd;
+  //Impact parameter variables
+  long ipn=ip->n;
+  PREC_RES *ipv,ipvv;
+  long i;
 
-  //star centered coordinates and counters
-  double starx,stary;
-  long i,j;
-
-  //allocate enough azimuthal bins for the outermost (biggest) radii,
-  //others will necessarily be smaller.
-  azd=2*PI*ip->v[ipn-1]*ip->fct/ipd;
-  azn=(long)azd+1;
-  azinteg=(double *)alloca(azn*sizeof(double));
   rinteg=(double *)alloca(ipn*sizeof(double));
   ipv=(double *)alloca(ipn*sizeof(double));
-  az=(double *)alloca(azn*sizeof(double));
 
   //this function calculates 1 minus the ratio of in-transit over out-of-transit
   //expresion for the simplest case, which is given by
@@ -231,38 +221,14 @@ modulation1 (PREC_RES *tau,
     //take azimuthal spacing equal to the radial spacing. Add one bin so
     //that integration can be done until $2\pi$
     ipvv=ipv[i]=ip->v[i]*ip->fct;
-    azd=ipd/ipvv;
-    azn=2*PI/azd +1;
-    tt=tau[i];
 
-    //fill azimuthal integrand
-    for(j=0;j<azn;j++){
-      azz=az[j]=j*azd;
-      starx=(sg->x+ipvv*sin(azz))/sg->starrad;
-      stary=(sg->y+ipvv*cos(azz))/sg->starrad;
-      azinteg[j]=exp(-tt)*ipvv;
-    }
+    rinteg[i]=exp(-tau[i])*ipvv*2.0*PI;
 
-    //feed gsl.
-#ifdef _USE_GSL
-    acc->cache = 0;
-    acc->hit_count = 0;
-    acc->miss_count = 0;
-    gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,azn);
-    gsl_spline_init(spl,az,azinteg,azn);
-    rinteg[i]=gsl_spline_eval_integ(spl,0,2*PI,acc);
-    gsl_spline_free(spl);
-
-    //Without {\bf GSL} is currently not implemented. Output is dependent in an
-    //appropiate installation of those libraries
-#else
-# error computation of modulation() without GSL is not implemented
-#endif
   }
   //fill two more lower part bins with 0. Only two to have a nice ending
   //spline and not unnecessary values.
   first-=2;
-  if(first<-1) first=-1;
+  if(first<0) first=-1;
   for(;i>first;i--){
     ipv[i]=ip->v[i]*ip->fct;
     rinteg[i]=0;
