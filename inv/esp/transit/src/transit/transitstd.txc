@@ -1,6 +1,7 @@
 /*
  * transitstd.c
- * transitstd.txc - Common routines for the Transit program,
+ * transitstd.txc - Common routines for the Transit program. Component
+ *                  of the Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -269,9 +270,14 @@ error (int exitstatus,
        ...)
 {
   va_list ap;
+  int len=strlen(fmt);
+  char out[len+2];
+  strcpy(out,fmt);
+  out[len]='\n';
+  out[len+1]='\0';
 
   va_start(ap,fmt);
-  vtransiterror(TERR_CRITICAL,fmt,ap);
+  vtransiterror(TERR_CRITICAL,out,ap);
   va_end(ap);
 
   exit(exitstatus);
