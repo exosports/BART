@@ -227,6 +227,8 @@ typedef struct {          	/* One item per sampling element */
   PREC_RES f;			/* final value */
   int o;			/* oversampling */
   PREC_RES *v;			/* values of the sampling */
+  double fct;			/* Factor to multiply v with to obtain a
+				   cgs value */
 } prop_samp;
 
 
@@ -292,10 +294,14 @@ struct lineinfo {		/* Used to keep parameters in
 
 
 struct line_transition {	/* One item per transition */
-  PREC_LNDATA *wl;		//Wavelength in nm.
-  PREC_LNDATA *elow;		//Lower energy level in cm-1
+  PREC_LNDATA *wl;		//Wavelength
+  PREC_LNDATA *elow;		//Lower energy level
   PREC_LNDATA *gf;		//gf value
   short *isoid;			//Isotope ID (Assumed to be in range)
+  double wfct;			//'.wl' multiplied by this factor yields
+				//cgs.
+  double efct;			//'.elow' multiplied by this factor
+				//yields cgs.
 };
 
 
@@ -396,7 +402,7 @@ struct transit {		/* Main data structure */
   char *f_atm,*f_line,*f_out;	/* Filenames */
   FILE *fp_atm,*fp_out,*fp_line;/* Filepointers */
   float allowrq;		/* How much less than one is accepted,
-				   and no warning is issued if
+				   so that no warning is issued if
 				   abundances don't ad up to that */
   PREC_RES telres;		/* Telescope resolution */
   PREC_RES m;			/* Amount of nanometers not trusted at

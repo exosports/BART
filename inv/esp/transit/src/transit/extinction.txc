@@ -44,6 +44,8 @@ int extwn (struct transit *tr)
   PREC_LNDATA *ltelow=tr->lt.elow;
   PREC_LNDATA *ltwl=tr->lt.wl;
   short *ltisoid=tr->lt.isoid;
+  double efct=tr->lt.efct;
+  double wfct=tr->lt.wfct;
   PREC_RES *k,**kiso,*wn,dwn,wavn,iniwn,wni,wnf;
   PREC_NSAMP nrad,nwn;
   int neiso,niso,nisoalloc;
@@ -189,7 +191,7 @@ int extwn (struct transit *tr)
   //For each radius (index 'r')
   for(r=0;r<nrad;r++){
 
-    transitprint(2,verblevel,"Radius %i: %g[planetary radius]\n",r,rad->v[r]);
+    transitprint(2,verblevel,"Radius %i: %g[cm]\n",r,rad->fct*rad->v[r]);
 
     //Initialization of 2nd dimension of extinction array.
     //\linelabel{kini}
@@ -284,14 +286,14 @@ int extwn (struct transit *tr)
 
     //Compute the spectra!, proceed for every line.
     for(ln=0;ln<tr->n_l;ln++){
-      /*
       if(ln!=10000&&ln!=10702&&ln!=10402)
 	continue;
+      /*
       if(ln<9000||ln>11000)
 	continue;
       */
 
-      wavn=WNU_O_WLU/ltwl[ln];
+      wavn=1.0/wfct/ltwl[ln];
       /* 
 	 when out of borders enabled
 	 if(wavn<wni||wavn>wnf)
@@ -359,13 +361,13 @@ int extwn (struct transit *tr)
       //Calculate opacity coefficient less the voigt spread
       /* CAVEATS: _mass_ densitty 
                   _log_ gf */
-      propto_k=densiso[i]	          //mass density
-	*SIGCTE			          //Constant in sigma
-	*ltgf[ln]		          //gf
-	*exp(-EXPCTE*ltelow[ln]/temp) //Level population
-	*(1-exp(-EXPCTE*wavn/temp))       //induced emission
-	/mass[i]	         	  //mass
-	/ziso[i];		          //Partition function
+      propto_k=densiso[i]	//mass density
+	*SIGCTE			//Constant in sigma
+	*ltgf[ln]		//gf
+	*exp(-EXPCTE*efct*ltelow[ln]/temp) //Level population
+	*(1-exp(-EXPCTE*wavn/temp)) //induced emission
+	/mass[i]		//mass
+	/ziso[i];		//Partition function
 
       transitDEBUG(21,verblevel,
 		   "i=%i   temp=%g   Elow=%g\n"
@@ -380,8 +382,8 @@ int extwn (struct transit *tr)
 		   "  /%12.5g  //ziso[i]\n"
 		   " = %12.5g   //extinction\n\n"
 		   ,i,temp,ltelow[ln]
-		   ,alphad[i]*wn[w],alphal[i]
-		   ,ltwl[ln],WNU_O_WLU/ltwl[ln]
+		   ,alphad[i]*wavn,alphal[i]
+		   ,ltwl[ln],1.0/wfct/ltwl[ln]/tr->wavs.fct
 		   ,densiso[i]
 		   ,SIGCTE
 		   ,ltgf[ln]

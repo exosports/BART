@@ -56,6 +56,12 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   //removing the last bin.
   const double okfinalexcess=1e-8;
 
+  //Check multiplicative factor
+  if(hint->fct<=0)
+    samp->fct=1;
+  else
+    samp->fct=hint->fct;
+
   //check initial value
   if(!(fl&(TRH_SI<<bitsshift))||hint->i<=0||hint->i<ref->i+margini){
     samp->i=ref->i+margini;
@@ -283,8 +289,9 @@ int makewnsample(struct transit *tr)
   transitcheckcalled(tr->pi,"makewnsample",1,
 		     "makewavsample",TRPI_MAKEWAV);
 
-  //use wavelength's oversampling
+  //use wavelength's oversampling and multiplicative factor
   fromwav.o=wsamp->o;
+  fromwav.fct=wsamp->fct;
 
   //don't give a fixed array.
   fromwav.n=-1;
@@ -369,6 +376,9 @@ int makeradsample(struct transit *tr)
   if(rsamp->n==1){
     rad->f=rad->i=rsamp->v[0];
     rad->n=1;
+    rad->i=rsamp->i;
+    rad->f=rsamp->f;
+    rad->fct=rsamp->fct;
     rad->d=-1;
     rad->v=(PREC_RES *)calloc(1,sizeof(PREC_RES));
     rad->v[0]=rsamp->v[0];

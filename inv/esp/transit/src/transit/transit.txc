@@ -92,6 +92,7 @@ int main (int argc,		/* Number of variables */
   samp->n=0;
   samp->o=100;
   samp->v=NULL;
+  samp->fct=0;
   trh.na|=TRH_WI|TRH_WF|TRH_WD|TRH_WO;
 
   //Initialization of radius sampling in planetary radius.
@@ -107,6 +108,7 @@ int main (int argc,		/* Number of variables */
   samp->n=0;
   samp->v=NULL;
   samp->o=0;
+  samp->fct=0;
   trh.na|=TRH_RI|TRH_RF|TRH_RD;
 
   //Initialization of wavenumber sampling in cm-1. Note that the
@@ -127,6 +129,7 @@ int main (int argc,		/* Number of variables */
   samp->n=0;
   samp->v=NULL;
   samp->o=0;
+  samp->fct=0;
   trh.na|=TRH_WNI|TRH_WNF|TRH_WND|TRH_WNO;
 
   //Initialization of general variables.
@@ -259,7 +262,7 @@ int main (int argc,		/* Number of variables */
 		 ,rn);
 
   //Print and output extinction if one P,T was desired
-  if(trh.onept.one)
+  if(transit.rads.n==1)
     printone(&transit);
 
   //Calculates optical depth
@@ -267,7 +270,6 @@ int main (int argc,		/* Number of variables */
     transiterror(TERR_SERIOUS,
 		 "tau() returned error code %i\n"
 		 ,rn);
-
 
   return EXIT_SUCCESS;
 }
@@ -282,30 +284,20 @@ printone(struct transit *tr)
   int rn;
   FILE *out=stdout;
 
-  while(1){
-    //open file
-    if(tr->f_out)
-      out=fopen(tr->f_out,"w");
+  //open file
+  if(tr->f_out)
+    out=fopen(tr->f_out,"w");
 
-    //Get which radius to print
-    long rad=askforposl("choose radius(1 - %li) to print to %s\n"
-			"('q' to finish): "
-			,tr->rads.n,tr->f_out)-1;
-    //This is actually never reached because 'askforposl()' handles
-    //finsihing when 'q' is given.
-    if(!rad)
-      break;
+  //print!
+  fprintf(out,
+	  "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
+  for(rn=0;rn<tr->wns.n;rn++)
+    /*    if(rn%tr->wns.o==0)*/
+    fprintf(out,"%10.4f%10.4f%15.5g%15.5g\n"
+	    ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
+	    tr->ds.ex->k[0][0][rn],
+	    AMU*tr->ds.ex->k[0][0][rn]*tr->isof[0].m/tr->isov[0].d[0]);
 
-    //print!
-    fprintf(out,
-	    "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
-    for(rn=0;rn<tr->wns.n;rn++)
-      /*    if(rn%tr->wns.o==0)*/
-      fprintf(out,"%10.4f%10.4f%15.5g%15.5g\n"
-	      ,tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn],
-	      tr->ds.ex->k[rad][0][rn],
-	      AMU*tr->ds.ex->k[rad][0][rn]*tr->isof[0].m/tr->isov[0].d[rad]);
-  }
   exit(EXIT_SUCCESS);
 }
 

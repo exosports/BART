@@ -3,6 +3,11 @@
 #first of such lines will be stored
 n <source of this info>
 
+#An optional radius unit factor can also be specified in a line
+#starting with u. If the radius specified below is multiplied by this
+#factor, then it will be in cgs units.
+u <factor to cgs>
+
 #lines starting with i contain isotope information
 i <mass1-name1>           <mass2-name2>
 i <mass3name3>

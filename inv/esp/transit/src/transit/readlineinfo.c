@@ -502,8 +502,15 @@ int checkrange(struct transit *tr, /* General parameters and
   msamp->n=-1;
   msamp->d=-1;
   msamp->v=NULL;
+  msamp->fct=1;
 
-  //First check that the margin value is reasonable. i.e. whether its
+  //Check that the factor is positive non-zero
+  if(hsamp->fct<=0)
+    msamp->fct=1;
+  else
+    msamp->fct=hsamp->fct;
+
+  //Check that the margin value is reasonable. i.e. whether its
   //leaves a non-zero range if applied to the whole line dataset.
   if(th->na&TRH_WM){
     if(2*th->m > (li->wf - li->wi)){
@@ -534,7 +541,7 @@ int checkrange(struct transit *tr, /* General parameters and
   }
   else
     extra=0;
-  
+
   transitDEBUG(21,verblevel,
 	       "hinted initial %g, final %g\n"
 	       "Databse max %g and min %g\n"
@@ -755,6 +762,11 @@ int readinfo_twii(struct transit *tr,
 		   ,rn);
       return -6;
     }
+
+  //Wavelength in a TWII file is always in nm and lower energy is always
+  //in cm-1.
+  tr->lt.wfct=1e-7;
+  tr->lt.efct=1;
 
   //close file, set progres indicator and return success.
   fclose(fp);
