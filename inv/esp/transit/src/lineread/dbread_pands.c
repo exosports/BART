@@ -34,6 +34,9 @@
 
 static char *pands_name="Partridge & Schwenke(1997)";
 static char *isotope[NUM_ISOT]={"1H1H16O","1H1H17O","1H1H18O","1H2H16O"};
+/* Wavelength is stored in nanometers */
+static double pands_fct=1e-7;
+static const char *pands_fct_ac="nm";
 short gabby_dbread=0;
 
 static int isoname(char ***isotope, int niso);
@@ -125,8 +128,8 @@ static inline void dbreadBSf(FILE *fp, 	  /* File pointer */
 PREC_NREC dbread_pands(char *filename,
 		       struct linedb **lines, //2 pointers in order to be
 		                              //able to allocate memory
-		       float wlbeg,           //Wavelengths in nanometers
-		       float wlend,
+		       float wlbeg,           //wavelengths in tli_fct
+		       float wlend,           //units
 		       /* Partition function data file */
 		       char *Zfilename,
 		       /* For the following 3 parameter, the memory is
@@ -160,6 +163,9 @@ PREC_NREC dbread_pands(char *filename,
   PREC_NREC i;
   FILE *fp;
 
+  wlbeg*=pands_fct/tli_fct;
+  wlend*=pands_fct/tli_fct;
+
   *nIso=NUM_ISOT;
   if(!filename)
     filename=deffname;
@@ -170,8 +176,8 @@ PREC_NREC dbread_pands(char *filename,
     Following is to transform stored integer of gflog and ielow into their
     real floating point values
   */
-  for(i=0;i<PANDS_NCODIDX;i++)
-    tablog[i]=pow(10,(i-PANDS_NCODIDX/2)*0.001);
+  for(i=1;i<=PANDS_NCODIDX;i++)
+    tablog[i]=pow(10,(i-16384)*0.001);
 
   ratiolog=log((double)1.0+(double)1.0/(2e+6));
 
@@ -212,9 +218,10 @@ PREC_NREC dbread_pands(char *filename,
   lnwl=log(wlbeg)/ratiolog;
   if(lnwl>lnwl2){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Last wavelength in the file (%g nm) is shorter "
-		 "than\nrequested initial wavelength (%g nm)\n"
-		 ,exp(lnwl2*ratiolog),wlbeg);
+		 "Last wavelength in the file (%g %s) is shorter "
+		 "than\nrequested initial wavelength (%g %s)\n"
+		 ,exp(lnwl2*ratiolog), pands_fct_ac, wlbeg
+		 ,pands_fct_ac);
     return -4;
   }
   if(lnwl<lnwl1){
@@ -231,9 +238,10 @@ PREC_NREC dbread_pands(char *filename,
   lnwl=log(wlend)/ratiolog;
   if(lnwl<lnwl1){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "First wavelength in the file (%g nm) is longer"
-		 "than\nrequested ending wavelength (%g nm)\n"
-		 ,exp(lnwl2*ratiolog),wlbeg);
+		 "First wavelength in the file (%g %s) is longer"
+		 "than\nrequested ending wavelength (%g %s)\n"
+		 ,exp(lnwl2*ratiolog), pands_fct_ac, wlbeg
+		 ,pands_fct_ac);
     return -5;
   }
   if(lnwl>lnwl2){
@@ -272,6 +280,7 @@ PREC_NREC dbread_pands(char *filename,
   fseek(fp,irec*PANDS_RECLENGTH,SEEK_SET);
 
   i=0;
+  double freq;
   do{
     line=(*lines)+i;
 
@@ -283,7 +292,14 @@ PREC_NREC dbread_pands(char *filename,
     reversebytes(&(record.ielow),2);
     reversebytes(&(record.igflog),2);
 
-    line->wl=exp(record.iwl*ratiolog);
+#if 0
+    int b;
+    fprintf(stderr,"\n%08li  ",irec+i);
+    for(b=0;b<8;b++)
+      fprintf(stderr,"%02hhx ",(char)*(((char *)&record)+b));
+#endif
+
+    line->wl=exp(record.iwl*ratiolog)*pands_fct/tli_fct;
 
     //Isotopes (1h1h16o, 1h1h17o, 1h1h18o, 1h2h16o)
     if(record.ielow>0)
@@ -291,8 +307,11 @@ PREC_NREC dbread_pands(char *filename,
     else
       line->isoid=record.igflog>0?2:3;
     line->recpos=i+irec;
-    line->elow=tablog[abs(record.ielow)];
-    line->lgf=tablog[abs(record.igflog)];
+    line->elow=(PREC_LNDATA)abs(record.ielow);
+
+    freq=LS/line->wl/tli_fct;
+    line->gf=0.01502*tablog[abs(record.igflog)]/freq;
+
     i++;
   }while(line->wl<wlend && i+irec<frec);
   if(gabby_dbread>0)
