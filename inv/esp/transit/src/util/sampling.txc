@@ -276,7 +276,7 @@ void natcubspline(int ndat,	/* Length of (x,y) array */
 {
   float tt;
   double hh;
-  long f,i,idx;
+  long f,i;
 
   if(ndat<0)
     transiterror(TERR_CRITICAL,
@@ -297,7 +297,7 @@ void natcubspline(int ndat,	/* Length of (x,y) array */
 	transiterror(TERR_CRITICAL,
 		     "Trying to extrapolate in last index(%i) while\n"
 		     "in natcubspline(). t=%f\n"
-		     ,idx,t[i]);
+		     ,ndat,t[i]);
       yout[f]=y[i];
     }
     else{
