@@ -244,6 +244,7 @@ getopt_long_files(int argc,	/* number of arguments */
 	//go to command line values.
 	if((line=fgets_alloc(fp,NULL))==NULL){
 	  fclose(fp);
+	  fp=NULL;
 	  ++parampointer;
 	  return getopt_long_files(argc,argv,shortopts,getopts,
 				 longidxp,NULL);
