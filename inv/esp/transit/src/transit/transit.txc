@@ -307,7 +307,8 @@ printtau(struct transit *tr)
   transitprint(1,verblevel,
 	       "\nPrinting optical depth for radius %li (at %gcm) in '%s'\n"
 	       "Optical depth calculated up to %g[cm-1]\n"
-	       ,rad+1,rads->v[rad],tr->f_out?tr->f_out:"standard output",toomuch);
+	       ,rad+1,rads->fct*rads->v[rad]
+	       ,tr->f_out?tr->f_out:"standard output",toomuch);
 
   //print!
   fprintf(out,

@@ -76,8 +76,10 @@ tau(struct transit *tr)
   inn=ip->n;
   rnn=rad->n;
 
-  //to temporarily store a per radius info
+  //to temporarily store a per radius info, and the ratio of the ip and
+  //rad units
   PREC_RES dt[wnn];
+  double riw=ip->fct/rad->fct;
 
   //Need at least three radius to calculate a spline interpolation.
   if(inn<3)
@@ -95,7 +97,8 @@ tau(struct transit *tr)
 
     //For each resultant impact parameter
     for(ii=inn-1;ii>=0;ii--){
-      if((t[ii]=tr->sol->tauperb(bb[ii]*ip->fct,r,n,e,inn,tau.iso,wi,rad->fct,dt,acc))
+      if((t[ii]=rad->fct*tr->sol->tauperb(bb[ii]*riw,r,n,e,inn
+					  ,tau.iso,wi,dt,acc))
 	 >tau.toomuch){
 	tau.first[wi]=ii;
 	break;
