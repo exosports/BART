@@ -24,6 +24,8 @@
 
 #include <readatm.h>
 
+#define ROUNDOFF 1e7
+
 static double zerorad=0;
 
 char *atmfilename;
@@ -32,7 +34,7 @@ static struct atm_isoprop *isoprop;
 
 struct fonly {
   char n[maxeisoname];
-  PREC_ATM *q;
+  PREC_ATM q;
 } *fonly;
 static int nfonly=0;
 
@@ -97,9 +99,13 @@ findfactq(char *iso, 		/* reference isotope looked for */
   if(strcasecmp(iso,isof->n)==0)
     return isov->q[r];
 
+  for(n=0 ; n<nfonly ; n++)
+    if(strcasecmp(iso,fonly[n].n)==0)
+      return fonly[n].q;
+
   transiterror(TERR_SERIOUS,
-	       "Isotope you want to reference(%s) was not found among those that\n"
-	       "abundance was given.\n"
+	       "Isotope you want to reference(%s) was not found among\n"
+	       "those that abundance was given.\n"
 	       ,iso);
 
   return -1;
@@ -184,7 +190,9 @@ checknonmatch(struct transit *tr, /* info about existent isotopes */
   //to be ignored
   rn=0;
   for(j=0 ; j<ison ; j++)
-    if( at->isoeq[j]==-1 && at->isodo[j]!=ignore )
+    if( ( at->isoeq[j]==-1 && at->isodo[j]!=ignore ) || 
+	( at->isoeq[j]!=-1 && at->isodo[j]==factor && 
+	  isoprop[at->isoeq[j]].eq==-1 ) )
       rn++;
 
   return rn;
@@ -292,7 +300,6 @@ getmnfromfile(FILE *fp,
   char line[maxline],*lp;
   int ison=0,i;
   struct isotopes *iso=tr->ds.iso;
-  prop_isof *isof=iso->isof;
   enum isodo *isodo=iso->isodo;
 
   //Set variable to handle proportional to isotopes
@@ -385,7 +392,7 @@ getmnfromfile(FILE *fp,
       //file 
       isoprop[ipi].eq=-1;
       isisoline(isoprop[ipi].n,isoprop[ipi].m,&isoprop[ipi].eq,factor,
-		isof,isodo,iso->n_i);
+		iso->isof,isodo,iso->n_i);
 
       //advance index and go for the next line
       ipi++;
@@ -417,6 +424,13 @@ getmnfromfile(FILE *fp,
     case 'i':			//Isotope information
       lp=line+1;
       while(*lp==' '||*lp=='\t') lp++;
+      //'i' has to come before 'f'
+      if(ipi)
+	transiterror(TERR_CRITICAL,
+		     "In line '%s'.\n"
+		     " 'f' lines have to come after all the 'i' lines in\n"
+		     " atmosphere file '%s'"
+		     ,line,atmfilename);
 
       //for each field
       while(*lp){
@@ -452,7 +466,7 @@ getmnfromfile(FILE *fp,
 	//now check if that isotope is one of the given in the lineinfo
 	//file
 	isisoline(at->n[ison],at->m[ison],at->isoeq+ison,atisodo,
-		  isof,isodo,iso->n_i);
+		  iso->isof,isodo,iso->n_i);
 	at->isodo[ison++]=atisodo;
 
 	//skip over recently read field, and go to next field.
@@ -512,10 +526,11 @@ getmnfromfile(FILE *fp,
 				       nmb*sizeof(enum isodo));
   iso->isof    = (prop_isof *)realloc(iso->isof,
 				      nmb*sizeof(prop_isof));
-  iso->isof->n = (char *)realloc(iso->isof->n,
-				 nmb*maxeisoname*sizeof(char));
-  for(i=1;i<nmb;i++)
-    iso->isof[i].n = iso->isof->n + i * maxeisoname;
+  iso->isof[iso->n_i].n = (char *)realloc(iso->isof[iso->n_i].n,
+					  (nmb-iso->n_i)*maxeisoname*
+					  sizeof(char));
+  for(i=1;i<nmb-iso->n_i;i++)
+    iso->isof[iso->n_i+i].n = iso->isof[iso->n_i].n + i * maxeisoname;
 
 
 
@@ -528,9 +543,10 @@ getmnfromfile(FILE *fp,
     //If the isotope is not associated to the linedb isotopes, then
     //associate it. Note that isotopes in linedb that are ignored will
     //be associated (see comments for Line \label{isodbassoc}). Hence
-    //they won't be detected in this loop.
+    //they won't be detected in this IF. Factor isotopes will also be
+    //associated, and will be handled below
     if(at->isoeq[i] == -1){
-      //If they want to be ignored then associate them with the
+      //If they are not going to be ignored then associate them with the
       //following index available of post linedb isotopes.
       if(at->isodo[i] != ignore){
 	at->isoeq[i]     = nmb;
@@ -548,7 +564,17 @@ getmnfromfile(FILE *fp,
   //isotopes.
     else if(at->isodo[i] == ignore)
       lineignore++;
-
+  //If there is factor isotopes
+    else if(at->isodo[i] == factor && isoprop[at->isoeq[i]].eq == -1){
+      if(at->isodo[i]==ignore)
+	transiterror(TERR_CRITICAL,
+		    "Trying to ignore an factor isotope, that is not\n"
+		     "posible.\n");
+      isoprop[at->isoeq[i]].eq = nmb;
+      iso->isodo[nmb]          = at->isodo[i];
+      iso->isof[nmb].m         = at->m[i];
+      strcpy(iso->isof[nmb++].n, at->n[i]);
+    }
 
   //Reduce the array to get rid of nonline-ignored isotopes.
   iso->n_e = nmb;
@@ -556,13 +582,30 @@ getmnfromfile(FILE *fp,
 				       nmb*sizeof(enum isodo));
   iso->isof    = (prop_isof *)realloc(iso->isof,
 				      nmb*sizeof(prop_isof));
-  iso->isof->n = (char *)realloc(iso->isof->n,
-				 nmb*maxeisoname*sizeof(char));
-  for(i=1;i<nmb;i++)
-    iso->isof[i].n = iso->isof->n + i * maxeisoname;
+  iso->isof[iso->n_i].n = (char *)realloc(iso->isof[iso->n_i].n,
+					  nmb*maxeisoname*sizeof(char));
+  for(i=1;i<nmb-iso->n_i;i++)
+    iso->isof[iso->n_i+i].n = iso->isof[iso->n_i].n + i * maxeisoname;
 
 
   //Check that everything makes sense
+  double cumulother=0;
+  for(i=0 ; i<at->n_aiso ; i++)
+    if(at->isodo[i]==factor){
+      int feq=at->isoeq[i];
+      if(strcasecmp(isoprop[feq].n,"other")==0)
+	cumulother+=isoprop[feq].f;
+    }
+  //It doesn't make sense for cumulother to be anything different from
+  //unity (except round-off error): you want to associate the
+  //remainder of the atmosphere to some isotopic properties. 
+  if( cumulother!=0 && (int)(cumulother*ROUNDOFF+0.5)!=(int)(ROUNDOFF+0.5) )
+    transiterror(TERR_SERIOUS,
+		 "If you are specifying isotopes proportional to 'other'\n"
+		 "you have to complete unity (%g). It doesn't make sense\n"
+		 "otherwise\n"
+		 ,cumulother);
+
   transitASSERT(nmb+nfonly!=ison+ipa,
 		"Oooops, number of ignored-nonline elements (%i), plus the\n"
 		"number of ignored-line elements(%i), plus the number of\n"
@@ -610,10 +653,7 @@ readatmfile(FILE *fp,		/* File */
   int *isoeq=at->isoeq;
   struct isotopes *iso=tr->ds.iso;
   enum isodo *isodo=at->isodo;
-  int i,nmb=iso->n_e;
-
-  for(i=0;i<nfonly;i++)
-    fonly[i].q=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  int i,neiso=iso->n_e;
 
   fseek(fp,at->begpos,SEEK_SET);
   while(1){
@@ -624,15 +664,12 @@ readatmfile(FILE *fp,		/* File */
       at->atm.t= (PREC_ATM *)realloc(at->atm.t,nrad*sizeof(PREC_ATM));
       at->atm.p= (PREC_ATM *)realloc(at->atm.p,nrad*sizeof(PREC_ATM));
       at->mm=(double *)realloc(at->mm,nrad*sizeof(double));
-      for(i=0;i<nmb;i++){
+      for(i=0;i<neiso;i++){
 	isov[i].d=(PREC_ATM *)realloc(isov[i].d,
 				      nrad*sizeof(PREC_ATM));
 	isov[i].q=(PREC_ATM *)realloc(isov[i].q,
 				      nrad*sizeof(PREC_ATM));
       }
-      for(i=0;i<nfonly;i++)
-	fonly[i].q=(PREC_ATM *)realloc(fonly[i].q,
-				       nrad*sizeof(PREC_ATM));
     }
 
     //Skip comments and read next line
@@ -658,7 +695,7 @@ readatmfile(FILE *fp,		/* File */
     //variables to be used by factor (except ieq which is general)
     int ieq, feq;
     double ref;
-    _Bool otherfct[nmb];
+    _Bool otherfct[neiso];
     memset(otherfct,0,sizeof(otherfct));
 
     //now read abundances for every isotope, but don't process
@@ -691,7 +728,7 @@ readatmfile(FILE *fp,		/* File */
 	  continue;
 	}
 	//find the reference value
-	ref=findfactq(isoprop[feq].n,iso->isof,isov,nmb,r);
+	ref=findfactq(isoprop[feq].t,iso->isof,isov,neiso,r);
 	isov[ieq].q[r]=isoprop[feq].f*ref;
 	break;
       default:
@@ -713,7 +750,7 @@ readatmfile(FILE *fp,		/* File */
 	//Read the abundance of the new element. There are two ways:      
 	//If processing one of the factor only elements
 	if(isodo[i]==ignore)
-	  tmp=fonly[ieq].q[r]=strtod(lp2,&lp);
+	  tmp=fonly[ieq].q=strtod(lp2,&lp);
 	//otherwise if this element is going to be considered
 	else
 	  tmp=isov[ieq].q[r]=strtod(lp2,&lp);
@@ -729,37 +766,27 @@ readatmfile(FILE *fp,		/* File */
 
     //process factorized elements that will take care of the rest of the
     //atmosphere
-    double cumulother=0;
-    ref=1-addq(isov,isodo,otherfct,nmb,r);
+    ref=1-addq(isov,iso->isodo,otherfct,neiso,r);
     for(i=0;i<at->n_aiso;i++)
-      if(otherfct[isoeq[i]]){
+      if(isodo[i]==factor){
 	feq=isoeq[i];
 	ieq=isoprop[feq].eq;
-	cumulother+=ref;
-	isov[ieq].q[r]=isoprop[feq].f*ref;
+	if(otherfct[ieq])
+	  isov[ieq].q[r]=isoprop[feq].f*ref;
       }
 
-    //It doesn't make sense for cumulother to be anything different from
-    //unity (except round-off error): you want to associate the
-    //remainder of the atmosphere to some isotopic properties. 
-    if( cumulother!=0 && (int)(cumulother*1e6)!=1000000 )
-      transiterror(TERR_SERIOUS,
-		   "If you are specifying isotopes proportional to 'other'\n"
-		   "you have to complete unity (%g). It doesn't make sense\n"
-		   "otherwise\n"
-		   ,cumulother);
-
     //calculate mean molecular mass and check whether abundances add up
-    //correctly
-    if((sumq=checkaddmm(at->mm+r,r,isov,iso->isof,nmb,at->mass,isodo))
-       <allowq)
+    //correctly, up to round off error of course
+    sumq=checkaddmm(at->mm+r,r,isov,iso->isof,neiso,at->mass,iso->isodo);
+    if((int)(sumq*ROUNDOFF+0.5)<(int)(allowq*ROUNDOFF+0.5))
       transiterror(TERR_WARNING,
-		   "In radius %g(%i: %g in file), abundances don't add up to 1: %.9g\n"
+		   "In radius %g(%i: %g in file), abundances\n"
+		   "don't add up to 1: %.9g\n"
 		   ,at->rads.v[r],r,at->rads.v[r]-zerorad,sumq);
 
 
     //Calculate densities
-    for(i=0;i<nmb;i++)
+    for(i=0;i<neiso;i++)
       isov[i].d[r]=stateeqnford(at->mass,
 				isov[i].q[r],
 				at->mm[r],
@@ -768,12 +795,14 @@ readatmfile(FILE *fp,		/* File */
 				at->atm.t[r]*at->atm.tfct);
     r++;
   }
+
+  //reduce array to the right number of radii
   rads->n=nrad=r;
   rads->v=(PREC_ATM *)realloc(rads->v,nrad*sizeof(PREC_ATM));
   at->atm.t= (PREC_ATM *)realloc(at->atm.t,nrad*sizeof(PREC_ATM));
   at->atm.p= (PREC_ATM *)realloc(at->atm.p,nrad*sizeof(PREC_ATM));
   at->mm=(double *)realloc(at->mm,nrad*sizeof(double));
-  for(i=0;i<nmb;i++){
+  for(i=0;i<neiso;i++){
     isov[i].d=(PREC_ATM *)realloc(isov[i].d,
 				  nrad*sizeof(PREC_ATM));
     isov[i].q=(PREC_ATM *)realloc(isov[i].q,
@@ -781,8 +810,6 @@ readatmfile(FILE *fp,		/* File */
   }
 
   //free arrays that were used only to get the factorizing elements
-  for(i=0;i<nfonly;i++)
-    free(fonly[i].q);
   free(fonly);
 
 

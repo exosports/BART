@@ -368,6 +368,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   }
 
   //Allocate isotope information for depth dependent information
+  nmb=iso->n_e;
   st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
   iso->isov=(prop_isov *)realloc(iso->isov,nmb*sizeof(prop_isov));
   st_at.mm=(double *)calloc(nrad,sizeof(double));

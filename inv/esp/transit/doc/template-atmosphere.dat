@@ -32,7 +32,9 @@ i !<massi6-namei6>
 
 
 #lines starting with f contain isotopes that are going to be obtained
-#from other isotopes abundances. Equal sign is optional.
+#from other isotopes abundances.
+#Equal sign is optional.
+#They MUST come after 'i' lines
 
 #In the following example the 7th isotope will have <fct> times the
 #abundance of the 3rd isotope.
