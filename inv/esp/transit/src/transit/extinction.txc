@@ -538,7 +538,8 @@ extwn (struct transit *tr)
 	       ,nrad);
 
   transitprint(1,verblevel,
-	       "Computing only the %i outmost ones to start...\n"
+	       "Computing extinction only in the %i outmost layers for now,\n"
+	       " other layers only if required...\n"
 	       ,3);
 
   //Initialize radius calculation variables
