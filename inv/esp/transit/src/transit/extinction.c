@@ -185,7 +185,7 @@ int extwn (struct transit *tr)
 	       ,nrad);
   for(r=0;r<nrad;r++){
 
-    transitprint(2,verblevel,"Radius %i: %g[cm]\n",r+1,rad->fct*rad->v[r]);
+    transitprint(2,verblevel,"Radius %i: %.9g[cm]\n",r+1,rad->fct*rad->v[r]);
 
     //Initialization of 2nd dimension of extinction array.
     //\linelabel{kini}
