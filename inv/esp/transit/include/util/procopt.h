@@ -55,6 +55,7 @@ struct optcfg {
   const char *postoption;
   char *files;			/* Configuration file */
   int indentdoc;
+  int columns;
 };
 
 #include <procopt_proto.h>

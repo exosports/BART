@@ -24,7 +24,6 @@
 
 static char *prgname=NULL;
 _Bool procopt_debug=1;
-int procopt_columns=__PADTO_COLUMNS;
 
 static int getoptfrom(char *line, struct option *getopts, int *longindex);
 
@@ -236,6 +235,7 @@ prochelp(int status,		/* either 'EXIT_FAILURE' or
   char *contintro="----------------------------------\n"
     "Contact Information: %s\n";
   int indentdoc=21;
+  int procopt_columns=(cfg&&cfg->columns)?cfg->columns:__PADTO_COLUMNS;
   int currind,tmp;
   char *doc;
   int cols;
