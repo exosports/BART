@@ -103,6 +103,8 @@ static double ferf[MAXCONV] = {
   6.05939744697137480783e-83, //59
   9.93207019544894768776e-85
 };
+int _voigt_maxelements=99999;
+int _voigt_computeeach=10;
 
 #define NFCN(x,y) (x<1?15:(int)(6.842*x+8.0))
 
@@ -129,15 +131,17 @@ static inline void voigtxy(double x,
 			   PREC_VOIGTP alphaD)
 {
   int i,n;
-  long double x2y2,xy2,or,nr,oi,ni,cosxy,sinxy,ar,ai; 
+  long double or,nr,oi,ni,ar,ai; 
+  const long double x2y2=x*x-y*y;
+  const long double xy2=2*x*y;
+  const long double cosxy=cosl(xy2);
+  const long double sinxy=sinl(xy2);
 
-  x2y2=x*x-y*y;
-  xy2=2*x*y;
-  cosxy=cosl(xy2);
-  sinxy=sinl(xy2);
-
+#ifdef _VOIGT_USE_CONVERG
   if(eps>0) n=MAXCONV;
-  else n=NFCN(x,y)+1;
+  else 
+#endif /* Precision convergence */
+    n=NFCN(x,y)+1;
 
   if(x<3 && y<1.8){       /* Region I   */
     ar=or=y;
@@ -146,6 +150,7 @@ static inline void voigtxy(double x,
     while(1){
       ni=or*xy2 +oi*x2y2;
       nr=or*x2y2-oi*xy2 ;
+#ifdef _VOIGT_USE_CONVERG
       if(n==MAXCONV){
         if(i>n){
           fprintf(stderr,
@@ -157,7 +162,9 @@ static inline void voigtxy(double x,
         if(fabs(ferf[i]*(cosxy*nr + sinxy*ni))<eps)
           break;
       }
-      else if(i>n) break;
+      else 
+#endif /* Precision convergence */
+	if(i>n) break;
       ai+=ni*ferf[i];
       ar+=nr*ferf[i];
 
@@ -188,7 +195,7 @@ static inline void voigtxy(double x,
               B1*((nr-ni*y)/(ni*ni+ar))+
               B3*((nr-ai*y)/(ai*ai+ar)));
   }
-}
+} __attribute__((always_inline))
 
 
 //\fcnfh
@@ -227,6 +234,7 @@ inline int voigtf(int nwn,	/* Number of wavenumber bins where the
 
 /*\fcnfh
   Computes voigt profile at equispaced points.
+
   @returns 1 on success
 */
 inline int voigtn(int m,	/* Number of fine resolution bins that
@@ -236,7 +244,7 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
 		  int nwn,	/* Number of wavenumber bins where the
 				   function is to be computed. In other
 				   words, the size of the following
-				   array 'wn'. */
+				   array 'vpro'. */
 		  PREC_VOIGTP dwn, /* Total wavenumber half width to
 				      sample. */
 		  PREC_VOIGTP alphaL, /* Lorentz width '$\alpha_L$'. */
@@ -281,16 +289,16 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
   //value of \vr{nint}. While \vr{aint} is the auxiliary array where the
   //fine-spaced profile is going to be made.
   int nint;
-  double dint,shft;
+  double dint, shft;
   PREC_VOIGT *aint;
 
   //Initialization:
-  nint=50;
-  ddwn=2.0*dwn/(nwn-1);
-  dcshft=ddwn/m;
-  ob=(int)(nwn/2.0);
-  y=SQRTLN2*alphaL/alphaD;
-  dint=alphaD/(nint-1);
+  nint   = 50;
+  ddwn   = 2.0 * dwn / ( nwn - 1 );
+  dcshft = ddwn / m;
+  ob     = (int)( nwn / 2.0 );
+  y      = SQRTLN2 * alphaL / alphaD;
+  dint   = alphaD / (nint - 1);
 
 
   //If only a quick integration is requested, no need to have more than
@@ -304,9 +312,9 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
   //integration. Set the fine-binned values to the given
   //ones. Temporarily enlarge by one the array in order to be able to
   //integrate the last bin.
-  if(ddwn<dint||(flags&VOIGT_QUICK)){
-    dint=ddwn;
-    nint=nwn+1;
+  if( ddwn<dint || (flags&VOIGT_QUICK) ){
+    dint = ddwn;
+    nint = nwn + 1;
   }
   //If integration is required then calculate binning so that for each
   //wavenumber bin there is an odd number of fine-integration bins (in
@@ -315,11 +323,11 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
   //fine-points for every wavenumber point and one extra point for the
   //one required to close the last bin.
   else{
-    nint=(int)(ddwn/dint)+1;
-    if(nint&1)
+    nint = (int)( ddwn / dint )+1;
+    if( nint&1 )
       nint++;
-    nint=nwn*nint+1;
-    dint=2.0*dwn/(nint-1);
+    nint = nwn * nint + 1;
+    dint = 2.0 * dwn / ( nint - 1 );
   }
 
   //Initialize \vr{aint} array
@@ -345,10 +353,9 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
     //Integration!
     //Does the user wants a quick integration?
     if(flags&VOIGT_QUICK){
-      //if so, just multiply the value at the beginning of each bin per
-      //the bin width 
+      //if so, just return the value at the beginning of each bin
       for(i=0;i<nwn;i++)
-	vpro[j][i]=aint[i]*ddwn;
+	vpro[j][i]=aint[i];
     }
     //If a slow integration is preferred, then
     //calculate the number of fine-point per regular points, note that
