@@ -589,7 +589,7 @@ linepad(char *out,		/* output, it has to have a length of at
   //word count 'wc' initializes to zero, it will be counting
   //interspaces.'out' index 'o' also initialize to zero.
   int wc=0,o=0,lasto=0;
-  _Bool prev;
+  _Bool prev=0;
   out[nc]='\0';
 
   while(o<nc){
