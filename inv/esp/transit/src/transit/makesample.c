@@ -58,7 +58,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
 
   //Check multiplicative factor
   if(!spec||hint->fct<=0)
-    samp->fct=1;
+    samp->fct=ref->fct;
   else
     samp->fct=hint->fct;
 
@@ -123,8 +123,8 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
 
   //if none has been hinted then use ref's
   if(!nhint&&!dhint){
-    //If none or both of ref's exist then error
-    if((ref->d<=0&&ref->n<=0)||(ref->d>0&&ref->n>0)){
+    //If none of the ref exists then error
+    if((ref->d<=0&&ref->n<=0)){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "Spacing(%g) and number of elements(%i) were\n"
 		   "either both or none in the reference for %s sampling.\n"
@@ -132,7 +132,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
 		   ,ref->d,ref->n,TRH_NAME(fl));
       return -5;
     }
-    //if spacing exists
+    //if spacing exists then trust it
     if(ref->d>0){
       samp->d=ref->d;
       samp->n=-1;
@@ -440,7 +440,7 @@ int makeradsample(struct transit *tr)
 
   /* TD: interpolation */
   //interpolate temperature values according to radius
-  resamplex(tr->fl,nrad,rad->v,rsamp->n,rsamp->v);
+  resamplex(tr->fl,rsamp->n,rsamp->v,nrad,rad->v);
   resampley(tr->fl,2,
 	    atms->atm.t,atmt->t,
 	    atms->atm.p,atmt->p);
@@ -457,7 +457,7 @@ int makeradsample(struct transit *tr)
 	      atms->isov[i].q,isovt[i].q);
   }
 
-  //Second, non-extended isotopes:
+  //Second, non-extended isotopes (isotopes coming from the line database):
   //We have to go to each database separately
   for(i=0;i<ndb;i++){
     //position in the first isotope of the database
