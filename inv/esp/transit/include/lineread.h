@@ -34,11 +34,12 @@ extern struct linedb{
   unsigned :0;              //Just some padding
   PREC_LNDATA wl;           //Wavelength in nm.
   PREC_LNDATA elow;         //Lower energy level in cm-1
-  PREC_LNDATA lgf;          //Log(gf) value
+  PREC_LNDATA gf;           //GF value
   short isoid;              //Isotope ID (Assumed to be in range)
 } linedb;
 
 extern short gabby_dbread;
+extern double tli_fct;
 
 #include <proto_lineread.h>
 #include <proto_dbread_pands.h>
