@@ -264,7 +264,7 @@ int processparameters(int argc, /* number of command line arguments */
      "optdepth","If optical depth for a particular path is larger\n"
      "than optdepth, then do not proceed to lower radius"},
     {"outtau",CLA_OUTTAU,required_argument,"0",
-     NULL,"Output is optical depth instead of modulation. It will be\n"
+     "#radius","Output is optical depth instead of modulation. It will be\n"
      "asked which radius to plot\n"},
     {"taulevel",CLA_TAULEVEL,required_argument,"1",
      "integer","Do a level integer integration for optical depth. 1\n"
