@@ -87,7 +87,9 @@ tau(struct transit *tr)
   transitprint(1,verblevel,
 	       "Calculating optical depth at various radius...\n");
 
+#ifdef _USE_GSL
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
+#endif
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
     t=tau.t[wi];
@@ -103,11 +105,18 @@ tau(struct transit *tr)
     }
 
   }
+#ifdef _USE_GSL
   gsl_interp_accel_free(acc);
+#endif
 
   transitprint(1,verblevel,
 	       "Optical depth calculated up to %g[cm-1]\n"
 	       ,tr->ds.tau->toomuch);
+
+  //Print lowest impact parameter before optical gets too big
+  if(tr->f_toomuch)
+    printtoomuch(tr->f_toomuch,tr->ds.tau, &tr->wns);
+
 
   //Set progress indicator and output tau if requested, otherwise return
   //success.
@@ -115,6 +124,40 @@ tau(struct transit *tr)
   if(tr->fl&TRU_OUTTAU)
     printtau(tr);
   return 0;
+}
+
+
+/* \fcnfh
+   Print lowest impact parameter before optical depth gets too big
+*/
+void
+printtoomuch(char *file, 	/* Filename to save to, a '-' is
+				   standard output */
+	     struct optdepth *tau, /* Tau information */
+	     prop_samp *wn)	/* Wavenumber sampling */
+{
+  long w;
+  FILE *out=stdout;
+
+  //open file
+  if(file&&file[0]!='-')
+    out=fopen(file,"w");
+  if(!out)
+    transiterror(TERR_WARNING,
+		 "Cannot open '%s' for writing maximum depth before too much\n"
+		 "optical depth.\n"
+		 ,out==stdout?"STDOUT":file);
+
+  transitprint(1,verblevel,
+	       "\nPrinting in '%s' maximum depth before optical depth got\n"
+	       "larger than %g and therefore impact parameter was not\n"
+	       "calculated for deeper layers.\n"
+	       ,file,tau->toomuch);
+
+  fprintf(out,"#Wavelength  Maximum_calculated_depth\n");
+  for(w=0;w<wn->n;w++)
+    fprintf(out,"%12.3g%12.3g\n",wn->v[w]*wn->fct,tau->first[w]);
+	       
 }
 
 
@@ -137,6 +180,10 @@ printtau(struct transit *tr)
   //open file
   if(tr->f_out&&tr->f_out[0]!='-')
     out=fopen(tr->f_out,"w");
+  if(!out)
+    transiterror(TERR_WARNING,
+		 "Cannot open '%s' for writing optical depth.\n"
+		 ,out==stdout?"STDOUT":tr->f_out);
 
   long rad=
     askforposl("Radius at which you want to print the optical depth(%li - %li): "

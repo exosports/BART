@@ -91,6 +91,8 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_GMASSRAD,
     CLA_GMASSRADFCT,
     CLA_OUTTAU,
+    CLA_TOOMUCH,
+    CLA_OUTTOOMUCH,
   };
 
   //General help-option structure
@@ -244,9 +246,15 @@ int processparameters(int argc, /* number of command line arguments */
     {"solution",required_argument,'s',
      "sol_name","Name of the kind of output solution ('slant path'\n"
      "is currently the only availabale alternative)"},
+    {"toomuch",required_argument,CLA_TOOMUCH,
+     "optdepth","If optical depth for a particular path is larger\n"
+     "than optdepth, then do not proceed to lower radius"},
     {"outtau",no_argument,CLA_OUTTAU,
      NULL,"Output is optical depth instead of modulation. It will be\n"
      "asked which radius to plot\n"},
+    {"outtoomuch",required_argument,CLA_OUTTOOMUCH,
+     "filename","Ouputs depth where toomuch optical depth has been\n"
+     "attained as a function of wavelength\n"},
 
     {NULL,HELPTITLE,0,
      NULL,"OBSERVATIONAL OPTIONS:"},
@@ -526,7 +534,18 @@ int processparameters(int argc, /* number of command line arguments */
     case CLA_OUTTAU:
       hints->fl|=TRU_OUTTAU;
       break;
+    case CLA_TOOMUCH:
+      hints->toomuch=atof(optarg);
+      break;
+    case CLA_OUTTOOMUCH:
+      if(hints->f_toomuch) {free(hints->f_toomuch);hints->f_toomuch=NULL;}
+      if(*optarg!='\0'){
+	hints->f_toomuch=(char *)calloc(strlen(optarg)+1,sizeof(char));
+	strcpy(hints->f_toomuch,optarg);
+      }
+      break;
     }
+    
   }
 
   getprocopt_free();
@@ -574,6 +593,10 @@ acceptgenhints(struct transit *tr) /* transit structure */
   //Accept output file
   if(th->na&TRH_FO)
     transitaccepthint(tr->f_out,th->f_out,th->fl,TRH_FO);
+
+  //Accept toomuch output file
+  if(th->f_toomuch)
+    tr->f_toomuch=th->f_toomuch;
 
   //Accept hinted solution type if it exists
   if(!(th->na&TRH_ST)||acceptsoltype(&tr->sol,th->solname)!=0){

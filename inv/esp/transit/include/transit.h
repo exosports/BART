@@ -61,8 +61,8 @@
 #define stateeqnford(q,m,p,t) (AMU*(q)*(m)*(p)/(KB*(t)))
 
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
-#define transitprint(thislevel, verblevel, ...) if(thislevel <= verblevel)  \
-        fprintf(stderr,__VA_ARGS__)
+#define transitprint(thislevel, verblevel, ...) do{                         \
+  if(thislevel <= verblevel)  fprintf(stderr,__VA_ARGS__); }while(0)
 #define transitacceptflag(transit,hint,flag) do{                            \
         transit|=hint&flag;hint&=~(flag);}while(0)
 #define transitaccepthint(transit,hint,flags,flagvalue) do{                 \
@@ -72,13 +72,13 @@
 	             "transit:: %s: Allocation failed for %i allocation\n"  \
 	             "units in line %i. Impossible to continue.\n"          \
 	             ,__FILE__,nmb,__LINE__)
-
+#define nullfree(x) do{free(x);x=NULL;}while(0)
 
 #ifdef NODEBUG_TRANSIT
 #define transitDEBUG(...) ((void)0)
 #define transitASSERT(...) ((void)0)
 #else
-#define free(x) do{free(x);x=NULL;}while(0)
+#define free(x) nullfree(x)
 #define transitASSERT(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitDEBUG(...) transitprint(__VA_ARGS__)
 #endif
