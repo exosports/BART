@@ -27,7 +27,7 @@ TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
 	    tau.o idxrefraction.o
 LR_OBJ    = transitstd.o dbread_pands.o lineread.o
 UT_OBJ    = sampling.o voigt.o procopt.o iomisc.o \
-	    numerical.o
+	    numerical.o xmalloc.o
 
 DEP_FILES = $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) $(UT_OBJ:.o=.c)
 PROTO_FILES = $(DEP_FILES)
