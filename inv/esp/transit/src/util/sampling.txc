@@ -415,13 +415,14 @@ lineinterp(double refx,		/* Reference x point */
 	   long n)		/* lenght of array */
 {
   double yout;
+  _Bool ascend=(x[1]-x[0]>0);
   n--;
 
   //Initial range is correct?
-  if(*x>refx){
+  if((ascend && *x>refx) || *x<refx){
     fprintf(stderr,
-	    "interpline():: First x-value (%g) is larger than refx(%g)\n"
-	    ,*x,refx);
+	    "interpline():: refx(%g) is outside x range (%g - %g)\n"
+	    ,refx,*x,x[n-1]);
     exit(EXIT_FAILURE);
   }
 
@@ -444,7 +445,7 @@ lineinterp(double refx,		/* Reference x point */
       exit(EXIT_FAILURE);
     }
     //found!
-    if(x[1]>refx)
+    if((ascend && x[1]>refx) || x[1]<refx)
       break;
     n--;
     x++;

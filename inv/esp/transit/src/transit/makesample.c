@@ -95,7 +95,7 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
     samp->f=hint->f;
 
   //check that resultant range makes sense
-  if(samp->f<=si){
+  if(samp->f<=si && ref->d>=0 && hint->d>=0){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Initial accepted sampling value (%g) is greater or\n"
 		 "equal than final accepted sample value(%g).\n"
