@@ -233,8 +233,7 @@ int
 readtwii_ascii(FILE *fp, 
 	       struct transit *tr,
 	       struct lineinfo *li,
-	       int maxline,
-	       int asciiline)
+	       int maxline)
 {
   char rc;
   char line[maxline+1],*lp,*lp2;
@@ -273,9 +272,9 @@ readtwii_ascii(FILE *fp,
   //...
   //\end{verb}
   //get Number of databases from first line
-  while((rc=fgetupto(line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+  while((rc=fgetupto(line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
 	=='#'||rc=='\n');
-  if(!rc) notyet(asciiline,tr->f_line);
+  if(!rc) notyet(li->asciiline,tr->f_line);
   ndb=strtol(line,&lp,0);
   checkprepost(lp,errno&ERANGE,*lp==' ',*lp!='\0');
   //Allocate pointers according to the number of databases
@@ -285,9 +284,9 @@ readtwii_ascii(FILE *fp,
   //for each database
   for(db=0;db<ndb;db++){
     //get name
-    while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+    while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
 	  =='#'||rc=='\n');
-    if(!rc) notyet(asciiline,tr->f_line);
+    if(!rc) notyet(li->asciiline,tr->f_line);
     if((tr->db[db].n=readstr_sp(lp,&lp,'_'))==NULL)
       transitallocerror(0);
 
@@ -330,9 +329,9 @@ readtwii_ascii(FILE *fp,
     }
 
     //get isotope name and mass
-    while((rc=fgetupto(lp2=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+    while((rc=fgetupto(lp2=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
 	  =='#'||rc=='\n');
-    if(!rc) notyet(asciiline,tr->f_line);
+    if(!rc) notyet(li->asciiline,tr->f_line);
     //for each isotope
     for(i=0;i<nIso;i++){
       //get name
@@ -350,9 +349,9 @@ readtwii_ascii(FILE *fp,
     //get for each temperature
     for(rn=0;rn<nT;rn++){
       //Get a line with temperature, partfcn and cross-sect info
-      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,asciiline++))
+      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
 	    =='#'||rc=='\n');
-      if(!rc) notyet(asciiline,tr->f_line);
+      if(!rc) notyet(li->asciiline,tr->f_line);
       while(*lp==' ')
 	lp++;
       //read temperature
@@ -495,6 +494,7 @@ int checkrange(struct transit *tr, /* General parameters and
   prop_samp *msamp=&li->wavs;
   prop_samp *hsamp=&th->wavs;
   PREC_LNDATA dbini=li->wi,dbfin=li->wf;
+  double extra;
 
   //initialize modified hints
   msamp->n=-1;
@@ -503,23 +503,42 @@ int checkrange(struct transit *tr, /* General parameters and
 
   //First check that the margin value is reasonable. i.e. whether its
   //leaves a non-zero range if applied to the whole line dataset.
-  if(2*th->m > (li->wf - li->wi)){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Margin value (%g) is too big for this dataset whose\n"
-		 "range is %g to %g nanometers\n"
-		 ,th->m,li->wi,li->wf);
-    return -4;
-  }
-  if(th->na&TRH_WM)
+  if(th->na&TRH_WM){
+    if(2*th->m > (li->wf - li->wi)){
+      transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		   "Margin value (%g) is too big for this dataset whose\n"
+		   "range is %g to %g nanometers\n"
+		   ,th->m,li->wi,li->wf);
+      return -4;
+    }
     transitaccepthint(margin=tr->m, th->m, th->na, TRH_WM);
+  }
   else
     margin=tr->m=0.0;
-
+ 
+  //If an TWII ascii file, then we'll be using limits twice the margin
+  //from the minimum or maximum values in the dataset. This is because,
+  //as opposed to binary archiving, I'm not guaranteed that I have all
+  //the lines between 'dbini' and 'dbfin', instead they are the minimum
+  //and maximum wavelength of the given transitions.
+  if(li->asciiline){
+    if(margin==0.0)
+      transiterror(TERR_WARNING,
+		   "Wavelength margin to be used is zero in a TWII-ASCII\n"
+		   " file. Hence, there will be no points to the left or\n"
+		   " right of the extreme central wavelengths.\n"
+		   );
+    extra=2*margin;
+  }
+  else
+    extra=0;
+  
   transitDEBUG(21,verblevel,
 	       "hinted initial %g, final %g\n"
 	       "Databse max %g and min %g\n"
 	       ,hsamp->i,hsamp->f,li->wi,li->wf);
 
+  //If final wavelength was not hinted then default it to zero
   if(!(th->na&TRH_WF)){
     hsamp->f=0;
     th->na|=TRH_WF;
@@ -528,11 +547,13 @@ int checkrange(struct transit *tr, /* General parameters and
 		 "extraction as %g. It was not user-hinted.\n"
 		 ,hsamp->f);
   }
-  //Check final wavelength. If it is 0 then use maximun possible less
-  //the margin. Do not return special value, it is assumed that user
-  //knows what he is doing.
-  if(hsamp->f<=0)
-    msamp->f=li->wf;
+
+  //Check final wavelength. If it is 0, modify it. Do not return
+  //special value, it is assumed that user knows what he is doing.
+  //\linelabel{finalwav}
+  if(hsamp->f<=0){
+      msamp->f=dbfin+extra;
+  }
   //otherwise
   else{
     transitDEBUG(20,verblevel,
@@ -542,17 +563,20 @@ int checkrange(struct transit *tr, /* General parameters and
     //check that is not below the minimum value
     if(dbini+margin>hsamp->f){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		   "Final wavelength (%g) is smaller than first\n"
-		   "allowed value in database (%g = %g + %g),\n"
-		   "considering margin\n"
+		   "Considering margin, final wavelength (%g) is\n"
+		   " smaller than first allowed value in database\n"
+		   " (%g = %g + %g)\n"
 		   ,hsamp->f,dbini+margin,dbini,margin);
       return -3;
     }
-    //check and change if it is above maximum allowed value
-    if(hsamp->f>dbfin){
-      msamp->f=dbfin;
-      res|=0x20;
-    }
+    //warn if it is above maximum value with information
+    if(hsamp->f>dbfin-margin)
+      transiterror(TERR_WARNING,
+		   "Final wavelength is above the maximum informative\n"
+		   "value in database\n"
+		   );
+    //set initial wavelength to be extracted
+    msamp->f=hsamp->f;
   }
 
   if(!(th->na&TRH_WI)){
@@ -564,9 +588,9 @@ int checkrange(struct transit *tr, /* General parameters and
 		 ,hsamp->i);
   }
   //Check initial wavelength. See final wavelength treatment above for
-  //more detailed comments about the code
+  //more detailed comments about the code (\lin{finalwav})
   if(hsamp->i<=0)
-    msamp->i=li->wi;
+    msamp->i=dbini-extra;
   else{
     transitDEBUG(20,verblevel,
 		 "dbfin: %g   margin:%g  sampi:%g\n"
@@ -579,10 +603,12 @@ int checkrange(struct transit *tr, /* General parameters and
 		   ,hsamp->i,dbfin-margin,dbfin,margin);
       return -2;
     }
-    if(hsamp->i<dbini){
-      msamp->i=dbini;
-      res|=0x10;
-    }
+    if(hsamp->i<dbini+margin)
+      transiterror(TERR_WARNING,
+		   "Final wavelength is above the maximum informative\n"
+		   "value in database\n"
+		   ); 
+    msamp->i=hsamp->i;
   }
 
   //Check that we still have a range considering margin
@@ -655,11 +681,12 @@ int readinfo_twii(struct transit *tr,
   FILE *fp;
   union {char sig[2];short s[2];} sign={{(char)(('T'<<4)|'W'),
 					 (char)(('I'<<4)|'I')}};
-  int asciiline=0;
   int maxline=200;
   char line[maxline+1];
   //Auxiliary hint structure pointer
   struct transithint *th=tr->ds.th;
+
+  li->asciiline=0;
 
   //Open info file and transport name into transit from hint (setting
   //corresponding flag) if the file opened succesfully
@@ -699,19 +726,19 @@ int readinfo_twii(struct transit *tr,
     if(rn){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "The file '%s' has not a valid TWII format. It may\n"
-		   "also be because the machine were it was created have\n"
-		   "different endian order, which is incompatible"
+		   " also be because the machine were it was created have\n"
+		   " different endian order, which is incompatible"
 		   ,tr->f_line);
       return -3;
     }
-    asciiline=1;
+    li->asciiline=1;
     //ignore the rest of the first line
     fgetupto(line,maxline,fp,&asciierr,tr->f_line,1);
   }
 
   //if ascii format of TWII read ascii file
-  if(asciiline){
-    if((rn=readtwii_ascii(fp,tr,li,maxline,asciiline))!=0){
+  if(li->asciiline){
+    if((rn=readtwii_ascii(fp,tr,li,maxline))!=0){
       transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
 		   "readtwii_ascii() return error code %i\n"
 		   ,rn);

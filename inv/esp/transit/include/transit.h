@@ -49,7 +49,7 @@
 #define TRH_SFTNAME(n) (n==TRH_RADSFT?"radius":         \
 			 (n==TRH_WAVSFT?"wavelength":    \
 			  (n==TRH_WNSFT?"wavenumber":    \
-			   "unknown(a.k.a bad 'bitsshift')")))
+			   "unknown(a.k.a bad 'bitsshift' value)")))
 			 
 
 #define TRH_RI  (TRH_SI<<TRH_RADSFT) /* Initial radius */
@@ -272,7 +272,6 @@ struct atm_data{
   prop_isov *isov;		/* variable isotope info
 				   [isoext] */
   prop_atm atm;			/* Atmospheric properties */
-  //  int n_rad;			/* Number of atmospheric radii */
   int n_niso;			/* Number of new isotopes */
 };
 
@@ -299,17 +298,16 @@ struct extinction{
 struct lineinfo {
   int twii_ver;			/* TWII version */
   int twii_rev;			/* TWII revision */
-  /*
-    char *f_data;			Data filename 
-    float dwmark;			 Mark every this many delta wavelength
-    in nanometers
-    PREC_NREC *mark;		Marks
-  */
   prop_samp wavs;		/* wavelength sampling extracted */
   double wi,wf;			/* initial and final wavelength in the
 				   database */
   long endinfo;			/* position at the end of the info part
 				   of the info file */
+  int asciiline;		/* line number in an TWII-ascii file
+				   being read, it is zero if a binary
+				   file. And the maximum value it gets
+				   is the first line of the transition
+				   info. */
 };
 
 struct onept {
@@ -388,13 +386,6 @@ struct transit {		/* Main data structure */
     struct extinction *ex;
   }ds;
 };
-
-
-/* Inline functions that are now detected by cproto
-inline void transitdot(int thislevel, int verblevel);
-inline int newprofile(PREC_VOIGT **pr, int vf, int *lw, PREC_RES dwn, 
-PREC_VOIGT dop, PREC_VOIGT lor, float ta);
-*/
 
 #include <transit_proto.h>
 #include <readlineinfo_proto.h>
