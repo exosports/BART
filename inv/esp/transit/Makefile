@@ -20,127 +20,20 @@
 #uncomment for clean compilation without debugging info
 #NODEBUG  = 1
 
-#directories
-ifndef PREFIX
-PREFIX  = ..
-endif
-SRC     = ./src/
-BIN     = $(PREFIX)/bin/
-INCL    = ./include/
+BASEBDIR=/home/pato/inv/esp/prg/transit/
+include $(BASEBDIR)/defs.mak
 
-#paths for dependencies
-vpath %.h include
-vpath %.txc $(SRC)/transit:$(SRC)/transit/atmosphere:\
-	    $(SRC)/lineread
+SHELL = /bin/sh
 
-#programs
-CPROTO  = /usr/bin/cproto
-RANLIB  = ranlib
-AR      = ar ru
-MAKEDEP = $(CC) -MM
-CLATEX  = $(HOME)/bin/clatex.pl
+srcdir = .
+top_srcdir = .
+tobasedir = .
 
-#objects and headers
-TR_OBJ    = transitstd.o readlineinfo.o makesample.o \
-	    extinction.o transit.o \
-	    tau.o idxrefraction.o argum.o \
-	    slantpath.o geometry.o observable.o \
-	    at_file.o readatm.o at_onept.o \
-	    cia.o
-LR_OBJ    = transitstd.o dbread_pands.o lineread.o
-TEST_FCN  = slantpath dbread_pands
-
-TEST_BIN    = $(patsubst %,test_%,$(TEST_FCN))
-PROTO_FILES = $(TR_OBJ:.o=.c) $(LR_OBJ:.o=.c) \
-	      $(patsubst %,%.c,$(TEST_BIN))
-DEP_FILES   = $(PROTO_FILES) $(TEST_OBJ:.o=.c)
+SUBDIRS = src
 
 #make specials
 .PHONY=clean dep proto
 
-#parameters
-CPUOPTION   = -mcpu=athlon-xp
-#CPUOPTION   = -mcpu=athlon-tbird
-#CPUOPTION   = -mcpu=pentium3
-EXTPRM      = -DTRANSIT -static
-WARNFLAGS   = -Wall -Winline
-GSLPRM      = -D_USE_GSL
-GSLLIB      = -lgsl -lblas
-#-W -Werror
-INCLFLAGS   = -I/usr/X11R6/include -I/home/devel/include -I$(INCL)
-LIBFLAGS    = -L/usr/X11R6/lib -L/home/devel/lib
-CPROTOFLAGS = $(INCLFLAGS) $(GSLPRM) -f 3 -m -e -i -X 0
-
-NODBGFLAGS  = 
-DBGFLAGS    = -g3 -gdwarf-2
-ifdef NODEBUG
-STDFLAGS    = $(NODBGFLAGS)
-else
-STDFLAGS    = $(DBGFLAGS)
-endif
-STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic \
-	      -std=c99 $(EXTPRM) $(CPUOPTION) $(GSLPRM) $(CFLAGS)
-
-#libraries to link
-LIBS  = -lX11 -lpu -lm $(GSLLIB)
-
-
-######################
-## Beautiful output ##
-######################
-##Adapted from Kernel 2.6 sources##
-#Different levels of output from more to less can be attained by
-#specifying 'make OUTP=n <label>' where n can be
-#  1(no output); or 2(regular output).
-#If there is no especification then use reduced output
-ifndef OUTP
- quiet = quiet_
-else 
- ifeq ($(OUTP),1)
-  quiet = silen_
- else
-  ifeq ($(OUTP),2)
-   quiet =
-  endif
- endif
-endif
-
-
-# If quiet is set, only print short version of command
-cmd = @$(if $($(quiet)cmd_$(1)),echo ' $($(quiet)cmd_$(1))' &&) $(cmd_$(1))
-
-ifeq ($(strip $(wildcard include/proto_*.h)),)
-	firstproto = 1
-endif
-
-#now for the different functions
-quiet_cmd_c_o   = Compiling $@
-      cmd_c_o   = $(CC) -c $(STDFLAGS) -o $@ $<
-
-quiet_cmd_cp    = Copying to $@
-      cmd_cp    = cp -f $< ./$(notdir $(basename $<)).c
-
-quiet_cmd_txc_c = Clatexing to $@
-      cmd_txc_c = $(CLATEX) $< -sl
-
-quiet_cmd_exec  = Building executable "$@"
-      cmd_exec  = $(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
-
-quiet_cmd_test  = Building for testing executable "$@"
-      cmd_test  = $(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
-
-quiet_cmd_proto = Making prototypes for $<
-      cmd_proto = $(CPROTO) $(CPROTOFLAGS) -o $(INCL)/proto_$*.h $<
-
-quiet_cmd_dep   = Making dependencies ...
-      cmd_dep   = $(MAKEDEP) $(STDFLAGS) $^ >.depen
-
-quiet_cmd_clean = Deleting non-source files ...
-      cmd_clean = rm -f $(TR_OBJ) $(LR_OBJ) $(DEP_FILES) \
-                  texput.log transit lineread .depen
-
-quiet_cmd_clean_proto = Deleting prototypes ...
-      cmd_clean_proto = rm -f include/proto_*.h
 
 ###############################
 # $^ dependencies
@@ -150,9 +43,34 @@ quiet_cmd_clean_proto = Deleting prototypes ...
 # $? modified dependencies
 ################################
 
+RECURSIVE_TARGETS = all-recursive dep-recursive clean-recursive \
+	install-bin-recursive uninstall-bin-recursive proto-recursive \
+	cleanproto-recursive cleanall-recursive
 
-#make main executable
-default: transit lineread
+all:
+	$(Q)$(MAKE) all-recursive
+
+$(RECURSIVE_TARGETS):
+	$(Q)target=`echo $@ | sed s/-recursive//`; \
+	list='$(SUBDIRS)'; \
+	cwd=`pwd|sed 's/$(subst /,\/,$(BASEBDIR:/=))/./'`; \
+	for subdir in $$list; do \
+	  $(call makingv,"$$target","$$cwd/$$subdir");\
+	  (cd $$subdir && $(MAKE) $$target) || fail="yes"; \
+	done; \
+	test -z "$$fail"
+
+#find recursiveness
+dep: dep-recursive
+install-bin: install-bin-recursive
+uninstall-bin: uninstall-bin-recursive
+proto: proto-recursive
+cleanproto: cleanproto-recursive
+clean: clean-recursive
+cleanall: cleanall-recursive
+
+install: install-bin
+uninstall: uninstall-bin
 
 
 #explain makefile options regarding printing
@@ -163,9 +81,9 @@ help:
 
 
 #install executables in target directory
-install: default
-	cp -pf lineread $(BIN)
-	cp -pf transit $(BIN)
+#	cp -pf lineread $(BIN)
+#	cp -pf transit $(BIN)
+
 
 
 #compile test programs
@@ -182,58 +100,20 @@ dbgreadline: transitstd.c readlineinfo.c
 	cp -pf dbgreadline $(BIN)
 
 
-#make executables
-transit : $(TR_OBJ)
-lineread: $(LR_OBJ)
-transit lineread:
-	$(call cmd,exec)
 
+#delete unused files
 
-#compilation of object files
-%.o: %.c
-	$(call cmd,c_o)
+#cleanproto:
+#	$(call cmd,clean_proto)
+#cleanall: clean cleanproto
 
 
 #if clatex exist then run it, otherwise just copy the file changing
 #extensions
-%.c: %.txc
-ifeq ($(strip $(wildcard $(CLATEX))),)
-	$(call cmd,cp)
-else
-	$(call cmd,txc_c)
-endif
-
-
-#delete unused files
-clean:
-	$(call cmd,clean)
-cleanproto:
-	$(call cmd,clean_proto)
-cleanall: clean cleanproto
-
-
-#find dependencies
-dep: $(DEP_FILES)
-	@echo >.depen
-	$(call cmd,dep)
-
-
-#making prototype files
-proto: check_cproto $(PROTO_FILES:.c=.proto)
-ifdef firstproto
-	@echo
-	@echo "** Probably reruning 'make proto' will clear any error message above **"
-	@echo
-endif
-%.proto: %.c
-	$(call cmd,proto)
-
-
-#checking that apropiate cproto version is being used
-check_cproto:
-	@exec ./scripts/check_proto.sh $(CPROTO)
-
-
-#include dependencies
--include .depen
+#%.c: %.txc
+#ifeq ($(strip $(wildcard $(CLATEX))),)
+#	$(call cmd,cp)
+#else
+#	$(call cmd,txc_c)
+#endif
 
