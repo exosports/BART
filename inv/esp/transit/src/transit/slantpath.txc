@@ -277,6 +277,7 @@ modulationm1(PREC_RES *tau,
   long i,ini;
   double ipv[2];
   double muchrad;
+  double srad=sg->starrad * sg->starradfct;
 
   if(tau[last]<toomuch)
     return -1;
@@ -290,7 +291,7 @@ modulationm1(PREC_RES *tau,
   //find the minimum radius through linear interpolation
   muchrad = interp_line  (tau+ini, ipv, toomuch);
 
-  return muchrad;
+  return muchrad*muchrad/srad/srad;
 }
 
 
