@@ -94,6 +94,7 @@ clean:
 	rm -f $(TR_OBJ) $(UT_OBJ) $(DEP_FILES) texput.log transit
 
 dep: $(DEP_FILES)
+	echo >.depen
 	makedepend -Y -f .depen -- $(STDFLAGS) -- $^
 
 proto: $(PROTO_FILES:.c=.proto)
@@ -106,4 +107,4 @@ proto: $(PROTO_FILES:.c=.proto)
 #~/hacking/C   #templates
 #-i -m -U __GNUC__
 
-include .depen
+-include .depen
