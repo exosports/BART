@@ -58,9 +58,9 @@ test_tau_monorad_norefr_now(PREC_RES *b, /* differential impact
 
   for(i=0;i<nimp;i++){
     result=totaltau(b[i],rad,refr,ex,nrad,wn,&acc);
-    test_result("While %s extinction, at %s,\n"
+    test_result("While %s extinction, at %s(%.7g),\n"
 		"  observed %.10g, expect %.10g, error %g\n"
-		,ktypes[wn],ipdesc[i],result,res[i],
+		,ktypes[wn],ipdesc[i],b[i],result,res[i],
 		fabs(result-res[i])/res[i]);
     if(fabs(result-res[i])/res[i]>acceptrelerror)
       test_fail(status,"Error bigger than %.5g\n"
@@ -121,8 +121,8 @@ test_tau_monorad_constrefr(int nrad,
   //tests at impact parameters: grazing, interpolated-radius, exact-radius,
   //lowest-radius 
 #define nimpact 4
-  PREC_RES b[nimpact]={rad[nrad-2], (rad[3*nrad/2] + rad[3*nrad/2+1])/2.0,
-		       rad[nrad/2], rad[0]};
+  PREC_RES b[nimpact]={rad[nrad-2], (rad[(3*nrad)/4-1] + rad[(3*nrad)/4])/2.0,
+		       rad[nrad/2-1], rad[0]};
   char *ipdesc[nimpact]={"grazing IP","interpolated IP","coincident IP",
 			 "lowest IP"};
 
