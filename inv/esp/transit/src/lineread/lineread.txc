@@ -115,16 +115,12 @@ int main(int argc,char *argv[])
   PREC_LNDATA tmin;
   int *nT,*nIso,*dbid,totaliso,adb;
   PREC_NREC *nlines,pmin;
-  FILE *fpout;//,*fpiout;
-  char *datafile;/**infofile;*/
+  FILE *fpout;
+  char *datafile;
   PREC_NREC dindex;
   void *tempp;
   int dummy;
   int verblevel;
-  /*
-  float prevmark,deltwmark;    //Mark every that much nanometers in info
-			       //file
-			       */
   char ***isonames;
 
 
@@ -148,19 +144,14 @@ int main(int argc,char *argv[])
   verblevel=1;
   datafile=(char *)calloc(20,sizeof(char));
   strcpy(datafile,"./res/lineread.twii");
-  /*
-    infofile=(char *)calloc(19,sizeof(char));
-    strcpy(infofile,"./res/lineread.inf");
-    deltwmark=1;
-  */
   fpout=NULL;
   dummy=0;
 
   if(argc<3)
-    synhelp(deltw,datafile,/*infofile, deltwmark,*/verblevel);
+    synhelp(deltw,datafile,verblevel);
 
   while(1){
-    rn=getopt(argc,argv,"vhqd:o:"/*O:*/"m:n");
+    rn=getopt(argc,argv,"vhqd:o:m:n");
     if (rn==-1)
       break;
 
@@ -169,13 +160,8 @@ int main(int argc,char *argv[])
       dummy=1;
       break;
     case 'h':
-      synhelp(deltw,datafile/*,infofile,deltwmark*/,verblevel);
+      synhelp(deltw,datafile,verblevel);
       break;
-      /*
-    case 'm':
-      deltwmark=atof(optarg);
-      break;
-      */
     case 'd':
       deltw=atof(optarg);
       break;
@@ -189,14 +175,8 @@ int main(int argc,char *argv[])
       datafile=(char *)realloc(datafile,strlen(optarg)*sizeof(char));
       strcpy(datafile,optarg);
       break;
-      /*
-    case 'O':
-      infofile=(char *)realloc(infofile,strlen(optarg)*sizeof(char));
-      strcpy(infofile,optarg);
-      break;
-      */
     default:
-      synhelp(deltw,datafile/*,infofile,deltwmark*/,verblevel);
+      synhelp(deltw,datafile,verblevel);
       break;
     }
   }
@@ -216,17 +196,6 @@ int main(int argc,char *argv[])
     rn=1;
     fpout=stdout;
   }
-  /*
-  if(strcmp("-",infofile)==0){
-    rn+=2;
-    fpiout=stdout;
-    if(fpdout==stdout)
-      transiterror(TERR_WARNING,
-		   "Both information and data will go to the standard\n"
-		   "output. Be warned, that this won't be compatible\n"
-		   "with main Transit program\n");
-  }
-  */
 
   transitprint(2,verblevel,
 	       "Extra blah, blah enabled. Be prepared!\n\n"
@@ -236,11 +205,7 @@ int main(int argc,char *argv[])
 	       "wavelength information  interchange)  format in smaller"
 	       " wavelength ranges of\n"
 	       "%.1f nanometers each.\n\n"
-	       /*
-	       "Indexing for speed-up of reading will be done every %.1f"
-	       " nanometers\n\n"
-	       */
-	       ,iniw,finw,deltw/*,deltwmark*/);
+	       ,iniw,finw,deltw);
 
   if(dummy)
     transitprint(1,verblevel,
@@ -249,12 +214,6 @@ int main(int argc,char *argv[])
 
   transitprint(1,verblevel,
 	       "TWIIf output file is: %s\n"
-	       /*
-	       "requires two output files that were chosen to be:\n"
-	       " '%s' as the info file, and\n"
-	       " '%s' as the data file\n\n"
-	       ,rn&2?"standard output":infofile
-	       */
 	       ,rn&1?"standard output":datafile);
 
 
@@ -264,13 +223,6 @@ int main(int argc,char *argv[])
 		   "Data file '%s' cannot be opened for writing.\n"
 		   ,datafile);
     }
-    /*
-    if(fpiout==NULL&&(fpiout=fopen(infofile,"w"))==NULL){
-      transiterror(TERR_SERIOUS,
-		   "Information file '%s' cannot be opened for writing.\n"
-		   ,infofile);
-    }
-    */
   }
 
   if(finw<iniw)
@@ -282,12 +234,6 @@ int main(int argc,char *argv[])
     fwrite(&sign.s,sizeof(short),1,fpout);
     fwrite(&lineread_ver, sizeof(int),1,fpout);
     fwrite(&lineread_rev, sizeof(int),1,fpout);
-    /*
-    rn=strlen(datafile);
-    fwrite(&rn,sizeof(int),1,fpiout);
-    fwrite(datafile,sizeof(char),rn,fpiout);
-    fwrite(&deltwmark,sizeof(float),1,fpiout);
-    */
     fwrite(&iniw,sizeof(double),1,fpout);
     fwrite(&finw,sizeof(double),1,fpout);
     rn=dbread_nfcn;
@@ -295,7 +241,6 @@ int main(int argc,char *argv[])
   }
 
   dindex=0;
-  /*  prevmark=iniw; */
   while(iniw<finw){
     parw=iniw+deltw;
     if(parw>finw)
@@ -360,7 +305,6 @@ int main(int argc,char *argv[])
 	  fwrite(Z[adb][j],sizeof(PREC_ZREC),nT[adb],fpout);
 	}
       }
-      /*      fwrite(&dindex,sizeof(PREC_NREC),1,fpiout);*/
     }
 
     transitprint(1,verblevel,"sorting... ");
@@ -383,14 +327,6 @@ int main(int argc,char *argv[])
       if(!dummy)
 	fwrite(&(crnt[pmin]->wl),sizeof(struct line_transition),1,fpout);
       dindex++;
-      /*
-      if(crnt[pmin]->wl - prevmark > deltwmark){
-	if(!dummy)
-	  fwrite(&dindex,sizeof(PREC_NREC),1,fpiout);
-	prevmark=crnt[pmin]->wl;
-	transitDEBUG(15,verblevel,"Mark set: %li\n",dindex);
-	}
-      */
 
       if(++crnt[pmin]-lineread[pmin]>=nlines[pmin]){
 	for(i=pmin;i<left-1;i++){
@@ -410,14 +346,9 @@ int main(int argc,char *argv[])
     }
     transitprint(1,verblevel,"done\n");
   }
-  if(!dummy){
-    /*
-    rn=0;
-    fwrite(&rn,sizeof(int),1,fpiout);
-    fclose(fpiout);
-    */
+  if(!dummy)
     fclose(fpout);
-  }
+
   transitprint(1,verblevel,"\n");
 
   return EXIT_SUCCESS;

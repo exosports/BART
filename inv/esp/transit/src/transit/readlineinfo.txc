@@ -78,8 +78,6 @@ int checkrange(struct transit *tr, /* General parameters and
   msamp->n=-1;
   msamp->d=-1;
   msamp->v=NULL;
-  /*  memcpy(msamp,hsamp,sizeof(prop_samp)); */
-  //  tr->mod.m=th->m;
 
   //First check that the margin value is reasonable. i.e. whether its
   //leaves a non-zero range if applied to the whole line dataset.
@@ -234,20 +232,12 @@ int readinfo_twii(struct transit *tr,
   //'CS' is an auxiliary cross section pointer.
   //'T' and 'Z' auxiliary temperature and partition function pointers.
   //'acumiso' keeps the cumulative number of isotopes per database.
-  /*
-  //'nalloc' is the length of mark's allocation.
-  //'mark' is an auxiliary pointer to allocate marks.
-  //'dwmark' mark wavelength spacing.
-    float dwmark;
-    PREC_NREC *mark;
-  */
   int rn,i,db,ndb,nT,nIso;
   FILE *fp;
   double iniw,finw;
   PREC_CS *CS;
   PREC_ZREC *T, *Z;
   int acumiso=0;
-  /*  long nalloc=8;*/
   char rc;
   union {char sig[2];short s[2];} sign={{(char)(('T'<<4)|'W'),
 					 (char)(('I'<<4)|'I')}};
@@ -321,13 +311,6 @@ int readinfo_twii(struct transit *tr,
     //number of datrabases.
     fread(&li->twii_ver,sizeof(int),1,fp);
     fread(&li->twii_rev,sizeof(int),1,fp);
-    /*
-    fread(&rn,sizeof(int),1,fp);
-    li->f_data=(char *)calloc(rn+1,sizeof(char));
-    fread(li->f_data,sizeof(char),rn,fp);
-    li->f_data[rn]='\0';
-    fread(&dwmark,sizeof(float),1,fp);
-    */
     fread(&iniw,sizeof(double),1,fp);
     fread(&finw,sizeof(double),1,fp);
     fread(&ndb,sizeof(int),1,fp);
@@ -458,44 +441,6 @@ int readinfo_twii(struct transit *tr,
   }
 
   li->endinfo=ftell(fp);
-
-  /*
-  //prepare to read marks. the first one should be 0.
-  rn=0;
-  mark=(PREC_NREC *)calloc(nalloc,sizeof(PREC_NREC));
-  fread(mark,sizeof(PREC_NREC),1,fp);
-  if(mark[rn++]!=0)
-    transiterror(TERR_CRITICAL,
-		 "Invalid TWII format for the info file: Marks did not\n"
-		 "start with a 0 integer\n");
-
-  //read marks, it has to end with a zero mark.
-  while(1){
-    if(!fread(mark+rn,sizeof(PREC_NREC),1,fp))
-      transiterror(TERR_CRITICAL,
-		   "Invalid TWII format for the info file: Marks did not\n"
-		   "end with a 0 integer\n");
-
-    transitDEBUG(20,verblevel,"Mark found at: %li\n",mark[rn]);
-    if(mark[rn]==0)
-      break;
-
-    if(rn++==nalloc)
-      mark=(PREC_NREC *)realloc(mark,sizeof(PREC_NREC)*(nalloc<<=1));
-  }
-  //save the marks in structure and reallocate array to the size used
-  li->mark=(PREC_NREC *)realloc(mark,sizeof(PREC_NREC)*(rn));
-
-  //check that the number of marks is the adequate
-  i=(int)((finw-iniw)/(dwmark));
-  if(i&&rn!=i){
-    transiterror(TERR_CRITICAL,
-		 "Incorrect number of marks in infofile. There are %i,\n"
-		 "it should have been %i.\n"
-		 ,rn,(int)((finw-iniw)/(dwmark)));
-  }
-  li->dwmark=dwmark;
-  */
 
   //update structure values
   li->wi=iniw;
