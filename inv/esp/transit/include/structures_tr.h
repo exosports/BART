@@ -343,6 +343,10 @@ struct transithint {		/* Structure with user hinted data that
 				   optical depth for all or some
 				   isotopes, TRU_EXTPERISO has to be
 				   on. */
+  double blowex;		/* Blow extinction by this amount before
+				   computing tau, this option has no
+				   physical meaning, but mostly
+				   debugging. */
   int taulevel;			/* Tau integration level of precision */
   int modlevel;			/* Modulation integration level of
 				   precision */
@@ -379,6 +383,10 @@ struct transit {		/* Main data structure */
   prop_atm atm;			/* Sampled atmospheric data. */
   short tauiso;			/* Isotope from which to calculate the
 				   optical depth */
+  double blowex;		/* Blow extinction by this amount before
+				   computing tau, this option has no
+				   physical meaning, but mostly
+				   debugging. */
   int taulevel;			/* Tau integration level of precision */
   int modlevel;			/* Modulation integration level of
 				   precision */

@@ -69,6 +69,7 @@ tau(struct transit *tr)
   rnn=rad->n;
 
   //set tau structures' value
+  const double blowex=tr->blowex=tr->ds.th->blowex;
   const int taulevel=tr->taulevel=tr->ds.th->taulevel;
   tau.toomuch=50;
   if(tr->ds.th->toomuch>0)
@@ -122,7 +123,7 @@ tau(struct transit *tr)
     //temporarily overwritten by (fnc)(), but they should come back as
     //they went in.
     for(ri=0;ri<rnn;ri++)
-      er[ri]=e[ri][wi];
+      er[ri]=e[ri][wi]*blowex;
 
     //For each resultant impact parameter
     for(ri=0;ri<inn;ri++){
@@ -132,7 +133,7 @@ tau(struct transit *tr)
 
 	if(ri)
 	  transitprint(3,verblevel,
-		       "Last Tau(bb=%9.3g, wn=%9.3g): %10.4g\n"
+		       "Last Tau(bb=%9.4g, wn=%9.4g): %10.4g\n"
 		       ,bb[ri-1],wn->v[wi],t[ri-1]);
 	//while the extinction at a radius bigger than the impact
 	//parameter is not computed.. go for it
@@ -147,7 +148,7 @@ tau(struct transit *tr)
 			   ,rn,r[lastr]*rfct);
 	    //otherwise, update the value of the extinction at the right place.
 	    else
-	      er[lastr]=e[lastr][wi];
+	      er[lastr]=e[lastr][wi]*blowex;
 	  }
 	}while(bb[ri]*ip->fct<r[lastr]*rfct);
       }
