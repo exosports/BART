@@ -73,8 +73,8 @@ LIBS  = -lX11 -lm $(GSLLIB)
 
 default: transit lineread
 
-install:
-	cp -pf dbgsample $(BIN)
+install: default
+	cp -pf lineread $(BIN)
 	cp -pf transit $(BIN)
 
 dbgsample: $(UT_OBJ) transitstd.c makesample.c
@@ -89,7 +89,6 @@ transit: $(UT_OBJ) $(TR_OBJ)
 
 lineread: $(UT_OBJ) $(LR_OBJ)
 	$(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
-	cp -pf lineread $(BIN)
 
 #$(UT_OBJ): %.o: %.c
 #	$(CC) -c $(STDFLAGS) -o $@ $<
