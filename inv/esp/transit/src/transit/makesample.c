@@ -482,12 +482,14 @@ int makeradsample(struct transit *tr)
   atmt->pfct=atms->atm.pfct;
   atmt->t=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   atmt->p=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  atmt->mm=(double *)calloc(nrad,sizeof(double));
 
   //interpolate temperature values according to radius
   resamplex(flag,rsamp->n,rsamp->v,nrad,rad->v);
-  resampley(flag,2,
+  resampley(flag,3,
 	    atms->atm.t,atmt->t,
-	    atms->atm.p,atmt->p);
+	    atms->atm.p,atmt->p,
+	    atms->mm,atmt->mm);
 
   //Now for the isotope. 
   //First, for the isotopes that were added by getatm() (extended). We
