@@ -262,9 +262,14 @@ int main (int argc,		/* Number of variables */
     printone(&transit);
 
   //Computes sampling of impact parameter
-  if((rn=makeipsample(&transit))!=0)
+  if((rn=makeipsample(&transit))<0)
     transiterror(TERR_SERIOUS,
-		 "makeipsampling() returned error code %i\n"
+		 "makeipsample() returned error code %i\n"
+		 ,rn);
+  if(rn>0)
+    transitprint(1,verblevel,
+		 "makeipsample() modified some parameters according\n"
+		 "to returned flag: 0x%x\n"
 		 ,rn);
 
 
