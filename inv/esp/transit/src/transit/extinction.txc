@@ -446,3 +446,34 @@ inline int newprofile(PREC_VOIGT **pr, /* output 2d profile */
   return nvgt/2;
 }
 
+
+
+/* \fcnfh
+   Printout for one P,T conditions
+*/
+void
+printone(struct transit *tr)
+{
+  int rn;
+  FILE *out=stdout;
+
+  //open file
+  if(tr->f_out&&tr->f_out[0]!='-')
+    out=fopen(tr->f_out,"w");
+
+  transitprint(1,verblevel,
+	       "\nPrinting extinction for one radius (at %gcm) in '%s'\n"
+	       ,tr->rads.v[0],tr->f_out?tr->f_out:"standard output");
+
+  //print!
+  fprintf(out,
+	  "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\tcross-section[cm2]\n");
+  for(rn=0;rn<tr->wns.n;rn++)
+    fprintf(out,"%12.6f%14.6f%17.7g%17.7g\n"
+	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
+	    tr->ds.ex->e[0][0][rn],
+	    AMU*tr->ds.ex->e[0][0][rn]*tr->isof[0].m/tr->isov[0].d[0]);
+
+  exit(EXIT_SUCCESS);
+}
+

@@ -53,7 +53,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 				       info file */
 {
   //'nmb' auxiliar variable for a number.
-  int nmb,nrad,i,newiso;
+  int nmb,nrad,i;
   double sumq;
   //'at' and 'hints' are the atmospheric and hint's structure,
   //respectively
@@ -64,9 +64,10 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   memset(&st_at,0,sizeof(struct atm_data));
   tr->ds.at=&st_at;
   enum {invalid,given,ask,file} inp=invalid;
-  FILE *fp;
   float allowq;
-
+  //'fp' and 'newiso' are initialized to avoid compiler output
+  FILE *fp=NULL;
+  int newiso=0;
 
   //Pass atmospheric flags into info struct
   transitacceptflag(tr->fl,th->fl,TRU_ATMBITS);
@@ -158,7 +159,11 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     //'nmb' the total number of allocated isotopes.
     newiso=tr->n_i;
     break;
-  default:			/* Just to avoid compiler output */
+  default:			/* Just to avoid compiler output, it
+				   should never happen */
+    transiterror(TERR_CRITICAL,
+		 "This is not happening in file %s (%li)\n"
+		 ,__FILE__,__LINE__);
     break;
   }
 

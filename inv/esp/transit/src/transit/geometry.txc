@@ -83,7 +83,7 @@ setgeom(struct geometry *sg,	/* geometry structure */
 				   position, use HUGE_VAL for use the
 				   default value stored in the geometry
 				   structure */
-	int *flags)		/* Progress indicator flag */
+	long *flags)		/* Progress indicator flag */
 {
   transitcheckcalled(*flags,"setgeom",1,
 		     "idxrefrac",TRPI_GEOMETRYHINT
@@ -121,4 +121,21 @@ setgeom(struct geometry *sg,	/* geometry structure */
   //set progress indicator and return.
   *flags|=TRPI_GEOMETRY;
   return 0;
+}
+
+
+/* \fcnfh
+   Any normalized variation of the star, probably limb darkening
+
+   @return normalized value;
+*/
+inline PREC_RES
+starvariation(double x,
+	      double y,
+	      double radius)
+{
+  if(x*x+y*y>radius*radius)
+    return 0;
+
+  return 1;
 }

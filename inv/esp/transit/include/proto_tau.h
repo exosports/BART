@@ -6,5 +6,6 @@
 
 /* tau.c */
 extern int tau P_((struct transit *tr));
+extern void printtau P_((struct transit *tr));
 
 #undef P_

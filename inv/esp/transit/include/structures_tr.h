@@ -28,37 +28,6 @@
 struct transit;
 struct geometry;
 
-typedef struct {
-  const char *name;
-  const char *file;
-  const char *gslver;
-
-  PREC_RES (*tauperb)		/* Optical depth per impact
-				   parameter */
-       (PREC_RES b,		/* impact parameter */
-	PREC_RES *rad,		/* radius array */
-	PREC_RES *refr,		/* refractivity index */
-	PREC_RES ***ex,		/* extinction[rad][iso][nwn] */
-	long nrad,		/* number of radii elements */
-	short iso,		/* isotope chosen */
-	long wn,		/* wavenumber looked */
-	PREC_RES *dt,		/* differential optical depth [rad].
-				   Auxiliary array */
-	gsl_interp_accel *acc);	/* accelerating pointer. Auxiliary array
-				 */
-  PREC_RES (*obsperwn)		/* Quantity obtained from
-				   integration of optical depth
-				*/ 
-       (PREC_RES *tau,
-	long first,
-	PREC_RES tautoomuch,
-	PREC_RES *b,
-	long nb,
-	struct geometry *star,
-	gsl_interp_accel *acc);
-} transit_ray_solution;
-extern const transit_ray_solution slantpath;
-
 
 typedef struct {          	/* One item per sampling element */
   PREC_NREC n;			/* number of elements */
@@ -111,6 +80,36 @@ typedef struct {          	/* One item per database */
   PREC_ZREC *T;			/* Temperatures */ 
 } prop_dbnoext;
 
+
+typedef struct {
+  const char *name;
+  const char *file;
+  const char *gslver;
+  const short monoip;
+
+  PREC_RES (*tauperb)		/* Optical depth per impact
+				   parameter */
+       (PREC_RES b,		/* impact parameter */
+	PREC_RES *rad,		/* radius array */
+	PREC_RES *refr,		/* refractivity index */
+	PREC_RES ***ex,		/* extinction[rad][iso][nwn] */
+	long nrad,		/* number of radii elements */
+	short iso,		/* isotope chosen */
+	long wn,		/* wavenumber looked */
+	PREC_RES *dt,		/* differential optical depth [rad].
+				   Auxiliary array */
+	gsl_interp_accel *acc);	/* accelerating pointer. Auxiliary array
+				 */
+  PREC_RES (*obsperwn)		/* Quantity obtained from
+				   integration of optical depth
+				*/ 
+       (PREC_RES *tau,
+	long first,
+	PREC_RES toomuch,
+	prop_samp *ip,
+	struct geometry *star,
+	gsl_interp_accel *acc);
+} transit_ray_solution;
 
 struct lineinfo {		/* Used to keep parameters in
 				   readlineinfo() */

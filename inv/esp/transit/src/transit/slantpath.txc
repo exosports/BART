@@ -109,10 +109,7 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
   PREC_RES analiticfrac=(rad[rs]-r0);
   res=ex[rs-1][iso][wn]*sqrt((analiticfrac+2*r0)*analiticfrac)/refr[rs-1];
 
-  //And now for the numerical integration.\par
-  //This part currently depends on a proper installation of GSL library
-#ifdef _USE_GSL
-
+  //And now for the numerical integration. Set the variables
   for(i=rs;i<nrad;i++){
     r0a=b/refr[i]/rad[i];
     transitASSERT(r0a>1,
@@ -121,7 +118,9 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
     dt[i]=ex[i][iso][wn]/sqrt(1-r0a*r0a);
   }
 
-
+  //and integrate!.\par
+  //This part currently depends on a proper installation of GSL library
+#ifdef _USE_GSL
   acc->cache = 0;
   acc->hit_count = 0;
   acc->miss_count = 0;
@@ -130,10 +129,10 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
   res+=gsl_spline_eval_integ(spl,rad[rs],rad[nrad-1],acc);
   gsl_spline_free(spl);
 
+#else
   //Without {\bf GSL} is currently not implemented. Output is dependent in an
   //appropiate installation of those libraries
-#else
-#error computation of tau() without GSL is not implemented
+# error computation of totaltau() without GSL is not implemented
 #endif
 
   return 2*res;
@@ -147,19 +146,74 @@ totaltau(PREC_RES b,		/* impact parameter, in units of rad. */
    @returns modulation obtained
 */
 static inline PREC_RES
-modulation (PREC_RES *tau,
-	    PREC_RES *b,
-	    long nb,
-	    struct geometry *sg,
-	    gsl_interp_accel *acc)
+modulationperwn (PREC_RES *tau,
+		 long first,
+		 double toomuch,
+		 prop_samp *ip,
+		 struct geometry *sg,
+		 gsl_interp_accel *acc)
 {
-
-  double intx,integrand;
-
+  //general variables
   double srad=sg->starrad*sg->starradfct;
-  double dint=srad/b[nb-1]*nb;
+  double *integ,tt;
+  PREC_RES res;
 
+  //Impact parameter and azimuth variables
+  long ipn=ip->n,azn;
+  PREC_RES ipd=ip->d,ipv;
+  PREC_RES azz,*az,azd;
 
+  //star centered coordinates and counters
+  double starx,stary;
+  long i,j;
+  
+  //allocate enough azimuthal bins for the outermost (biggest) radii,
+  //others will necessarily be smaller.
+  azd=2*PI*ip->v[ipn-1]*ip->fct/ipd;
+  azn=(long)azd+1;
+  integ=(double *)alloca(azn*sizeof(double));
+  az=(double *)alloca(azn*sizeof(double));
+
+  //for each of the planet's layer starting from the outermost until the
+  //closest layer
+  first--;
+  for(i=ipn-1;i>first;i--){
+    //take azimuthal spacing equal to the radial spacing. Add one bin so
+    //that integration can be done until 2PI
+    ipv=ip->v[i]*ip->fct;
+    azd=ipd/ipv;
+    azn=2*PI/azd +1;
+    tt=tau[i];
+
+    //fill azimuthal integrand
+    for(j=0;j<azn;j++){
+      azz=az[j]=j*azd;
+      starx=(sg->x+ipv*sin(azz))/sg->starrad;
+      stary=(sg->y+ipv*cos(azz))/sg->starrad;
+      integ[j]=starvariation(starx,stary,srad)*
+	exp(-tt)*ipv;
+    }
+
+    //feed gsl.
+#ifdef _USE_GSL
+    acc->cache = 0;
+    acc->hit_count = 0;
+    acc->miss_count = 0;
+    gsl_spline *spl=gsl_spline_alloc(gsl_interp_cspline,azn);
+    gsl_spline_init(spl,az,integ,azn);
+    res=gsl_spline_eval_integ(spl,0,2*PI,acc);
+    gsl_spline_free(spl);
+
+#else
+    //Without {\bf GSL} is currently not implemented. Output is dependent in an
+    //appropiate installation of those libraries
+# error computation of modulation() without GSL is not implemented
+#endif
+
+  }
+
+  /* TD: Add normalized unblocked area of the star */
+  res+=0;
 
   return 0;
 }
@@ -167,9 +221,11 @@ modulation (PREC_RES *tau,
 
 const transit_ray_solution slantpath =
   {
-    "Slant Path",
-    "slantpath.c",
-    "1.4",
-    &totaltau,
-    &modulation
+    "Slant Path",		/* Name of the solution */
+    "slantpath.c",		/* This file name */
+    "1.4",			/* GSL version */
+    1,				/* Equispaced impact parameter requested? */
+    &totaltau,			/* per impact parameter and per
+				   wavenumber value computation */
+    &modulationperwn		/* per wavenumber value computation */
   };

@@ -27,14 +27,11 @@
    to telescope resolution
 
    @returns 0 on success
+            -1 if impact parameter sampling is not equispaced
  */
 int
 modulation(struct transit *tr)	/* Main structure */
 {
-  long w;
-  prop_samp *ip=&tr->ips;
-  prop_samp *wn=&tr->wns;
-
   transitcheckcalled(tr->pi,"modulation",4,
 		     "tau",TRPI_TAU,
 		     "makeipsample",TRPI_MAKEIP,
@@ -42,21 +39,66 @@ modulation(struct transit *tr)	/* Main structure */
 		     "setgeom",TRPI_GEOMETRY
 		     );
 
+  //initial variables and check that impact parameters was a monospaced
+  //array. Stop otherwise.
+  long w;
+  prop_samp *ip=&tr->ips;
+  prop_samp *wn=&tr->wns;
+  transit_ray_solution *sol=tr->sol;
+  if(ip->d<=0&&sol->monoip){
+    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+		 "To compute %s modulation, the impact parameter has to\n"
+		 "be an equispaced array\n"
+		 ,sol->name);
+    return -1;
+  }
+
   //output and geometry variables.
   PREC_RES *out=tr->outpret=(PREC_RES *)calloc(wn->n,sizeof(PREC_RES));
   struct geometry *sg=tr->ds.sg;
   struct optdepth *tau=tr->ds.tau;
 
-  PREC_RES *t;
-
+  //set time to the user hinted default
   setgeom(sg,HUGE_VAL,&tr->pi);
 
+
+  //integrate for each wavelength
   gsl_interp_accel *acc=gsl_interp_accel_alloc();
   for(w=0;w<wn->n;w++){
-    out[w]=tr->sol->obsperwn(tau->t[w],tau->first[w],tau->toomuch,
-			     ip->v,ip->n,sg,acc);
+    out[w]=sol->obsperwn(tau->t[w],tau->first[w],tau->toomuch,
+			 ip,sg,acc);
   }
   gsl_interp_accel_free(acc);
 
   return 0;
+}
+
+
+/* \fcnfh
+   Printout for modulation as function of wavelength
+*/
+void
+printmod(struct transit *tr)
+{
+  FILE *out=stdout;
+  int rn;
+
+  //open file
+  if(tr->f_out&&tr->f_out[0]!='-')
+    out=fopen(tr->f_out,"w");
+
+  transitprint(1,verblevel,
+	       "\nPrinting in-eclipse/out-eclipse ratio for requested\n"
+	       "conditions in '%s'\n"
+	       ,tr->f_out?tr->f_out:"standard output");
+
+  //print!
+  fprintf(out,
+	  "#wavenumber[cm-1]\twavelength[nm]\tmodulation\n");
+  for(rn=0;rn<tr->wns.n;rn++)
+    fprintf(out,"%12.6f%14.6f%17.7g\n"
+	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
+	    tr->outpret[rn]);
+
+  exit(EXIT_SUCCESS);
 }

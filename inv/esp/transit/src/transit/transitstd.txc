@@ -29,12 +29,11 @@ int transit_nowarn=0;
 int verblevel;
 int maxline=200;
 
-inline void transitdot(int thislevel, int verblevel)
+inline void transitdot(int thislevel, int verblevel,...)
 {
   if(thislevel<=verblevel)
     fwrite(".",1,1,stderr);
 }
-
 
 int
 transiterror (int flags,

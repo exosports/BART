@@ -957,11 +957,11 @@ int readdatarng(struct transit *tr, /* General parameters and
     //if ascii, after skipping comments read the 4 fields: center, isoid,
     //lowE, loggf
     if(li->asciiline){
-      while((rn=fgetupto(lp=line,maxline,fp,&asciierr,
+      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,
 			 tr->f_line,li->asciiline+offs++))
 	    =='#'||rc=='\n');
       //if it is not end of file, read the records.
-      if(rn){
+      if(rc){
 	ltwl[i]=strtod(lp,&lp2);
 	if(lp==lp2) 
 	  return invalidfield(line,tr->f_line,li->asciiline+offs

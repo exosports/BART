@@ -38,6 +38,7 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <alloca.h>
 #ifdef _USE_GSL
 #include <gsl/gsl_spline.h>
 #endif
@@ -96,6 +97,9 @@ enum isodo {unclear=0,atmfile,ignore,fixed};
 
 #include <structures_tr.h>
 
+extern const transit_ray_solution slantpath;
+
+
 /***** Prototypes *****/
 #include <proto_transit.h>
 #include <proto_readlineinfo.h>
@@ -106,5 +110,7 @@ enum isodo {unclear=0,atmfile,ignore,fixed};
 #include <proto_idxrefraction.h>
 #include <proto_tau.h>
 #include <proto_argum.h>
+#include <proto_geometry.h>
+#include <proto_observable.h>
 
 #endif /* _TRANSIT_H */

@@ -105,6 +105,57 @@ tau(struct transit *tr)
   }
   gsl_interp_accel_free(acc);
 
+  transitprint(1,verblevel,
+	       "Optical depth calculated up to %g[cm-1]\n"
+	       ,tr->ds.tau->toomuch);
+
   tr->pi|=TRPI_TAU;
   return 0;
 }
+
+
+/* \fcnfh
+   Printout for optical depth at a requested radius
+*/
+void
+printtau(struct transit *tr)
+{
+  int rn;
+  FILE *out=stdout;
+  prop_samp *rads=&tr->ips;
+  PREC_RES **t=tr->ds.tau->t;
+  long *frst=tr->ds.tau->first;
+  PREC_RES toomuch=tr->ds.tau->toomuch;
+
+  transitcheckcalled(tr->pi,"printtau",1,
+		     "tau",TRPI_TAU);
+
+  //open file
+  if(tr->f_out&&tr->f_out[0]!='-')
+    out=fopen(tr->f_out,"w");
+
+  long rad=
+    askforposl("Radius at which you want to print the optical depth(%li - %li): "
+	       ,1,rads->n)-1;
+  if(rad>rads->v[rads->n-1]){
+    fprintf(stderr,"Value out of range, try again\n");
+    printtau(tr);
+  }
+
+  transitprint(1,verblevel,
+	       "\nPrinting optical depth for radius %li (at %gcm) in '%s'\n"
+	       "Optical depth calculated up to %g[cm-1]\n"
+	       ,rad+1,rads->fct*rads->v[rad]
+	       ,tr->f_out?tr->f_out:"standard output",toomuch);
+
+  //print!
+  fprintf(out,
+	  "#wavenumber[cm-1]\twavelength[nm]\toptical depth[cm-1]\n");
+  for(rn=0;rn<tr->wns.n;rn++)
+    fprintf(out,"%12.6f%14.6f%17.7g\n"
+	    ,tr->wns.fct*tr->wns.v[rn],WNU_O_WLU/tr->wns.v[rn]/tr->wns.fct,
+	    rad<frst[rn]?toomuch:t[rn][rad]);
+
+  exit(EXIT_SUCCESS);
+}
+

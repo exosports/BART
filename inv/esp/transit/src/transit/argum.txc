@@ -85,7 +85,8 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_GTIME,
     CLA_GTIMEFCT,
     CLA_GMASSRAD,
-    CLA_GMASSRADFCT
+    CLA_GMASSRADFCT,
+    CLA_OUTTAU,
   };
 
   //General help-option structure
@@ -239,6 +240,9 @@ int processparameters(int argc, /* number of command line arguments */
     {"solution",required_argument,'s',
      "sol_name","Name of the kind of output solution ('slant path'\n"
      "is currently the only availabale alternative)"},
+    {"outtau",no_argument,CLA_OUTTAU,
+     NULL,"Output is optical depth instead of modulation. It will be\n"
+     "asked which radius to plot\n"},
 
     {NULL,HELPTITLE,0,
      NULL,"OBSERVATIONAL OPTIONS:"},
@@ -255,7 +259,7 @@ int processparameters(int argc, /* number of command line arguments */
   var_cfg.columns=60;
 
   int rn,i;
-  prop_samp *samp;
+  prop_samp *samp=NULL;
   char name[20],rc,*lp;
   char *sampv[]={"Initial","Final","Spacing","Oversampling integer for"};
   double rf;
@@ -514,6 +518,9 @@ int processparameters(int argc, /* number of command line arguments */
       getnd(6,',',optarg,
 	    &hints->sg.smaxisfct,&hints->sg.timefct,&hints->sg.inclfct,
 	    &hints->sg.eccfct,&hints->sg.lnodefct,&hints->sg.aperfct);
+      break;
+    case CLA_OUTTAU:
+      hints->fl|=TRU_OUTTAU;
       break;
     }
   }
