@@ -36,6 +36,9 @@ static char *pands_name="Partridge & Schwenke(1997)";
 static char *isotope[NUM_ISOT]={"1H1H16O","1H1H17O","1H1H18O","1H2H16O"};
 
 static int isoname(char ***isotope, int niso);
+static int read_zpands(char *filename, PREC_ZREC ***Z, PREC_ZREC **T,
+		       int *nT, int nIso);
+
 
 /* \fcnfh
   databasename: Just return the name of the database in a newly
@@ -59,21 +62,6 @@ int databasename(char **name)
 
   return 1;
 }
-
-/* \fcnfh
-  read_zpands: Read from file 'filename'(char *), the partition function
-  information into 'Z'(PREC_ZREC ***), it is a two dimensional array
-  depending on isotope (1st dimension) and temperature(2nd
-  dimension). Values of temperature are stored in 'T'(PREC_ZREC **), of
-  size 'nT'(int *). 'nIso'(int) indicates the number of isotopes in
-  consideration. It is assumed that the isotopes columns have the same
-  order as the indices being used.
-*/
-static int read_zpands(char *filename,
-		       PREC_ZREC ***Z,
-		       PREC_ZREC **T,
-		       int *nT,
-		       int nIso);
 
 
 /*
@@ -333,6 +321,15 @@ PREC_NREC dbread_pands(char *filename,
 
 
 #define MAX_LINE 200
+/*\fcnfh
+  read_zpands: Read from file 'filename'(char *), the partition function
+  information into 'Z'(PREC_ZREC ***), it is a two dimensional array
+  depending on isotope (1st dimension) and temperature(2nd
+  dimension). Values of temperature are stored in 'T'(PREC_ZREC **), of
+  size 'nT'(int *). 'nIso'(int) indicates the number of isotopes in
+  consideration. It is assumed that the isotopes columns have the same
+  order as the indices being used.
+*/
 static int read_zpands(char *filename, /* Doh! */
 		       PREC_ZREC ***Z, /* Partition function */
 		       PREC_ZREC **T,  /* Temperature points */
