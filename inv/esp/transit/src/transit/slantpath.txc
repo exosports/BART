@@ -275,25 +275,22 @@ modulationm1(PREC_RES *tau,
 	     struct geometry *sg)
 {
   long i,ini;
-  double ipv[3];
+  double ipv[2];
   double muchrad;
-  double srad=sg->starrad*sg->starradfct;
 
   if(tau[last]<toomuch)
     return -1;
 
   //Fill the unnormalized impact parameter array
-  ini=++last-3;
+  ini=++last-2;
   if(ini<0) ini=0;
   for(i=ini;i<last;i++)
     ipv[i-ini]=ip->v[i]*ip->fct;
 
-  //Find the level at which toomuch is reached through a paraboloid or
-  //linear interpolation, depending whether we have enough points.
-  if(last>2) muchrad = interp_parab (tau+ini, ipv, toomuch);
-  else       muchrad = interp_line  (tau,     ipv, toomuch);
+  //find the minimum radius through linear interpolation
+  muchrad = interp_line  (tau+ini, ipv, toomuch);
 
-  return muchrad*muchrad/srad/srad;
+  return muchrad;
 }
 
 
