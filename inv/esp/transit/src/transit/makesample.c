@@ -446,6 +446,8 @@ int makeradsample(struct transit *tr)
       isovt[i].z=isovt->z+i*nrad;
     }
   }
+  atmt->tfct=atms->atm.tfct;
+  atmt->pfct=atms->atm.pfct;
   atmt->t=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   atmt->p=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
 

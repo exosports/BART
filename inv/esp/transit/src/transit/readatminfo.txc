@@ -135,7 +135,10 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
 		"not initialized in file %s, line %i\n"
 		,__FILE__,__LINE__);
 
+  //initialize TP arrays, by default temp and pressure are given in cgs.
   rads->v=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  st_at.atm.tfct=1;
+  st_at.atm.pfct=1;
   st_at.atm.t= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   st_at.atm.p= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   rads->v[0]=1.0;
@@ -259,8 +262,8 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     for(i=0;i<nmb;i++)
       st_at.isov[i].d[0]=stateeqnford(st_at.isov[i].q[0],
 				      st_at.mm[0],
-				      st_at.atm.p[0],
-				      st_at.atm.t[0]);
+				      st_at.atm.p[0]*st_at.atm.pfct,
+				      st_at.atm.t[0]*st_at.atm.tfct);
     break;
   case file:
     //All the extra isotopes are going to have density from file (cannot
@@ -370,7 +373,7 @@ telldefaults(struct isotopes *iso,
 	       " Temperature:         %g K\n"
 	       " Pressure:            %g (cgs, dyne/cm2)\n"
 	       " Mean molecular mass: %g (AMU)\n"
-	       ,at->atm.t[0],at->atm.p[0],at->mm[0]);
+	       ,at->atm.t[0]*at->atm.tfct,at->atm.p[0]*at->atm.pfct,at->mm[0]);
   //Densities for all isotopes
   for(i=0;i<iso->n_e;i++)
     if(iso->isodo[i]!=ignore)
@@ -507,7 +510,17 @@ getmnfromfile(FILE *fp,
 	  =='#'||rc=='\n');
     if(!rc) notyet(at->begline,tr->f_atm);
     if(rc=='u'){
-      at->rads.fct=atof(line+1);
+      switch(line[1]){
+      case 'r':
+	at->rads.fct=atof(line+2);
+	break;
+      case 'p':
+	at->atm.pfct=atof(line+2);
+	break;
+      case 't':
+	at->atm.tfct=atof(line+2);
+	break;
+      }
       continue;
     }
     if(rc=='n'){
@@ -751,7 +764,7 @@ readatmfile(FILE *fp,		/* File */
 
   fseek(fp,at->begpos,SEEK_SET);
   while(1){
-    //allocate if necessary
+    //reallocate if necessary
     if(r==nrad){
       nrad<<=1;
       rads->v=(PREC_ATM *)realloc(rads->v,nrad*sizeof(PREC_ATM));
@@ -776,18 +789,15 @@ readatmfile(FILE *fp,		/* File */
     tmp=rads->v[r]=strtod(lp,&lp2);
     checkposvalue(tmp,1,tr->f_atm,lines);
     if(lp==lp2) 
-    invalidfield(line,tr->f_atm,lines
-		 ,1,"radius");
+      invalidfield(line, tr->f_atm, lines, 1, "radius");
     tmp=at->atm.p[r]=strtod(lp2,&lp);
     checkposvalue(tmp,2,tr->f_atm,lines);
     if(lp==lp2)
-      invalidfield(line,tr->f_atm,lines
-		   ,2,"pressure");
+      invalidfield(line, tr->f_atm, lines, 2, "pressure");
     tmp=at->atm.t[r]=strtod(lp,&lp2);
     checkposvalue(tmp,3,tr->f_atm,lines);
     if(lp==lp2)
-      invalidfield(line,tr->f_atm,lines
-		   ,3,"temperature");
+      invalidfield(line, tr->f_atm, lines, 3, "temperature");
 
     //now read abundances for every isotope
     for(i=0;i<at->n_aiso;i++){
@@ -795,11 +805,10 @@ readatmfile(FILE *fp,		/* File */
 		    "Assertion failed in file %s, line %i: %i!=[0,%i]\n"
 		    ,__FILE__,__LINE__,isoeq[i],iso->n_e-1);
       tmp=isov[isoeq[i]].q[r]=strtod(lp2,&lp);
-      checkposvalue(tmp,i+4,tr->f_atm,lines);
+      checkposvalue(tmp, i+4, tr->f_atm, lines);
 
       if(lp==lp2)
-	invalidfield(line,tr->f_atm,lines
-			    ,4+i,"isotope abundance");
+	invalidfield(line, tr->f_atm, lines, 4+i, "isotope abundance");
       lp2=lp;
     }
 
@@ -831,8 +840,8 @@ readatmfile(FILE *fp,		/* File */
     for(i=0;i<nmb;i++)
       isov[i].d[r]=stateeqnford(isov[i].q[r],
 				at->mm[r],
-				at->atm.p[r],
-				at->atm.t[r]);
+				at->atm.p[r]*at->atm.pfct,
+				at->atm.t[r]*at->atm.tfct);
     r++;
   }
   rads->n=nrad=r;
@@ -927,6 +936,8 @@ sethcdef(struct transit *tr,
 
   int nrad=rads->n;
   rads->v=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+  at->atm.tfct=1;
+  at->atm.pfct=1;
   at->atm.t= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   at->atm.p= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
   at->mm= (PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));

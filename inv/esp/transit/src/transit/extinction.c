@@ -194,7 +194,7 @@ int extwn (struct transit *tr)
     ex->e[r][0]=ex->e[0][0]+r*i*nwn;
 
     //set some auxiliary variables.
-    temp=tr->atm.t[r];
+    temp=tr->atm.t[r]*tr->atm.tfct;
 
     //'propto\_adop' is proportional to the Doppler width, which in its
     //total splendor is
