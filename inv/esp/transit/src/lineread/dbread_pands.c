@@ -280,7 +280,6 @@ PREC_NREC dbread_pands(char *filename,
   fseek(fp,irec*PANDS_RECLENGTH,SEEK_SET);
 
   i=0;
-  double freq;
   do{
     line=(*lines)+i;
 
@@ -308,9 +307,7 @@ PREC_NREC dbread_pands(char *filename,
       line->isoid=record.igflog>0?2:3;
     line->recpos=i+irec;
     line->elow=(PREC_LNDATA)abs(record.ielow);
-
-    freq=LS/line->wl/tli_fct;
-    line->gf=0.01502*tablog[abs(record.igflog)]/freq;
+    line->gf=tablog[abs(record.igflog)];
 
     i++;
   }while(line->wl<wlend && i+irec<frec);
