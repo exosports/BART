@@ -38,13 +38,15 @@ tau(struct transit *tr)
   prop_samp *rad=&tr->rads;
   prop_samp *wn=&tr->wns;
   prop_samp *ip=&tr->ips;
-  PREC_RES **e=tr->ds.ex->e[tr->tauiso];
+  struct extinction *ex=tr->ds.ex;
+  PREC_RES **e=ex->e[tr->tauiso];
   PREC_RES (*fcn)()=tr->sol->tauperb;
 
 
   //index, initial and final values
-  long ii,wi;
+  long ii,wi,ri;
   long inn,rnn,wnn;
+  int rn;
   //'bb' is the impact parameter, while 'n' is the index of refraction,
   //'w' is the wavenumber, 't' is the tau as function of impact
   //parameter, 'r' is the radius
@@ -52,6 +54,7 @@ tau(struct transit *tr)
   PREC_RES *n=tr->ds.ir->n;
   PREC_RES *r=rad->v;
   PREC_RES *t;
+  PREC_ATM *temp=tr->ds.at->atm.t,tfct=tr->ds.at->atm.tfct;
 
   transitcheckcalled(tr->pi,"tau",2,
 		     "idxrefrac",TRPI_IDXREFRAC,
@@ -91,7 +94,7 @@ tau(struct transit *tr)
   transitprint(1,verblevel,
 	       "Calculating optical depth at various radius...\n");
 
-  if(tr->ds.ex->periso)
+  if(ex->periso)
     transitprint(1,verblevel,
 		 " Note that I'm computing only for isotope '%s', others"
 		 "were ignored\n"
@@ -99,6 +102,7 @@ tau(struct transit *tr)
 
   //to store reordered extinction
   PREC_RES er[rnn];
+  _Bool *comp=ex->computed;
 
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
@@ -107,13 +111,19 @@ tau(struct transit *tr)
     //Put the extinction values in a new array, the values may be
     //temporarily overwritten by (fnc)(), but they should come back as
     //they went in.
-    for(ii=0;ii<rnn;ii++)
-      er[ii]=e[ii][wi];
+    for(ri=0;ri<rnn;ri++)
+      er[ri]=e[ri][wi];
 
     //For each resultant impact parameter
-    for(ii=0;ii<inn;ii++){
-      if( (t[ii] = rfct * fcn(bb[ii]*riw,r,n,er,rnn,taulevel)) > tau.toomuch){
-	tau.last[wi]=ii;
+    for(ri=0;ri<inn;ri++){
+      if(!comp[ri] &&
+	 (rn=computeextradius(ri,r[ri]*rfct,temp[ri]*tfct,ex))!=0)
+	transiterror(TERR_CRITICAL,
+		     "computeextradius() return error code %i while\n"
+		     "computing radius #%i: %g\n"
+		     ,rn,r[ri]*rfct);
+      if( (t[ri] = rfct * fcn(bb[ri]*riw,r,n,er,rnn,taulevel)) > tau.toomuch){
+	tau.last[wi]=ri;
 	break;
       }
     }
