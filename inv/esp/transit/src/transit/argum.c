@@ -58,7 +58,7 @@ const static transit_ray_solution *raysols[] = {
  */
 int processparameters(int argc, /* number of command line arguments */
 		      char **argv, /* command line arguments */
-		      struct transithint *hints) /* structure to store
+		      struct transit *tr) /* structure to store
 						    hinted parameters */
 {
   //different non short options
@@ -284,6 +284,16 @@ int processparameters(int argc, /* number of command line arguments */
   var_cfg.files=DOTCFGFILE PREPEXTRACFGFILES;
   var_cfg.columns=60;
 
+  static struct transithint st_trh;
+  memset(&st_trh, 0, sizeof(struct transithint));
+  struct transithint *hints = tr->ds.th=&st_trh;
+
+  st_trh.fl|=TRU_ATMASK1P|TRU_SAMPLIN|TRH_MASS;
+  st_trh.verbnoise=4;
+  st_trh.mass=1;
+  /* TD: have this option user selectable */
+  st_trh.tauiso=0;
+
   int rn,i;
   prop_samp *samp=NULL;
   char name[20],rc,*lp;
@@ -435,6 +445,7 @@ int processparameters(int argc, /* number of command line arguments */
     case CLA_ONEINT:
       hints->fl=(hints->fl&~TRU_ATM1PBITS)|TRU_ATMASK1P;
       break;
+
     case CLA_RADLOW:
       hints->rads.i=atof(optarg);
       break;
@@ -443,6 +454,9 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_RADDELT:
       hints->rads.d=atof(optarg);
+      break;
+    case CLA_RADFCT:
+      hints->rads.fct=atof(optarg);
       break;
 
     case CLA_WAVLOW:
@@ -461,12 +475,16 @@ int processparameters(int argc, /* number of command line arguments */
       hints->wavs.n=0;
       hints->wavs.v=NULL;
       break;
+    case CLA_WAVFCT:
+      hints->wavs.fct=atof(optarg);
+      break;
     case CLA_WAVOSAMP:
       hints->wavs.o=atof(optarg);
       break;
     case CLA_WAVMARGIN:
       hints->m=atof(optarg);
       break;
+
     case CLA_WAVNLOW:
       hints->wns.i=atof(optarg);
       break;
@@ -483,6 +501,9 @@ int processparameters(int argc, /* number of command line arguments */
       break;
     case CLA_WAVNMARGIN:
       hints->wnm=atof(optarg);
+      break;
+    case CLA_WNFCT:
+      hints->wns.fct=atof(optarg);
       break;
 
     case 't':			//Telescope resolution
