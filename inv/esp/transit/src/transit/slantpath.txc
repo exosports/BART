@@ -53,6 +53,7 @@ totaltau1(PREC_RES b,		/* impact parameter */
   int rs;
   int i;
   PREC_RES res;
+  PREC_RES x3[3],r3[3];
 
   //Look for closest approach radius
   PREC_RES r0=b/refr;
@@ -84,51 +85,42 @@ totaltau1(PREC_RES b,		/* impact parameter */
   if(nrad==2) *ex=interp_parab(rad-1,ex-1,r0);
   else *ex=interp_parab(rad,ex,r0);
   *rad=r0;
+  if(nrad==2){
+    x3[0]=ex[0];
+    x3[2]=ex[1];
+    x3[1]=(ex[1]+ex[0])/2.0;
+    r3[0]=rad[0];
+    r3[2]=rad[1];
+    r3[1]=(rad[0]+rad[1])/2.0;
+    *rad=tmprad;
+    *ex=tmpex;
+    rad=r3;
+    ex=x3;
+    nrad++;
+  }
   const PREC_RES dr=rad[1]-rad[0];
 
   //Now convert to s spacing, i.e. distance along the path. Radius needs
   //to be equispaced.
-  //If we are not in the border
-  if(nrad>2){
-    PREC_RES s[nrad];
-    const PREC_RES Dr=rad[2]-rad[1];
-    const PREC_RES cte=dr*(dr + 2*r0);
-    s[0]=0;
+  PREC_RES s[nrad];
+  const PREC_RES Dr=rad[2]-rad[1];
+  const PREC_RES cte=dr*(dr + 2*r0);
+  s[0]=0;
 
-    for(i=1 ; i<nrad ; i++)
-      s[i]=sqrt(cte + (i-1)*Dr*(2.0*(r0+dr) + (i-1)*Dr) );
+  for(i=1 ; i<nrad ; i++)
+    s[i]=sqrt(cte + (i-1)*Dr*(2.0*(r0+dr) + (i-1)*Dr) );
 
-    //Integrate!\par
-    //Use spline if GSL is available along with at least 3 points
+  //Integrate!\par
+  //Use spline if GSL is available along with at least 3 points
 #ifdef _USE_GSL
-    gsl_interp_accel acc={0,0,0};
-    gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,nrad);
-    gsl_interp_init(spl,s,ex,nrad);
-    res=gsl_interp_eval_integ(spl,s,ex,0,s[nrad-1],&acc);
-    gsl_interp_free(spl);
+  gsl_interp_accel acc={0,0,0};
+  gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,nrad);
+  gsl_interp_init(spl,s,ex,nrad);
+  res=gsl_interp_eval_integ(spl,s,ex,0,s[nrad-1],&acc);
+  gsl_interp_free(spl);
 #else
 #error non equispaced integration is not implemented without GSL
 #endif /* _USE_GSL */
-  }
-
-  //Integrate towards a constant value of extinction if we are in the
-  //outmost layer
-  else{
-    if(ex[1]==ex[0])
-      res= ex[0] * r0 * ( sqrt( rad[1] * rad[1] / r0 / r0 - 1) );
-    else{
-      PREC_RES alpha = ( ex[1] - ex[0] ) / dr;
-      PREC_RES rm    = rad[1];
-      if(alpha<0)
-	res= - alpha * (rm * sqrt( rm * rm - r0 * r0) - r0 * r0 * 
-			log( sqrt( rm * rm / r0 / r0 - 1) + rm / r0 ) )
-	  / 2.0;
-      else
-	res=   alpha * (rm * sqrt( rm * rm - r0 * r0) + r0 * r0 * 
-			log( sqrt( rm * rm / r0 / r0 - 1) + rm / r0 ) )
-	  / 2.0;
-    }
-  }
 
   //replace original value of extinction
   //\linelabel{tmpex}
