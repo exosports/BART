@@ -727,12 +727,12 @@ int readinfo_tli(struct transit *tr,
   tr->fp_line=fp;
   tr->f_line=th->f_line;
 
-  //Read first two bytes, they should be either
+  //Read first four bytes, they should be either
   //`(0xff-T)(0xff-L)(0xff-I)(0xff)' or '\#TLI'. They are stored as
   //integer, so this check also serves to check whether the machine were
   //the data file and the one this program is being run have the same
   //endian order. If the first two are '\#TLI', then the first line
-  //might also start as '\#TLI-ascii' 
+  //should also start as '\#TLI-ascii' 
   fread(sign.s,sizeof(int),1,fp);
   //is it a binary TLI?
   if(sign.s[0]!=sign.s[1]){
@@ -794,7 +794,7 @@ int readinfo_tli(struct transit *tr,
    print out an error, it is called by readdatarng if one of the field
    with transition info is invalid
 
-   @return -5 always
+   @returns -5 always
 */
 static int
 invalidfield(char *line,	/* Contents of the line */
@@ -812,7 +812,7 @@ invalidfield(char *line,	/* Contents of the line */
 
 
 
-/*
+/*\fcnfh
   readdatarng: Read a wavelength range from datafile as returned by
   lineread. This function doesn't check for correct boundaries of
   data. You should run checkrange() before running this
