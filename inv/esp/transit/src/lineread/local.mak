@@ -1,5 +1,5 @@
 #sources
-lineread_SOURCES = ../transit/transitstd.c dbread_pands.c lineread.c
+lineread_SOURCES = ../transit/transitstd.c dbread_pands.c lineread.c dbread_text.c
 lineread_OBJECTS = $(lineread_SOURCES:.c=.o)
 bin_PROGRAMS     = lineread$(EXEEXT)
 

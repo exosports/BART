@@ -44,6 +44,7 @@ extern double tli_fct;
 
 #include <proto_lineread.h>
 #include <proto_dbread_pands.h>
+#include <proto_dbread_text.h>
 
 /*
   dbread_*: Reading of different line databases.

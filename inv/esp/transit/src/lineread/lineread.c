@@ -61,10 +61,9 @@ static int lineread_rev=1;
 PREC_NREC (*linefcn[dbread_nfcn])(char *,struct linedb **,float,float
 				    ,char *, PREC_ZREC ***,PREC_ZREC **
 				    ,PREC_ZREC **, int *, int *, char ***)={
-				      dbread_pands
-				    };
-char *dname[dbread_nfcn]={
-  "Partridge & Schwenke (1997). Water"
+				      dbread_pands,dbread_text
+				    };char *dname[dbread_nfcn]={
+				      "Partridge & Schwenke (1997). Water", "TLI-ASCII"
 };
 
 //Wavelength units is always nanometers
