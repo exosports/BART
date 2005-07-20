@@ -25,7 +25,19 @@
 
 short gabby_dbread=0;
 
+struct textinfo{
+  PREC_ZREC **Z;
+  PREC_ZREC *T;
+  PREC_ZREC *isomass;
+  int nT;
+  int nIso;
+  char **isonames;
+};
+
 static int isoname(char ***isotope, int niso);
+static FILE *readinfo(char *filename, struct textinfo *textinfo);
+static FILE *readlinres(FILE *fp, struct textinfo *textinfo,
+			float wlneg, float wlend);
 
 
 /* \fcnfh
@@ -45,25 +57,55 @@ int databasename(char **name)
  *
  *********************************************************/
 
-PREC_NREC dbread_pands(char *filename,
-		       struct linedb **lines, //2 pointers in order to be
-		                              //able to allocate memory
-		       float wlbeg,           //wavelengths in tli_fct
-		       float wlend,           //units
-		       /* Partition function data file */
-		       char *Zfilename,
-		       /* For the following 3 parameter, the memory is
-			  allocated in the dbread_* functions, and the
-			  size is returned in the last parameters. */
-		       PREC_ZREC ***Z,        //Partition function(isot,
-					      //temp)
-		       PREC_ZREC **T,         //temps for Z
-		       PREC_ZREC **isomass,   //Isotopes' mass in AMU
-		       int *nT,               //number of temperature
-					      //points 
-		       int *nIso,             //number of isotopes
-		       char ***isonames)      //Isotope's name
+
+
+PREC_NREC dbread_text(char *filename,
+		      struct linedb **lines, //2 pointers in order to be
+				//able to allocate memory
+		      float wlbeg,           //wavelengths in tli_fct
+		      float wlend,           //units
+		      /* Partition function data file */
+		      char *Zfilename,
+		      /* For the following 3 parameter, the memory is
+			 allocated in the dbread_* functions, and the
+			 size is returned in the last parameters. */
+		      PREC_ZREC ***Z,        //Partition function(isot,
+				//temp)
+		      PREC_ZREC **T,         //temps for Z
+		      PREC_ZREC **isomass,   //Isotopes' mass in AMU
+		      int *nT,               //number of temperature
+				//points 
+		      int *nIso,             //number of isotopes
+		      char ***isonames)      //Isotope's name
 {
+  struct textinfo texinfo;
+
+  FILE *fp = readinfo(filename, &textinfo);
+
+  return readlines(fp, &textinfo, wlbeg, wlend);
+}
+
+/*****************/
+
+static FILE *
+readinfo(char *filename,
+	 struct textinfo *textinfo)
+{
+  
+}
+
+/*****************/
+
+static FILE *
+readlinres(FILE *fp,
+	   struct textinfo *textinfo,
+	   float wlneg,
+	   float wlend)
+{
+}
+
+/*****************/
+
   PREC_NREC nrec;
   char *deffname="./oth/pands/h2ofast.bin";
   char *defzfname="./oth/pands/h2opartfn.dat";
