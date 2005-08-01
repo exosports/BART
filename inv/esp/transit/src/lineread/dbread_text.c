@@ -28,10 +28,11 @@ short gabby_dbread=0;
 struct textinfo{
   PREC_ZREC **Z;
   PREC_ZREC *T;
-  PREC_ZREC *isomass;
+  PREC_CS *c;
+  PREC_ZREC *mass;
   int nT;
   int nIso;
-  char **isonames;
+  char **name;
   long currline;
 };
 
@@ -90,32 +91,46 @@ int databasename(char **name)
  *
  *********************************************************/
 
+/* \fcnfh
+   Read line info
 
-
-PREC_NREC dbread_text(char *filename,
-		      struct linedb **lines, //2 pointers in order to be
-				//able to allocate memory
-		      float wlbeg,           //wavelengths in tli_fct
-		      float wlend,           //units
-		      /* Partition function data file */
-		      char *Zfilename,
-		      /* For the following 3 parameter, the memory is
-			 allocated in the dbread_* functions, and the
-			 size is returned in the last parameters. */
-		      PREC_ZREC ***Z,        //Partition function(isot,
-				//temp)
-		      PREC_ZREC **T,         //temps for Z
-		      PREC_ZREC **isomass,   //Isotopes' mass in AMU
-		      int *nT,               //number of temperature
-				//points 
-		      int *nIso,             //number of isotopes
-		      char ***isonames)      //Isotope's name
+   @returns number of lines read
+*/
+PREC_NREC
+dbread_text(char *filename,
+	    struct linedb **lines, //2 pointers in order to be
+	    //able to allocate memory
+	    float wlbeg,           //wavelengths in tli_fct
+	    float wlend,           //units
+	    /* Partition function data file */
+	    char *Zfilename,
+	    /* For the following 3 parameter, the memory is
+	       allocated in the dbread_* functions, and the
+	       size is returned in the last parameters. */
+	    PREC_ZREC ***Z,        //Partition function(isot,
+	    //temp)
+	    PREC_ZREC **T,         //temps for Z
+	    PREC_ZREC **isomass,   //Isotopes' mass in AMU
+	    int *nT,               //number of temperature
+	    //points 
+	    int *nIso,             //number of isotopes
+	    char ***isonames)      //Isotope's name
 {
   struct textinfo texinfo;
 
   FILE *fp = readinfo(filename, &textinfo);
 
-  return readlines(fp, &textinfo, wlbeg, wlend);
+  PREC_NREC ret = readlines(fp, &textinfo, wlbeg, wlend, lines);
+
+  *Z        = textinfo->Z;
+  *T        = textinfo->T;
+  *isomass  = textinfo->mass;
+  *nT       = textinfo->nT;
+  *nIso     = textinfo->nIso;
+  *isonames = textinfo->name;
+  *isocs    = textinfo->cs;
+
+  return ret;
 }
 
 /*****************/
@@ -131,7 +146,7 @@ readinfo(char *filename,
 {
   FILE *fp = fopen(filename,"r");
   long ndb;
-  char line[maxline+1], *lp, rc;
+  char line[maxline+1], *lp, *lp2, rc;
   textinfo->currline = 0;
 
   settoolongerr(&linetoolong,filename,&(textinfo->currline));
@@ -160,24 +175,102 @@ readinfo(char *filename,
   if((dbname = readstr_sp_alloc(line,&lp,'_'))==NULL)
     transitallocerror(0);
   checkprepost(lp,0,*lp==' '||*lp=='\t',*lp=='\0');
-  int nISO, nT;
-  rn=getnl(2,' ',lp,&nIso,&nT);
+  long nISO, nT, i;
+  rn = getnl(2,' ',lp,&nIso,&nT);
   checkprepost(lp,rn!=2,0,0);
-  textinfo->nT=nT;
-  textinfo->nIso=nIso;
+  textinfo->nT   = nT;
+  textinfo->nIso = nIso;
 
+  //allocate temperature, mass, cross section and partition info
+  textinfo->c   = (PREC_CS **)  calloc(nIso,   sizeof(PREC_CS *));
+  textinfo->Z   = (PREC_ZREC **)calloc(nIso,   sizeof(PREC_ZREC *));
+  textinfo->Z[0]= (PREC_ZREC *) calloc(nIso*nT,sizeof(PREC_ZREC));
+  textinfo->c[0]= (PREC_CS *)   calloc(nIso*nT,sizeof(PREC_CS));
+  textinfo->name= (char **)     calloc(nIso,   sizeof(char *));
+  textinfo->mass= (PREC_ZREC *) calloc(nIso,   sizeof(PREC_ZREC));
+  textinfo->T   = (PREC_ZREC *) calloc(nT,     sizeof(PREC_ZREC));
 
+  //get isotope name and mass
+  while((rc=fgetupto(lp2=line,maxline,fp)) == '#' || rc == '\n')
+    textinfo->currline++;
+  if(!rc) earlyend(filename, textinfo->currline);
+  for(i=0 ; i<nIso ; i++){
+    textinfo->Z[i]=isov->z + nT*i;
+    textinfo->c[i]=isov->c + nT*i;
+    if((textinfo->names[i]=readstr_sp_alloc(lp2,&lp,'_'))==NULL)
+      transitallocerror(0);
+    //get mass and convert to cgs
+    textinfo->mass[i]=strtod(lp,&lp2);
 
+    if(i!=nIso-1)
+      checkprepost(lp2,lp==lp2,*lp2==' '||*lp2=='\t',*lp2=='\0');
+  }
+  //Last isotope has to be followed by an end of string
+  checkprepost(lp2,0,*lp2==' '||*lp2=='\t',*lp2!='\0');
+
+  //get for each temperature a line with temperature, partfcn and
+  //cross-sect info
+  long t;
+  for(t=0 ; t<nT ; t++){
+    while((rc=fgetupto(lp=line,maxline,fp)) == '#' || rc == '\n')
+      textinfo->currline++;
+    if(!rc) earlyend(filename, textinfo->currline);
+    while(*lp==' ') lp++;
+    textinfo->T[t] = strtod(lp,&lp);
+    checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
+
+    for(i=0;i<nIso;i++){
+      textinfo->Z[i][t]=strtod(lp,&lp);
+      checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
+    }
+    for(i=0;i<nIso-1;i++){
+      textinfo->c[i][t]=strtod(lp,&lp);
+      checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
+    }
+    textinfo->c[i][t]=strtod(lp,&lp);
+    checkprepost(lp,0,*lp==' '||*lp=='\t',*lp!='\0');
+  }
+
+  return fp;
 }
 
 /*****************/
 
 static FILE *
-readlinres(FILE *fp,
-	   struct textinfo *textinfo,
-	   float wlneg,
-	   float wlend)
+readline(FILE *fp,
+	 struct textinfo *textinfo,
+	 float wlneg,
+	 float wlend,
+	 struct linedb **linesp)
 {
+  long na=16,nl;
+  char *lp, *lp2, rc;
+
+  struct linedb *line = (struct linedb *)calloc(na, sizeof(struct linedb));
+  while((rc=fgetupto(lp=line,maxline,fp)) =='#'||rc=='\n')
+    textinfo->currline++;
+  //if it is not end of file, read the records.
+  if(rc){
+    line[i].recpos = nl;
+    line[i].wl=strtod(lp,&lp2);
+    if(lp==lp2) 
+	  return invalidfield(line,tr->f_line,li->asciiline+offs
+			      ,1,"central wavelength");
+	line[i].isoid=strtol(lp2,&lp,0);
+	if(lp==lp2)
+	  return invalidfield(line,tr->f_line,li->asciiline+offs
+			      ,2,"isotope ID");
+	line[i].elow=strtod(lp,&lp2);
+	if(lp==lp2)
+	  return invalidfield(line,tr->f_line,li->asciiline+offs
+			      ,3,"lower energy level");
+	line[i].gf=strtod(lp2,&lp);
+	if(lp==lp2)
+	  return invalidfield(line,tr->f_line,li->asciiline+offs
+			      ,4,"log(gf)");
+  }
+
+  *linesp = line;
 }
 
 /*****************/
