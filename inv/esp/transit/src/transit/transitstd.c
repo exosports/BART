@@ -379,3 +379,22 @@ reststr(FILE *in,
   return 0;
 }
 
+
+/* \fcnfh
+   This function is called if a line of 'file' was longer than 'max'
+   characters
+*/
+void 
+linetoolong(int max,		/* Maxiumum length of an accepted line
+				 */ 
+	    char *file,		/* File from which we were reading */
+	    int line)		/* Line who was being read */
+{
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+	       "Line %i of file '%s' has more than %i characters,\n"
+	       "that is not allowed\n"
+	       ,file,max);
+  exit(EXIT_FAILURE);
+}
+
+

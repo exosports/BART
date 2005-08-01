@@ -322,7 +322,8 @@ getmnfromfile(FILE *fp,
 
   //while t,p data doesn't start, check for the various modifiers
   while(1){
-    switch(fgetupto(line,maxline,fp,&atmerr,atmfilename,at->begline++)){
+    switch(fgetupto_err(line,maxline,fp,&atmerr,atmfilename,
+			at->begline++)){
     case '\n':			//Ignore comments and
     case '#':			//  blank lines
       continue;
@@ -673,7 +674,7 @@ readatmfile(FILE *fp,		/* File */
     }
 
     //Skip comments and read next line
-    while((rc=fgetupto(lp=line,maxline,fp,&atmerr,atmfilename,lines++))
+    while((rc=fgetupto_err(lp=line,maxline,fp,&atmerr,atmfilename,lines++))
 	  =='#'||rc=='\n');
     //if it is end of file, stop loop
     if(!rc)

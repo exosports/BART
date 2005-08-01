@@ -96,7 +96,7 @@ interpolatecia(struct transit *tr)
     //(ignoring blanks and comments)
     while(1){
       //Skip comments,blanks and read next line
-      while((rc=fgetupto(lp=line,maxline,fp,&ciaerr,file,lines++))
+      while((rc=fgetupto_err(lp=line,maxline,fp,&ciaerr,file,lines++))
 	    =='#'||rc=='\n');
       //if it is end of file, stop loop
       if(!rc)
@@ -183,7 +183,7 @@ interpolatecia(struct transit *tr)
     while(1){
       //Skip comments,blanks and read next line
       if (n)
-	while((rc=fgetupto(lp=line,maxline,fp,&ciaerr,file,lines++))
+	while((rc=fgetupto_err(lp=line,maxline,fp,&ciaerr,file,lines++))
 	      =='#'||rc=='\n');
       //if it is end of file, stop loop
       if(!rc)

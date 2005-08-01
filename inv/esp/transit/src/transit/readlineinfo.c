@@ -27,7 +27,6 @@
 #define TLI_WAV_UNITS 1e-7
 #define TLI_E_UNITS   1
 
-static void asciierr(int max, char *file, int line);
 static void notyet(int lin, char *file);
 static int invalidfield(char *line, char *file, int nmb,
 			int fld, char *fldn);
@@ -40,14 +39,14 @@ static inline void datafileBS(FILE *fp, PREC_NREC initial, PREC_NREC final,
    if(pre)                                                                 \
      transiterror(TERR_SERIOUS,                                            \
                   "Pre-condition failed on line %i(%s)\n while reading:\n" \
-		  "%s\n\nTLI_Ascii format most likely invalid\n"          \
+		  "%s\n\nTLI_Ascii format most likely invalid\n"           \
                   ,__LINE__,__FILE__,line);                                \
    while(omit)                                                             \
      pointer++;                                                            \
    if(post)                                                                \
      transiterror(TERR_SERIOUS,                                            \
                   "Post-condition failed on line %i(%s)\n while reading:\n"\
-		  "%s\n\nTLI_Ascii format most likely invalid\n"          \
+		  "%s\n\nTLI_Ascii format most likely invalid\n"           \
                   ,__LINE__,__FILE__,line);                                \
                                              }while(0)
 
@@ -286,8 +285,8 @@ readtli_ascii(FILE *fp,
   //...
   //\end{verb}
   //get Number of databases from first line
-  while((rc=fgetupto(line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
-	=='#'||rc=='\n');
+  while((rc=fgetupto_err(line,maxline,fp,&linetoolong,tr->f_line,
+			 li->asciiline++))=='#'||rc=='\n');
   if(!rc) notyet(li->asciiline,tr->f_line);
   ndb=strtol(line,&lp,0);
   checkprepost(lp,errno&ERANGE,*lp==' '||*lp=='\t',*lp!='\0');
@@ -298,8 +297,8 @@ readtli_ascii(FILE *fp,
   //for each database
   for(db=0;db<ndb;db++){
     //get name
-    while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
-	  =='#'||rc=='\n');
+    while((rc=fgetupto_err(lp=line,maxline,fp,&linetoolong,tr->f_line,
+			   li->asciiline++)) == '#' || rc == '\n');
     if(!rc) notyet(li->asciiline,tr->f_line);
     if((iso->db[db].n=readstr_sp_alloc(lp,&lp,'_'))==NULL)
       transitallocerror(0);
@@ -341,8 +340,8 @@ readtli_ascii(FILE *fp,
     isov->c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
 
     //get isotope name and mass
-    while((rc=fgetupto(lp2=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
-	  =='#'||rc=='\n');
+    while((rc=fgetupto_err(lp2=line,maxline,fp,&linetoolong,tr->f_line,
+			   li->asciiline++)) == '#' || rc == '\n');
     if(!rc) notyet(li->asciiline,tr->f_line);
     //for each isotope
     for(i=0;i<nIso;i++){
@@ -363,8 +362,8 @@ readtli_ascii(FILE *fp,
     //get for each temperature
     for(rn=0;rn<nT;rn++){
       //Get a line with temperature, partfcn and cross-sect info
-      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
-	    =='#'||rc=='\n');
+      while((rc=fgetupto_err(lp=line,maxline,fp,&linetoolong,tr->f_line,
+			     li->asciiline++)) == '#' || rc == '\n');
       if(!rc) notyet(li->asciiline,tr->f_line);
       while(*lp==' ')
 	lp++;
@@ -416,7 +415,7 @@ getinifinasctli(double *ini,	/* where initial value would be stored */
   char line[maxline+1],*lp,*lplast;
 
   //get first line
-  while((rc=fgetupto(lp=line,maxline,fp,&asciierr,file,0))
+  while((rc=fgetupto_err(lp=line,maxline,fp,&linetoolong,file,0))
 	=='#'||rc=='\n');
   //there should be at least one isotope!
   if(!rc){
@@ -650,25 +649,6 @@ int checkrange(struct transit *tr, /* General parameters and
 
 
 /* \fcnfh
-   This function is called if a line of 'file' was longer than 'max'
-   characters
-*/
-static void 
-asciierr(int max,		/* Maxiumum length of an accepted line
-				   */ 
-	 char *file,		/* File from which we were reading */
-	 int line)		/* Line who was being read */
-{
-  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-	       "Line %i of file '%s' has more than %i characters,\n"
-	       "that is not allowed\n"
-	       ,file,max);
-  exit(EXIT_FAILURE);
-}
-
-
-
-/* \fcnfh
    It outputs error. Used when EOF is found before expected
 */
 static void
@@ -755,7 +735,7 @@ int readinfo_tli(struct transit *tr,
     }
     li->asciiline=1;
     //ignore the rest of the first line
-    fgetupto(line,maxline,fp,&asciierr,tr->f_line,1);
+    fgetupto_err(line,maxline,fp,&linetoolong,tr->f_line,1);
   }
 
   //if ascii format of TLI read ascii file
@@ -882,8 +862,8 @@ int readdatarng(struct transit *tr, /* General parameters and
     //go to where readinfo\_tli left off and skip all comments, since
     //then, 'li->asciiline' won't increase
     fseek(fp,li->endinfo,SEEK_SET);
-    while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,li->asciiline++))
-	  =='#'||rc=='\n');
+    while((rc=fgetupto_err(lp=line,maxline,fp,&linetoolong,tr->f_line,
+			   li->asciiline++)) =='#'||rc=='\n');
     li->endinfo=ftell(fp)-strlen(line)-1;
 
     //'offs' is the number of lines since the first transition.
@@ -906,8 +886,8 @@ int readdatarng(struct transit *tr, /* General parameters and
 	break;
 
       //skip following comments and increase 'offs'
-      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,tr->f_line,
-			 li->asciiline+offs++))
+      while((rc=fgetupto_err(lp=line,maxline,fp,&linetoolong,tr->f_line,
+			     li->asciiline+offs++))
 	    =='#'||rc=='\n');
     }
     fseek(fp,li->endinfo,SEEK_SET);
@@ -974,8 +954,8 @@ int readdatarng(struct transit *tr, /* General parameters and
     //if ascii, after skipping comments read the 4 fields: center, isoid,
     //lowE, loggf
     if(li->asciiline){
-      while((rc=fgetupto(lp=line,maxline,fp,&asciierr,
-			 tr->f_line,li->asciiline+offs++))
+      while((rc=fgetupto_err(lp=line,maxline,fp,&linetoolong,
+			     tr->f_line,li->asciiline+offs++))
 	    =='#'||rc=='\n');
       //if it is not end of file, read the records.
       if(rc){
@@ -1369,5 +1349,8 @@ int main(int argc, char **argv)
   }
   
 }
+
+#undef checkprepost
+
 #endif
 
