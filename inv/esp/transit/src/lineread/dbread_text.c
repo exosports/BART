@@ -247,27 +247,32 @@ readline(FILE *fp,
   char *lp, *lp2, rc;
 
   struct linedb *line = (struct linedb *)calloc(na, sizeof(struct linedb));
-  while((rc=fgetupto(lp=line,maxline,fp)) =='#'||rc=='\n')
-    textinfo->currline++;
-  //if it is not end of file, read the records.
-  if(rc){
-    line[i].recpos = nl;
-    line[i].wl=strtod(lp,&lp2);
-    if(lp==lp2) 
-	  return invalidfield(line,tr->f_line,li->asciiline+offs
-			      ,1,"central wavelength");
-	line[i].isoid=strtol(lp2,&lp,0);
-	if(lp==lp2)
-	  return invalidfield(line,tr->f_line,li->asciiline+offs
-			      ,2,"isotope ID");
-	line[i].elow=strtod(lp,&lp2);
-	if(lp==lp2)
-	  return invalidfield(line,tr->f_line,li->asciiline+offs
-			      ,3,"lower energy level");
-	line[i].gf=strtod(lp2,&lp);
-	if(lp==lp2)
-	  return invalidfield(line,tr->f_line,li->asciiline+offs
-			      ,4,"log(gf)");
+  do{
+    while((rc=fgetupto(lp=line,maxline,fp)) =='#'||rc=='\n')
+      textinfo->currline++;
+    //if it is not end of file, read the records.
+    if(rc){
+      if (i>na) {
+	/* TD_HERE: realloc */
+      }
+      line[i].recpos = nl;
+      line[i].wl=strtod(lp,&lp2);
+      if(lp==lp2) 
+	return invalidfield(line,tr->f_line,li->asciiline+offs
+			    ,1,"central wavelength");
+      line[i].isoid=strtol(lp2,&lp,0);
+      if(lp==lp2)
+	return invalidfield(line,tr->f_line,li->asciiline+offs
+			    ,2,"isotope ID");
+      line[i].elow=strtod(lp,&lp2);
+      if(lp==lp2)
+	return invalidfield(line,tr->f_line,li->asciiline+offs
+			    ,3,"lower energy level");
+      line[i].gf=strtod(lp2,&lp);
+      if(lp==lp2)
+	return invalidfield(line,tr->f_line,li->asciiline+offs
+			    ,4,"log(gf)");
+    }
   }
 
   *linesp = line;
