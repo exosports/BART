@@ -262,12 +262,12 @@ readtli_ascii(FILE *fp,
   //\begin{verb}
   //<m-database>
   //<DATABASE1-name> <n1-iso> <nt1-temp>
-  //<NAME1> <MASS1> ... <MASSn1> <MASSn1>
+  //<NAME1> <MASS1> ... <NAMEn1> <MASSn1>
   //<TEMP1>    <Z1-1>  ...  <Z1-n1>   <CS1-1>  ...  <CS1-n1>
   //...
   //<TEMPnt1> <Znt1-1> ... <Znt1-n1> <CSnt1-1> ... <CSnt1-n1>
   //<DATABASE2-name> <n2-iso> <nt2-temp>
-  //<NAME1> <MASS1> ... <MASSn2> <MASSn2>
+  //<NAME1> <MASS1> ... <NAMEn2> <MASSn2>
   //<MASS1> ... <MASSn2>
   //<TEMP1>    <Z1-1>  ...  <Z1-n2>   <CS1-1>  ...  <CS1-n2>
   //...
@@ -275,7 +275,7 @@ readtli_ascii(FILE *fp,
   //....
   //....
   //<DATABASEm-name> <nm-iso> <ntm-temp>
-  //<NAME1> <MASS1> ... <MASSnm> <MASSnm>
+  //<NAME1> <MASS1> ... <namenm> <MASSnm>
   //<TEMP1>    <Z1-1>  ...  <Z1-nm>   <CS1-1>  ...  <CS1-nm>
   //...
   //<TEMPntm> <Zntm-1> ... <Zntm-nm> <CSntm-1> ... <CSntm-nm>
