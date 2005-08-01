@@ -32,13 +32,45 @@ struct textinfo{
   int nT;
   int nIso;
   char **isonames;
+  long currline;
 };
 
 static int isoname(char ***isotope, int niso);
 static FILE *readinfo(char *filename, struct textinfo *textinfo);
 static FILE *readlinres(FILE *fp, struct textinfo *textinfo,
 			float wlneg, float wlend);
+static char *dbname;
 
+#define checkprepost(pointer,pre,omit,post) do{                            \
+   if(pre)                                                                 \
+     transiterror(TERR_SERIOUS,                                            \
+                  "Pre-condition failed on line %i(%s)\n while reading:\n" \
+		  "%s\n\nTLI_Ascii format most likely invalid\n"           \
+                  ,__LINE__,__FILE__,line);                                \
+   while(omit)                                                             \
+     pointer++;                                                            \
+   if(post)                                                                \
+     transiterror(TERR_SERIOUS,                                            \
+                  "Post-condition failed on line %i(%s)\n while reading:\n"\
+		  "%s\n\nTLI_Ascii format most likely invalid\n"           \
+                  ,__LINE__,__FILE__,line);                                \
+                                             }while(0)
+
+
+/* \fcnfh
+   It outputs error. Used when EOF is found before expected
+*/
+static void
+earlyend(long lin, char *file)
+{
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+	       "readlineinfo:: EOF unexpectedly found at line %i in\n"
+	       "ascii-TLI linedb info file '%s'\n"
+	       ,lin,file);
+  exit(EXIT_FAILURE);
+}
+
+/**************/
 
 /* \fcnfh
   databasename: Just return the name of the database in a newly
@@ -50,6 +82,7 @@ static FILE *readlinres(FILE *fp, struct textinfo *textinfo,
 int databasename(char **name)
 {
 
+  *name = strdup(dbname);
   return 1;
 }
 
@@ -87,11 +120,54 @@ PREC_NREC dbread_text(char *filename,
 
 /*****************/
 
+/* \fcnfh
+ Read info from TLI-ASCII file
+
+ @returns fp of the opened file.
+*/
 static FILE *
 readinfo(char *filename,
 	 struct textinfo *textinfo)
 {
-  
+  FILE *fp = fopen(filename,"r");
+  long ndb;
+  char line[maxline+1], *lp, rc;
+  textinfo->currline = 0;
+
+  settoolongerr(&linetoolong,filename,&(textinfo->currline));
+
+  //skip comments and blank lines
+  while((rc=fgetupto(line,maxline,fp)) == '#' || rc == '\n')
+    textinfo->currline++;
+  if(!rc) earlyend(filename, textinfo->currline);
+
+  //get number of database which needs to be one at this point. If
+  //omitted number of databases it is assumed to be 1
+  ndb = strtol(line, &lp, 0);
+  while(isspace(lp++));
+  if(*lp) ndb=1;
+  else 
+    while((rc=fgetupto(line,maxline,fp)) == '#' || rc == '\n')
+      textinfo->currline = '\0';
+  if(ndb != 1)
+    transiterr(TERR_SERIOUS,
+	       "TLI-ascii reading by lineread is implemented to read "
+	       "only one database per file (%s)."
+	       ,filename);
+  if(!rc) earlyend(filename, textinfo->currline);
+
+  //read name, number of temps, and number of isotopes
+  if((dbname = readstr_sp_alloc(line,&lp,'_'))==NULL)
+    transitallocerror(0);
+  checkprepost(lp,0,*lp==' '||*lp=='\t',*lp=='\0');
+  int nISO, nT;
+  rn=getnl(2,' ',lp,&nIso,&nT);
+  checkprepost(lp,rn!=2,0,0);
+  textinfo->nT=nT;
+  textinfo->nIso=nIso;
+
+
+
 }
 
 /*****************/
