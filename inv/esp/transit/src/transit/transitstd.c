@@ -153,53 +153,56 @@ int fileexistopen(char *in,	/* Input filename */
 /*\fcnfh
   Output for the different cases. of fileexistopen()
 
-  @return 1 on success
-          -1 on error (doesn't always returns though
+  @return fp of opened file on success
+          NULL on error (doesn't always returns though
 */
-int
+FILE *
 verbfileopen(char *in,		/* Input filename */
-	     FILE **fp,		/* Opened file pointer if successful */
 	     char *desc)	/* Comment on the kind of file */
 {
+  FILE *fp;
+
   switch(fileexistopen(in,fp)){
     //Success in opening or user don't want to use atmosphere file
   case 1:
-    return 1;
+    return fp;
   case 0:
-    return -1;
+    transiterror(TERR_SERIOUS,
+		 "No file was given to open");
+    return NULL;
     //File doesn't exist
   case -1:
     transiterror(TERR_SERIOUS,
-		 "%sinfo file '%s' doesn't exist."
+		 "%s info file '%s' doesn't exist."
 		 ,desc,in);
-    return -1;
+    return NULL;
     //Filetype not valid
   case -2:
     transiterror(TERR_SERIOUS,
 		 "%sfile '%s' is not of a valid kind\n"
 		 "(it is a dir or device)\n"
 		 ,desc,in);
-    return -1;
+    return NULL;
     //file not openable.
   case -3:
     transiterror(TERR_SERIOUS,
 		 "%sfile '%s' is not openable.\n"
 		 "Probably because of permissions.\n"
 		 ,desc,in);
-    return -1;
+    return NULL;
     //stat returned -1.
   case -4:
     transiterror(TERR_SERIOUS,
 		 "Some error happened for %sfile '%s',\n"
 		 "stat() returned -1, but file exists\n"
 		 ,desc,in);
-    return -1;
+    return NULL;
   default:
     transiterror(TERR_SERIOUS,
 		 "Ooops, something weird in file %s, line %i\n"
 		 __FILE__,__LINE__);
   }
-  return 1;
+  return NULL;
 }
 
 
