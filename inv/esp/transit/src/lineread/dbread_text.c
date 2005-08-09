@@ -33,7 +33,9 @@ struct textinfo{
   int nT;
   int nIso;
   char **name;
+
   long currline;
+  char *filename;
 };
 
 static int isoname(char ***isotope, int niso);
@@ -118,6 +120,10 @@ dbread_text(char *filename,
 {
   struct textinfo texinfo;
 
+  if(Zfilename)
+    transiterror(TERR_CRITICAL,
+		 "Zfilename needs to be NULL for TLI-ascii file\n");
+
   FILE *fp = readinfo(filename, &textinfo);
 
   PREC_NREC ret = readlines(fp, &textinfo, wlbeg, wlend, lines);
@@ -144,7 +150,9 @@ static FILE *
 readinfo(char *filename,
 	 struct textinfo *textinfo)
 {
-  FILE *fp = fopen(filename,"r");
+  FILE *fp = verbfileopen(th->f_line, "TLI-ascii database");
+  textinfo->filename = strdup(filename);
+
   long ndb;
   char line[maxline+1], *lp, *lp2, rc;
   textinfo->currline = 0;
@@ -236,14 +244,21 @@ readinfo(char *filename,
 
 /*****************/
 
-static FILE *
+/* \fcnfh
+   Read line info
+
+
+   @returns Error from invalid field
+            0 on success
+*/
+static int
 readline(FILE *fp,
 	 struct textinfo *textinfo,
-	 float wlneg,
+	 float wlbeg,
 	 float wlend,
 	 struct linedb **linesp)
 {
-  long na=16,nl;
+  long na=16, nbeg, i=0;
   char *lp, *lp2, rc;
 
   struct linedb *line = (struct linedb *)calloc(na, sizeof(struct linedb));
@@ -252,300 +267,36 @@ readline(FILE *fp,
       textinfo->currline++;
     //if it is not end of file, read the records.
     if(rc){
-      if (i>na) {
-	/* TD_HERE: realloc */
-      }
-      line[i].recpos = nl;
-      line[i].wl=strtod(lp,&lp2);
+      textinfo->currline++;
+      if (i>na)
+	line = (struct linedb *)realloc(line, (na<<=1) * 
+					sizeof(struct linedb));
+      double wavl    = strtod(lp, &lp2);
+      if (wavl < wlbeg) continue;
+      if (wavl > wlend) break;
+
+      line[i].recpos = nbeg+i;
+      line[i].wl     = wavl;
       if(lp==lp2) 
-	return invalidfield(line,tr->f_line,li->asciiline+offs
-			    ,1,"central wavelength");
-      line[i].isoid=strtol(lp2,&lp,0);
+	return invalidfield(line, textinfo->filename, textinfo->currline
+			    , 1, "central wavelength");
+      line[i].isoid=strtol(lp2, &lp, 0);
       if(lp==lp2)
-	return invalidfield(line,tr->f_line,li->asciiline+offs
-			    ,2,"isotope ID");
-      line[i].elow=strtod(lp,&lp2);
+	return invalidfield(line, textinfo->filename, textinfo->currline
+			    , 2, "isotope ID");
+      line[i].elow=strtod(lp, &lp2);
       if(lp==lp2)
-	return invalidfield(line,tr->f_line,li->asciiline+offs
-			    ,3,"lower energy level");
-      line[i].gf=strtod(lp2,&lp);
+	return invalidfield(line, textinfo->filename, textinfo->currline
+			    , 3, "lower energy level");
+      line[i++].gf=strtod(lp2, &lp);
       if(lp==lp2)
-	return invalidfield(line,tr->f_line,li->asciiline+offs
-			    ,4,"log(gf)");
+	return invalidfield(line, textinfo->filename, textinfo->currline
+			    , 4, "log(gf)");
     }
-  }
+  }while(rc);
 
   *linesp = line;
 }
-
-/*****************/
-
-  PREC_NREC nrec;
-  char *deffname="./oth/pands/h2ofast.bin";
-  char *defzfname="./oth/pands/h2opartfn.dat";
-
-  struct linedb *line;
-  struct recordstruct{
-    PREC_BREC iwl;                    //Wavelength index
-    short int ielow,igflog;           //Lower energy and log(gf) indices.
-  }record;
-  struct stat fs;
-  double tablog[PANDS_NCODIDX+1];     //Array used to convert stored int
-				      //to float
-  double lnwl;                        //log of beginning wavelength to
-				      //be used in BS
-  PREC_NREC lnwl1, lnwl2, irec, frec; //upper and lower values of BS
-  double ratiolog;
-  PREC_NREC i;
-  FILE *fp;
-
-  wlbeg*=pands_fct/tli_fct;
-  wlend*=pands_fct/tli_fct;
-
-  *nIso=NUM_ISOT;
-  if(!filename)
-    filename=deffname;
-  if(!Zfilename)
-    Zfilename=defzfname;
-
-  /*
-    Following is to transform stored integer of gflog and ielow into their
-    real floating point values
-  */
-  for(i=1;i<=PANDS_NCODIDX;i++)
-    tablog[i]=pow(10,(i-16384)*0.001);
-
-  ratiolog=log((double)1.0+(double)1.0/(2e+6));
-
-  if(stat(filename,&fs)==-1){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Data file '%s' cannot be accesed by stat() in "
-		 "function dbread_pands().\nThis is important to obtain "
-		 "its size and hence the number of lines to be\n "
-		 "examinated\n"
-		 ,filename);
-    return -2;
-  }
-  nrec=fs.st_size;
-  if(nrec/PANDS_RECLENGTH<nrec/(float)PANDS_RECLENGTH){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Data file '%s' does not contain an integer number of "
-		 "%i-bytes records!.\nAre you sure it is the right %s "
-		 "file?\n"
-		 ,filename,PANDS_RECLENGTH,pands_name);
-    return -3;
-  }
-  nrec/=PANDS_RECLENGTH;
-
-  if((fp=fopen(filename,"r"))==NULL){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Data file '%s' cannot be opened\nas stream in function "
-		 "dbread_pands(), stopping.\n"
-		 ,filename);
-    return -1;
-  }
-  fread(&lnwl1,4,1,fp);
-  reversebytes(&lnwl1,4);
-
-  fseek(fp,-PANDS_RECLENGTH,SEEK_END);
-  fread(&lnwl2,4,1,fp);
-  reversebytes(&lnwl2,4);
-
-  lnwl=log(wlbeg)/ratiolog;
-  if(lnwl>lnwl2){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Last wavelength in the file (%g %s) is shorter "
-		 "than\nrequested initial wavelength (%g %s)\n"
-		 ,exp(lnwl2*ratiolog), pands_fct_ac, wlbeg
-		 ,pands_fct_ac);
-    return -4;
-  }
-  if(lnwl<lnwl1){
-    wlbeg=exp(ratiolog*lnwl1);
-    irec=0;
-  }
-  else
-    dbreadBSf(fp,0,nrec,lnwl,&irec,8);
-    //    pandsBS(0,nrec,lnwl,&irec);
-  if(gabby_dbread>1)
-    fprintf(stderr,
-	    "Located beginning wavelength %g at position %li\n",wlbeg,irec);
-
-  lnwl=log(wlend)/ratiolog;
-  if(lnwl<lnwl1){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "First wavelength in the file (%g %s) is longer"
-		 "than\nrequested ending wavelength (%g %s)\n"
-		 ,exp(lnwl2*ratiolog), pands_fct_ac, wlbeg
-		 ,pands_fct_ac);
-    return -5;
-  }
-  if(lnwl>lnwl2){
-    wlend=exp(ratiolog*lnwl1);
-    frec=0;
-  }
-  else{
-    dbreadBSf(fp,irec,nrec,lnwl,&frec,8);
-    //    pandsBS(irec,nrec,lnwl,&frec);
-    frec++;
-  }
-  if(gabby_dbread>1){
-    fprintf(stderr,
-	    "Located ending wavelength %g at position %li\n",wlend,frec);
-    fprintf(stderr,
-	    "About to initialize memory space to hold %li records.\n"
-	    " I'll require %.2fMb of available memory.\n"
-	    ,frec-irec
-	    ,(frec-irec)*(float)sizeof(struct linedb)/1024.0/1024.0);
-  }
-
-  if(((*lines)=calloc(frec-irec,sizeof(struct linedb)))==NULL){
-    transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
-		 "Cannot allocate memory to hold all the data from %s\n"
-		 "Required memory was %li bytes\n"
-		 ,pands_name,(frec-irec)*sizeof(struct linedb));
-    return -6;
-  }
-  if(gabby_dbread>1)
-    fprintf(stderr,"Success in memory allocation\n");
-
-  /* Main reading loop */
-  if(gabby_dbread>0)
-    fprintf(stderr,"reading... ");
-
-  fseek(fp,irec*PANDS_RECLENGTH,SEEK_SET);
-
-  i=0;
-  do{
-    line=(*lines)+i;
-
-    /*TD: Is not safe to use structre to read data, because it may
-      contain padding */
-
-    fread(&record,1,8,fp);
-    reversebytes(&(record.iwl),4);
-    reversebytes(&(record.ielow),2);
-    reversebytes(&(record.igflog),2);
-
-#if 0
-    int b;
-    fprintf(stderr,"\n%08li  ",irec+i);
-    for(b=0;b<8;b++)
-      fprintf(stderr,"%02hhx ",(char)*(((char *)&record)+b));
-#endif
-
-    line->wl=exp(record.iwl*ratiolog)*pands_fct/tli_fct;
-
-    //Isotopes (1h1h16o, 1h1h17o, 1h1h18o, 1h2h16o)
-    if(record.ielow>0)
-      line->isoid=record.igflog>0?0:1; //isotopes indices are Kurucz's - 1
-    else
-      line->isoid=record.igflog>0?2:3;
-    line->recpos=i+irec;
-    line->elow=(PREC_LNDATA)abs(record.ielow);
-    line->gf=tablog[abs(record.igflog)];
-
-    i++;
-  }while(line->wl<wlend && i+irec<frec);
-  if(gabby_dbread>0)
-    fprintf(stderr,"done\n");
-
-  fclose(fp);
-
-  if(isonames!=NULL)
-    isoname(isonames,*nIso);
-
-  *isomass=(PREC_ZREC *)calloc(*nIso,sizeof(PREC_ZREC));
-  (*isomass)[0]=18.01056468;
-  (*isomass)[1]=19.01478156;
-  (*isomass)[2]=20.01481046;
-  (*isomass)[3]=19.01684143;
-
-  if(Z!=NULL)
-    if((nrec=read_zpands(Zfilename,Z,T,nT,*nIso))!=1)
-      transiterror(TERR_SERIOUS,
-		   "Function read_zpands() return error code '%i'\n",
-		   nrec);
-
-  return i;
-}
-
-
-#define MAX_LINE 200
-/*\fcnfh
-  read_zpands: Read from file 'filename'(char *), the partition function
-  information into 'Z'(PREC_ZREC ***), it is a two dimensional array
-  depending on isotope (1st dimension) and temperature(2nd
-  dimension). Values of temperature are stored in 'T'(PREC_ZREC **), of
-  size 'nT'(int *). 'nIso'(int) indicates the number of isotopes in
-  consideration. It is assumed that the isotopes columns have the same
-  order as the indices being used.
-*/
-static int read_zpands(char *filename, /* Doh! */
-		       PREC_ZREC ***Z, /* Partition function */
-		       PREC_ZREC **T,  /* Temperature points */
-		       int *nT,        /* Number of temp. points */
-		       int nIso)       /* Number of isotopes */
-{
-  FILE *fp;
-  int i,cnt;
-  char line[MAX_LINE], *sp,*sp2;
-  int ignorelines;
-
-  ignorelines=5;		/* Header */
-  (*nT)=8; 			/* Initial value for allocation of
-				   temperature info */
-
-  if((fp=fopen(filename,"r"))==NULL){
-    transiterror(TERR_SERIOUS,
-		 "Data file '%s' cannot be opened as stream in function "
-		 "read_zpands(), stopping.\n"
-		 ,filename);
-  }
-
-  for(i=0;i<ignorelines;i++){
-    fgets(line,MAX_LINE,fp);
-  }
-
-  *Z=(PREC_ZREC **)calloc(nIso,sizeof(PREC_ZREC *));
-  for(i=0;i<nIso;i++)
-    (*Z)[i]=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
-  *T=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
-
-  cnt=0;
-
-  while(fgets(line,MAX_LINE,fp)!=NULL){
-    sp=line;
-    (*T)[cnt]=strtod(sp,&sp2);
-
-    for(i=0;i<nIso;i++){
-      if(sp2==sp){
-	transiterror(TERR_SERIOUS,
-		     "In function read_zpands(): line %i of file\n '%s'"
-		     " has %i columns instead of %i.\n",
-		     cnt+ignorelines,filename, i+1,nIso+1);
-      }
-      sp=sp2;
-      (*Z)[i][cnt]=strtod(sp,&sp2);
-    }
-
-    if(++cnt==(*nT)){
-      (*nT)<<=1;
-      (*T)=(PREC_ZREC *)realloc((*T),(*nT)*sizeof(PREC_ZREC));
-      for(i=0;i<nIso;i++)
-	(*Z)[i]=(PREC_ZREC *)realloc((*Z)[i],(*nT)*sizeof(PREC_ZREC));
-    }
-  }
-  (*nT)=cnt;
-  (*T)=(PREC_ZREC *)realloc((*T),(*nT)*sizeof(PREC_ZREC));
-  for(i=0;i<nIso;i++)
-    (*Z)[i]=(PREC_ZREC *)realloc((*Z)[i],(*nT)*sizeof(PREC_ZREC));
-
-
-  return 1;
-
-}
-#undef MAX_LINE
 
 /*
   isoname: returns the name of the isotopes in the newly allocated array
