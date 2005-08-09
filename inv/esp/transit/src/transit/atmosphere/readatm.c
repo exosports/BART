@@ -271,7 +271,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   else{
     //If a filename was given check its existence and that it can be
     //opened.
-    if(verbfileopen(th->f_atm,&tr->fp_atm,"Atmospheric info ")!=1)
+    if((tr->fp_atm=verbfileopen(th->f_atm,"Atmospheric info ")) == NULL)
       exit(EXIT_FAILURE);
     atmfilename=tr->f_atm=th->f_atm;
     inp=file;
