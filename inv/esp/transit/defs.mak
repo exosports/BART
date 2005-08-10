@@ -28,9 +28,9 @@ mkinstalldirs = $(BASEBDIR)/mkinstalldirs
 
 #parameters
 INCL        = $(BASEBDIR)/include/
-CPUOPTION   = -mcpu=athlon-xp
-#CPUOPTION  = -mcpu=athlon-tbird
-#CPUOPTION  = -mcpu=pentium3
+CPUOPTION   = -mtune=athlon-xp
+#CPUOPTION  = -mtune=athlon-tbird
+#CPUOPTION  = -mtune=pentium3
 EXTPRM      = -DTRANSIT -static
 WARNFLAGS   = -Wall -Winline
 GSLPRM      = -D_USE_GSL
