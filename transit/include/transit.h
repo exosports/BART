@@ -98,7 +98,7 @@ stateeqnford(_Bool mass,	/* Mass abundance? (as opposed to
 extern int transit_nowarn;
 extern int verblevel;              /* verbose level, greater than 10 
 				      is only for debuging */
-extern int maxline;
+extern int maxline;		/* initialized in transitstd */
 extern int version;
 extern int revision;
 

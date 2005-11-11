@@ -1,5 +1,5 @@
 /*
- * dbread_pands.c - Driver to read Partridge & Schwenke for Transit.
+ * dbread_text.c - Driver to read line information from a text file.
  *              Part of Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
@@ -28,7 +28,7 @@ short gabby_dbread=0;
 struct textinfo{
   PREC_ZREC **Z;
   PREC_ZREC *T;
-  PREC_CS *c;
+  PREC_CS **c;
   PREC_ZREC *mass;
   int nT;
   int nIso;
@@ -39,9 +39,6 @@ struct textinfo{
 };
 
 static int isoname(char ***isotope, int niso);
-static FILE *readinfo(char *filename, struct textinfo *textinfo);
-static FILE *readlinres(FILE *fp, struct textinfo *textinfo,
-			float wlneg, float wlend);
 static char *dbname;
 
 #define checkprepost(pointer,pre,omit,post) do{                            \
@@ -64,7 +61,7 @@ static char *dbname;
    It outputs error. Used when EOF is found before expected
 */
 static void
-earlyend(long lin, char *file)
+earlyend(char *file, long lin)
 {
   transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 	       "readlineinfo:: EOF unexpectedly found at line %i in\n"
@@ -89,56 +86,6 @@ int databasename(char **name)
   return 1;
 }
 
-/*********************************************************
- *
- *********************************************************/
-
-/* \fcnfh
-   Read line info
-
-   @returns number of lines read
-*/
-PREC_NREC
-dbread_text(char *filename,
-	    struct linedb **lines, //2 pointers in order to be
-	    //able to allocate memory
-	    float wlbeg,           //wavelengths in tli_fct
-	    float wlend,           //units
-	    /* Partition function data file */
-	    char *Zfilename,
-	    /* For the following 3 parameter, the memory is
-	       allocated in the dbread_* functions, and the
-	       size is returned in the last parameters. */
-	    PREC_ZREC ***Z,        //Partition function(isot,
-	    //temp)
-	    PREC_ZREC **T,         //temps for Z
-	    PREC_ZREC **isomass,   //Isotopes' mass in AMU
-	    int *nT,               //number of temperature
-	    //points 
-	    int *nIso,             //number of isotopes
-	    char ***isonames)      //Isotope's name
-{
-  struct textinfo texinfo;
-
-  if(Zfilename)
-    transiterror(TERR_CRITICAL,
-		 "Zfilename needs to be NULL for TLI-ascii file\n");
-
-  FILE *fp = readinfo(filename, &textinfo);
-
-  PREC_NREC ret = readlines(fp, &textinfo, wlbeg, wlend, lines);
-
-  *Z        = textinfo->Z;
-  *T        = textinfo->T;
-  *isomass  = textinfo->mass;
-  *nT       = textinfo->nT;
-  *nIso     = textinfo->nIso;
-  *isonames = textinfo->name;
-  *isocs    = textinfo->cs;
-
-  return ret;
-}
-
 /*****************/
 
 /* \fcnfh
@@ -150,7 +97,7 @@ static FILE *
 readinfo(char *filename,
 	 struct textinfo *textinfo)
 {
-  FILE *fp = verbfileopen(th->f_line, "TLI-ascii database");
+  FILE *fp = verbfileopen(filename, "TLI-ascii database");
   textinfo->filename = strdup(filename);
 
   long ndb;
@@ -183,7 +130,8 @@ readinfo(char *filename,
   if((dbname = readstr_sp_alloc(line,&lp,'_'))==NULL)
     transitallocerror(0);
   checkprepost(lp,0,*lp==' '||*lp=='\t',*lp=='\0');
-  long nISO, nT, i;
+  long nIso, nT, i;
+  int rn;
   rn = getnl(2,' ',lp,&nIso,&nT);
   checkprepost(lp,rn!=2,0,0);
   textinfo->nT   = nT;
@@ -203,9 +151,9 @@ readinfo(char *filename,
     textinfo->currline++;
   if(!rc) earlyend(filename, textinfo->currline);
   for(i=0 ; i<nIso ; i++){
-    textinfo->Z[i]=isov->z + nT*i;
-    textinfo->c[i]=isov->c + nT*i;
-    if((textinfo->names[i]=readstr_sp_alloc(lp2,&lp,'_'))==NULL)
+    textinfo->Z[i] = textinfo->Z[0] + nT*i;
+    textinfo->c[i] = textinfo->c[0] + nT*i;
+    if((textinfo->name[i]=readstr_sp_alloc(lp2,&lp,'_'))==NULL)
       transitallocerror(0);
     //get mass and convert to cgs
     textinfo->mass[i]=strtod(lp,&lp2);
@@ -259,9 +207,9 @@ readline(FILE *fp,
 	 struct linedb **linesp)
 {
   long na=16, nbeg, i=0;
-  char *lp, *lp2, rc;
+  char *lp, *lp2, rc, line[maxline+1];
 
-  struct linedb *line = (struct linedb *)calloc(na, sizeof(struct linedb));
+  struct linedb *lineinfo = (struct linedb *)calloc(na, sizeof(struct linedb));
   do{
     while((rc=fgetupto(lp=line,maxline,fp)) =='#'||rc=='\n')
       textinfo->currline++;
@@ -269,53 +217,82 @@ readline(FILE *fp,
     if(rc){
       textinfo->currline++;
       if (i>na)
-	line = (struct linedb *)realloc(line, (na<<=1) * 
+	lineinfo = (struct linedb *)realloc(lineinfo, (na<<=1) * 
 					sizeof(struct linedb));
       double wavl    = strtod(lp, &lp2);
       if (wavl < wlbeg) continue;
       if (wavl > wlend) break;
 
-      line[i].recpos = nbeg+i;
-      line[i].wl     = wavl;
+      lineinfo[i].recpos = nbeg+i;
+      lineinfo[i].wl     = wavl;
       if(lp==lp2) 
 	return invalidfield(line, textinfo->filename, textinfo->currline
 			    , 1, "central wavelength");
-      line[i].isoid=strtol(lp2, &lp, 0);
+      lineinfo[i].isoid=strtol(lp2, &lp, 0);
       if(lp==lp2)
 	return invalidfield(line, textinfo->filename, textinfo->currline
 			    , 2, "isotope ID");
-      line[i].elow=strtod(lp, &lp2);
+      lineinfo[i].elow=strtod(lp, &lp2);
       if(lp==lp2)
 	return invalidfield(line, textinfo->filename, textinfo->currline
 			    , 3, "lower energy level");
-      line[i++].gf=strtod(lp2, &lp);
+      lineinfo[i++].gf=strtod(lp2, &lp);
       if(lp==lp2)
 	return invalidfield(line, textinfo->filename, textinfo->currline
 			    , 4, "log(gf)");
     }
   }while(rc);
 
-  *linesp = line;
+  *linesp = lineinfo;
 }
 
-/*
-  isoname: returns the name of the isotopes in the newly allocated array
-  'isoname'(char ***)
+/*********************************************************
+ *
+ *********************************************************/
 
-  @todo    error check for calloc calls
-  @returns 1 on success
+/* \fcnfh
+   Read line info
+
+   @returns number of lines read
 */
-static int isoname(char ***isonames, int niso)
+PREC_NREC
+dbread_text(char *filename,
+	    struct linedb **lines, //2 pointers in order to be
+	    //able to allocate memory
+	    float wlbeg,           //wavelengths in tli_fct
+	    float wlend,           //units
+	    /* Partition function data file */
+	    char *Zfilename,
+	    /* For the following 3 parameter, the memory is
+	       allocated in the dbread_* functions, and the
+	       size is returned in the last parameters. */
+	    PREC_ZREC ***Z,        //Partition function : [iso][T]
+	    PREC_ZREC **T,         //temps for Z: [T]
+	    PREC_ZREC **isomass,   //Isotopes' mass in AMU: [iso]
+	    PREC_CS ***isocs,      //Isotope's cross-section: [iso][T]
+	    int *nT,               //number of temperature
+	    //points 
+	    int *nIso,             //number of isotopes
+	    char ***isonames)      //Isotope's name
 {
-  int i;
+  struct textinfo textinfo;
 
-  *isonames=(char **)calloc(niso,sizeof(char *));
-  for(i=0;i<niso;i++){
-    (*isonames)[i]=(char *)calloc(strlen(isotope[i])+1,sizeof(char));
-    strcpy((*isonames)[i],isotope[i]);
-  }
+  if(Zfilename)
+    transiterror(TERR_CRITICAL,
+		 "Zfilename needs to be NULL for TLI-ascii file\n");
 
-  return 1;
-  
+  FILE *fp = readinfo(filename, &textinfo);
+
+  PREC_NREC ret = readline(fp, &textinfo, wlbeg, wlend, lines);
+
+  *Z        = textinfo.Z;
+  *T        = textinfo.T;
+  *isomass  = textinfo.mass;
+  *nT       = textinfo.nT;
+  *nIso     = textinfo.nIso;
+  *isonames = textinfo.name;
+  *isocs    = textinfo.c;
+
+  return ret;
 }
 
