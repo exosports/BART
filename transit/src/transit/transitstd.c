@@ -162,7 +162,7 @@ verbfileopen(char *in,		/* Input filename */
 {
   FILE *fp;
 
-  switch(fileexistopen(in,fp)){
+  switch(fileexistopen(in,&fp)){
     //Success in opening or user don't want to use atmosphere file
   case 1:
     return fp;

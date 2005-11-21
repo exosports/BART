@@ -58,13 +58,15 @@ static int lineread_rev=1;
 short gabby_dbread = 0;
 
 /* Add sources and name for every new reader driver */
-#define dbread_nfcn 1
+#define dbread_nfcn 2
 PREC_NREC (*linefcn[dbread_nfcn])(char *,struct linedb **,float,float
-				    ,char *, PREC_ZREC ***,PREC_ZREC **
-				    ,PREC_ZREC **, int *, int *, char ***)={
-				      dbread_pands,dbread_text
-				    };char *dname[dbread_nfcn]={
-				      "Partridge & Schwenke (1997). Water", "TLI-ASCII"
+				  ,char *, PREC_ZREC ***,PREC_ZREC **
+				  ,PREC_ZREC **, PREC_CS ***
+				  ,int *, int *, char ***)={
+				    &dbread_pands, &dbread_text
+				  };
+char *dname[dbread_nfcn]={
+  "Partridge & Schwenke (1997). Water", "TLI-ASCII"
 };
 
 //Wavelength units is always nanometers
@@ -106,6 +108,7 @@ int main(int argc,char *argv[])
   double iniw,finw,parw;
   struct linedb **lineread,**crnt;
   PREC_ZREC ***Z,**T,**mass;
+  PREC_CS ***cs;
   PREC_LNDATA tmin;
   int *nT,*nIso,*dbid,totaliso,adb;
   PREC_NREC *nlines,pmin;
@@ -126,6 +129,7 @@ int main(int argc,char *argv[])
   crnt=    (struct linedb **)calloc(dbread_nfcn,sizeof(struct linedb *));
   lineread=(struct linedb **)calloc(dbread_nfcn,sizeof(struct linedb *));
   Z=       (PREC_ZREC ***)   calloc(dbread_nfcn,sizeof(PREC_ZREC **)   );
+  cs=      (PREC_CS   ***)   calloc(dbread_nfcn,sizeof(PREC_CS   **)   );
   T=       (PREC_ZREC **)    calloc(dbread_nfcn,sizeof(PREC_ZREC *)    );
   mass=    (PREC_ZREC **)    calloc(dbread_nfcn,sizeof(PREC_ZREC *)    );
   nlines=  (PREC_NREC *)     calloc(dbread_nfcn,sizeof(PREC_NREC)      );
@@ -256,7 +260,7 @@ int main(int argc,char *argv[])
       tempp=dindex?NULL:Z+left;	/* Only read Z if first time */
       if((nlines[left]=(linefcn[i])(NULL, lineread+left, iniw, 
 				    parw, NULL, tempp, T+left,
-				    mass+left, nT+left, nIso+left,
+				    mass+left, cs+left, nT+left, nIso+left,
 				    isonames+left))>0){
 	crnt[left]=lineread[left];
 
