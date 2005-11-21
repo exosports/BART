@@ -1,6 +1,5 @@
 /*
- * test_dbread_pands.c - Test for the driver to read Partridge &
- *                       Schwenke for Transit. Part of Transit program.
+ * test_dbread.c - Test for the read drivers. Part of Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -23,6 +22,14 @@
 #include <transit.h>
 #include <lineread.h>
 #include <math.h>
+
+#define TEST_RUN
+/*
+ Now change the inclusion below for whichever database reader you want
+to test, as a condition is that you only need to provide the
+test_fill_defaults() routine
+*/
+#define DRIVERNAME "pands"
 #include "dbread_pands.c"
 
 //Expect results in nanometers
@@ -35,14 +42,27 @@ const char *tli_fct_name="nanometers";
 int main(int argc,
 	 char **argv)
 {
+
+  int maxnamelen=100;
+  char zfile[maxnamelen],file[maxnamelen],dbread_wl_unit[maxnamelen];
+  int numisot;
+  char **isonames;
+  PREC_NREC (*dbread_main)(char *,  struct linedb **,
+			   float, float, char *, 
+			   PREC_ZREC ***, PREC_ZREC **, 
+			   PREC_ZREC **, PREC_CS ***, int *, int *, 
+			   char ***);
+
+  test_fill_defaults(file, zfile, dbread_wl_unit, &numisot, 
+		     &isonames, dbread_main);
+
   struct linedb *lines,*lp;
   PREC_NREC n;
   float wl1,wl2,szb,endb,tf1;
-  int i,nbins,qb[NUM_ISOT],ti1,nbinsgf;
-  char *file="../oth/pands/h2ofast.bin";
-  char *zfile="../oth/pands/h2opartfn.dat";
+  int i,nbins,qb[numisot],ti1,nbinsgf;
   int ans;
   PREC_ZREC **Z,*T,*isomass;
+  PREC_CS **isocs;
   int nT,nIso;
   char rc;
 
@@ -57,11 +77,11 @@ int main(int argc,
   nbinsgf=10;
 
   printf("Welcome!\n");
-  fprintf(stderr,"Lower wavelength (%s)[%g]?: ",pands_fct_ac,wl1);
+  fprintf(stderr,"Lower wavelength (%s)[%g]?: ",dbread_wl_unit,wl1);
   if((tf1=readds(stdin,&rc,NULL,0))!=0||rc==-1)
     wl1=tf1;
 
-  fprintf(stderr,"Upper wavelength (%s)[%g]?: ",pands_fct_ac,wl2);
+  fprintf(stderr,"Upper wavelength (%s)[%g]?: ",dbread_wl_unit,wl2);
   if((tf1=readds(stdin,&rc,NULL,0))!=0||rc==-1)
     wl2=tf1;
 
@@ -86,20 +106,21 @@ int main(int argc,
   fprintf(stderr,"Reading '%s'\n--------------------------------\n",file);
 
   gabby_dbread=2;
-  n=dbread_pands(file, &lines, wl1, wl2,zfile,&Z,&T,&isomass,&nT,&nIso,NULL);
+  n = (*dbread_main)(file, &lines, wl1, wl2, zfile, &Z, &T,
+		     &isomass, &isocs, &nT, &nIso, NULL);
   fprintf(stderr,"--------------------------------\n");
 
   if(n<0)
     transiterror(TERR_SERIOUS,
-		 "dbread_pands() return error status %i.\n",n);
+		 "dbread_%s() return error status %i.\n",DRIVERNAME, n);
 
   ti1=(int)(log10(n)+1);
 
-  printf("\ndbread_pands() test results:\n"
+  printf("\ndbread_%s() test results:\n"
 	  " Chosen wavelength range was from %.2f to %.2f [%s]\n"
 	  " %*li lines read\n"
 	  " Choosing %i equal-sized bins, the result is\n"
-	  ,wl1,wl2,pands_fct_ac,ti1,n,nbins);
+	  ,DRIVERNAME, wl1, wl2, dbread_wl_unit, ti1, n, nbins);
 
   szb=(wl2-wl1)/nbins;
   lp=lines;
@@ -238,7 +259,7 @@ int main(int argc,
   printf("\n");
 
   for(i=0;i<nIso;i++){
-    printf("\n%s:",isotope[lines[i].isoid]);
+    printf("\n%s:",isonames[lines[i].isoid]);
     for(ti1=0;ti1<nT;ti1++)
       printf(" %.3f",Z[i][ti1]);
     printf("\n");
@@ -259,8 +280,8 @@ int main(int argc,
 	     ,lp->recpos,lp->wl,tli_fct_name,1/lp->wl/tli_fct);
       printf("Lower Energy Level: %.10g [cm-1]\ngf: %.10g\n"
 	      , lp->elow, lp->gf);
-      printf("Isotope Name: %s\nFreq: %.10g"
-	      ,isotope[lp->isoid],LS/lp->wl/tli_fct);
+      printf("Isotope's Name: %s\nFreq: %.10g"
+	      ,isonames[lp->isoid],LS/lp->wl/tli_fct);
     }
     else
       printf("\nInvalid record number, so ...");

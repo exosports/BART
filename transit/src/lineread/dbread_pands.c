@@ -37,35 +37,12 @@ static char *isotope[NUM_ISOT]={"1H1H16O","1H1H17O","1H1H18O","1H2H16O"};
 /* Wavelength is stored in nanometers */
 static double pands_fct=1e-7;
 static const char *pands_fct_ac="nm";
-short gabby_dbread=0;
+short gabby_dbread;
 
 static int isoname(char ***isotope, int niso);
 static int read_zpands(char *filename, PREC_ZREC ***Z, PREC_ZREC **T,
 		       int *nT, int nIso);
 
-
-/* \fcnfh
-  databasename: Just return the name of the database in a newly
-  allocated string.
-
-  @returns -1 on failure
-            1 on success
-*/
-int databasename(char **name)
-{
-
-  if(((*name)=(char *)calloc(strlen(pands_name),sizeof(char)))==NULL){
-    transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
-		 "Cannot allocate memory to hold database name: '%s'\n"
-		 ,pands_name);
-    *name=NULL;
-    return -1;
-  }
-
-  strcpy(*name,pands_name);
-
-  return 1;
-}
 
 
 /*
@@ -126,28 +103,29 @@ dbreadBSf(FILE *fp,		/* File pointer */
 }
 
 
-PREC_NREC dbread_pands(char *filename,
-		       struct linedb **lines, //2 pointers in order to be
-		                              //able to allocate memory
-		       float wlbeg,           //wavelengths in tli_fct
-		       float wlend,           //units
-		       /* Partition function data file */
-		       char *Zfilename,
-		       /* For the following 3 parameter, the memory is
-			  allocated in the dbread_* functions, and the
-			  size is returned in the last parameters. */
-		       PREC_ZREC ***Z,        //Partition function(isot,
-					      //temp)
-		       PREC_ZREC **T,         //temps for Z
-		       PREC_ZREC **isomass,   //Isotopes' mass in AMU
-		       int *nT,               //number of temperature
-					      //points 
-		       int *nIso,             //number of isotopes
-		       char ***isonames)      //Isotope's name
+PREC_NREC
+dbread_pands(char *filename,
+	     struct linedb **lines, //2 pointers in order to be
+				//able to allocate memory
+	     float wlbeg,           //wavelengths in tli_fct
+	     float wlend,           //units
+	     /* Partition function data file */
+	     char *Zfilename,
+	     /* For the following 3 parameter, the memory is
+		allocated in the dbread_* functions, and the
+		size is returned in the last parameters. */
+	     PREC_ZREC ***Z,        //Partition function:[iso][T]
+	     PREC_ZREC **T,         //temps for Z
+	     PREC_ZREC **isomass,   //Isotopes' mass in AMU
+	     PREC_CS ***isocs,      //Isotope's cross-section: [iso][T]
+	     int *nT,               //number of temperature
+				//points 
+	     int *nIso,             //number of isotopes
+	     char ***isonames)      //Isotope's name
 {
   PREC_NREC nrec;
-  char *deffname="./oth/pands/h2ofast.bin";
-  char *defzfname="./oth/pands/h2opartfn.dat";
+  char *deffname  = "./oth/pands/h2ofast.bin";
+  char *defzfname = "./oth/pands/h2opartfn.dat";
 
   struct linedb *line;
   struct recordstruct{
@@ -433,3 +411,42 @@ static int isoname(char ***isonames, int niso)
   
 }
 
+#ifdef TEST_RUN
+
+/* \fcnfh
+   
+ */
+static int
+test_fill_defaults(char *file,
+		   char *zfile,
+		   char *dbread_wl_unit,
+		   int *numisot,
+		   char ***isonames,
+		   PREC_NREC (*dbread_main)(char *,  struct linedb **,
+					    float, float, char *, 
+					    PREC_ZREC ***, PREC_ZREC **, 
+					    PREC_ZREC **, PREC_CS ***,
+					    int *, int *, char ***))
+{
+  strcpy(file,"../oth/pands/h2ofast.bin");
+  strcpy(zfile,"../oth/pands/h2opartfn.dat");
+  strcpy(dbread_wl_unit, pands_fct_ac);
+  *numisot=NUM_ISOT;
+  *isonames = (char **)calloc(NUM_ISOT, sizeof(char *));
+  **isonames = (char *)calloc(sizeof(isotope)+NUM_ISOT, sizeof(char));
+
+  fprintf(stderr, "Allocating %i bytes for isotope. Correct and check.\n"
+	  , sizeof(isotope)+1);
+
+  int i;
+  for (i=0 ; i<NUM_ISOT ; i++){
+    int len=strlen(strcpy(*isonames[i], isotope[i]))+1;
+    if (i!=NUM_ISOT-1)
+      *isonames[i+1] = *isonames[i] + len;
+  }
+
+  dbread_main = &dbread_pands;
+  return 0;
+}
+
+#endif

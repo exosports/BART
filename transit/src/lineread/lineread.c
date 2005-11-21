@@ -55,6 +55,7 @@ static int lineread_ver=3;	/* Different version implies
 				   incompatible storage formats */
 static int lineread_rev=1;
 
+short gabby_dbread = 0;
 
 /* Add sources and name for every new reader driver */
 #define dbread_nfcn 1

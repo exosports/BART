@@ -23,7 +23,7 @@
 #include <lineread.h>
 #include <math.h>
 
-short gabby_dbread=0;
+short gabby_dbread;
 
 struct textinfo{
   PREC_ZREC **Z;
@@ -38,7 +38,6 @@ struct textinfo{
   char *filename;
 };
 
-static int isoname(char ***isotope, int niso);
 static char *dbname;
 
 #define checkprepost(pointer,pre,omit,post) do{                            \
@@ -58,6 +57,30 @@ static char *dbname;
 
 
 /* \fcnfh
+   print out an error, it is called by readdatarng if one of the field
+   with transition info is invalid
+
+   @returns -5 always
+*/
+static int
+invalidfield(char *line,	/* Contents of the line */
+	     char *file,	/* File name */
+	     int nmb,		/* File number */
+	     int fld,		/* field with the error */
+	     char *fldn)	/* Name of the field */
+{
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+	       "Line %i of file '%s': Field %i (%s) has\n"
+	       " not a valid value:\n%s\n"
+	       ,nmb,file,fld,fldn,line);
+  return -5;
+}
+
+
+/*****************************************************/
+
+
+/* \fcnfh
    It outputs error. Used when EOF is found before expected
 */
 static void
@@ -68,22 +91,6 @@ earlyend(char *file, long lin)
 	       "ascii-TLI linedb info file '%s'\n"
 	       ,lin,file);
   exit(EXIT_FAILURE);
-}
-
-/**************/
-
-/* \fcnfh
-  databasename: Just return the name of the database in a newly
-  allocated string.
-
-  @returns -1 on failure
-            1 on success
-*/
-int databasename(char **name)
-{
-
-  *name = strdup(dbname);
-  return 1;
 }
 
 /*****************/
@@ -120,10 +127,10 @@ readinfo(char *filename,
     while((rc=fgetupto(line,maxline,fp)) == '#' || rc == '\n')
       textinfo->currline = '\0';
   if(ndb != 1)
-    transiterr(TERR_SERIOUS,
-	       "TLI-ascii reading by lineread is implemented to read "
-	       "only one database per file (%s)."
-	       ,filename);
+    transiterror(TERR_SERIOUS,
+		 "TLI-ascii reading by lineread is implemented to read "
+		 "only one database per file (%s)."
+		 ,filename);
   if(!rc) earlyend(filename, textinfo->currline);
 
   //read name, number of temps, and number of isotopes
@@ -244,6 +251,8 @@ readline(FILE *fp,
   }while(rc);
 
   *linesp = lineinfo;
+
+  return 0;
 }
 
 /*********************************************************
