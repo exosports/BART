@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* lineread.c */
+/* src/lineread/lineread.c */
 extern int main P_((int argc, char *argv[]));
 
 #undef P_

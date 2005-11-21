@@ -4,6 +4,6 @@
 #define P_(s) ()
 #endif
 
-/* slantpath.c */
+/* src/transit/slantpath.c */
 
 #undef P_

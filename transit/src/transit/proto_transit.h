@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* transit.c */
+/* src/transit/transit.c */
 extern int main P_((int argc, char **argv));
 
 #undef P_

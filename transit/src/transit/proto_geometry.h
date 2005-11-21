@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* geometry.c */
+/* src/transit/geometry.c */
 extern int setgeomhint P_((struct transit *tr));
 extern int setgeom P_((struct geometry *sg, double time, long *flags));
 extern inline double starvariation P_((double x, double y, double radius));

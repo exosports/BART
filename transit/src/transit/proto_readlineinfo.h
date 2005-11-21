@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* readlineinfo.c */
+/* src/transit/readlineinfo.c */
 extern int readtli_bin P_((FILE *fp, struct transit *tr, struct lineinfo *li));
 extern int readtli_ascii P_((FILE *fp, struct transit *tr, struct lineinfo *li));
 extern int getinifinasctli P_((double *ini, double *fin, FILE *fp, char *file));
