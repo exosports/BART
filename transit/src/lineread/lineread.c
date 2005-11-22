@@ -50,8 +50,9 @@
    3.1:  Change magic bits, which is 4 bytes now. Change file extension
          TWII => TLI. Big bug fix regarding reading of P&S, wasn't
          divided by freq before. 081204. PMR
+   4.1:  Include cross section in TLI. 112205. PMR
 */
-static int lineread_ver=3;	/* Different version implies
+static int lineread_ver=4;	/* Different version implies
 				   incompatible storage formats */
 static int lineread_rev=1;
 
@@ -209,8 +210,8 @@ int main(int argc,char *argv[])
 
   if(dummy)
     transitprint(1,verblevel,
-		 "Dummy run: No output. However everything else actually runs\n"
-		 "regularly\n");
+		 "Dummy run: No file output. However everything else "
+		 "actually runs\nregularly\n");
 
   transitprint(1,verblevel,
 	       "TLIf output file is: %s\n"
@@ -279,8 +280,8 @@ int main(int argc,char *argv[])
     }
     totaliso=dbid[left-1]+nIso[left-1];
 
-    /* Sorting and output of tlifile is done here only while looking at
-       the first range */
+    /* Sorting and output of tlifile info is done here only while
+       looking at the first range */
     if(!dindex&&!dummy){
       for(i=0;i<dbread_nfcn;i++){
 	rn=strlen(dname[i]);
@@ -305,6 +306,7 @@ int main(int argc,char *argv[])
 		       ,rn,ftell(fpout));
 	  fwrite(isonames[adb][j],sizeof(char),rn,fpout);
 	  fwrite(Z[adb][j],sizeof(PREC_ZREC),nT[adb],fpout);
+	  fwrite(cs[adb][j],sizeof(PREC_ZREC),nT[adb],fpout);
 	}
       }
     }
