@@ -23,6 +23,8 @@
 #include <lineread.h>
 #include <math.h>
 
+#define DRIVERNAME "text"
+
 short gabby_dbread;
 
 struct textinfo{

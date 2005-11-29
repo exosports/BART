@@ -31,6 +31,7 @@
 #define PANDS_NCODIDX 32786
 #define PREC_BREC int		/* Type for the Big record  */
 #define NUM_ISOT 4
+#define DRIVERNAME "pands"
 
 static char *pands_name="Partridge & Schwenke(1997)";
 static char *isotope[NUM_ISOT]={"1H1H16O","1H1H17O","1H1H18O","1H2H16O"};

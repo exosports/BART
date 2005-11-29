@@ -23,15 +23,6 @@
 #include <lineread.h>
 #include <math.h>
 
-#define TEST_RUN
-/*
- Now change the inclusion below for whichever database reader you want
-to test, as a condition is that you only need to provide the
-test_fill_defaults() routine
-*/
-#define DRIVERNAME "pands"
-#include "dbread_pands.c"
-
 //Expect results in nanometers
 double tli_fct=1e-7;
 const char *tli_fct_name="nanometers";

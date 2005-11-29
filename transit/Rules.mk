@@ -32,6 +32,9 @@ $(lib_DYNAMIC):
 $(bin_PROGRAMS): 
 	$(call cmd,exec)
 
+$(test_PROGRAMS):
+	$(call cmd,test)
+
 #compilation of object files
 $(PIC_OBJS): %_pic.o: %.c
 	$(call cmd,c_o_pic)

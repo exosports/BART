@@ -8,6 +8,14 @@ ifndef BUILD_VERBOSE
   BUILD_VERBOSE = 0
 endif
 
+###############################
+# $^ dependencies
+# $< first dependencie
+# $* stem of a pattern in target:pattern:depend
+# $@ target
+# $? modified dependencies
+################################
+
 #####################
 ## Beautify output ##
 #####################
@@ -84,8 +92,8 @@ quiet_cmd_txc_c = Clatexing to $@
 quiet_cmd_exec  = Building executable "$@"
       cmd_exec  = $(CC) $(STDFLAGS) $(CF_LOCAL) -o $@ $(filter %.c %.o,$^) $(LIBS)  $(LL_LOCAL)
 
-quiet_cmd_test  = Building for testing executable "$@"
-      cmd_test  = $(CC) $(STDFLAGS) -o $@ $(filter %.c %.o,$^) $(LIBS)
+quiet_cmd_test  = Building executable "$@" for testing
+      cmd_test  = $(CC) $(STDFLAGS) $(CF_LOCAL) $(CF_TEST) -o $@ $(filter %.c %.o,$^) $(LIBS) $(LL_LOCAL)
 
 quiet_cmd_dlib  = Building the dynamic library $@
       cmd_dlib  = $(CC) -shared -Wl,--whole-archive $(filter %.o,$^) \
