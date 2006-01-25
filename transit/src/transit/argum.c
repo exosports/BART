@@ -308,8 +308,10 @@ int processparameters(int argc, /* number of command line arguments */
      "is for constant index of refraction (better precision), use 2\n"
      "if it is variable."},
     {"modlevel",CLA_MODLEVEL,required_argument,"1",
-     "integer","Do a level integer integration to compute modulation\n"
-     "1 doesn't consider limb darkening.\n"},
+     "integer","Do an integration of level <integer> to compute modulation.\n"
+     "1 doesn't consider limb darkening. -1 doesn't consider limb darkening\n"
+     "but it only returns the moduated radius at which extinction becomes\n"
+     "one."},
     {"detailtau",CLA_DETTAU,required_argument,NULL,
      "filename:wn1,wn2,...","Save optical depth at the particular\n"
      "wavenumbers in the specified filename"},

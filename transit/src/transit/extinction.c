@@ -222,34 +222,11 @@ extradius(PREC_NREC r,		/* Radius index */
     //initialize 'wa[i]' to last wavenumber
     wa[i]=w;
   }
-#if 0
-  long omitw[]={ 1699616,1697169,1897579};
-  long omite[]={1360,1294,757};
-  long nomit=3;
-#endif
 
   //Compute the spectra!, proceed for every line.
   for(ln=0;ln<nlines;ln++){
-    if(gominelow&&minelow>ltelow[ln])
+    if(gominelow && ltelow[ln]<minelow)
       continue;
-#if 0
-    for(i=0;i<nomit;i++)
-      if((long)(ltwl[ln]*1000)==omitw[i] &&
-	 (long)(ltelow[ln])==omite[i]){
-	if(r==129)
-	  fprintf(stderr,
-		  "\nOmitting %6li, wav: %7g, wn: %7g, en %7g, gf: %7g, iso: %i"
-		  ,ln,ltwl[ln],1e7/ltwl[ln],ltelow[ln],ltgf[ln]
-		  ,ltisoid[ln]);
-	continue;
-      }
-#endif
-    /*
-      if(ln!=10000&&ln!=10702&&ln!=10402)
-      continue;
-      if(ln<9000||ln>11000)
-      continue;
-    */
 
     wavn=1.0/wfct/ltwl[ln];
     /* 
