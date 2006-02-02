@@ -57,9 +57,10 @@ LOCAL_INC_$(d) := -I$(d) -I$(d)/../transit
 $(OBJS_$(d):.o=.proto): CP_LOCAL :=  $(LOCAL_INC_$(d))
 $(local_$(d)): $(d)/Rules.mk
 $(local_$(d)): CF_LOCAL := -D_USE_GSL $(LOCAL_INC_$(d)) \
-	-DHAVE_INLINE -DGSL_RANGE_CHECK_OFF \
-	`pkg-config --cflags gtk+-2.0`
-$(local_$(d)): LL_LOCAL := -lm -lpu -lgsl `pkg-config --libs gtk+-2.0` \
+	-DHAVE_INLINE -DGSL_RANGE_CHECK_OFF #\
+#	`pkg-config --cflags gtk+-2.0`
+$(local_$(d)): LL_LOCAL := -lm -lpu -lgsl \
+#`pkg-config --libs gtk+-2.0` \
 	-lplplotd -lcfitsio -lblas
 test_pands: CF_TEST := -DTEST_RUN \
 	$(foreach inc, $(test_pands_INCLUDE_$(d):%=$(d)/%.c), -include $(inc))

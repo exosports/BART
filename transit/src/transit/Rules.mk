@@ -46,9 +46,10 @@ transit$(EXEEXT):  $(transit_OBJS_$(d))
 $(OBJS_$(d):.o=.proto): CP_LOCAL :=  -I$(d)
 $(local_$(d)): $(d)/Rules.mk
 $(local_$(d)): CF_LOCAL := -D_USE_GSL -I$(d) -Iinclude \
-	-DHAVE_INLINE -DGSL_RANGE_CHECK_OFF \
-	`pkg-config --cflags gtk+-2.0`
-$(local_$(d)): LL_LOCAL := -lm -lpu -lgsl `pkg-config --libs gtk+-2.0` \
+	-DHAVE_INLINE -DGSL_RANGE_CHECK_OFF #\
+#	`pkg-config --cflags gtk+-2.0`
+$(local_$(d)): LL_LOCAL := -lm -lpu -lgsl \
+#`pkg-config --libs gtk+-2.0` \
 	-lplplotd -lcfitsio -lblas
 
 #Standard closure

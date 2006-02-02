@@ -62,7 +62,7 @@ mkinstalldirs = ./scripts/mkinstalldirs
 
 #parameters
 INCL        = ./include/
-CPUOPTION   = -mtune=athlon-xp
+CPUOPTION   = -mcpu=athlon-xp -march=athlon-xp
 #CPUOPTION  = -mtune=athlon-tbird
 #CPUOPTION  = -mtune=pentium3
 EXTPRM      = -DTRANSIT -static

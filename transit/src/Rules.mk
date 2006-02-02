@@ -46,9 +46,9 @@ OBJS         := $(OBJS)         $(OBJS_$(d))
 #extra dependencies and local variables
 $(OBJS_$(d):.o=.proto): CP_LOCAL :=  -I$(d)
 $(local_$(d)): $(d)/Rules.mk
-$(local_$(d)): CF_LOCAL := -D_USE_GSL -I$(d) -Iinclude \
-	`pkg-config --cflags gtk+-2.0`
-$(local_$(d)): LL_LOCAL := -lm `pkg-config --libs gtk+-2.0`
+$(local_$(d)): CF_LOCAL := -D_USE_GSL -I$(d) -Iinclude #\
+#	`pkg-config --cflags gtk+-2.0`
+$(local_$(d)): LL_LOCAL := -lm #`pkg-config --libs gtk+-2.0`
 
 #Standard closure
 #-include $(DEPS_$(d))
