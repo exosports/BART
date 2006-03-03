@@ -151,7 +151,7 @@ printmod(struct transit *tr)
 
   fprintf(outf,
 	  "#wvn[%s-1]%*swvl[%s]%*smodulation\n"
-	  ,wnu,9-strlen(wnu),"",wlu,12-strlen(wlu),"");
+	  ,wnu,(int)(9-strlen(wnu)),"",wlu,(int)(12-strlen(wlu)),"");
   for(rn=0;rn<tr->wns.n;rn++)
     fprintf(outf,"%-17.9g%-17.9g%-18.9g\n"
 	    ,tr->wns.v[rn]/tr->wns.fct

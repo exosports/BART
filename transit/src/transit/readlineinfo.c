@@ -204,7 +204,7 @@ readtli_bin(FILE *fp,
 		 "Mass read: %g * %g = %g\n"
 		 "position: %li, size %i\n"
 		 ,iso->isof[i].m,AMU,iso->isof[i].m*AMU
-		 ,ftell(fp),sizeof(iso->isof[i].m));
+		 ,(long)(ftell(fp)),(int)(sizeof(iso->isof[i].m)));
 
     //allocate and read isotope names
     fread(&rn,sizeof(int),1,fp);
