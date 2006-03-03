@@ -34,7 +34,7 @@ SUBDIRS = src
 
 #installation directories
 ifndef prefix
-prefix = /usr/local
+prefix = ../../
 endif
 exec_prefix = ${prefix}
 
@@ -62,7 +62,8 @@ mkinstalldirs = ./scripts/mkinstalldirs
 
 #parameters
 INCL        = ./include/
-CPUOPTION   = -mcpu=athlon-xp -march=athlon-xp
+CPUOPTION   = -mtune=pentium-m -march=pentium-m
+#CPUOPTION   = -mtune=athlon-xp -march=athlon-xp
 #CPUOPTION  = -mtune=athlon-tbird
 #CPUOPTION  = -mtune=pentium3
 EXTPRM      = -DTRANSIT -static

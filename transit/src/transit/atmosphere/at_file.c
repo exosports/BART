@@ -66,7 +66,7 @@ addq(prop_isov *isov,		/* Variable isotope info (abundance
   if(*isodo!=ignore && !*other)
     res+=isov->q[r];
   
-  if(res>1||res<0)
+  if(res>1.001||res<0)
     transiterror(TERR_SERIOUS,
 		 "Without processing 'other' molecules, abundance\n"
 		 "addition(%g) is either bigger than 1 or negative!\n"
