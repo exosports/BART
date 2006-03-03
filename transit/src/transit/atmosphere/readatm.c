@@ -155,7 +155,7 @@ checkaddmm(double *mm,		/* mean molecular mass stored here */
     *mm=1.0/(*mm);
 
   //Check that abundances make sense
-  if(sumq>1){
+  if(sumq>1.001){
     transiterror(TERR_SERIOUS,
 		 "Sum of abundances of isotopes adds up to more\n"
 		 "than 1: %g\n"
