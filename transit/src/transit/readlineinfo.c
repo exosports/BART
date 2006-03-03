@@ -211,7 +211,7 @@ readtli_bin(FILE *fp,
     transitDEBUG(21,verblevel,
 		 "Name's length: %i\n"
 		 "position: %li, size %i\n"
-		 ,rn,ftell(fp),sizeof(int));
+		 ,rn,(long)(ftell(fp)),(int)(sizeof(int)));
     iso->isof[i].n=(char *)calloc(rn+1,sizeof(char));
     fread(iso->isof[i].n,sizeof(char),rn,fp);
     iso->isof[i].n[rn]='\0';
