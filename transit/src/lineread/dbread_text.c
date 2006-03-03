@@ -123,7 +123,7 @@ readinfo(char *filename,
   //get number of database which needs to be one at this point. If
   //omitted number of databases it is assumed to be 1
   ndb = strtol(line, &lp, 0);
-  while(isspace(lp++));
+  while(isspace(*lp++));
   if(*lp) ndb=1;
   else 
     while((rc=fgetupto(line,maxline,fp)) == '#' || rc == '\n')
