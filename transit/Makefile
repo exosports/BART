@@ -34,7 +34,7 @@ SUBDIRS = src
 
 #installation directories
 ifndef prefix
-prefix = ../../
+prefix = /usr/local
 endif
 exec_prefix = ${prefix}
 
@@ -62,8 +62,7 @@ mkinstalldirs = ./scripts/mkinstalldirs
 
 #parameters
 INCL        = ./include/
-CPUOPTION   = -mtune=pentium-m -march=pentium-m
-#CPUOPTION   = -mtune=athlon-xp -march=athlon-xp
+CPUOPTION   = -mcpu=athlon-xp -march=athlon-xp
 #CPUOPTION  = -mtune=athlon-tbird
 #CPUOPTION  = -mtune=pentium3
 EXTPRM      = -DTRANSIT -static
@@ -96,7 +95,6 @@ install_sh_DATA = $(install_sh) -c -m 644
 install_sh_PROGRAM = $(install_sh) -c
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_HEADER = $(INSTALL_DATA)
-
 
 include Beauty.mk
 include Rules.mk
