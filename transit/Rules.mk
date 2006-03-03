@@ -19,8 +19,8 @@ include $(d)/Rules.mk
 
 binaries: $(bin_PROGRAMS)
 libraries: $(lib_STATIC) $(lib_DYNAMIC)
-install: install-bin install-lib install-header
-uninstall: uninstall-bin uninstall-lib uninstall-header
+install: install-bin #install-header install-lib
+uninstall: uninstall-bin #uninstall-lib uninstall-header
 
 #libraries and binaries
 $(lib_STATIC):

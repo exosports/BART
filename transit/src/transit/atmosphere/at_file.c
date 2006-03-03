@@ -105,7 +105,7 @@ findfactq(char *iso, 		/* reference isotope looked for */
 
   transiterror(TERR_SERIOUS,
 	       "Isotope you want to reference(%s) was not found among\n"
-	       "those that abundance was given.\n"
+	       "those whose abundance was given.\n"
 	       ,iso);
 
   return -1;
@@ -309,11 +309,11 @@ getmnfromfile(FILE *fp,
 
   at->begline=0;
   enum isodo atisodo;
-  at->isodo=(enum isodo *)calloc(nmb,sizeof(enum isodo));
-  at->isoeq=(int *)calloc(nmb,sizeof(int));
-  at->m=(PREC_ZREC *)calloc(nmb,sizeof(PREC_ZREC));
-  at->n=(char **)calloc(nmb,sizeof(char *));
-  at->n[0]=(char *)calloc(nmb*maxeisoname,sizeof(char));
+  at->isodo = (enum isodo *)calloc(nmb,sizeof(enum isodo));
+  at->isoeq = (int *)       calloc(nmb,sizeof(int));
+  at->m     = (PREC_ZREC *) calloc(nmb,sizeof(PREC_ZREC));
+  at->n     = (char **)     calloc(nmb,sizeof(char *));
+  at->n[0]  = (char *)      calloc(nmb*maxeisoname,sizeof(char));
   at->isoeq[0]=-1;
   for(i=1;i<nmb;i++){
     at->n[i]=at->n[0]+i*maxeisoname;
@@ -439,11 +439,11 @@ getmnfromfile(FILE *fp,
 	//Allocate if necessary
 	if(ison==nmb){
 	  nmb<<=1;
-	  at->isodo=(enum isodo *)realloc(at->isoeq,nmb*sizeof(enum isodo));
-	  at->isoeq=(int *)realloc(at->isoeq,nmb*sizeof(int));
-	  at->m=(PREC_ZREC *)realloc(at->m,nmb*sizeof(PREC_ZREC));
-	  at->n=(char **)realloc(at->n,nmb*sizeof(char *));
-	  at->n[0]=(char *)realloc(at->n[0],nmb*maxeisoname*sizeof(char));
+	  at->isodo = (enum isodo *)realloc(at->isodo,nmb*sizeof(enum isodo));
+	  at->isoeq = (int *)       realloc(at->isoeq,nmb*sizeof(int));
+	  at->m     = (PREC_ZREC *) realloc(at->m,    nmb*sizeof(PREC_ZREC));
+	  at->n     = (char **)     realloc(at->n,    nmb*sizeof(char *));
+	  at->n[0]  = (char *)      realloc(at->n[0], nmb*maxeisoname*sizeof(char));
 	  for(i=1;i<nmb;i++)
 	    at->n[i]=at->n[0]+i*maxeisoname;
 	  for(i=nmb/2;i<nmb;i++)
@@ -481,6 +481,9 @@ getmnfromfile(FILE *fp,
     }
     break;
   }
+
+  transitprint(3,verblevel,
+	       "Read all keywords in atmosphere file without problems\n");
 
   //Check if there was at least an isotope identification and allocate new
   //arrays
