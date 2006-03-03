@@ -443,7 +443,7 @@ detailout(prop_samp *wn,
   for(i=0;i<det->n;i++){
     val=det->ref[i];
     u=wn->n-1;
-    if(val==det->ref[u])
+    if(val==wn->v[u])
       d=u;
     else{
       d=0;
