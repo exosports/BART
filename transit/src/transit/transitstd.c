@@ -94,7 +94,7 @@ int vtransiterror(int flags, const char *str, va_list ap)
 
   if(xtr>lenout){
     out=(char *)realloc(out,xtr+1);
-    xtr=vsprintf(out,errormessage,ap)+1;
+    xtr=vsnprintf(out,xtr+1,errormessage,ap)+1;
   }
 
   fwrite(out,sizeof(char),xtr-1,stderr);
