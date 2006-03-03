@@ -34,7 +34,7 @@ SUBDIRS = src
 
 #installation directories
 ifndef prefix
-prefix = /usr/local
+prefix = ../../
 endif
 exec_prefix = ${prefix}
 
