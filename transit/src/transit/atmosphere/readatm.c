@@ -52,7 +52,8 @@ freemem_atmosphere(struct atm_data *at,
 {
   //free structures
   free_samp(&at->rads);
-  free_isov(at->isov);
+  for(int i=0 ; i<at->n_nonignored ; i++)
+    free_isov(at->isov+i);
   free_atm(&at->atm);
 
 
@@ -328,9 +329,9 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   }
 
   //Set values and allocate accordingly
-  nmb=iso->n_e=iso->n_i+newiso;
-  iso->isof=(prop_isof *)realloc(iso->isof,nmb*sizeof(prop_isof));
-  iso->isof[iso->n_i].n=(char *)calloc(newiso*maxeisoname,sizeof(char));
+  nmb = iso->n_e = iso->n_i+newiso;
+  iso->isof = (prop_isof *)realloc(iso->isof,nmb*sizeof(prop_isof));
+  iso->isof[iso->n_i].n = (char *)calloc(newiso*maxeisoname,sizeof(char));
   for(i=1;i<newiso;i++)
     iso->isof[iso->n_i+i].n=iso->isof[iso->n_i].n+i*maxeisoname;
 
@@ -371,7 +372,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   }
 
   //Allocate isotope information for depth dependent information
-  nmb=iso->n_e;
+  st_at.n_nonignored=nmb=iso->n_e;
   st_at.isov=(prop_isov *)calloc(nmb,sizeof(prop_isov));
   iso->isov=(prop_isov *)realloc(iso->isov,nmb*sizeof(prop_isov));
   st_at.mm=(double *)calloc(nrad,sizeof(double));

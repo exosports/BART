@@ -580,7 +580,8 @@ getmnfromfile(FILE *fp,
       strcpy(iso->isof[nmb++].n, at->n[i]);
     }
 
-  //Reduce the array to get rid of nonline-ignored isotopes.
+  //Reduce the array to get rid of nonline-ignored isotopes. (isov has
+  //not even been allocated yet)
   iso->n_e = nmb;
   iso->isodo   = (enum isodo *)realloc(iso->isodo,
 				       nmb*sizeof(enum isodo));
@@ -785,7 +786,7 @@ readatmfile(FILE *fp,		/* File */
     if((int)(sumq*ROUNDOFF+0.5)<(int)(allowq*ROUNDOFF+0.5))
       transiterror(TERR_WARNING,
 		   "In radius %g(%i: %g in file), abundances\n"
-		   "don't add up to 1: %.9g\n"
+		   "don't add up to 1: %.9g"
 		   ,at->rads.v[r],r,at->rads.v[r]-zerorad,sumq);
 
 
