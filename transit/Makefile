@@ -62,10 +62,10 @@ mkinstalldirs = ./scripts/mkinstalldirs
 
 #parameters
 INCL        = ./include/
-CPUOPTION   = -mcpu=athlon-xp -march=athlon-xp
+#CPUOPTION   = -mcpu=athlon-xp -march=athlon-xp
 #CPUOPTION  = -mtune=athlon-tbird
-#CPUOPTION  = -mtune=pentium3
-EXTPRM      = -DTRANSIT -static
+CPUOPTION  = -mtune=pentium3
+EXTPRM      = -DTRANSIT -O1 #-static
 WARNFLAGS   = -Wall -Winline
 GSLPRM      = -D_USE_GSL
 GSLLIB      = -lgsl -lblas
@@ -86,7 +86,7 @@ STDFLAGS   += $(INCLFLAGS) $(LIBFLAGS) $(WARNFLAGS) -pedantic \
 	      -std=c99 $(EXTPRM) $(CPUOPTION) $(GSLPRM) $(CFLAGS)
 
 #libraries to link
-LIBS  = -lpu -lm $(GSLLIB)
+LIBS  = -lm $(GSLLIB) -lpu
 
 INSTALL = /usr/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
