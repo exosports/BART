@@ -120,7 +120,6 @@ newprofile(PREC_VOIGT **pr,	/* output 2d profile */
 */
 inline int
 extradius(PREC_NREC r,		/* Radius index */
-	  PREC_RES rad,		/* Radius output */
 	  PREC_RES **kiso,	/* Extinction, uninitialized pointers
 				   but allocated [iso][wn] */
 	  PREC_ATM temp,	/* Temperature */
@@ -145,8 +144,6 @@ extradius(PREC_NREC r,		/* Radius index */
 		 "trying to call computeextradius() before having called\n"
 		 "even once to extwn()\n");
 
-  transitprint(2,verblevel,"Radius %li: %.9g[cm]... ",r+1,rad);
-
   //'propto\_adop' is proportional to the Doppler width, which in its
   //total splendor is
   //\[
@@ -167,9 +164,6 @@ extradius(PREC_NREC r,		/* Radius index */
   //\label{lorwidth}
   //\]
   double propto_alor=sqrt(temp*2*KB/PI/AMU)/AMU/LS/PI;
-
-  if (r==43&&verblevel==21)
-    printf("#rad: %-20.9g%-9i%-20.9g\n",rad,5763,wn[5763]);
 
 
   //Initialize a voigt profile for every isotope as well for the
@@ -331,7 +325,7 @@ extradius(PREC_NREC r,		/* Radius index */
     if(maxj>nwn)
       maxj=nwn;
 
-    if(ln==403631||ln==403688){
+    if(ln==400000){
       j=10;
     }
 
@@ -479,13 +473,12 @@ outputinfo(char *outfile,
 */
 inline int
 computeextradius(PREC_NREC r,	/* Radius index */
-		 PREC_RES rad,	/* Radius output */
 		 PREC_ATM temp, /* Temperature */
 		 struct extinction *ex)	/* Extinction parameters */
 {
   int res;
 
-  if((res=extradius(r, rad, kalt[r], temp, 
+  if((res=extradius(r, kalt[r], temp, 
 		    ex->vf, ex->ta, ex->maxratio))==0)
     ex->computed[r]=1;
 
@@ -670,7 +663,7 @@ extwn (struct transit *tr)
   int nrad=rad->n;
   transitprint(1,verblevel,
 	       "Computing extinction in the outtermost layer\n");
-  if((rn=computeextradius(nrad-1, rad->fct*rad->v[nrad-1],
+  if((rn=computeextradius(nrad-1,
 			  tr->atm.t[nrad-1]*tr->atm.tfct, ex))!=0)
     transiterror(TERR_CRITICAL,
 		 "computeexradius()returned error code %i\n"

@@ -670,7 +670,8 @@ int processparameters(int argc, /* number of command line arguments */
     case '?':
       rn=optopt;
       transiterror(TERR_SERIOUS,
-		   "Unknown or unsupported option of code %i(%c) passed\n"
+		   "Unknown, unsupported, or missing parameter to option "
+		   "of code %i(%c) passed\n"
 		   "as argument, use '-h' to see accepted options.\n"
 		   ,rn,(char)rn);
       break;

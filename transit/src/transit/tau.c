@@ -55,7 +55,7 @@ tau(struct transit *tr)
   PREC_RES *bb=ip->v;
   PREC_RES *n=tr->ds.ir->n;
   PREC_RES *r=rad->v;
-  PREC_RES *t;
+  PREC_RES *tau_wn;
   PREC_ATM *temp=tr->atm.t,tfct=tr->atm.tfct;
 
   transitcheckcalled(tr->pi,"tau",2,
@@ -130,7 +130,7 @@ tau(struct transit *tr)
 
   //for each wavenumber
   for(wi=0;wi<wnn;wi++){
-    t=tau.t[wi];
+    tau_wn=tau.t[wi];
 
     //print output every 10\% that is ready
     if(wi>wnextout){
@@ -165,15 +165,16 @@ tau(struct transit *tr)
 	if(ri)
 	  transitprint(3,verblevel,
 		       "Last Tau(bb=%9.4g, wn=%9.4g): %10.4g\n"
-		       ,bb[ri-1],wn->v[wi],t[ri-1]);
+		       ,bb[ri-1],wn->v[wi],tau_wn[ri-1]);
 	//while the extinction at a radius bigger than the impact
 	//parameter is not computed.. go for it
 	do{
 	  if(!comp[--lastr]){
 	    //compute a new extinction at given radius printing error if
 	    //something happen
-	    if((rn=computeextradius(lastr,r[lastr]*rfct,
-				    temp[lastr]*tfct,ex))!=0)
+	    transitprint(2,verblevel,"Radius %i: %.9g[cm]... "
+			 ,lastr+1, r[lastr]);
+	    if((rn=computeextradius(lastr,temp[lastr]*tfct,ex))!=0)
 	      transiterror(TERR_CRITICAL,
 			   "computeextradius() return error code %i while\n"
 			   "computing radius #%i: %g\n"
@@ -187,13 +188,15 @@ tau(struct transit *tr)
 	}while(bb[ri]*ip->fct<r[lastr]*rfct);
       }
 
-      if( (t[ri] = rfct * 
+      if( (tau_wn[ri] = rfct * 
 	   fcn(bb[ri]*riw,r+lastr,n+lastr,er+lastr,rnn-lastr,taulevel))
 	  > tau.toomuch){
 	tau.last[wi]=ri;
 	break;
       }
     }
+    if (ri==inn)
+      tau.last[wi] = ri-1;
 
   }
 

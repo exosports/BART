@@ -34,18 +34,20 @@ interpolatecia(struct transit *tr)
 {
   FILE *fp;
   char *file,*colname1=0,*colname2=0;
-  double **a,*t=0,*wn;
+  double **a,*t=NULL,*wn;
 
   static struct cia st_cia;
   tr->ds.cia=&st_cia;
   int npairs=tr->ds.cia->n=tr->ds.th->ncia, p;
-  long nwn,nt;
+  long nwn,nt=0;
   char rc;
   char *lp,*lpa;
   int maxline=300,n;
   long lines,i;
   char line[maxline+1];
-  double tmpw[tr->wns.n],tmpt[tr->rads.n];
+  double *tmpw = malloc(tr->wns.n  * sizeof(double));
+  double *tmpt = malloc(tr->rads.n * sizeof(double));
+  //  double tmpw[tr->wns.n],tmpt[tr->rads.n];
   prop_atm *atm=&tr->atm;
   double *densiso1,*densiso2,amagat2;
   struct isotopes *iso=tr->ds.iso;
@@ -83,6 +85,11 @@ interpolatecia(struct transit *tr)
     e[p]=e[0]+p*tr->rads.n;
   memset(e[0],0,tr->wns.n*tr->rads.n*sizeof(double));
 
+  st_cia.e=(PREC_CIA **)calloc(tr->wns.n,sizeof(PREC_CIA *));
+  st_cia.e[0]=(PREC_CIA *)calloc(tr->wns.n*tr->rads.n,sizeof(PREC_CIA));
+  for(p=1;p<tr->wns.n;p++)
+    st_cia.e[p]=st_cia.e[0]+p*tr->rads.n;
+
   for(p=0;p<npairs;p++){
     file=st_cia.file[p]=strdup(tr->ds.th->ciafile[p]);
 
@@ -108,8 +115,8 @@ interpolatecia(struct transit *tr)
       switch(rc){
       case 'i':
 	while(isblank(*++lp));
-	nt=countfields(lp,',');
-	if(nt!=2)
+	long ni=countfields(lp,',');
+	if(ni!=2)
 	  transiterror(TERR_SERIOUS,
 		       "Wrong line %i in CIA file '%s', if it begins with\n"
 		       " a 'i' then it should have the comma-separated\n"
@@ -117,20 +124,20 @@ interpolatecia(struct transit *tr)
 		       " collision. Rest of line:\n"
 		       " %s\n"
 		       ,lines,file,lp);
-	nt=0;
-	while(lp[nt++]!=',');
-	colname1=(char *)calloc(nt,sizeof(char));
-	strncpy(colname1,lp,nt-1);
-	lp+=nt-1;
-	nt=0;
+	ni=0;
+	while(lp[ni++]!=',');
+	colname1=(char *)calloc(ni,sizeof(char));
+	strncpy(colname1,lp,ni-1);
+	lp+=ni-1;
+	ni=0;
 	while(isblank(*lp++));
-	while(lp[nt++]);
-	if((--nt)<=0)
+	while(lp[ni++]);
+	if((--ni)<=0)
 	  transiterror(TERR_SERIOUS,
 		       "Inexistent second isotope name in CIA file '%s'\n"
 		       ,file);
-	colname2=(char *)calloc(nt+1,sizeof(char));
-	strncpy(colname2,lp,nt);
+	colname2=(char *)calloc(ni+1,sizeof(char));
+	strncpy(colname2,lp,ni);
 	continue;
 
       case 't':
@@ -165,7 +172,7 @@ interpolatecia(struct transit *tr)
       break;
     }
 
-    if(!colname2||!t)
+    if(!colname2||nt==0)
       transiterror(TERR_SERIOUS,
 		   "There is either a temperature 't' or isotope name 'i'\n"
 		   " missing in CIA file '%s'\n"
@@ -234,43 +241,45 @@ interpolatecia(struct transit *tr)
     bicubicinterpolate(e,a,wn,nwn,t,nt,
 		       tmpw,tr->wns.n, tmpt,tr->rads.n);
 
+
+    //TD: Linearly adding CIA when there is more than 1 such
+    //database. Check that this is really OK.
+    densiso1=densiso2=0;
+    long j;
+    for(j=0;j<iso->n_e;j++){
+      if(strcmp(iso->isof[j].n,colname1)==0)
+	densiso1=iso->isov[j].d;
+      if(strcmp(iso->isof[j].n,colname2)==0)
+	densiso2=iso->isov[j].d;
+    }
+
+    if(!densiso1||!densiso2)
+      transiterror(TERR_SERIOUS,
+		   "One or both of the names of the isotopes in CIA (%s, %s)\n"
+		   " file '%' doesn't match any in the atmsopheric database '%s'"
+		   ,colname1,colname2,file,tr->f_atm);
+
+    nt=tr->rads.n;
+    for(i=0;i<nt;i++){
+      amagat2=densiso1[i]*densiso2[i]/RHOSTP/RHOSTP;
+      for(j=0;j<tr->wns.n;j++)
+	st_cia.e[j][i] += e[j][nt-i-1]*amagat2;
+    }
+
     free(a[0]);
     free(a);
     free(wn);
     free(t);
+    free(colname1);
+    free(colname2);
+    free(file);
     fclose(fp);
   }
 
-  st_cia.e=(PREC_CIA **)calloc(tr->wns.n,sizeof(PREC_CIA *));
-  st_cia.e[0]=(PREC_CIA *)calloc(tr->wns.n*tr->rads.n,sizeof(PREC_CIA));
-  for(p=1;p<tr->wns.n;p++)
-    st_cia.e[p]=st_cia.e[0]+p*tr->rads.n;
-
-  densiso1=densiso2=0;
-  for(p=0;p<iso->n_e;p++){
-    if(strcmp(iso->isof[p].n,colname1)==0)
-      densiso1=iso->isov[p].d;
-    if(strcmp(iso->isof[p].n,colname2)==0)
-      densiso2=iso->isov[p].d;
-  }
-
-  if(!densiso1||!densiso2)
-    transiterror(TERR_SERIOUS,
-		 "One or both of the names of the isotopes in CIA (%s, %s)\n"
-		 " file '%' doesn't match any in the atmsopheric database '%s'"
-		 ,colname1,colname2,file,tr->f_atm);
-
-  nt=tr->rads.n;
-  for(i=0;i<nt;i++){
-    amagat2=densiso1[i]*densiso2[i]/RHOSTP/RHOSTP;
-    for(p=0;p<tr->wns.n;p++)
-      st_cia.e[p][i]=e[p][nt-i-1]*amagat2;
-  }
-
-  free(colname1);
-  free(colname2);
   free(e[0]);
   free(e);
+  free(tmpw);
+  free(tmpt);
 
   transitprint(1,verblevel,
 	       " done\n");
@@ -300,7 +309,6 @@ bicubicinterpolate(double **res, /* target array [t1][t2] */
 		   long nt2)
 {
   long i,j;
-  double f2[nt2][nx1];
   double fx1=x1[0],fx2=x2[0],lx1=x1[nx1-1],lx2=x2[nx2-1];
   long lj=nt2,fj=0;
   long li=nt1,fi=0;
@@ -325,10 +333,16 @@ bicubicinterpolate(double **res, /* target array [t1][t2] */
     if(t2[j]>lx2)
       lj=j;
 
+  double **f2 = (double **)malloc(nt2*sizeof(double *));
+  f2[0] = (double *)malloc(nt2*nx1*sizeof(double));
+  for(i=1 ; i<nt2 ; i++)
+    f2[i] = f2[0] + i*nx1;
+  gsl_interp_accel *acc;
+  gsl_interp       *spl;
 
-  for(i=0;i<nx1;i++){
-    gsl_interp_accel *acc =gsl_interp_accel_alloc ();
-    gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,nx2);
+  for(i=0 ; i<nx1 ; i++){
+    acc = gsl_interp_accel_alloc ();
+    spl = gsl_interp_alloc(gsl_interp_cspline,nx2);
     gsl_interp_init(spl,x2,src[i],nx2);
     for(j=fj;j<lj;j++)
       f2[j][i]=gsl_interp_eval(spl,x2,src[i],t2[j],acc);
@@ -336,15 +350,19 @@ bicubicinterpolate(double **res, /* target array [t1][t2] */
     gsl_interp_accel_free(acc);
   }
 
-  for(j=fj;j<lj;j++){
-    gsl_interp_accel *acc =gsl_interp_accel_alloc ();
-    gsl_interp *spl=gsl_interp_alloc(gsl_interp_cspline,nx1);
+  for(j=fj ; j<lj ; j++){
+    acc = gsl_interp_accel_alloc ();
+    spl = gsl_interp_alloc(gsl_interp_cspline,nx1);
     gsl_interp_init(spl,x1,f2[j],nx1);
     for(i=fi;i<li;i++)
       res[i][j]+=gsl_interp_eval(spl,x1,f2[j],t1[i],acc);
     gsl_interp_free(spl);
     gsl_interp_accel_free(acc);
   }
+
+
+  free(f2[0]);
+  free(f2);
 
   return 0;
     

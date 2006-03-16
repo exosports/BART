@@ -76,7 +76,6 @@ readtli_bin(FILE *fp,
   PREC_ZREC *T,*Z;
   PREC_CS *CS;
   int acumiso=0;
-  char *undefined_string;
   struct isotopes *iso=tr->ds.iso;
 
   //Read datafile name, initial, final wavelength, and
@@ -93,7 +92,7 @@ readtli_bin(FILE *fp,
   fread(&iniw,sizeof(double),1,fp);
   fread(&finw,sizeof(double),1,fp);
   fread(&rn,sizeof(int),1,fp);
-  undefined_string=(char *)calloc(rn+1,sizeof(char));
+  char undefined_string[rn+1];
   fread(undefined_string,sizeof(char),rn,fp);
   fread(&ndb,sizeof(int),1,fp);
 

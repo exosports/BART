@@ -48,7 +48,7 @@ $(local_$(d)): $(d)/Rules.mk
 $(local_$(d)): CF_LOCAL := -D_USE_GSL -I$(d) -Iinclude \
 	-DHAVE_INLINE -DGSL_RANGE_CHECK_OFF #\
 #	`pkg-config --cflags gtk+-2.0`
-$(local_$(d)): LL_LOCAL := -lm -lpu -lgsl \
+$(local_$(d)): LL_LOCAL := -lm -lgsl \
 #`pkg-config --libs gtk+-2.0` \
 	-lplplotd -lcfitsio -lblas
 

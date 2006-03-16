@@ -77,12 +77,12 @@ int vtransiterror(int flags, const char *str, va_list ap)
 
   len=0;
   if(!(flags&TERR_NOPREAMBLE))
-    len=strlen(pre_error)+strlen(error[flags&TERR_NOFLAGBITS]);
-  len+=strlen(str)+1;
-  lenout=len;
+    len = strlen(pre_error)+strlen(error[flags&TERR_NOFLAGBITS]);
+  len    += strlen(str)+1;
+  lenout  = len;
 
-  errormessage=(char *)calloc(len,sizeof(char));
-  out=(char *)calloc(lenout,sizeof(char));
+  errormessage = (char *)calloc(len, sizeof(char));
+  out          = (char *)calloc(lenout, sizeof(char));
 
   if(!(flags&TERR_NOPREAMBLE)){
     strcat(errormessage,pre_error);
@@ -96,8 +96,10 @@ int vtransiterror(int flags, const char *str, va_list ap)
     out=(char *)realloc(out,xtr+1);
     xtr=vsnprintf(out,xtr+1,errormessage,ap)+1;
   }
+  free(errormessage);
 
   fwrite(out,sizeof(char),xtr-1,stderr);
+  free(out);
 
   if (flags&TERR_ALLOWCONT||(flags&TERR_NOFLAGBITS)==TERR_WARNING){
     terr_allown++;

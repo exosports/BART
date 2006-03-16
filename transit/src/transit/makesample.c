@@ -340,9 +340,17 @@ int makewnsample(struct transit *tr)
   fromwav.f+=tr->wnmf;
   fromwav.i-=tr->wnmi;
 
-  //make the sampling
+  //make the sampling and check we are not trying to compute where we
+  //don't have information
   res=makesample(&tr->wns,&trh->wns,&fromwav,
 		 TRH_WN,0,0);
+  if ((tr->wns.i < wnu_o_wlu/tr->wavs.f) || 
+      (tr->wns.f > wnu_o_wlu/tr->wavs.i))
+    transiterror(TERR_SERIOUS,
+		 "Wavenumber range (%g-%g), where extinction is "
+		 "going to be computed, is beyond wavelength range "
+		 "(%g-%g), where line info was read.\n"
+		 ,tr->wns.i, tr->wns.f, tr->wavs.i, tr->wavs.f);
 
   //set progress indicator if sampling was successful and return status
   if(res>=0)
