@@ -90,12 +90,15 @@ int vtransiterror(int flags, const char *str, va_list ap)
   }
   strcat(errormessage,str);
 
+  va_list aq;
+  va_copy(aq, ap);
   xtr=vsnprintf(out,lenout,errormessage,ap)+1;
 
   if(xtr>lenout){
     out=(char *)realloc(out,xtr+1);
-    xtr=vsnprintf(out,xtr+1,errormessage,ap)+1;
+    xtr=vsnprintf(out,xtr+1,errormessage,aq)+1;
   }
+  va_end(aq);
   free(errormessage);
 
   fwrite(out,sizeof(char),xtr-1,stderr);
