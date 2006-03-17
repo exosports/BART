@@ -173,16 +173,16 @@ int processparameters(int argc, /* number of command line arguments */
     {"number-abund",CLA_NUMBERQ,no_argument,NULL,
      NULL,"Indicates that given abundances are by number rather\n"
      "than by mass"},
-    {"oneptn",CLA_ONEPT,required_argument,NULL,
+    {"onept",CLA_ONEPT,required_argument,NULL,
      "press,temp,extra_iso","Don't calculate transit spectra, just\n"
      "obtain spectra for a given pressure and temperature. Unless\n"
      "oneabund is also specified and has the correct number of\n"
      "isotopes, the abundances will be asked interactively"},
     {"oneextra",CLA_ONEEXTRA,required_argument,NULL,
      "mass1name1,mass2name2,...","It only has effect with --onept,\n"
-     "a list of the atomic mass and names for the hitherto specified\n"
-     "extra isotopes. If it doesn't have the right amount of values,\n"
-     "the program will ask interactively"},
+     "a list of the atomic mass and names for the extra isotopes \n"
+     "specified with --onept. If it doesn't have the right amount of\n"
+     "values, the program will ask interactively"},
     {"oneabund",CLA_ONEABUND,required_argument,NULL,
      "q1,...","It also only has effect with --onept, a list of the\n"
      "abundances of the different isotopes. If it is omitted or\n"
@@ -385,8 +385,8 @@ int processparameters(int argc, /* number of command line arguments */
 
     switch(rn){
     case CLA_CIAFILE:
-      hints->ncia=nchar(optarg,',')+1;
-      hints->ciafile=splitnzero_alloc(optarg,',');
+      hints->ncia    = nchar(optarg,',') + 1;
+      hints->ciafile = splitnzero_alloc(optarg,',');
       break;
     case CLA_DETCIA:
       det=&hints->det.cia;
@@ -516,7 +516,7 @@ int processparameters(int argc, /* number of command line arguments */
       if(rf!=hints->onept.ne)
 	transiterror(TERR_SERIOUS,
 		     "A non integer(%g) number of extra isotopes was given\n"
-		     " with the option --oneptn\n"
+		     " with the option --onept\n"
 		     ,rf);
       hints->onept.one=1;
       break;
@@ -843,6 +843,9 @@ savehint(FILE *out,
   savestr(out,hints->f_toomuch);
   savestr(out,hints->f_outsample);
   savestr(out,hints->solname);
+  for(int i=0 ; i<hints->ncia ; i++){
+    savestr(out, hints->ciafile[i]);
+  }
 
   //save sub-structures
   savesample_arr(out,&hints->rads);
@@ -886,6 +889,10 @@ resthint(FILE *in,
   if(rn<0) return rn; else res+=rn;
   rn=reststr(in,&hint->solname);
   if(rn<0) return rn; else res+=rn;
+  for(int i=0 ; i<hint->ncia ; i++){
+    rn=reststr(in,hint->ciafile+i);
+    if(rn<0) return rn; else res+=rn;
+  }
 
   //restore sub-structures
   restsample_arr(in,&hint->rads);
@@ -915,4 +922,57 @@ printintro()
 	       "                TRANSIT v%i.%i%s\n"
 	       "-----------------------------------------------\n"
 	       ,version,revision,rcname);
+}
+
+
+/* \fcnfh
+   Frees hints structure
+*/
+void
+freemem_hints(struct transithint *h)
+{
+  //free strings
+  free(h->f_atm);
+  free(h->f_line);
+  free(h->f_out);
+  free(h->f_toomuch);
+  free(h->f_outsample);
+  free(h->solname);
+  for(int i=0 ; i<h->ncia ; i++)
+    free( h->ciafile[i]);
+  free(h->ciafile);
+
+  //free sub-structures
+  freemem_onept(&h->onept);
+  freemem_samp(&h->rads);
+  freemem_samp(&h->wavs);
+  freemem_samp(&h->wns);
+  freemem_samp(&h->ips);
+  /* TD: Free sve if it is ever enabled 
+     freesaves(&h->save); */
+
+  freemem_cloud(&h->cl);
+  freemem_detailout(&h->det);
+
+
+}
+
+void
+freemem_cloud(struct extcloud *c)
+{
+}
+
+void
+freemem_detailout(struct detailout *d)
+{
+  freemem_detailfld(&d->ext);
+  freemem_detailfld(&d->tau);
+  freemem_detailfld(&d->cia);
+}
+
+void
+freemem_detailfld(struct detailfld *f)
+{
+  if (f->n)
+    free(f->ref);
 }

@@ -15,5 +15,6 @@ extern void savesample_arr P_((FILE *out, prop_samp *samp));
 extern int restsample P_((FILE *in, prop_samp *samp));
 extern int restsample_arr P_((FILE *in, prop_samp *samp));
 extern int outsample P_((struct transit *tr));
+extern void freemem_samp P_((prop_samp *samp));
 
 #undef P_

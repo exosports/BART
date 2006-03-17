@@ -153,5 +153,35 @@ int main (int argc,		/* Number of variables */
 		 "modulation() returned error code %i\n"
 		 ,rn);
 
+  freemem_transit(&transit);
+
   return EXIT_SUCCESS;
+}
+
+
+/* \fcnfh
+   Frees transit structure
+*/
+void
+freemem_transit(struct transit *tr)
+{
+  freemem_hints(tr->ds.th);
+
+  free(tr->f_atm);
+  free(tr->f_line);
+  free(tr->f_out);
+  free(tr->f_toomuch);
+  free(tr->f_outsample);
+
+  freemem_samp(&tr->rads);
+  freemem_samp(&tr->wavs);
+  freemem_samp(&tr->wns);
+  freemem_samp(&tr->ips);
+  free_atm(&tr->atm);
+
+  free(tr->outpret);
+  /* TD:Free saves once it is enabled
+     freemem_saves(); */
+
+
 }

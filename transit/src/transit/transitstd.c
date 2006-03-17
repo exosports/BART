@@ -346,6 +346,7 @@ free_atm(prop_atm *atm)
 {
   free(atm->p);
   free(atm->t);
+  free(atm->mm);
 }
 
 /* \fcnfh

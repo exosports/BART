@@ -436,7 +436,7 @@ int makeradsample(struct transit *tr)
 		"makeradsample():: called but essential variables are\n"
 		"missing!\n");
 
-  int flag;
+  int flag=0;
   switch(tr->fl&TRU_SAMPBITS){
   case TRU_SAMPLIN:
     flag=SAMP_LINEAR;
@@ -444,6 +444,9 @@ int makeradsample(struct transit *tr)
   case TRU_SAMPSPL:
     flag=SAMP_SPLINE;
     break;
+  default:
+    transiterror(TERR_SERIOUS,
+		 "Invalid sampling function specified");
   }
 
   //We need to set-up limit so that the hinted values are compatible
@@ -510,6 +513,7 @@ int makeradsample(struct transit *tr)
 	      atms->isov[i].d,isovt[i].d,
 	      atms->isov[i].q,isovt[i].q);
   }
+  resample_free();
 
   //Second, non-extended isotopes (isotopes coming from the line database):
   //We have to go to each database separately
@@ -530,6 +534,7 @@ int makeradsample(struct transit *tr)
 		isovs[j].c,isovt[iso1db+j].c);
     }
   }
+  resample_free();
 
   //set progress indicator and return
   if(res>=0)
@@ -685,8 +690,15 @@ outsample(struct transit *tr)
   return 0;
 }
 
-
-
+/* \fcnfh
+ Frees the sampling structure
+*/
+void
+freemem_samp(prop_samp *samp)
+{
+  if(samp->n)
+    free(samp->v);
+}
 
 
 #ifdef DBGSAMPLE
