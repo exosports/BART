@@ -153,8 +153,9 @@ int main (int argc,		/* Number of variables */
 		 "modulation() returned error code %i\n"
 		 ,rn);
 
-  freemem_isotopes(transit.ds.iso, &transit.pi);
-  freemem_cia(transit.ds.iso, &transit.pi);
+  freemem_isotopes (transit.ds.iso, &transit.pi);
+  freemem_cia      (transit.ds.cia, &transit.pi);
+  freemem_outputray(transit.ds.out, &transit.pi);
   freemem_transit(&transit);
 
   return EXIT_SUCCESS;

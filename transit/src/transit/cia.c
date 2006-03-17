@@ -63,8 +63,6 @@ interpolatecia(struct transit *tr)
   for(i=0;i<tr->wns.n;i++)
     tmpw[i]=tr->wns.fct *tr->wns.v[i];
 
-  //prepare and read each datafile
-  st_cia.file=(char **)calloc(npairs,sizeof(char *));
 
   //Return succes if there is no files to read, or give some info
   if(!npairs){
@@ -77,6 +75,9 @@ interpolatecia(struct transit *tr)
   transitprint(1,verblevel,
 	       "\nComputing CIA opacities for %i database%s...\n"
 	       ,npairs,npairs>1?"s":"");
+
+  //prepare and read each datafile
+  st_cia.file=(char **)calloc(npairs,sizeof(char *));
 
   double **e;
   e=(double **)calloc(tr->wns.n,sizeof(double *));
@@ -91,7 +92,7 @@ interpolatecia(struct transit *tr)
     st_cia.e[p]=st_cia.e[0]+p*tr->rads.n;
 
   for(p=0;p<npairs;p++){
-    file=st_cia.file[p]=strdup(tr->ds.th->ciafile[p]);
+    file = st_cia.file[p] = strdup(tr->ds.th->ciafile[p]);
 
     if((fp=fopen(file,"r"))==NULL)
       transiterror(TERR_SERIOUS,
@@ -272,7 +273,6 @@ interpolatecia(struct transit *tr)
     free(t);
     free(colname1);
     free(colname2);
-    free(file);
     fclose(fp);
   }
 
@@ -397,10 +397,10 @@ freemem_cia(struct cia *cia,
   //free arrays
   free(cia->e[0]);
   free(cia->e);
-  if (cia->file){
-    free(cia->file[0]);
+  for (int i=0 ; i<cia->n ; i++)
+    free(cia->file[i]);
+  if(cia->n)
     free(cia->file);
-  }
 
   //unset appropiate flags
   *pi&=~(TRPI_CIA);
