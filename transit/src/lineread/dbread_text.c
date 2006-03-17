@@ -215,7 +215,7 @@ readline(FILE *fp,
 	 float wlend,
 	 struct linedb **linesp)
 {
-  long na=16, nbeg, i=0;
+  long na=16, nbeg=0, i=0;
   char *lp, *lp2, rc, line[maxline+1];
 
   struct linedb *lineinfo = (struct linedb *)calloc(na, sizeof(struct linedb));
