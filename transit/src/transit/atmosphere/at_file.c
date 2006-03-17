@@ -1,7 +1,6 @@
 /*
- * at_file.c
- * at_file.txc - Read atmospheric info from file. Component of the
- *               Transit program.
+ * at_file.c - Read atmospheric info from file. Component of the
+ *             Transit program.
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -21,8 +20,7 @@
  * 02111-1307, USA.
  */
 
-
-#include <readatm.h>
+#include "at_common.c"
 
 #define ROUNDOFF 1e7
 
@@ -499,7 +497,7 @@ getmnfromfile(FILE *fp,
   fonly=(struct fonly *)calloc(nfonly,sizeof(struct fonly));
   at->ipa=ipa=ipi;
   isoprop=(struct atm_isoprop *)realloc(isoprop,ipa*
-				    sizeof(struct atm_isoprop));
+					sizeof(struct atm_isoprop));
 
   //Makes at arrays bigger, so that they can hold the factorized values.
   nmb       = at->n_aiso = ison + ipa;

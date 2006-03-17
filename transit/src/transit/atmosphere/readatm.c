@@ -1,6 +1,5 @@
 /*
- * readatm.c
- * readatm.txc - Read atmospheric info main file. Component of the
+ * readatm.c - Read atmospheric info main file. Component of the
  *               Transit program.
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
@@ -21,24 +20,7 @@
  * 02111-1307, USA.
  */
 
-#include <readatm.h>
-
-/* \fcnfh
-   Skip to the next field pointed by 'lp', omits leading and trailing
-   spaces.
-
-   @returns pointer to the beginning of next non-space
-*/
-inline char *
-nextfield(char *lp)
-{
-  while(*lp==' '||*lp=='\t') lp++;
-  while(*lp!=' '&&*lp!='\0') lp++;
-  while(*lp==' '||*lp=='\t') lp++;
-
-  return lp;
-}
-
+#include "at_common.c"
 
 
 
@@ -74,6 +56,7 @@ freemem_atmosphere(struct atm_data *at,
   for(int i=0 ; i<at->n_nonignored ; i++)
     free_isov(at->isov+i);
   free_atm(&at->atm);
+  free(at->isoprop);
 
 
   //free arrays

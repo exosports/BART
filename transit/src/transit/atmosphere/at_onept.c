@@ -1,6 +1,5 @@
 /*
- * at_onept.c
- * at_onept.txc - Take one point atmospheric info. Component of the
+ * at_onept.c - Take one point atmospheric info. Component of the
  *               Transit program.
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
@@ -21,7 +20,7 @@
  * 02111-1307, USA.
  */
 
-#include <readatm.h>
+#include "at_common.c"
 
 /* \fcnfh
    ask from standard input for temperature, pressure and number of
