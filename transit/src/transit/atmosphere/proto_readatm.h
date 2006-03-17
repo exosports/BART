@@ -6,6 +6,7 @@
 
 /* src/transit/atmosphere/readatm.c */
 extern inline char *nextfield P_((char *lp));
+extern void freemem_onept P_((struct onept *o));
 extern int freemem_atmosphere P_((struct atm_data *at, long *pi));
 extern void saveonept_arr P_((FILE *out, struct onept *onept));
 extern int restonept_arr P_((FILE *in, struct onept *onept));

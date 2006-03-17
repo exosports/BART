@@ -41,6 +41,25 @@ nextfield(char *lp)
 
 
 
+
+/* \fcnfh
+   frees memory from the onept structure
+
+   @returns 0 on success
+*/
+void
+freemem_onept(struct onept *o)
+{
+
+  free(o->q);
+  if(o->nm){
+    free(o->n[0]);
+    free(o->n);
+    free(o->m);
+  }
+}
+
+
 /* \fcnfh
    frees memory from the atmosphere structure
 
@@ -433,6 +452,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
     nrad=readatmfile(fp,tr,&st_at,rads,nrad);
     transitprint(1,verblevel,
 		 " done\n");
+    fclose(fp);
     break;
   default:
     break;
