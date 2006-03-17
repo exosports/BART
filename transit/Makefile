@@ -58,7 +58,9 @@ MAKEDEP = $(CC) -MM
 CLATEX  = $(HOME)/bin/clatex.pl
 
 EXEEXT =
-mkinstalldirs = ./scripts/mkinstalldirs
+scriptdir = ./scripts/
+mkinstalldirs = $(scriptdir)mkinstalldirs
+CC = ${scriptdir}ccd-gcc.sh
 
 #parameters
 INCL        = ./include/
