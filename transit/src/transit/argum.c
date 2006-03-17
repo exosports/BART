@@ -363,13 +363,10 @@ int processparameters(int argc, /* number of command line arguments */
   //preset values for detailed output
   struct detailfld *det=&hints->det.tau;
   strcpy(det->name,"optical depth");
-  det->ref=(double *)calloc(1,sizeof(double));
   det=&hints->det.ext;
   strcpy(det->name,"extinction");
-  det->ref=(double *)calloc(1,sizeof(double));
   det=&hints->det.cia;
   strcpy(det->name,"CIA extinction");
-  det->ref=(double *)calloc(1,sizeof(double));
   
 
   procopt_debug=1;
@@ -398,9 +395,10 @@ int processparameters(int argc, /* number of command line arguments */
 	det=&hints->det.ext;
 
       //search for filename and save it
-      free(det->ref);
-      rn=sizeof(det->file);
-      if(strlen(optarg)<rn) rn=strlen(optarg);
+      if (det->n)
+	free(det->ref);
+      rn = sizeof(det->file);
+      if(strlen(optarg)<rn) rn = strlen(optarg);
       i=0;
       while(i<rn)
 	if(optarg[i++]==':') break;
@@ -931,16 +929,20 @@ printintro()
 void
 freemem_hints(struct transithint *h)
 {
-  //free strings
+  //free strings which are copied into transit
   free(h->f_atm);
   free(h->f_line);
   free(h->f_out);
   free(h->f_toomuch);
   free(h->f_outsample);
+
+  //free other strings
   free(h->solname);
-  for(int i=0 ; i<h->ncia ; i++)
-    free( h->ciafile[i]);
-  free(h->ciafile);
+  fprintf(stderr, "Freeing %i CIA\n",h->ncia);
+  if (h->ncia){
+    free(h->ciafile[0]);
+    free(h->ciafile);
+  }
 
   //free sub-structures
   freemem_onept(&h->onept);

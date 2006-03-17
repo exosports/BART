@@ -384,3 +384,25 @@ ciaerr(int max,
 	       ,line,name,max,__FILE__);
 }
 
+
+/* \fcnfh
+   frees cia structure 
+
+   @returns 0 on success
+*/
+int
+freemem_cia(struct cia *cia,
+	    long *pi)
+{
+  //free arrays
+  free(cia->e[0]);
+  free(cia->e);
+  if (cia->file){
+    free(cia->file[0]);
+    free(cia->file);
+  }
+
+  //unset appropiate flags
+  *pi&=~(TRPI_CIA);
+  return 0;
+}

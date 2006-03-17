@@ -328,6 +328,7 @@ printtoomuch(char *file, 	/* Filename to save to, a '-' is
     fprintf(out,"%-14.10g%16.12g\n",wn->v[w]*wn->fct,
 	    rad->v[tau->last[w]]*rad->fct);
 
+  fclose(out);
 }
 
 

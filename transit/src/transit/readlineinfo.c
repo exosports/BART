@@ -31,9 +31,6 @@ static void notyet(int lin, char *file);
 static int invalidfield(char *line, char *file, int nmb,
 			int fld, char *fldn);
 
-static inline void datafileBS(FILE *fp, PREC_NREC initial, PREC_NREC final,
-			      double lookfor, PREC_NREC *resultp,
-			      int reclength); 
 
 #define checkprepost(pointer,pre,omit,post) do{                            \
    if(pre)                                                                 \
@@ -50,6 +47,43 @@ static inline void datafileBS(FILE *fp, PREC_NREC initial, PREC_NREC final,
                   ,__LINE__,__FILE__,line);                                \
                                              }while(0)
 
+
+/* \fcnfh
+  datafileBS: Perform a binary search in file pointed by 'fp'(FILE *)
+  between 'initial'(PREC\_NREC) and 'final'(PREC\_NREC) looking for
+  'lookfor'(PREC\_NREC) at the first item of a record, result is stored
+  in 'resultp'(PREC\_NREC *). Records are of length 'reclength'(int) and
+  the first item of each of them is of type PREC\_BREC.
+*/
+static inline void 
+datafileBS(FILE *fp,		/* File pointer */
+	   long offs,	        /* initial position of data in tli 
+				   file */
+	   PREC_NREC nfields,	/* last position */
+	   double lookfor,	/* target value */
+	   PREC_NREC *resultp,	/* result index */
+	   int reclength)	/* Total length of record */
+{
+  PREC_LNDATA temp;
+  const int trglength=sizeof(PREC_LNDATA);
+  PREC_NREC ini=0,fin=nfields-1;
+
+  transitDEBUG(21,verblevel,
+	       "BS: Start looking from %li in %li fields for %f\n"
+	       ,offs,nfields,lookfor);
+  do{
+    *(resultp)=(fin+ini)/2;
+    fseek(fp,offs+reclength*(*resultp),SEEK_SET);
+    fread(&temp,trglength,1,fp);
+    transitDEBUG(21,verblevel,"BS: found wl %f at position %li\n"
+		 ,temp,(*resultp));
+    if(lookfor>temp)
+      ini=*(resultp);
+    else
+      fin=*(resultp);
+  }while (fin-ini>1);
+  *resultp=ini;
+}
 
 /* \fcnfh
    Read binary TLI file already open in 'fp'
@@ -1036,43 +1070,6 @@ int readdatarng(struct transit *tr, /* General parameters and
   return i;
 }
 
-/* \fcnfh
-  datafileBS: Perform a binary search in file pointed by 'fp'(FILE *)
-  between 'initial'(PREC\_NREC) and 'final'(PREC\_NREC) looking for
-  'lookfor'(PREC\_NREC) at the first item of a record, result is stored
-  in 'resultp'(PREC\_NREC *). Records are of length 'reclength'(int) and
-  the first item of each of them is of type PREC\_BREC.
-*/
-static inline void 
-datafileBS(FILE *fp,		/* File pointer */
-	   long offs,	        /* initial position of data in tli 
-				   file */
-	   PREC_NREC nfields,	/* last position */
-	   double lookfor,	/* target value */
-	   PREC_NREC *resultp,	/* result index */
-	   int reclength)	/* Total length of record */
-{
-  PREC_LNDATA temp;
-  const int trglength=sizeof(PREC_LNDATA);
-  PREC_NREC ini=0,fin=nfields-1;
-
-  transitDEBUG(21,verblevel,
-	       "BS: Start looking from %li in %li fields for %f\n"
-	       ,offs,nfields,lookfor);
-  do{
-    *(resultp)=(fin+ini)/2;
-    fseek(fp,offs+reclength*(*resultp),SEEK_SET);
-    fread(&temp,trglength,1,fp);
-    transitDEBUG(21,verblevel,"BS: found wl %f at position %li\n"
-		 ,temp,(*resultp));
-    if(lookfor>temp)
-      ini=*(resultp);
-    else
-      fin=*(resultp);
-  }while (fin-ini>1);
-  *resultp=ini;
-}
-
 
 
 /* TD: Accept isotope list */
@@ -1180,8 +1177,9 @@ freemem_isotopes(struct isotopes *iso,
   int i;
 
   //free structures
-  for(i=0;i<iso->n_i;i++)
+  for(i=0;i<iso->n_i;i++)	/* Allocated in readlineinfo */
     free_isof(iso->isof+i);
+  free_isof(iso->isof+iso->n_i); /* Allocated in at_file */
   for(i=0;i<iso->n_db;i++)
     free_db(iso->db+i);
   free_isov(iso->isov);

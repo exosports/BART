@@ -153,6 +153,8 @@ int main (int argc,		/* Number of variables */
 		 "modulation() returned error code %i\n"
 		 ,rn);
 
+  freemem_isotopes(transit.ds.iso, &transit.pi);
+  freemem_cia(transit.ds.iso, &transit.pi);
   freemem_transit(&transit);
 
   return EXIT_SUCCESS;
@@ -166,12 +168,6 @@ void
 freemem_transit(struct transit *tr)
 {
   freemem_hints(tr->ds.th);
-
-  free(tr->f_atm);
-  free(tr->f_line);
-  free(tr->f_out);
-  free(tr->f_toomuch);
-  free(tr->f_outsample);
 
   freemem_samp(&tr->rads);
   freemem_samp(&tr->wavs);

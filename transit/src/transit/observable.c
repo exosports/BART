@@ -160,7 +160,7 @@ printmod(struct transit *tr)
 
   fclose(outf);
 
-  exit(EXIT_SUCCESS);
+  return;
 }
 
 
