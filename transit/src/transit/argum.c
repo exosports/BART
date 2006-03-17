@@ -938,7 +938,6 @@ freemem_hints(struct transithint *h)
 
   //free other strings
   free(h->solname);
-  fprintf(stderr, "Freeing %i CIA\n",h->ncia);
   if (h->ncia){
     free(h->ciafile[0]);
     free(h->ciafile);
