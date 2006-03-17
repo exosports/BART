@@ -20,11 +20,15 @@
  * 02111-1307, USA.
  */
 
+#ifndef _READATM_H
+#define _READATM_H
+
 #include <transit.h>
 
 extern char *atmfilename;
 
-#include <proto_at_onept.h>
-#include <proto_at_file.h>
-#include <proto_readatm.h>
+#include <atmosphere/proto_at_onept.h>
+#include <atmosphere/proto_at_file.h>
+#include <atmosphere/proto_readatm.h>
 
+#endif

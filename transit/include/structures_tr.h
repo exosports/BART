@@ -315,7 +315,7 @@ struct extscat {
   double prm;
 };
 
-struct saves {
+struct saves {			/* NOT ENABLED! */
   char *tau;			/* Save after finalizing tau */
 };
 
@@ -396,12 +396,11 @@ struct transithint {		/* Structure with user hinted data that
   struct onept onept;		/* Parameters for onept atmosphere */
   struct saves save;		/* Saves indicator of program stats */
 
+  struct extcloud cl;
+  struct detailout det;
+
   double minelow;		/* Only use transitions with this
 				   minimum low energy (in cm-1) */
-
-  struct extcloud cl;
-
-  struct detailout det;
 
   char **ciafile;
   int ncia;
@@ -459,19 +458,19 @@ struct transit {		/* Main data structure */
 				   data that is not required for the
 				   final computation */
     struct transithint *th;
-    struct lineinfo *li;
-    struct atm_data *at;
-    struct extinction *ex;
-    struct optdepth *tau;
-    struct idxref *ir;
-    struct geometry *sg;
-    struct savefiles *sf;
-    struct isotopes *iso;
-    struct outputray *out;
-    struct extcloud *cl;
-    struct extscat *sc;
-    struct detailout *det;
-    struct cia *cia;
+    struct lineinfo    *li;
+    struct atm_data    *at;
+    struct extinction  *ex;
+    struct optdepth    *tau;
+    struct idxref      *ir;
+    struct geometry    *sg;
+    struct savefiles   *sf;
+    struct isotopes    *iso;
+    struct outputray   *out;
+    struct extcloud    *cl;
+    struct extscat     *sc;
+    struct detailout   *det;
+    struct cia         *cia;
   }ds;
 };
 

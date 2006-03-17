@@ -112,7 +112,7 @@ extern const transit_ray_solution slantpath;
 /***** Prototypes *****/
 #include <proto_transit.h>
 #include <proto_readlineinfo.h>
-#include <proto_readatm.h>
+#include <atmosphere/proto_readatm.h>
 #include <proto_transitstd.h>
 #include <proto_makesample.h>
 #include <proto_extinction.h>
