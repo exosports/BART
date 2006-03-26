@@ -364,8 +364,11 @@ modulation1 (PREC_RES *tau,
   //1-M=&1-\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
   //             +\int_{r_p}^{R_s}\dd A}
   //            {\pi R_s^2}\\%
-  //   =&\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
-  //           -Area_{planet}}
+  //   =&-\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
+  //           +Area_{planet}}
+  //          {\pi R_s^2}
+  //   =&-\frac{2\int_0^{r_p}\ee^{-\tau}r\dd r
+  //           +r_p^2}
   //          {\pi R_s^2}
   //\end{align}
   res = ipv[ipn1] * ipv[ipn1]
