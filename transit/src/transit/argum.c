@@ -922,7 +922,7 @@ printintro()
 	       "-----------------------------------------------\n"
 	       ,version,revision,rcname);
   transitprint(2,verblevel,
-	       "Started on %s\n", ctime(time()));
+	       "Started on %s\n", ctime(time(NULL)));
 }
 
 
