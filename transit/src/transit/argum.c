@@ -21,6 +21,7 @@
  */
 
 
+#include <time.h>
 #include <transit.h>
 #include <version_tr.h>
 #include <math.h>
@@ -920,6 +921,8 @@ printintro()
 	       "                TRANSIT v%i.%i%s\n"
 	       "-----------------------------------------------\n"
 	       ,version,revision,rcname);
+  transitprint(2,verblevel,
+	       "Started on %s\n", ctime(time()));
 }
 
 
