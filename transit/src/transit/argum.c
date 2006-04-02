@@ -921,8 +921,9 @@ printintro()
 	       "                TRANSIT v%i.%i%s\n"
 	       "-----------------------------------------------\n"
 	       ,version,revision,rcname);
+  time_t tim = time(NULL);
   transitprint(2,verblevel,
-	       "Started on %s\n", ctime(time(NULL)));
+	       "Started on %s\n", ctime(&tim));
 }
 
 
