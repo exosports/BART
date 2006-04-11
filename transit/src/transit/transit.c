@@ -21,9 +21,7 @@
  * 02111-1307, USA.
  */
 
-/* TD: Command line parameters parsing */
 /* TD: calloc checks */
-/* TD: atmosphere info  retrieval */
 
 #include <transit.h>
 

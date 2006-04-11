@@ -70,7 +70,7 @@ totaltau1(PREC_RES b,		/* impact parameter */
   ex+=rs;
   nrad-=rs;
 
-  //By parabola fitting, interpolate the value of extinction at the
+  //By parabolic fitting, interpolate the value of extinction at the
   //radius of minimum approach and store it in the sample that
   //corresponded to the closest from below. Store such value and radius,
   //which are to be replaced before returning (\lin{tmpex})

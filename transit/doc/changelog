@@ -5,6 +5,8 @@ XXXX-XX-XX  Patricio Rojo <pato@astro.cornell.edu>
 	* Using ccd-gcc.sh to compile with the right dependencies
 	* Improved verbosity in several places
 	* This changelog was written from an old cvstags file.
+	* Improving transiterror() so that it nows it can print filename
+	and line number.
 	
 2004-11-16  Patricio Rojo <pato@astro.cornell.edu>
 

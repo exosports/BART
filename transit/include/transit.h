@@ -68,6 +68,19 @@ stateeqnford(_Bool mass,	/* Mass abundance? (as opposed to
  return AMU * q * mi * p / KB / t;
 }
 
+#ifdef  DEBUG_ERROR
+#define DBGERR | TERR_DBG
+#else
+#define DBGERR
+#endif /* DEBUG_ERROR */
+
+
+#define transiterror(flag, ...) \
+    transiterror_fcn(flag DBGERR, __FILE__, __LINE__, __VA_ARGS__)
+#define vtransiterror(flag, ...) \
+    vtransiterror_fcn(flag DBGERR, __FILE__, __LINE__, __VA_ARGS__)
+
+
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitprint(thislevel, verblevel, ...) do{                         \
   if(thislevel <= verblevel)  fprintf(stderr,__VA_ARGS__); }while(0)

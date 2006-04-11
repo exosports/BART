@@ -141,5 +141,6 @@
 #define TERR_ALLOWCONT    0x000010
 #define TERR_NOPREAMBLE   0x000020
 #define TERR_ALLOC        0x000040
+#define TERR_DBG          0x000080
 
 #endif /* _FLAGS_TR_H */
