@@ -6,7 +6,7 @@
 
 /* src/transit/extinction.c */
 extern inline int newprofile P_((float **pr, int vf, double dwn, float dop, float lor, float ta));
-extern inline int extradius P_((long r, double **kiso, double temp, int fbinvoigt, float timesalpha, float maxratio));
+extern int extradius P_((long r, double **kiso, double temp, int fbinvoigt, float timesalpha, float maxratio));
 extern void savefile_extinct P_((char *filename, double **e, short *c, long nrad, long nwav));
 extern void restfile_extinct P_((char *filename, double **e, short *c, long nrad, long nwav));
 extern void outputinfo P_((char *outfile, long w, long dw, long ln, long dln, double **kiso, double timesalpha, int fbinvoigt, double temp, double rad));

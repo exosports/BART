@@ -126,9 +126,10 @@ int processparameters(int argc, /* number of command line arguments */
      NULL,"Prints list of possible parameters"},
     {"defaults",'d',no_argument,NULL,
      NULL,"Prints default values of the different variable"},
-    {"verb",'v',required_argument,NULL,
-     "[+..][-..]","Increase or decrease verbose level by one per\n"
-     "each + or -. 0 is the quietest"},
+    {"verb",'v',no_argument,NULL,
+     NULL,"Increase the verbose level by one\n"},
+    {"quiet",'q',no_argument,NULL,
+     NULL,"Decrease the verbose level to the minimum\n"},
     {"paramf",'p',ADDPARAMFILE,NULL,
      "filename","Use filename to read parameters in addition to\n"
      "default file(s): '" DOTCFGFILENM PREPEXTRACFGFILES"'"},
@@ -652,16 +653,12 @@ int processparameters(int argc, /* number of command line arguments */
       hints->timesalpha=atof(optarg);
       break;
 
-    case 'v':			//Increase/decrease verbose level
-      optarg--;
-      while(*++optarg){
-	if(*optarg=='+')
-	  verblevel++;
-	else if(*optarg=='-')
-	  verblevel--;
-      }
-      if(verblevel<0)
-	verblevel=0;
+    case 'v':			//Increase verbose level
+      verblevel++;
+      break;
+
+    case 'q':			//decrease verbose level
+      verblevel=0;
       break;
 
     case 'V':			//Print version number and exit

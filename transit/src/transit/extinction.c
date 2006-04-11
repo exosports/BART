@@ -118,7 +118,7 @@ newprofile(PREC_VOIGT **pr,	/* output 2d profile */
 	   -7 timesalpha less than 1
 	   -8 maxratio less than 0
 */
-inline int
+int
 extradius(PREC_NREC r,		/* Radius index */
 	  PREC_RES **kiso,	/* Extinction, uninitialized pointers
 				   but allocated [iso][wn] */
@@ -387,8 +387,9 @@ savefile_extinct(char *filename,
 
   transitprint(2, verblevel, "Saving extinction file '%s'", filename);
 
-  fwrite("@E@S@", sizeof(char), 5, fp);
-  fwrite(e, sizeof(PREC_RES), nrad*nwav, fp);
+  const char mn[] = "@E@S@";
+  fwrite(mn, sizeof(char), 5, fp);
+  fwrite(e[0], sizeof(PREC_RES), nrad*nwav, fp);
   fwrite(c, sizeof(_Bool), nrad, fp);
 
   fclose(fp);
@@ -425,7 +426,7 @@ restfile_extinct(char *filename,
   }
 
   char mn[5];
-  if(fread(mn, sizeof(char), 5, fp)!=5 || strncmp(mn,"@E@S@", 5)==0){
+  if(fread(mn, sizeof(char), 5, fp)!=5 || strncmp(mn,"@E@S@", 5)!=0){
      transiterror(TERR_WARNING,
 		  "Given filename for extinction savefile '%s' exists\n"
 		  "and is not a valid extinction file. Remove it\n"
@@ -437,14 +438,16 @@ restfile_extinct(char *filename,
 
   transitprint(2, verblevel, "Restoring extinction file '%s'", filename);
 
-  fread(e, sizeof(PREC_RES), nrad*nwav, fp);
+  fread(e[0], sizeof(PREC_RES), nrad*nwav, fp);
   fread(c, sizeof(_Bool), nrad, fp);
 
-  int i;
+  long i;
   for (i=0 ; i<nrad ; i++)
     if (c[i]) break;
 
-  transitprint(2, verblevel, " done (%li/%li radii computed)\n", nrad-i, nrad);
+  transitprint(2, verblevel,
+	       " done (From the %lith radii)\n"
+	       , i);
 
   fclose(fp);
 
@@ -559,7 +562,7 @@ outputinfo(char *outfile,
    @returns 0 on success
             extradius() return otherwise
 */
-inline int
+int
 computeextradius(PREC_NREC r,	/* Radius index */
 		 PREC_ATM temp, /* Temperature */
 		 struct extinction *ex)	/* Extinction parameters */

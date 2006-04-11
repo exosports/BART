@@ -122,6 +122,7 @@ int main (int argc,		/* Number of variables */
   fw(modulation, !=0, &transit);
 
 
+  free(transit.save.ext);
   freemem_isotopes (transit.ds.iso, &transit.pi);
   freemem_cia      (transit.ds.cia, &transit.pi);
   freemem_outputray(transit.ds.out, &transit.pi);
