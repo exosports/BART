@@ -36,14 +36,16 @@ inline void transitdot(int thislevel, int verblevel,...)
 }
 
 int
-transiterror (int flags,
-	      const char *str,
-	      ...)
+transiterror_fcn (int flags,
+		  const char *file,
+		  const long line,
+		  const char *str,
+		  ...)
 {
   va_list ap;
 
   va_start(ap,str);
-  int ret=vtransiterror(flags,str,ap);
+  int ret = vtransiterror_fcn(flags, file, line, str, ap);
   va_end(ap);
 
   return ret;
@@ -58,41 +60,57 @@ transiterror (int flags,
              execution of program.
 	   0 if it is a warning call and 'transit\_nowarn' is 1
 */
-int vtransiterror(int flags, const char *str, va_list ap)
+int vtransiterror_fcn(int flags, 
+		      const char *file,
+		      const long line,
+		      const char *str,
+		      va_list ap)
 {
-  char pre_error[]="\nTransit:: ";
-  char error[7][20]={"",
-		     "CRITICAL:: ",         /* Produced by the code */
-		     "SERIOUS:: ",          /* Produced by the user */
-		     "Warning:: ",
-		     "Not implemented",
-		     "Not implemented",
-		     "Not implemented"
+  char pre_error[]="\nTransit";
+  char error[7][22]={"",
+		     " :: CRITICAL: ",         /* Produced by the code */
+		     " :: SERIOUS: ",          /* Produced by the user */
+		     " :: Warning: ",
+		     " :: Not implemented",
+		     " :: Not implemented",
+		     " :: Not implemented"
   };
   char *errormessage,*out;
   int len,lenout,xtr;
 
+
   if(transit_nowarn&&(flags & TERR_NOFLAGBITS)==TERR_WARNING)
     return 0;
 
-  len=0;
+  len = strlen(pre_error);
   if(!(flags&TERR_NOPREAMBLE))
-    len = strlen(pre_error)+strlen(error[flags&TERR_NOFLAGBITS]);
-  len    += strlen(str)+1;
+    len = strlen(error[flags&TERR_NOFLAGBITS]);
+  //symbols + digits + file
+  int debugchars = 0;
+  if(flags&TERR_DBG) debugchars = 5 + 6 + strlen(file);
+  len    += strlen(str) + 1 + debugchars;
   lenout  = len;
 
   errormessage = (char *)calloc(len, sizeof(char));
   out          = (char *)calloc(lenout, sizeof(char));
 
+  strcat(errormessage,pre_error);
+  if(flags&TERR_DBG){
+    char debugprint[debugchars];
+    sprintf(debugprint," (%s|%li)", file, line);
+    strcat(errormessage, debugprint);
+  }
+
   if(!(flags&TERR_NOPREAMBLE)){
-    strcat(errormessage,pre_error);
-    strcat(errormessage,error[flags&TERR_NOFLAGBITS]);
+    strcat(errormessage, error[flags&TERR_NOFLAGBITS]);
   }
   strcat(errormessage,str);
+
 
   va_list aq;
   va_copy(aq, ap);
   xtr=vsnprintf(out,lenout,errormessage,ap)+1;
+  va_end(ap);
 
   if(xtr>lenout){
     out=(char *)realloc(out,xtr+1);

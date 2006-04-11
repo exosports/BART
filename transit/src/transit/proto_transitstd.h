@@ -6,8 +6,8 @@
 
 /* src/lineread/../transit/transitstd.c */
 extern inline void transitdot P_((int thislevel, int verblevel, ...));
-extern int transiterror P_((int flags, const char *str, ...));
-extern int vtransiterror P_((int flags, const char *str, va_list ap));
+extern int transiterror_fcn P_((int flags, const char *file, const long line, const char *str, ...));
+extern int vtransiterror_fcn P_((int flags, const char *file, const long line, const char *str, va_list ap));
 extern int fileexistopen P_((char *in, FILE **fp));
 extern FILE *verbfileopen P_((char *in, char *desc));
 extern void transitcheckcalled P_((const long pi, const char *fcn, const int n, ...));
