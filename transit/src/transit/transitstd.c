@@ -68,12 +68,12 @@ int vtransiterror_fcn(int flags,
 {
   char pre_error[]="\nTransit";
   char error[7][22]={"",
-		     " :: CRITICAL: ",         /* Produced by the code */
-		     " :: SERIOUS: ",          /* Produced by the user */
-		     " :: Warning: ",
-		     " :: Not implemented",
-		     " :: Not implemented",
-		     " :: Not implemented"
+		     ":: CRITICAL: ",         /* Produced by the code */
+		     ":: SERIOUS: ",          /* Produced by the user */
+		     ":: Warning: ",
+		     ":: Not implemented",
+		     ":: Not implemented",
+		     ":: Not implemented"
   };
   char *errormessage,*out;
   int len,lenout,xtr;
@@ -84,7 +84,7 @@ int vtransiterror_fcn(int flags,
 
   len = strlen(pre_error);
   if(!(flags&TERR_NOPREAMBLE))
-    len = strlen(error[flags&TERR_NOFLAGBITS]);
+    len += strlen(error[flags&TERR_NOFLAGBITS]);
   //symbols + digits + file
   int debugchars = 0;
   if(flags&TERR_DBG) debugchars = 5 + 6 + strlen(file);
