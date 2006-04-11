@@ -37,7 +37,7 @@
    @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
                                       of 'rad'
 */
-static inline PREC_RES
+static  PREC_RES
 totaltau1(PREC_RES b,		/* impact parameter */
 	  PREC_RES *rad,	/* Equispaced radius array */
 	  PREC_RES refr,	/* refractivity index */
@@ -136,7 +136,7 @@ totaltau1(PREC_RES b,		/* impact parameter */
  @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
                                     of 'rad'
 */
-static inline PREC_RES
+static PREC_RES
 totaltau2(PREC_RES b,		/* differential impact parameter with
 				   respect to maximum value */
 	  PREC_RES *rad,	/* radius array */
@@ -289,7 +289,7 @@ modulationm1(PREC_RES *tau,
 
    @returns modulation obtained
 */
-static inline PREC_RES
+static PREC_RES
 modulation1 (PREC_RES *tau,
 	     long last,		/* Index of the last poisition it has to
 				   be at least 1 */

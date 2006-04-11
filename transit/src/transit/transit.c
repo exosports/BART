@@ -35,21 +35,16 @@ int main (int argc,		/* Number of variables */
   //initialized yet.
   struct transit transit;
   memset(&transit, 0, sizeof(struct transit));
-  int rn;
 
   verblevel=2;
 
   //Command line parameters' processing
-  if((rn=processparameters(argc,argv,&transit))!=0)
-    transiterror(TERR_SERIOUS,
-		 "processparameters() returned error code %i\n"
-		 ,rn);
+  fw(processparameters, !=0, argc, argv, &transit);
+
 
   //Accept all general hints
-  if((rn=acceptgenhints(&transit))!=0)
-    transiterror(TERR_SERIOUS,
-		 "transitaccepthints() returned error code %i\n"
-		 ,rn);
+  fw(acceptgenhints, !=0, &transit);
+
 
   //Presentation
   printintro();
@@ -58,98 +53,74 @@ int main (int argc,		/* Number of variables */
   if(verblevel<2)
     transit_nowarn=1;
 
+
   //Read line info
-  if((rn=readlineinfo(&transit))!=0)
-    transiterror(TERR_SERIOUS,
-		 "readlineinfo() returned error code %i\n"
-		 ,rn);
+  fw(readlineinfo, !=0, &transit);
+
 
   //Read Atmosphere information
-  if((rn=getatm(&transit))!=0)  
-    transiterror(TERR_SERIOUS,
-		 "getatm() returned error code %i\n"
-		 ,rn);
+  fw(getatm, !=0, &transit);
 
 
   //Make wavelength binning
-  if((rn=makewavsample(&transit))<0)
-    transiterror(TERR_SERIOUS,
-		 "makewavsample() returned error code %i\n"
-		 ,rn);
-  if(rn>0)
+  fw(makewavsample, <0, &transit);
+  if(fw_status>0)
     transitprint(7,verblevel,
-		 "makewavsample() modified some of the hinted parameters according\n"
-		 "to returned flag: 0x%x\n"
-		 ,rn);
+		 "makewavsample() modified some of the hinted\n"
+		 " parameters according to returned flag: 0x%lx\n"
+		 ,fw_status);
+
 
   //Make wavenumber binning
-  if((rn=makewnsample(&transit))<0)
-    transiterror(TERR_SERIOUS,
-		 "makewnsample() returned error code %i\n"
-		 ,rn);
-  if(rn>0)
+  fw(makewnsample, <0, &transit);
+  if(fw_status>0)
     transitprint(7,verblevel,
-		 "makewnsample() modified some of the hinted parameters according\n"
-		 "to returned flag: 0x%x\n"
-		 ,rn);
+		 "makewnsample() modified some of the hinted\n"
+		 " parameters according to returned flag: 0x%lx\n"
+		 ,fw_status);
+
 
   //Make radius binning and interpolate data to new value
-  if((rn=makeradsample(&transit))<0)
-    transiterror(TERR_SERIOUS,
-		 "makeradsample() returned error code %i\n"
-		 ,rn);
-  if(rn>0)
+  fw(makeradsample, <0, &transit);
+  if(fw_status>0)
     transitprint(7,verblevel,
-		 "makeradsample() modified some of the hinted parameters according\n"
-		 "to returned flag: 0x%x\n"
-		 ,rn);
+		 "makeradsample() modified some of the hinted\n"
+		 " parameters according to returned flag: 0x%lx\n"
+		 ,fw_status);
+
 
   //Initializes CIA
-  if((rn=interpolatecia(&transit))!=0)
-    transiterror(TERR_SERIOUS,
-		 "readcia() returned error code %i\n"
-		 ,rn);
+  fw(interpolatecia, !=0, &transit);
+
 
   //Computes index of refraction
-  if((rn=idxrefrac(&transit))!=0)
-    transiterror(TERR_SERIOUS,
-		 "idxrefrac() returned error code %i\n"
-		 ,rn);
+  fw(idxrefrac, !=0, &transit);
+
 
   //Calculates extinction coefficient
-  if((rn=extwn(&transit))!=0)
-    transiterror(TERR_SERIOUS,
-		 "extwn() returned error code %i\n"
-		 ,rn);
+  fw(extwn, !=0, &transit);
+
 
   //Computes sampling of impact parameter
-  if((rn=makeipsample(&transit))<0)
-    transiterror(TERR_SERIOUS,
-		 "makeipsample() returned error code %i\n"
-		 ,rn);
-  if(rn>0)
+  fw(makeipsample, <0, &transit);
+  if(fw_status>0)
     transitprint(7,verblevel,
-		 "makeipsample() modified some of the hinted parameters according\n"
-		 "to returned flag: 0x%x\n"
-		 ,rn);
+		 "makeipsample() modified some of the hinted\n"
+		 " parameters according to returned flag: 0x%lx\n"
+		 ,fw_status);
+
 
   //Prints sampling info
-  if((rn=outsample(&transit))<0)
-    transiterror(TERR_SERIOUS,
-		 "outsample() returned error code %i\n"
-		 ,rn);
+  fw(outsample, !=0, &transit);
+
 
   //Calculates optical depth
-  if((rn=tau(&transit))!=0)
-    transiterror(TERR_SERIOUS,
-		 "tau() returned error code %i\n"
-		 ,rn);
+  fw(tau, !=0, &transit);
+
 
   //Calculates eclipse modulation
-  if((rn=modulation(&transit))!=0)
-    transiterror(TERR_SERIOUS,
-		 "modulation() returned error code %i\n"
-		 ,rn);
+  fw(modulation, !=0, &transit);
+
 
   freemem_isotopes (transit.ds.iso, &transit.pi);
   freemem_cia      (transit.ds.cia, &transit.pi);

@@ -81,6 +81,15 @@ stateeqnford(_Bool mass,	/* Mass abundance? (as opposed to
     vtransiterror_fcn(flag DBGERR, __FILE__, __LINE__, __VA_ARGS__)
 
 
+long fw_status;
+#define fw(fcn, failurecondition, ...) do{               \
+    if((fw_status=fcn(__VA_ARGS__)) failurecondition)    \
+      transiterror(TERR_SERIOUS,                         \
+		   #fcn "() returned error code %li\n"   \
+                   , fw_status);                         \
+                                       }while(0)
+
+
 #define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
 #define transitprint(thislevel, verblevel, ...) do{                         \
   if(thislevel <= verblevel)  fprintf(stderr,__VA_ARGS__); }while(0)
