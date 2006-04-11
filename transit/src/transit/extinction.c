@@ -387,6 +387,7 @@ savefile_extinct(char *filename,
 
   transitprint(2, verblevel, "Saving extinction file '%s'", filename);
 
+  fwrite("@E@S@", sizeof(char), 5, fp);
   fwrite(e, sizeof(PREC_RES), nrad*nwav, fp);
   fwrite(c, sizeof(_Bool), nrad, fp);
 
@@ -421,6 +422,17 @@ restfile_extinct(char *filename,
 		 "extinction savefile.\n"
 		 ,filename);
     return;
+  }
+
+  char mn[5];
+  if(fread(mn, sizeof(char), 5, fp)!=5 || strncmp(mn,"@E@S@", 5)==0){
+     transiterror(TERR_WARNING,
+		  "Given filename for extinction savefile '%s' exists\n"
+		  "and is not a valid extinction file. Remove it\n"
+		  "before trying to use extinction savefile\n"
+		  ,filename);
+     fclose(fp);
+     return;
   }
 
   transitprint(2, verblevel, "Restoring extinction file '%s'", filename);
