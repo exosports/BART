@@ -76,7 +76,7 @@ int vtransiterror_fcn(int flags,
 		     ":: Not implemented"
   };
   char *errormessage,*out;
-  int len,lenout,xtr;
+  int len, lenout, xtr;
 
 
   if(transit_nowarn&&(flags & TERR_NOFLAGBITS)==TERR_WARNING)

@@ -385,11 +385,18 @@ savefile_extinct(char *filename,
     return;
   }
 
+  transitprint(2, verblevel, "Saving extinction file '%s'", filename);
+
   fwrite(e, sizeof(PREC_RES), nrad*nwav, fp);
   fwrite(c, sizeof(_Bool), nrad, fp);
 
   fclose(fp);
 
+  int i;
+  for (i=0 ; i<nrad ; i++)
+    if (c[i]) break;
+
+  transitprint(2, verblevel, " done (%li/%li radii computed)\n", nrad-i, nrad);
 }
 
 
@@ -416,8 +423,16 @@ restfile_extinct(char *filename,
     return;
   }
 
+  transitprint(2, verblevel, "Restoring extinction file '%s'", filename);
+
   fread(e, sizeof(PREC_RES), nrad*nwav, fp);
   fread(c, sizeof(_Bool), nrad, fp);
+
+  int i;
+  for (i=0 ; i<nrad ; i++)
+    if (c[i]) break;
+
+  transitprint(2, verblevel, " done (%li/%li radii computed)\n", nrad-i, nrad);
 
   fclose(fp);
 
