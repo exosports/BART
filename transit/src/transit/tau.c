@@ -73,7 +73,7 @@ tau(struct transit *tr)
 
   //set tau structures' value
   struct transithint *trh=tr->ds.th;
-  tr->save.tau=trh->save.tau;
+  tr->save.ext=trh->save.ext;
   const double blowex=tr->blowex=trh->blowex;
   const int taulevel=tr->taulevel=trh->taulevel;
   tau.toomuch=50;
@@ -95,6 +95,25 @@ tau(struct transit *tr)
   else
     cl.rfct=tr->ds.th->cl.rfct;
   tr->ds.cl=&cl;
+
+
+  _Bool *comp=ex->computed;
+  //Restoring savefile if given
+  if(tr->save.ext)
+    restfile_extinct(tr->save.ext, e, comp, rnn, wnn);
+
+
+  //compute extinction at the outermost layer
+  if(!comp[rnn-1]){
+    transitprint(1,verblevel,
+		 "Computing extinction in the outtermost layer\n");
+    if((rn=computeextradius(rnn-1,
+			    tr->atm.t[rnn-1]*tr->atm.tfct, ex))!=0)
+      transiterror(TERR_CRITICAL,
+		   "computeexradius()returned error code %i\n"
+		   ,rn);
+  }
+
 
   //to temporarily store a per radius info, and the ratio of the ip and
   //rad units
@@ -120,7 +139,6 @@ tau(struct transit *tr)
 
   //to store reordered extinction
   PREC_RES er[rnn];
-  _Bool *comp=ex->computed;
   int lastr=rnn-1;
   int wnextout=(long)(wnn/10.0);
   //Following are extinction from scattering and from clouds
@@ -179,11 +197,10 @@ tau(struct transit *tr)
 			   "computeextradius() return error code %i while\n"
 			   "computing radius #%i: %g\n"
 			   ,rn,r[lastr]*rfct);
-	    //otherwise, update the value of the extinction at the right
+	    //update the value of the extinction at the right
 	    //place.
-	    else
-	      er[lastr]=e[lastr][wi]*blowex + e_s[lastr]
-		+ e_c[lastr] + e_cia[wi][lastr];
+	    er[lastr] = e[lastr][wi]*blowex + e_s[lastr]
+	      + e_c[lastr] + e_cia[wi][lastr];
 	  }
 	}while(bb[ri]*ip->fct<r[lastr]*rfct);
       }
@@ -213,9 +230,8 @@ tau(struct transit *tr)
     detailout(&tr->wns,&tr->rads,&tr->ds.det->cia,(double **)e_cia,
 	      CIA_DOFLOAT);
 
-  //save current state
-  if(tr->save.tau)
-    savefile_exsofar(tr);
+  if(tr->save.ext)
+    savefile_extinct(tr->save.ext, e, comp, rnn, wnn);
 
   //Print lowest impact parameter before optical gets too big
   if(tr->f_toomuch)

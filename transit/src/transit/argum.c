@@ -113,6 +113,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_DETCIA,
     CLA_DETTAU,
     CLA_CIAFILE,
+    CLA_SAVEEXT,
   };
 
   //General help-option structure
@@ -286,9 +287,12 @@ int processparameters(int argc, /* number of command line arguments */
     {"detailcia",CLA_DETCIA,required_argument,NULL,
      "filename:wn1,wn2,...","Save extinction due to CIA at the particular\n"
      "wavenumbers in the specified filename"},
-    {"cia",CLA_CIAFILE,required_argument,NULL,
-     "filenames","Use the following filenames for CIA opacities,\n"
+    {"cia", CLA_CIAFILE, required_argument, NULL,
+     "filenames", "Use the indicated filenames for CIA opacities,\n"
      "it is a comma separated list"},
+    {"saveext", CLA_SAVEEXT, required_argument, NULL,
+     "filename", "Save extinction array in this file which won't need to\n"
+     "be recomputed if only the radius scale (scale height) changes"},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"RESULTING RAY OPTIONS:"},
@@ -385,6 +389,9 @@ int processparameters(int argc, /* number of command line arguments */
     case CLA_CIAFILE:
       hints->ncia    = nchar(optarg,',') + 1;
       hints->ciafile = splitnzero_alloc(optarg,',');
+      break;
+    case CLA_SAVEEXT:
+      hints->save.ext = strdup(optarg);
       break;
     case CLA_DETCIA:
       det=&hints->det.cia;

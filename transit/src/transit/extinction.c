@@ -365,6 +365,67 @@ extradius(PREC_NREC r,		/* Radius index */
 
 
 /* \fcnfh
+ Saving extinction for a possible next run
+*/
+void
+savefile_extinct(char *filename,
+		 PREC_RES **e,
+		 _Bool *c,
+		 long nrad,
+		 long nwav)
+{
+
+  FILE *fp;
+
+  if((fp=fopen(filename, "w")) == NULL){
+    transiterror(TERR_WARNING,
+		 "Extinction savefile '%s' cannot be opened for writing.\n"
+		 " Continuing without saving\n"
+		 ,filename);
+    return;
+  }
+
+  fwrite(e, sizeof(PREC_RES), nrad*nwav, fp);
+  fwrite(c, sizeof(_Bool), nrad, fp);
+
+  fclose(fp);
+
+}
+
+
+/* \fcnfh
+   Restoring extinction for a possible next run
+*/
+void
+restfile_extinct(char *filename,
+		 PREC_RES **e,
+		 _Bool *c,
+		 long nrad,
+		 long nwav)
+{
+
+  FILE *fp;
+
+  if((fp=fopen(filename, "r")) == NULL){
+    transiterror(TERR_WARNING,
+		 "Extinction savefile '%s' cannot be opened for reading.\n"
+		 "Continuing without restoring. You can safely ignore "
+		 "this warning if this the first time you run for this "
+		 "extinction savefile.\n"
+		 ,filename);
+    return;
+  }
+
+  fread(e, sizeof(PREC_RES), nrad*nwav, fp);
+  fread(c, sizeof(_Bool), nrad, fp);
+
+  fclose(fp);
+
+}
+
+
+
+/* \fcnfh
    Output info to file regarding extinction computation. Designed to be
    called from the debugger only
 
@@ -658,19 +719,8 @@ extwn (struct transit *tr)
 	       "\nThere are %li radii samples.\n"
 	       ,nrad);
 
-  prop_samp *rad=&tr->rads;
-  int rn;
-  int nrad=rad->n;
-  transitprint(1,verblevel,
-	       "Computing extinction in the outtermost layer\n");
-  if((rn=computeextradius(nrad-1,
-			  tr->atm.t[nrad-1]*tr->atm.tfct, ex))!=0)
-    transiterror(TERR_CRITICAL,
-		 "computeexradius()returned error code %i\n"
-		 ,rn);
-
    //save current status if requested.
-  savefile_extwn(tr);
+  //  savefile_extwn(tr);
 
   //Set progress indicator, and print and output extinction if one P,T
   //was desired, otherwise return success
@@ -797,6 +847,7 @@ restextinct(FILE *in,
 }
 
 
+#if 0
 /* \fcnfh
    Save program memory after being through tau computation, whether
    ->save.tau is defined have to be checked before.
@@ -809,7 +860,7 @@ savefile_exsofar(struct transit *tr)	/* Main structure */
   if((fp=fopen(tr->save.tau,"w"))==NULL){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "\nCannot open file '%s' for saving extinction data.\n"
-		 " Continuing anyways\n\n"
+		 " Continuing without saving\n\n"
 		 ,tr->save.tau);
     return;
   }
@@ -910,7 +961,7 @@ savefile_extwn(struct transit *tr)
   return 0;
 }
 
-
+#endif
 /* \fcnfh
    Frees voigt profile pointer arrays. Data array should already be free
 */

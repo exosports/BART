@@ -203,7 +203,7 @@ struct extinction{
 				   contained in the profile */
   _Bool periso;			/* Extinction per isotope */
   _Bool *computed;		/* Whether the extinction at the given
-				   radius was computed */
+				   radius was computed [rad] */
   double minelow;		/* Only use transitions with this
 				   minimum low energy (in cm-1) */
 };
@@ -226,11 +226,13 @@ struct onept {
 };
 
 
+#if 0
 struct savefiles {
-  char *extinction;		/* after extwn() savefile */
+  char *ext;			/* saves extinction */
   char *tau;			/* after tau() savefile */
   char *modulation;		/* after modulation() savefile */
 };
+#endif
 
 
 struct optdepth {
@@ -315,8 +317,8 @@ struct extscat {
   double prm;
 };
 
-struct saves {			/* NOT ENABLED! */
-  char *tau;			/* Save after finalizing tau */
+struct saves {
+  char *ext;
 };
 
 struct detailfld {
@@ -464,7 +466,9 @@ struct transit {		/* Main data structure */
     struct optdepth    *tau;
     struct idxref      *ir;
     struct geometry    *sg;
+#if 0
     struct savefiles   *sf;
+#endif
     struct isotopes    *iso;
     struct outputray   *out;
     struct extcloud    *cl;
