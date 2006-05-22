@@ -35,20 +35,24 @@ idxrefrac(struct transit *tr)
   static struct idxref st_idx;
   long r;
 
-  transitcheckcalled(tr->pi,"idxrefrac",2,
-		     "getatm",TRPI_GETATM,
+  transitcheckcalled(tr->pi,"idxrefrac",1,
 		     "makeradsample",TRPI_MAKERAD
 		     );
 
-  tr->ds.ir=&st_idx;
+  tr->ds.ir = &st_idx;
+  prop_atm *atm = &tr->atm;
+
+  PREC_ATM nustp = 0; 		/* TD: Allow for ray bending. Tau2 has
+				   to be enabled as well */
+  PREC_ATM rho;
 
   //allocate space and initialize
   st_idx.n=(PREC_RES *)calloc(tr->rads.n,sizeof(PREC_RES));
-  for(r=0;r<tr->rads.n;r++)
-    st_idx.n[r]=1;
 
-  //free atmosphere info that won't be used anymore
-  freemem_atmosphere(tr->ds.at,&tr->pi);
+  for(r=0;r<tr->rads.n;r++){
+    rho = stateeqnford(1, 1.0, atm->mm[r], 0, atm->p[r], atm->t[r]);
+    st_idx.n[r] = 1 + rho*nustp/(LO*AMU*atm->mm[r]);
+  }
 
   //set progress indicator and return success
   tr->pi|=TRPI_IDXREFRAC;

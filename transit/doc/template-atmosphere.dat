@@ -15,7 +15,7 @@ q number
 #starting with u<variable>, where <variable> can be either 'r', 't',
 #or 'p' for Radius, temperature or pressure, quantities that after
 #being multiplied by such factors are gonna be in cgs units
-z  <radius offset>
+z  <radius offset in same units as tabulated data>
 ur <factor to convert radius to cm>
 ut <factor to convert temperature to K>
 up <factor to convert pressure to dynes/cm2>

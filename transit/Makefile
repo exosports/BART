@@ -67,7 +67,7 @@ INCL        = ./include/
 #CPUOPTION   = -mcpu=athlon-xp -march=athlon-xp
 #CPUOPTION  = -mtune=athlon-tbird
 CPUOPTION  = -mtune=pentium3
-EXTPRM      = -DTRANSIT -O1 #-static
+EXTPRM      = -DTRANSIT #-O1 #-static
 WARNFLAGS   = -Wall -Winline
 GSLPRM      = -D_USE_GSL
 GSLLIB      = -lgsl -lblas

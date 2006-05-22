@@ -53,19 +53,23 @@ printextprogress(long wi, long wnn)
 {
 }
 
+/* 
+
+*/
 static __inline__ double
 stateeqnford(_Bool mass,	/* Mass abundance? (as opposed to
 				   abundance by number. */
 	     double q,		/* abundance */
-	     double ma,		/* Average molecular weight */
+	     double ma,		/* Average molecular weight (in AMU) */
 	     double mi,		/* Molecular weight of the particular
-				   specie */
+				   specie (in AMU) */
 	     double p,		/* Pressure */
 	     double t)		/* Temperature */
 {
- if(mass)
-   return AMU * q * ma * p / KB / t;
- return AMU * q * mi * p / KB / t;
+  const double rho = AMU * q * p / KB / t;
+  if(mass)
+    return rho * ma;
+  return rho * mi;
 }
 
 #ifdef  DEBUG_ERROR

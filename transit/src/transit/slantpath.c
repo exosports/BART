@@ -151,6 +151,11 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
   const int maxiterations=50;
   int rs;
 
+  transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
+	       "Tau 2??? I'm afraid  that this has not been"
+	       " successfully tested yet. I'll continue but"
+	       " be critical of the result\n");
+
   //Look for closest approach radius
   i=0;
   while(1){
@@ -216,7 +221,7 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
   for(i=rs;i<nrad;i++){
     r0a=b/refr[i]/rad[i];
     transitASSERT(r0a>1,
-		  "Oops! assert condition not met, b/(nr)=%g > 1\n"
+		  "Oops! condition could not be asserted, b/(nr)=%g > 1\n"
 		  ,r0a);
 
     dt[i]=ex[i]/sqrt(1-r0a*r0a);
@@ -233,7 +238,7 @@ totaltau2(PREC_RES b,		/* differential impact parameter with
     gsl_spline_free(spl);
     gsl_interp_accel_free (acc);
   }
-  //Only integrate Trapezium if there is only two points available.
+  //Only integrate Trapezium if there are only two points available.
   else
 #endif /* _USE_GSL */
   //Integrate Simpson-Trapezium if enough(w/o GSL) or not enough(w/ GSL)
@@ -371,8 +376,7 @@ modulation1 (PREC_RES *tau,
   //           +r_p^2}
   //          {\pi R_s^2}
   //\end{align}
-  res = ipv[ipn1] * ipv[ipn1]
-    - 2.0 * res ;
+  res = ipv[ipn1] * ipv[ipn1] - 2.0 * res ;
 
   //If the planet is going to be transparent with its maximum optical
   //depth given by toomuch then

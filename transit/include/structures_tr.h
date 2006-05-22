@@ -44,7 +44,7 @@ typedef struct {          	/* One item per sampling element */
 
 typedef struct {          	/* One item per isotope and
 				   miscellaneous conditions, usually
-				   radius or temperature */ 
+				   radius or temperature */
   PREC_ZREC *z;            	/* Partition function [radius or temp] */
   PREC_CS *c;              	/* Cross section [radius or temp] */
   PREC_ATM *d;			/* Environment: Density [radius], not
@@ -378,6 +378,7 @@ struct transithint {		/* Structure with user hinted data that
   _Bool mass;			/* whether the abundances read by getatm
 				   are by mass or number */
   long fl;			/* flags */
+  _Bool userefraction;		/* Whether to use variable refraction */
 
   double toomuch;		/* Optical depth values greater than
 				   this won't be calculated: the

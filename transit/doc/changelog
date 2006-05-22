@@ -6,8 +6,8 @@ XXXX-XX-XX  Patricio Rojo <pato@astro.cornell.edu>
 	* Improved verbosity in several places
 	* This changelog was written from an old cvstags file.
 	* Added saveext function to store all the computed extinction
-	array. Only valid when radius is the only difference between two
-	runs.
+	array.  This is psysically valid only  when radius is the only
+	difference between two runs.
 	* Improving transiterror() so that now it can print filename
 	and line number.
 	

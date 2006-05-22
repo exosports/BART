@@ -138,6 +138,7 @@ extradius(PREC_NREC r,		/* Radius index */
   PREC_RES *k,wavn;
   double propto_k;
 
+  double maxk = 0;
 
   if(!extwncalledonce)
     transiterror(TERR_CRITICAL,
@@ -289,6 +290,9 @@ extradius(PREC_NREC r,		/* Radius index */
       *(1-exp(-EXPCTE*wavn/temp)) //induced emission
       /mass[i]		//mass
       /ziso[i];		//Partition function
+
+    if (propto_k > maxk)
+      maxk=propto_k;
 
     transitDEBUG(21,verblevel,
 		 "i=%i   temp=%g   Elow=%g\n"
