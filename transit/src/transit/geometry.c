@@ -63,9 +63,8 @@ setgeomhint(struct transit *tr)
   sg->aper    =hg->aper>0    ?hg->aper    :0;
   sg->lnode   =hg->lnode>0   ?hg->lnode   :0;
 
-  sg->starmass=hg->starmass>0?hg->starmass:1.05*SUNMASS/sg->starmass;
-  sg->starrad =hg->starrad>0 ?hg->starrad :1.173*SUNRADIUS/sg->starradfct;
-
+  sg->starmass=hg->starmass>0?hg->starmass:1.101*SUNMASS/sg->starmass;
+  sg->starrad =hg->starrad>0 ?hg->starrad :1.125*SUNRADIUS/sg->starradfct;
 
   //set progressindicator and return
   tr->pi|=TRPI_GEOMETRYHINT;

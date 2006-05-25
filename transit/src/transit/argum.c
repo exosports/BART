@@ -114,6 +114,7 @@ int processparameters(int argc, /* number of command line arguments */
     CLA_DETTAU,
     CLA_CIAFILE,
     CLA_SAVEEXT,
+    CLA_STARRAD,
   };
 
   //General help-option structure
@@ -329,7 +330,9 @@ int processparameters(int argc, /* number of command line arguments */
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"GEOMETRY PARAMETERS"},
-    {"g-orbpar",CLA_GORBPAR,required_argument,NULL,
+    {"starrad",CLA_STARRAD, required_argument, "1.125",
+     "radius_sun", "Stellar radius in solar radius"},
+    {"g-orbpar",CLA_GORBPAR, required_argument, NULL,
      "smaxis,time,incl,ecc,long_node,arg_per","Orbital parameters, in"
      " the above order, to use the default of any of these (1,0,0,0,0,0),"
      " leave the corresponding field blank"},
@@ -695,11 +698,14 @@ int processparameters(int argc, /* number of command line arguments */
       hints->fl&=~TRU_EXTINPERISO;
       break;
     case CLA_BLOWEX:
-      hints->blowex=atof(optarg);
+      hints->blowex = atof(optarg);
       break;
 
+    case CLA_STARRAD:
+      hints->sg.starrad = atof(optarg);
+      break;
     case CLA_GORBPAR:
-      getnd(6,',',optarg,
+      getnd(6, ',', optarg,
 	    &hints->sg.smaxis,&hints->sg.time,&hints->sg.incl,
 	    &hints->sg.ecc,&hints->sg.lnode,&hints->sg.aper);
       break;

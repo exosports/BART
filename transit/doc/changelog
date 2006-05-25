@@ -10,6 +10,7 @@ XXXX-XX-XX  Patricio Rojo <pato@astro.cornell.edu>
 	difference between two runs.
 	* Improving transiterror() so that now it can print filename
 	and line number.
+	* Adding 'starrad' option.
 	
 2004-11-16  Patricio Rojo <pato@astro.cornell.edu>
 
