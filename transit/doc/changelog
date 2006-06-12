@@ -1,6 +1,6 @@
-XXXX-XX-XX  Patricio Rojo <pato@astro.cornell.edu>
+2006-06-12  Patricio Rojo <pato@astro.cornell.edu>
 
-	* Release X.X
+	* Release 3.3
 	* Several memory leaks fixed after running 'valgrind'
 	* Using ccd-gcc.sh to compile with the right dependencies
 	* Improved verbosity in several places
