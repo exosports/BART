@@ -1,6 +1,5 @@
 /*
- * lineread.c
- * linereaf.txc - output adequate line information for Transit.
+ * lineread.c   - output adequate line information for Transit.
  *                Part of Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)

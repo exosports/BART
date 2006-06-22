@@ -1,6 +1,5 @@
 /*
- * cia.c 
- * cia.txc - Computes collision-indeced absorption. Component of the
+ * cia.c   - Computes collision-indeced absorption. Component of the
  *           Transit program.
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)

@@ -1,24 +1,7 @@
-Integration accuracy:
-=====================
-
-Slant Path method (slantpath.txc)
----------------------------------
-
-  When integrating optical depth, the numerical precision of the
-result obtained with constant index of refraction is, compared to ray
-bending approach, orders of magnitude better when there are several
-layers and slightly better when the are only a few. 
-  Most probably, the reason is because of using a spline integration
-with a infinity integrand near the closest approach point.
-
-  Modulation integration was very precise for the test cases.
-
-
-===============================================================
 Monotonous Temperature
 ======================
 
   Temperature is assumed increasing monotonous inwards. Otherwise CIA
 calculations are in mistake. This is necesary for GSL spline.
-  Changes to correct this would have to be made at the begging of
-interpolatecia function ion cia.txc.
+  Changes to correct this would have to be made at the beginning of
+interpolatecia function on cia.c.

@@ -1,16 +1,17 @@
-2006-06-12  Patricio Rojo <pato@astro.cornell.edu>
+XXXX-XX-XX  Patricio Rojo <pato@astro.cornell.edu>
 
 	* Release 3.3
-	* Several memory leaks fixed after running 'valgrind'
-	* Using ccd-gcc.sh to compile with the right dependencies
-	* Improved verbosity in several places
+	* Several memory leaks fixed after running 'valgrind'.
+	* Using ccd-gcc.sh to compile with the right dependencies.
+	* Improved verbosity in several places.
 	* This changelog was written from an old cvstags file.
 	* Added saveext function to store all the computed extinction
-	array.  This is psysically valid only  when radius is the only
+	array.  This is psysically valid only when radius is the only
 	difference between two runs.
 	* Improving transiterror() so that now it can print filename
 	and line number.
 	* Adding 'starrad' option.
+	* Improved README and documentation files.
 	
 2004-11-16  Patricio Rojo <pato@astro.cornell.edu>
 

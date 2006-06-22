@@ -1,6 +1,5 @@
 /*
- * extinction.c 
- * extinction.txc - Computes extinction coefficient. Component of the
+ * extinction.c   - Computes extinction coefficient. Component of the
  *                  Transit program.
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)

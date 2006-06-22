@@ -1,6 +1,5 @@
 /*
- * observable.c
- * observable.txc - Finds the optical depth. Component of the Transit program.
+ * observable.c   - Finds the optical depth. Component of the Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *

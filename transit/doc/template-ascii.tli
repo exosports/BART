@@ -4,8 +4,8 @@
 
 #For each database, one after the other, give info about isotope
 #number, temperature points number, isotope's name and mass, and
-#temperature dependent cross section and partition function, use the
-#following format for each database i
+#temperature dependent cross section and partition function, for each
+#column, respectively.  Use the following format for each database i
 <DATABASENAMEi> <NISOi> <NTEMPi>
 <ISONAME-1> <ISOMASS-1> ... <ISONAME-NISOi> <ISOMASS-NISOi>
 <TEMP,1>      <Z,1-1>      ... <Z,1-NISO1>      <CS,1-1>      ... <CS,1-NISO1>

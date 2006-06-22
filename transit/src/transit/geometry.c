@@ -1,6 +1,5 @@
 /*
- * geometry.c
- * geometry.txc - Functions to establish a system geometry. Component
+ * geometry.c   - Functions to establish a system geometry. Component
  *                of the transit program
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)

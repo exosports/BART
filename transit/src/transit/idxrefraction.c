@@ -1,7 +1,6 @@
 /*
- * idxref.c
- * idxref.txc - Finds the index of refraction. Component of the Transit
- *              program.
+ * idxrefraction.c - Finds the index of refraction. Component of the 
+ *                   Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *

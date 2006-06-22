@@ -1,6 +1,5 @@
 /*
- * transitstd.c
- * transitstd.txc - Common routines for the Transit program. Component
+ * transitstd.c   - Common routines for the Transit program. Component
  *                  of the Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)

@@ -1,6 +1,5 @@
 /*
- * makesample.c
- * makesample.txc - create array sampling after initial, final and spacing
+ * makesample.c   - create array sampling after initial, final and spacing
  *                  parameters. Component of the Transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)

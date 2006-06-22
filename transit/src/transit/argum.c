@@ -1,6 +1,5 @@
 /*
- * argum.c
- * argum.txc - Process command line parameters for the transit program.
+ * argum.c   - Process command line parameters for the transit program.
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *

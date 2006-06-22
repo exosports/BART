@@ -1,6 +1,5 @@
 /*
- * readlineinfo.c
- * readlineinfo.txc - reads line info as returned by
+ * readlineinfo.c   - reads line info as returned by
  *                    lineread. Component of Transit program
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)

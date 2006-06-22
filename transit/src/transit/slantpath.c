@@ -1,6 +1,5 @@
 /*
- * slantpath.c
- * slantpath.txc - Functions to handle a slant path problem. Component
+ * slantpath.c   - Functions to handle a slant path problem. Component
  *                 of the transit program
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)

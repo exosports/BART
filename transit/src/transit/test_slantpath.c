@@ -1,7 +1,6 @@
 /*
- * test_slantpath.c
- * test_slantpath.txc - Tests to check correct working of slantpath.c.
- *                      Component of the transit program
+ * test_slantpath.c - Tests to check correct working of slantpath.c.
+ *                    Component of the transit program
  *
  * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -516,14 +515,14 @@ main(int argc, char *argv[])
   if(status){
     fprintf(stdout,
 	    "\n###########################################################################\n"
-	    "slantpath.txc result is FAILURE: %i difference%s bigger than %g\n"
+	    "slantpath.c result is FAILURE: %i difference%s bigger than %g\n"
 	    "                                 found out of %li test%s\n"
 	    ,status,status>1?"s":"",maxerr,test,test>1?"s":"");
     exit(EXIT_FAILURE);
   }
   fprintf(stdout,
 	  "\n#############################################################################\n"
-	  "slantpath.txc result is SUCCESS: no differences bigger than %g\n"
+	  "slantpath.c result is SUCCESS: no differences bigger than %g\n"
 	  "                                 found out of %li test%s\n"
 	  ,maxerr,test,test>1?"s":"");
 

@@ -1,7 +1,6 @@
 /*
- * transit.c
- * transit.txc - Models the modulation produced by a Planet crossing in
- *               front of the star. Main component of the Transit program.
+ * telres.c    - Convolves to telescope resolution.  Component of the
+ *               Transit program. 
  *
  * Copyright (C) 2003 Patricio Rojo (pato@astro.cornell.edu)
  *
