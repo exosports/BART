@@ -1,4 +1,4 @@
-XXXX-XX-XX  Patricio Rojo <pato@astro.cornell.edu>
+2006-07-26  Patricio Rojo <pato@astro.cornell.edu>
 
 	* Release 3.3
 	* Several memory leaks fixed after running 'valgrind'.
