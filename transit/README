@@ -15,7 +15,7 @@ DIRECTORIES AND IMPORTANT FILES:
                       Makefile to compile the code.  Target
                       directories should be changed in './Makefile'.
    README             This file.
-   COPYING            Full GNU's General Public License text.
+   COPYING            Full GNU General Public License text.
 
 ---
  ./doc/         Documentation
@@ -39,7 +39,7 @@ DIRECTORIES AND IMPORTANT FILES:
   ./scripts     Scripts required for the compilation of the code.
 
 ---
-  ./tests       Tests routines during different development stages.
+  ./tests       Test routines during different development stages.
                 Files could be very obsolete.
 
 ========================================================================
@@ -52,7 +52,7 @@ PRE-REQUIREMENTS:
               website: http://www.das.uchile.cl/~pato/sw/
   P&S database: This is a requirement to run transit, not to compile
               it.  The water transition database in a version readable
-              by this program is available from Dr. Robert L. Kuruck's
+              by this program is available from Dr. Robert L. Kuruckz's
               website:  http://kurucz.harvard.edu/molecules/H2O/.
               Original data from Harry Partridge and David W. Schwenke
               in J. Chem. Phys. 106, pp 4618-4639, 1997.
@@ -72,8 +72,8 @@ commands:
 ========================================================================
 EXECUTING LINEREAD:
   This program is used to build the binary TLI file that transit uses.
-Right now it can only read Partridge and Schwenke database as prepared
-by Kurucz in the default location: 
+Right now it can only read the Partridge and Schwenke database as
+prepared by Kuruckz in the default location:
     ./oth/pands/h2ofast.bin
     ./oth/pands/h2opartfn.dat
 
@@ -93,7 +93,7 @@ EXECUTING TRANSIT:
    transit -h
 
  By default it reads the following TLI file: './res/lineread.tli'.
-Use the option --linedb if the file located somewhere else.
+Use the option --linedb if the file is located somewhere else.
 
 -----
 EXAMPLE: 
