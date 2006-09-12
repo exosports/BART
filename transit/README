@@ -45,14 +45,18 @@ DIRECTORIES AND IMPORTANT FILES:
 ========================================================================
 PRE-REQUIREMENTS:
 
-  gsl & blas libraries: Available from the GNU repository at:
-              http://www.gnu.org/software/gsl/
+  GSL & BLAS libraries: Available from the GNU repository at:
+              http://www.gnu.org/software/gsl/.  Version 1.8 from GSL,
+              and 1.2 from BLAS was used to compile this version of
+              transit.
   pu library: This is a C code library by Patricio Rojo available
               under the GNU General Public License on the author's
-              website: http://www.das.uchile.cl/~pato/sw/
+              website: http://www.das.uchile.cl/~pato/sw/. Version
+              1.28 of this library was used for this version of
+              transit.
   P&S database: This is a requirement to run transit, not to compile
               it.  The water transition database in a version readable
-              by this program is available from Dr. Robert L. Kuruckz's
+              by this program is available from Dr. Robert L. Kurucz's
               website:  http://kurucz.harvard.edu/molecules/H2O/.
               Original data from Harry Partridge and David W. Schwenke
               in J. Chem. Phys. 106, pp 4618-4639, 1997.
@@ -73,7 +77,7 @@ commands:
 EXECUTING LINEREAD:
   This program is used to build the binary TLI file that transit uses.
 Right now it can only read the Partridge and Schwenke database as
-prepared by Kuruckz in the default location:
+prepared by Kurucz in the default location:
     ./oth/pands/h2ofast.bin
     ./oth/pands/h2opartfn.dat
 
