@@ -1,8 +1,0 @@
-*.c  *.o
-transit  .log
-lineread
-dbg*
-.depen
-test_*
-.smhist
-a.out
