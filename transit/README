@@ -1,7 +1,22 @@
     ********* TRANSIT *********
 
 
-  Readme file for latest stable version: 3.3
+  Readme file for version 3.3.  
+
+========================================================================
+
+CONTACT INFO AND HOMEPAGE
+
+  Patricio Rojo
+     Departamento de Astronomia
+     Universidad de Chile
+     Casilla 36-D
+     Santiago, RM
+     Chile
+    pato@das.uchile.cl
+
+ Check for the most recent release of transit at:
+  http://www.das.uchile.cl/~pato/sw/
 
 ========================================================================
 DIRECTORIES AND IMPORTANT FILES:
@@ -104,4 +119,3 @@ EXAMPLE:
 
    transit --oneptn=1.1e3,1340,3 --oneextra 2H2,4He,30CO --oneabund 6.5e-4,1e-10,1e-10,1e-10,.80,.14,.00065 >output.dat
 
-========================================================================
