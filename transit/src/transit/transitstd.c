@@ -190,7 +190,7 @@ verbfileopen(char *in,		/* Input filename */
     return fp;
   case 0:
     transiterror(TERR_SERIOUS,
-		 "No file was given to open");
+		 "No file was given to open\n");
     return NULL;
     //File doesn't exist
   case -1:

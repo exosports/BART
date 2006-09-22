@@ -72,6 +72,7 @@ stateeqnford(_Bool mass,	/* Mass abundance? (as opposed to
   return rho * mi;
 }
 
+#define DEBUG_ERROR
 #ifdef  DEBUG_ERROR
 #define DBGERR | TERR_DBG
 #else

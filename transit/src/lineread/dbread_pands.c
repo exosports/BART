@@ -116,9 +116,9 @@ dbread_pands(char *filename,
 		allocated in the dbread_* functions, and the
 		size is returned in the last parameters. */
 	     PREC_ZREC ***Z,        //Partition function:[iso][T]
-	     PREC_ZREC **T,         //temps for Z
 	     PREC_ZREC **isomass,   //Isotopes' mass in AMU
 	     PREC_CS ***isocs,      //Isotope's cross-section: [iso][T]
+	     PREC_ZREC **T,         //temps for Z
 	     int *nT,               //number of temperature
 				//points 
 	     int *nIso,             //number of isotopes
@@ -138,7 +138,7 @@ dbread_pands(char *filename,
 				      //to float
   double lnwl;                        //log of beginning wavelength to
 				      //be used in BS
-  PREC_NREC lnwl1, lnwl2, irec, frec; //upper and lower values of BS
+  PREC_NREC lnwl1=0, lnwl2=0, irec, frec; //upper and lower values of BS
   double ratiolog;
   PREC_NREC i;
   FILE *fp;
@@ -196,7 +196,7 @@ dbread_pands(char *filename,
   reversebytes(&lnwl2,4);
 
   lnwl=log(wlbeg)/ratiolog;
-  if(lnwl>lnwl2){
+  if(lnwl2>0 && lnwl>lnwl2){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Last wavelength in the file (%g %s) is shorter "
 		 "than\nrequested initial wavelength (%g %s)\n"
@@ -204,7 +204,7 @@ dbread_pands(char *filename,
 		 ,pands_fct_ac);
     return -4;
   }
-  if(lnwl<lnwl1){
+  if(lnwl1>0 && lnwl<lnwl1){
     wlbeg=exp(ratiolog*lnwl1);
     irec=0;
   }
@@ -213,18 +213,18 @@ dbread_pands(char *filename,
     //    pandsBS(0,nrec,lnwl,&irec);
   if(gabby_dbread>1)
     fprintf(stderr,
-	    "Located beginning wavelength %g at position %li\n",wlbeg,irec);
+	    "Located beginning wavelength %g at position %li\n", wlbeg, irec);
 
   lnwl=log(wlend)/ratiolog;
-  if(lnwl<lnwl1){
+  if(lnwl1>0 && lnwl<lnwl1){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "First wavelength in the file (%g %s) is longer"
+		 "First wavelength in the file (%g %s) is longer "
 		 "than\nrequested ending wavelength (%g %s)\n"
-		 ,exp(lnwl2*ratiolog), pands_fct_ac, wlbeg
+		 ,exp(lnwl1*ratiolog), pands_fct_ac, wlend
 		 ,pands_fct_ac);
     return -5;
   }
-  if(lnwl>lnwl2){
+  if(lnwl2>0 && lnwl>lnwl2){
     wlend=exp(ratiolog*lnwl1);
     frec=0;
   }
@@ -299,17 +299,20 @@ dbread_pands(char *filename,
   if(isonames!=NULL)
     isoname(isonames,*nIso);
 
-  *isomass=(PREC_ZREC *)calloc(*nIso,sizeof(PREC_ZREC));
-  (*isomass)[0]=18.01056468;
-  (*isomass)[1]=19.01478156;
-  (*isomass)[2]=20.01481046;
-  (*isomass)[3]=19.01684143;
+  if(isomass != NULL){
+    *isomass=(PREC_ZREC *)calloc(*nIso,sizeof(PREC_ZREC));
+    (*isomass)[0]=18.01056468;
+    (*isomass)[1]=19.01478156;
+    (*isomass)[2]=20.01481046;
+    (*isomass)[3]=19.01684143;
+  }
 
   if(Z!=NULL)
-    if((nrec=read_zpands(Zfilename,Z,T,nT,*nIso))!=1)
+    if((nrec=read_zpands(Zfilename,Z,T,CS,nT,*nIso))!=1)
       transiterror(TERR_SERIOUS,
 		   "Function read_zpands() return error code '%i'\n",
 		   nrec);
+
 
   return i;
 }
@@ -328,6 +331,7 @@ dbread_pands(char *filename,
 static int read_zpands(char *filename, /* Doh! */
 		       PREC_ZREC ***Z, /* Partition function */
 		       PREC_ZREC **T,  /* Temperature points */
+		       PREC_CS  ***CS, /* Cross section points */
 		       int *nT,        /* Number of temp. points */
 		       int nIso)       /* Number of isotopes */
 {
@@ -352,8 +356,16 @@ static int read_zpands(char *filename, /* Doh! */
   }
 
   *Z=(PREC_ZREC **)calloc(nIso,sizeof(PREC_ZREC *));
-  for(i=0;i<nIso;i++)
+  *CS=(PREC_CS  **)calloc(nIso,sizeof(PREC_CS *));
+  **Z=(PREC_ZREC *)calloc(nIso*(*nT), sizeof(PREC_ZREC));
+  **CS=(PREC_CS *)calloc(nIso*(*nT), sizeof(PREC_CS));
+  for(i=1;i<nIso;i++){
+    (*Z)[i]=(*Z)[0] + (*nT)*i;
+    (*CS)[i]=(*CS)[0] + (*nT)*i;
+    /*    (*Z)[0]=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
     (*Z)[i]=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
+    */
+  }
   *T=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
 
   cnt=0;

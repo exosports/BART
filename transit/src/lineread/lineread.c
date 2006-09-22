@@ -58,14 +58,14 @@ static int lineread_rev=1;
 short gabby_dbread = 0;
 
 /* Add sources and name for every new reader driver */
-#define dbread_nfcn 2
-PREC_NREC (*linefcn[dbread_nfcn])(char *,struct linedb **,float,float
-				  ,char *, PREC_ZREC ***,PREC_ZREC **
-				  ,PREC_ZREC **, PREC_CS ***
-				  ,int *, int *, char ***)={
-				    &dbread_pands, &dbread_text
-				  };
-char *dname[dbread_nfcn]={
+#define dbread_nfcn 1
+PREC_NREC (*linefcn[])(char *,struct linedb **,float,float
+		       ,char *, PREC_ZREC ***,PREC_ZREC **
+		       ,PREC_CS ***, PREC_ZREC **
+		       ,int *, int *, char ***)={
+			 &dbread_pands, &dbread_text
+		       };
+char *dname[]={
   "Partridge & Schwenke (1997). Water", "TLI-ASCII"
 };
 
@@ -115,7 +115,6 @@ int main(int argc,char *argv[])
   FILE *fpout;
   char *datafile;
   PREC_NREC dindex;
-  void *tempp;
   int dummy;
   int verblevel;
   char ***isonames;
@@ -139,7 +138,7 @@ int main(int argc,char *argv[])
   nT=      (int *)           calloc(dbread_nfcn,sizeof(int)            );
 
   const char *undefined_string="";
-  deltw=40;
+  deltw=500;
   verblevel=1;
   datafile=(char *)calloc(20,sizeof(char));
   strcpy(datafile,"-");
@@ -171,7 +170,7 @@ int main(int argc,char *argv[])
       verblevel++;
       break;
     case 'o':
-      datafile=(char *)realloc(datafile,strlen(optarg)*sizeof(char));
+      datafile=(char *)realloc(datafile,strlen(optarg)*sizeof(char)+1);
       strcpy(datafile,optarg);
       break;
     default:
@@ -210,11 +209,11 @@ int main(int argc,char *argv[])
   if(dummy)
     transitprint(1,verblevel,
 		 "Dummy run: No file output. However everything else "
-		 "actually runs\nregularly\n");
+		 "works.\n");
 
   transitprint(1,verblevel,
 	       "TLIf output file is: %s\n"
-	       ,rn&1?"standard output":datafile);
+	       ,(rn&1)?"standard output":datafile);
 
 
   if(!dummy){
@@ -257,10 +256,12 @@ int main(int argc,char *argv[])
     /* Reading of data in the range [iniw,parw] */
     for (i=0;i<dbread_nfcn;i++){
       transitprint(1,verblevel,"    Database %i (%s): \n",i+1,dname[i]);
-      tempp=dindex?NULL:Z+left;	/* Only read Z if first time */
+      void *tmpz=dindex?NULL:Z+left;	/* Only read Z if first time */
+      void *tmpcs=dindex?NULL:cs+left;	/* Only read CS if first time */
+      void *tmpmass=dindex?NULL:isomass+left;	/* Only read mass if first time */
       if((nlines[left]=(linefcn[i])(NULL, lineread+left, iniw, 
-				    parw, NULL, tempp, T+left,
-				    mass+left, cs+left, nT+left, nIso+left,
+				    parw, NULL, tmpz, tmpmass, tmpcs, 
+				    T+left, nT+left, nIso+left,
 				    isonames+left))>0){
 	crnt[left]=lineread[left];
 
@@ -272,9 +273,9 @@ int main(int argc,char *argv[])
       }
       else
 	transiterror(TERR_WARNING,
-		     "Database %i didn't have any line in the wavelength\n"
+		     "Database %i (%s) didn't have any line in the wavelength "
 		     "range %f - %f, or there was an error.\n"
-		     ,iniw,parw);
+		     ,i+1, dname[i], iniw,parw);
 
     }
     totaliso=dbid[left-1]+nIso[left-1];
