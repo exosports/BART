@@ -279,8 +279,8 @@ dbread_text(char *filename,
 	       size is returned in the last parameters. */
 	    PREC_ZREC ***Z,        //Partition function : [iso][T]
 	    PREC_ZREC **T,         //temps for Z: [T]
-	    PREC_ZREC **isomass,   //Isotopes' mass in AMU: [iso]
 	    PREC_CS ***isocs,      //Isotope's cross-section: [iso][T]
+	    PREC_ZREC **isomass,   //Isotopes' mass in AMU: [iso]
 	    int *nT,               //number of temperature
 	    //points 
 	    int *nIso,             //number of isotopes
