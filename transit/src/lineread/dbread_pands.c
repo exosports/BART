@@ -355,12 +355,11 @@ static int read_zpands(char *filename, /* Doh! */
     fgets(line,MAX_LINE,fp);
   }
 
-  *Z=(PREC_ZREC **)calloc(nIso,sizeof(PREC_ZREC *));
-  *CS=(PREC_CS  **)calloc(nIso,sizeof(PREC_CS *));
-  **Z=(PREC_ZREC *)calloc(nIso*(*nT), sizeof(PREC_ZREC));
-  **CS=(PREC_CS *)calloc(nIso*(*nT), sizeof(PREC_CS));
+  *Z  =(PREC_ZREC **)calloc(nIso, sizeof(PREC_ZREC *));
+  *CS =(PREC_CS   **)calloc(nIso, sizeof(PREC_CS *));
+  **CS=(PREC_CS    *)calloc(nIso, sizeof(PREC_CS));
   for(i=0;i<nIso;i++){
-    (*Z)[i]=(*Z)[0] + (*nT)*i;
+    (*Z)[i]=(PREC_ZREC *)calloc((*nT), sizeof(PREC_ZREC));
     (*CS)[i]=(*CS)[0] + (*nT)*i;
     for(j=0;j<*nT;j++){
       (*CS)[i][j] = SIGWATER;
