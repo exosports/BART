@@ -5,6 +5,6 @@
 #endif
 
 /* src/lineread/dbread_pands.c */
-extern long dbread_pands P_((char *filename, struct linedb **lines, float wlbeg, float wlend, char *Zfilename, double ***Z, double **T, double **isomass, double ***isocs, int *nT, int *nIso, char ***isonames));
+extern long dbread_pands P_((char *filename, struct linedb **lines, float wlbeg, float wlend, char *Zfilename, double ***Z, double **isomass, double ***isocs, double **T, int *nT, int *nIso, char ***isonames));
 
 #undef P_

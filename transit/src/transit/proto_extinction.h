@@ -10,7 +10,7 @@ extern int extradius P_((long r, double **kiso, double temp, int fbinvoigt, floa
 extern void savefile_extinct P_((char *filename, double **e, short *c, long nrad, long nwav));
 extern void restfile_extinct P_((char *filename, double **e, short *c, long nrad, long nwav));
 extern void outputinfo P_((char *outfile, long w, long dw, long ln, long dln, double **kiso, double timesalpha, int fbinvoigt, double temp, double rad));
-extern inline int computeextradius P_((long r, double temp, struct extinction *ex));
+extern int computeextradius P_((long r, double temp, struct extinction *ex));
 extern int extwn P_((struct transit *tr));
 extern void printone P_((struct transit *tr));
 extern int freemem_extinction P_((struct extinction *ex, long *pi));

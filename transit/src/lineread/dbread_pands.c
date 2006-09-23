@@ -42,7 +42,7 @@ short gabby_dbread;
 
 static int isoname(char ***isotope, int niso);
 static int read_zpands(char *filename, PREC_ZREC ***Z, PREC_ZREC **T,
-		       int *nT, int nIso);
+		       PREC_CS ***CS, int *nT, int nIso);
 
 
 
@@ -117,7 +117,7 @@ dbread_pands(char *filename,
 		size is returned in the last parameters. */
 	     PREC_ZREC ***Z,        //Partition function:[iso][T]
 	     PREC_ZREC **isomass,   //Isotopes' mass in AMU
-	     PREC_CS ***isocs,      //Isotope's cross-section: [iso][T]
+	     PREC_CS ***CS,         //Isotope's cross-section: [iso][T]
 	     PREC_ZREC **T,         //temps for Z
 	     int *nT,               //number of temperature
 				//points 
@@ -336,7 +336,7 @@ static int read_zpands(char *filename, /* Doh! */
 		       int nIso)       /* Number of isotopes */
 {
   FILE *fp;
-  int i,cnt;
+  int i,j,cnt;
   char line[MAX_LINE], *sp,*sp2;
   int ignorelines;
 
@@ -359,9 +359,12 @@ static int read_zpands(char *filename, /* Doh! */
   *CS=(PREC_CS  **)calloc(nIso,sizeof(PREC_CS *));
   **Z=(PREC_ZREC *)calloc(nIso*(*nT), sizeof(PREC_ZREC));
   **CS=(PREC_CS *)calloc(nIso*(*nT), sizeof(PREC_CS));
-  for(i=1;i<nIso;i++){
+  for(i=0;i<nIso;i++){
     (*Z)[i]=(*Z)[0] + (*nT)*i;
     (*CS)[i]=(*CS)[0] + (*nT)*i;
+    for(j=0;j<*nT;j++){
+      (*CS)[i][j] = SIGWATER;
+    }
     /*    (*Z)[0]=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
     (*Z)[i]=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
     */

@@ -777,7 +777,7 @@ int acceptsoltype(transit_ray_solution **sol,
   while(*sol){
     if(strncasecmp(hname,(*sol)->name,len)==0)
       return 0;
-    *sol++;
+    sol++;
   }
 
   return -1;

@@ -258,7 +258,7 @@ int main(int argc,char *argv[])
       transitprint(1,verblevel,"    Database %i (%s): \n",i+1,dname[i]);
       void *tmpz=dindex?NULL:Z+left;	/* Only read Z if first time */
       void *tmpcs=dindex?NULL:cs+left;	/* Only read CS if first time */
-      void *tmpmass=dindex?NULL:isomass+left;	/* Only read mass if first time */
+      void *tmpmass=dindex?NULL:mass+left;	/* Only read mass if first time */
       if((nlines[left]=(linefcn[i])(NULL, lineread+left, iniw, 
 				    parw, NULL, tmpz, tmpmass, tmpcs, 
 				    T+left, nT+left, nIso+left,

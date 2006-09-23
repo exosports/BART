@@ -1,6 +1,6 @@
 #
 # Makefile - prepared for transit.
-# Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
+# Copyright (C) 2004-2006 Patricio Rojo (pato@astro.cornell.edu)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License

@@ -23,9 +23,9 @@
 #ifndef _VERSION_TR_H
 #define _VERSION_TR_H
 
-int version=3;
-int revision=3;
-int version_rc=-1;
+int version=4;
+int revision=0;
+int version_rc=1;
 
 
 #endif /* _VERSION_TR_H */
