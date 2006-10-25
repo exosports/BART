@@ -1,9 +1,10 @@
 XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
 
-	* Verbose corrections for lineread
-	* lineread fixed.  Previous release was halfway between CS (v4.x)
-	and not CS (v3.x) in the TLI
-	* Memory leaks were fixed on lineread, after running valgrind.	
+	* Added reading of CS from TLI (v4.x+).
+	* Copyright notice updated.
+	* lineread is being developed independently of transit now.  It
+	has its own directory structure in CVS.
+	* Magic bit enabled.
 	
 2006-07-26  Patricio Rojo <pato@astro.cornell.edu>
 
@@ -13,7 +14,7 @@ XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
 	* Improved verbosity in several places.
 	* This changelog was written from an old cvstags file.
 	* Added saveext function to store all the computed extinction
-	array.  This is psysically valid only when radius is the only
+	array.  This is physically valid only when radius is the only
 	difference between two runs.
 	* Improving transiterror() so that now it can print filename
 	and line number.

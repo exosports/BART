@@ -2,12 +2,11 @@
  * test_slantpath.c - Tests to check correct working of slantpath.c.
  *                    Component of the transit program
  *
- * Copyright (C) 2004 Patricio Rojo (pato@astro.cornell.edu)
+ * Copyright (C) 2004-2006 Patricio Rojo (pato@astro.cornell.edu)
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * modify it under the terms of version 2 of the GNU General 
+ * Public License as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of

@@ -1,4 +1,8 @@
 #TLI-ASCII
+#Previous line is mandatory. All other lines that begin with the
+#number sign (#) are comments.
+#This template is valid for version 3 of TLI.
+
 #Number of databases
 <m-database>
 
