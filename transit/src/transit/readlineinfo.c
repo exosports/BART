@@ -253,12 +253,13 @@ readtli_bin(FILE *fp,
 		 ,iso->isof[i].n);
 
     //read partition function
-    fread(Z,sizeof(PREC_ZREC),nT,fp);
+    fread(Z, sizeof(PREC_ZREC), nT, fp);
 
-    /* TD: add cross section in info file */
     //read cross section
-    for(rn=0;rn<nT;rn++)
-      CS[rn]=SIGWATER;
+    fread(CS, sizeof(PREC_CS), nT, fp);
+
+    transitDEBUG(12, verblevel,
+		 "Z(%i/%i):%g %g\n", i+1, iso->n_i, Z[nT-1], Z[nT-2]);
   }
 
   //update structure values

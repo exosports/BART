@@ -24,7 +24,7 @@
 #include <math.h>
 
 /* TD: Is not safe to use structre to read data, because it may
-   contain padding */
+   contain unexpected padding */
 /* TD: BS can be fooled by lines with identical line centers */
 
 #define PANDS_RECLENGTH 8
@@ -355,18 +355,12 @@ static int read_zpands(char *filename, /* Doh! */
     fgets(line,MAX_LINE,fp);
   }
 
-  *Z  =(PREC_ZREC **)calloc(nIso, sizeof(PREC_ZREC *));
-  *CS =(PREC_CS   **)calloc(nIso, sizeof(PREC_CS *));
-  **CS=(PREC_CS    *)calloc(nIso, sizeof(PREC_CS));
-  for(i=0;i<nIso;i++){
-    (*Z)[i]=(PREC_ZREC *)calloc((*nT), sizeof(PREC_ZREC));
-    (*CS)[i]=(*CS)[0] + (*nT)*i;
-    for(j=0;j<*nT;j++){
-      (*CS)[i][j] = SIGWATER;
-    }
-    /*    (*Z)[0]=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
-    (*Z)[i]=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
-    */
+  *Z   = (PREC_ZREC **)calloc(nIso, sizeof(PREC_ZREC *));
+  *CS  = (PREC_CS   **)calloc(nIso, sizeof(PREC_CS *));
+  **CS = (PREC_CS    *)calloc(nIso*(*nT), sizeof(PREC_CS));
+  for(i=0 ; i<nIso ; i++){
+    (*Z)[i]  = (PREC_ZREC *)calloc((*nT), sizeof(PREC_ZREC));
+    (*CS)[i] = (PREC_CS   *)calloc((*nT), sizeof(PREC_CS));
   }
   *T=(PREC_ZREC *)calloc((*nT),sizeof(PREC_ZREC));
 
@@ -383,8 +377,8 @@ static int read_zpands(char *filename, /* Doh! */
 		     " has %i columns instead of %i.\n",
 		     cnt+ignorelines,filename, i+1,nIso+1);
       }
-      sp=sp2;
-      (*Z)[i][cnt]=strtod(sp,&sp2);
+      sp = sp2;
+      (*Z)[i][cnt] = strtod(sp,&sp2);
     }
 
     if(++cnt==(*nT)){
@@ -396,9 +390,15 @@ static int read_zpands(char *filename, /* Doh! */
   }
   (*nT)=cnt;
   (*T)=(PREC_ZREC *)realloc((*T),(*nT)*sizeof(PREC_ZREC));
-  for(i=0;i<nIso;i++)
-    (*Z)[i]=(PREC_ZREC *)realloc((*Z)[i],(*nT)*sizeof(PREC_ZREC));
+  for(i=0;i<nIso;i++){
+    (*Z)[i]  = (PREC_ZREC *)realloc((*Z)[i], (*nT)*sizeof(PREC_ZREC));
+    (*CS)[i] = (PREC_CS   *)realloc((*CS)[i],(*nT)*sizeof(PREC_CS));
+    for(j=0 ; j<(*nT) ; j++){
+      (*CS)[i][j] = SIGWATER;
+    }
+  }
 
+  fclose(fp);
 
   return 1;
 
@@ -417,9 +417,10 @@ static int isoname(char ***isonames, int niso)
   int i;
 
   *isonames=(char **)calloc(niso,sizeof(char *));
-  for(i=0;i<niso;i++){
-    (*isonames)[i]=(char *)calloc(strlen(isotope[i])+1,sizeof(char));
-    strcpy((*isonames)[i],isotope[i]);
+  for(i=0 ; i<niso ; i++){
+    (*isonames)[i] = (char *)calloc(strlen(isotope[i])+1,
+				    sizeof(char));
+    strcpy((*isonames)[i], isotope[i]);
   }
 
   return 1;

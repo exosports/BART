@@ -74,8 +74,8 @@ quiet_cmd_clean = Deleting non-source files ...
 quiet_cmd_cleansrcb = Deleting non-source files ...
       cmd_cleansrcb = rm -f $(OBJECTS) .depen $(PROGRAMS)
 
-quiet_cmd_clean_proto = Deleting prototypes ...
-      cmd_clean_proto = rm -f proto_*.h
+quiet_cmd_clean_proto = Deleting prototype $(notdir $*)
+      cmd_clean_proto = rm -f $(dir $*)/proto_$(notdir $*).h
 
 quiet_cmd_c_o   = Compiling $@
       cmd_c_o   = $(CC) -c $(CF_LOCAL) $(STDFLAGS) -o $@ $<

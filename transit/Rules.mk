@@ -45,6 +45,11 @@ $(PIC_OBJS): %_pic.o: %.c
 #deletion
 clean:
 	$(call cmd,clean)
+cleanproto:  $(OBJS:.o=.delproto)
+%.delproto:
+	$(call cmd,clean_proto)
+cleanall: clean cleanproto
+
 
 
 install-header: install-headerPROGRAMS
@@ -134,7 +139,7 @@ clean-binPROGRAMS:
 #making prototype files
 proto: check_cproto $(OBJS:.o=.proto)
 	@echo
-	@echo "** Reruning 'make proto' should clear any error message above **"
+	@echo "** Reruning 'make proto' should clear any error message above, if any **"
 	@echo
 %.proto: %.c
 	$(call cmd,proto)

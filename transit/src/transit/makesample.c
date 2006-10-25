@@ -64,8 +64,8 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   if(hint->i<=0||(margini!=0&&hint->i<ref->i+margini)){
     samp->i=ref->i+margini;
     transitprint(4,verblevel,
-		 "Using ref sampling %g (w/margin) for initial"
-		 "value of %s"
+		 "Using ref sampling %g (w/margin) for initial "
+		 "value of %s\n"
 		 ,samp->i,TRH_NAME(fl));
     res|=0x1;
   }
@@ -85,8 +85,8 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   if(hint->f<=0||(marginf!=0&&hint->f>ref->f-marginf)){
     samp->f=ref->f-marginf;
     transitprint(4,verblevel,
-		 "Using ref sampling %g (w/margin) for final"
-		 "value of %s"
+		 "Using ref sampling %g (w/margin) for final "
+		 "value of %s\n"
 		 ,samp->f,TRH_NAME(fl));
     res|=0x2;
   }
@@ -232,9 +232,9 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   //check the final point
   if(si!=0 && samp->v[samp->n-1]!=samp->f && verblevel>2)
     transiterror(TERR_WARNING,
-		 "Final sampled value (%g) of the\n"
-		 "%li points doesn't coincide exactly with required\n"
-		 "value (%g). %s sampling with pre-oversampling\n"
+		 "Final sampled value (%g) of the "
+		 "%li points doesn't coincide exactly with required "
+		 "value (%g). %s sampling with pre-oversampling "
 		 "spacing of %g.\n"
 		 ,samp->v[samp->n-1],samp->n,samp->f
 		 ,TRH_NAME(fl),samp->d);

@@ -3,7 +3,7 @@ XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
 	* Verbose corrections for lineread
 	* lineread fixed.  Previous release was halfway between CS (v4.x)
 	and not CS (v3.x) in the TLI
-	
+	* Memory leaks were fixed on lineread, after running valgrind.	
 	
 2006-07-26  Patricio Rojo <pato@astro.cornell.edu>
 

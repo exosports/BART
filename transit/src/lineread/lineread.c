@@ -306,7 +306,7 @@ int main(int argc,char *argv[])
 		       ,rn,ftell(fpout));
 	  fwrite(isonames[adb][j],sizeof(char),rn,fpout);
 	  fwrite(Z[adb][j],sizeof(PREC_ZREC),nT[adb],fpout);
-	  fwrite(cs[adb][j],sizeof(PREC_ZREC),nT[adb],fpout);
+	  fwrite(cs[adb][j],sizeof(PREC_CS),nT[adb],fpout);
 	}
       }
     }
@@ -358,6 +358,22 @@ int main(int argc,char *argv[])
     fclose(fpout);
 
   transitprint(1,verblevel,"\n");
+
+  // Freeing memory
+  for (i=0;i<dbread_nfcn;i++){
+    free(isonames[i]);
+    for (j=0 ; j<nIso[i] ; j++){
+      free(Z[i][j]);
+      free(cs[i][j]);
+    }
+  }
+  free(nIso);
+  free(crnt);
+  free(lineread);
+  free(Z);
+  free(mass);
+  free(T);
+  free(datafile);
 
   return EXIT_SUCCESS;
 }
