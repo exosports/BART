@@ -1,6 +1,6 @@
 /*
  * dbread_text.c - Driver to read line information from a text file.
- *              Part of Transit program.
+ *              Part of lineread program.
  *
  * Copyright (C) 2005-2006 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -23,6 +23,7 @@
 
 #define DRIVERNAME "text"
 
+static long maxline=200;
 short gabby_dbread;
 
 struct textinfo{
@@ -40,19 +41,19 @@ struct textinfo{
 
 static char *dbname;
 
-#define checkprepost(pointer,pre,omit,post) do{                            \
-   if(pre)                                                                 \
-     transiterror(TERR_SERIOUS,                                            \
-                  "Pre-condition failed on line %i(%s)\n while reading:\n" \
-		  "%s\n\nTLI_Ascii format most likely invalid\n"           \
-                  ,__LINE__,__FILE__,line);                                \
-   while(omit)                                                             \
-     pointer++;                                                            \
-   if(post)                                                                \
-     transiterror(TERR_SERIOUS,                                            \
-                  "Post-condition failed on line %i(%s)\n while reading:\n"\
-		  "%s\n\nTLI_Ascii format most likely invalid\n"           \
-                  ,__LINE__,__FILE__,line);                                \
+#define checkprepost(pointer,pre,omit,post) do{                       \
+   if(pre)                                                            \
+     mperror(MSGP_USER,                                               \
+             "Pre-condition failed on line %i(%s)\n while reading:\n" \
+	     "%s\n\nTLI_Ascii format most likely invalid\n"           \
+             ,__LINE__,__FILE__,line);                                \
+   while(omit)                                                        \
+     pointer++;                                                       \
+   if(post)                                                           \
+     mperror(MSGP_USER,                                               \
+             "Post-condition failed on line %i(%s)\n while reading:\n"\
+	     "%s\n\nTLI_Ascii format most likely invalid\n"           \
+             ,__LINE__,__FILE__,line);                                \
                                              }while(0)
 
 
@@ -69,7 +70,7 @@ invalidfield(char *line,	/* Contents of the line */
 	     int fld,		/* field with the error */
 	     char *fldn)	/* Name of the field */
 {
-  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+  mperror(MSGP_USER|MSGP_ALLOWCONT,
 	       "Line %i of file '%s': Field %i (%s) has\n"
 	       " not a valid value:\n%s\n"
 	       ,nmb,file,fld,fldn,line);
@@ -86,7 +87,7 @@ invalidfield(char *line,	/* Contents of the line */
 static void
 earlyend(char *file, long lin)
 {
-  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+  mperror(MSGP_USER|MSGP_ALLOWCONT,
 	       "readlineinfo:: EOF unexpectedly found at line %i in\n"
 	       "ascii-TLI linedb info file '%s'\n"
 	       ,lin,file);
@@ -127,7 +128,7 @@ readinfo(char *filename,
     while((rc=fgetupto(line,maxline,fp)) == '#' || rc == '\n')
       textinfo->currline = '\0';
   if(ndb != 1)
-    transiterror(TERR_SERIOUS,
+    mperror(MSGP_USER,
 		 "TLI-ascii reading by lineread is implemented to read "
 		 "only one database per file (%s)."
 		 ,filename);
@@ -135,7 +136,7 @@ readinfo(char *filename,
 
   //read name, number of temps, and number of isotopes
   if((dbname = readstr_sp_alloc(line,&lp,'_'))==NULL)
-    transitallocerror(0);
+    mpallocerror(0);
   checkprepost(lp,0,*lp==' '||*lp=='\t',*lp=='\0');
   long nIso, nT, i;
   int rn;
@@ -161,7 +162,7 @@ readinfo(char *filename,
     textinfo->Z[i] = textinfo->Z[0] + nT*i;
     textinfo->c[i] = textinfo->c[0] + nT*i;
     if((textinfo->name[i]=readstr_sp_alloc(lp2,&lp,'_'))==NULL)
-      transitallocerror(0);
+      mpallocerror(0);
     //get mass and convert to cgs
     textinfo->mass[i]=strtod(lp,&lp2);
 
@@ -287,8 +288,8 @@ dbread_text(char *filename,
   struct textinfo textinfo;
 
   if(Zfilename)
-    transiterror(TERR_CRITICAL,
-		 "Zfilename needs to be NULL for TLI-ascii file\n");
+    mperror(MSGP_SYSTEM,
+	    "Zfilename needs to be NULL for TLI-ascii file\n");
 
   FILE *fp = readinfo(filename, &textinfo);
 

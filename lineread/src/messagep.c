@@ -20,6 +20,7 @@
  *
  */
 
+#include <messagep.h>
 
 /* keeps tracks of number of errors that where allowed to continue. */
 static int msgp_allown=0;
@@ -34,7 +35,7 @@ inline void msgpdot(int thislevel, int verblevel,...)
 }
 
 int
-msgperror_fcn (int flags,
+mperror_fcn (int flags,
 		  const char *file,
 		  const long line,
 		  const char *str,
@@ -43,7 +44,7 @@ msgperror_fcn (int flags,
   va_list ap;
 
   va_start(ap,str);
-  int ret = vmsgperror_fcn(flags, file, line, str, ap);
+  int ret = vmperror_fcn(flags, file, line, str, ap);
   va_end(ap);
 
   return ret;
@@ -51,14 +52,14 @@ msgperror_fcn (int flags,
 
 
 /*\fcnfh
-  msgperror: Error function for Msgp package.
+  mperror: Error function for Msgp package.
 
   @returns Number of characters wrote to the standard error file
              descriptor if PERR\_ALLOWCONT is set, otherwise, it ends
              execution of program.
 	   0 if it is a warning call and 'msgp\_nowarn' is 1
 */
-int vmsgperror_fcn(int flags, 
+int vmperror_fcn(int flags, 
 		      const char *file,
 		      const long line,
 		      const char *str,
@@ -66,8 +67,8 @@ int vmsgperror_fcn(int flags,
 {
   char pre_error[]="\nMsgp";
   char error[7][22]={"",
-		     ":: CRITICAL: ",         /* Produced by the code */
-		     ":: SERIOUS: ",          /* Produced by the user */
+		     ":: SYSTEM: ",         /* Produced by the code */
+		     ":: USER: ",          /* Produced by the user */
 		     ":: Warning: ",
 		     ":: Not implemented",
 		     ":: Not implemented",
@@ -188,38 +189,38 @@ verbfileopen(char *in,		/* Input filename */
   case 1:
     return fp;
   case 0:
-    msgperror(MSGP_SERIOUS,
+    mperror(MSGP_USER,
 		 "No file was given to open\n");
     return NULL;
     //File doesn't exist
   case -1:
-    msgperror(MSGP_SERIOUS,
+    mperror(MSGP_USER,
 		 "%s info file '%s' doesn't exist."
 		 ,desc,in);
     return NULL;
     //Filetype not valid
   case -2:
-    msgperror(MSGP_SERIOUS,
+    mperror(MSGP_USER,
 		 "%sfile '%s' is not of a valid kind\n"
 		 "(it is a dir or device)\n"
 		 ,desc,in);
     return NULL;
     //file not openable.
   case -3:
-    msgperror(MSGP_SERIOUS,
+    mperror(MSGP_USER,
 		 "%sfile '%s' is not openable.\n"
 		 "Probably because of permissions.\n"
 		 ,desc,in);
     return NULL;
     //stat returned -1.
   case -4:
-    msgperror(MSGP_SERIOUS,
+    mperror(MSGP_USER,
 		 "Some error happened for %sfile '%s',\n"
 		 "stat() returned -1, but file exists\n"
 		 ,desc,in);
     return NULL;
   default:
-    msgperror(MSGP_SERIOUS,
+    mperror(MSGP_USER,
 		 "Ooops, something weird in file %s, line %i\n"
 		 __FILE__,__LINE__);
   }
@@ -229,29 +230,24 @@ verbfileopen(char *in,		/* Input filename */
 
 
 
+
+
 /* \fcnfh
-   Called by a gsl_error
+   This function is called if a line of 'file' was longer than 'max'
+   characters
 */
 void 
-error (int exitstatus,
-       int something, 
-       const char *fmt,
-       ...)
+linetoolong(int max,		/* Maxiumum length of an accepted line
+				 */ 
+	    char *file,		/* File from which we were reading */
+	    int line)		/* Line who was being read */
 {
-  va_list ap;
-  int len=strlen(fmt);
-  char out[len+2];
-  strcpy(out,fmt);
-  out[len]='\n';
-  out[len+1]='\0';
-
-  va_start(ap,fmt);
-  vmsgperror(MSGP_CRITICAL,out,ap);
-  va_end(ap);
-
-  exit(exitstatus);
+  mperror(MSGP_USER|MSGP_ALLOWCONT,
+	  "Line %i of file '%s' has more than %i characters,\n"
+	  "that is not allowed\n"
+	  ,file,max);
+  exit(EXIT_FAILURE);
 }
-
 
 
 

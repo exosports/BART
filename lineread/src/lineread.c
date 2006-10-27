@@ -1,6 +1,5 @@
 /*
- * lineread.c   - output adequate line information for Transit.
- *                Part of Transit program.
+ * lineread.c   - output adequate line information in TLI format.
  *
  * Copyright (C) 2003-2006 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -15,8 +14,9 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- * 02111-1307, USA.
+ * Foundation, Inc., 59 Temple Place - Suite 330, 
+ * Boston, MA 02111-1307, USA.
+ *
  */
 
 /* TD: replace gabby_read in dbread_pands and lineread.h by verblevel */
@@ -93,7 +93,7 @@ int main(int argc,char *argv[])
 
 
   if(dbread_nfcn<1)
-    transiterror(TERR_CRITICAL,
+    mperror(MSGP_SYSTEM,
 		 "No drivers for reading database selected or found!!");
 
 
@@ -154,12 +154,10 @@ int main(int argc,char *argv[])
   finw=atof(argv[optind]);
   gabby_dbread=verblevel;
 
-  transitprint(1,verblevel,
-	    "           LINEREAD v%i.%i. Part of Transit package\n"
-	    "--------------------------------------------------------------\n",
+  messagep(1, "           LINEREAD v%i.%i.\n"
+	   "-------------------------------------------\n",
 	    lineread_ver,lineread_rev);
-  transitprint(1,verblevel,
-	       "Reading %i line database(s)\n\n",dbread_nfcn);
+  messagep(1, "Reading %i line database(s)\n\n",dbread_nfcn);
 
   rn=0;
   if(strcmp("-",datafile)==0){
@@ -167,10 +165,9 @@ int main(int argc,char *argv[])
     fpout=stdout;
   }
 
-  transitprint(2,verblevel,
-	       "Extra blah blah enabled. Be prepared!\n\n"
-	       "Wavelength during storage and verbose will always be in\n"
-	       "%s.\n"
+  messagep(2, "Extra blah blah enabled. Be prepared!\n\n"
+	   "Wavelength during storage and verbose will always be in\n"
+	   "%s.\n"
 	       "Total wavelength range is %.2g to %.2g.\n"
 	       "The databases are going to be read and written in the\n"
 	       " standard TLI (Transit line information) format.\n"
@@ -179,25 +176,23 @@ int main(int argc,char *argv[])
 	       ,tli_fct_name,iniw,finw,deltw,tli_fct_name);
 
   if(dummy)
-    transitprint(1,verblevel,
-		 "Dummy run: No file output. However everything else "
-		 "works.\n");
+    messagep(1, "Dummy run: No file output. However everything else "
+	     "works.\n");
 
-  transitprint(1,verblevel,
-	       "TLIf output file is: %s\n"
-	       ,(rn&1)?"standard output":datafile);
+  messagep(1, "TLIf output file is: %s\n"
+	   ,(rn&1)?"standard output":datafile);
 
 
   if(!dummy){
     if(fpout==NULL&&(fpout=fopen(datafile,"w"))==NULL){
-      transiterror(TERR_SERIOUS,
+      mperror(MSGP_USER,
 		   "Data file '%s' cannot be opened for writing.\n"
 		   ,datafile);
     }
   }
 
   if(finw<iniw)
-    transiterror(TERR_SERIOUS,
+    mperror(MSGP_USER,
 		 "Final wavelength (%.2f) has to be greater than\n"
 		 "initial wavelength (%.2f)\n",finw,iniw);
 
@@ -220,14 +215,13 @@ int main(int argc,char *argv[])
     if(parw>finw)
       parw=finw;
 
-    transitprint(1,verblevel,
-		 "*******    Wavelength range %8.2f - %8.2f    *******\n"
-		 ,iniw,parw);
+    messagep(1, "*******    Wavelength range %8.2f - %8.2f    *******\n"
+	     ,iniw,parw);
 
     left=0;
     /* Reading of data in the range [iniw,parw] */
     for (i=0;i<dbread_nfcn;i++){
-      transitprint(1,verblevel,"    Database %i (%s): \n",i+1,dname[i]);
+      messagep(1,"    Database %i (%s): \n",i+1,dname[i]);
       void *tmpz=dindex?NULL:Z+left;	/* Only read Z if first time */
       void *tmpcs=dindex?NULL:cs+left;	/* Only read CS if first time */
       void *tmpmass=dindex?NULL:mass+left;	/* Only read mass if first time */
@@ -244,10 +238,10 @@ int main(int argc,char *argv[])
 	left++;
       }
       else
-	transiterror(TERR_WARNING,
-		     "Database %i (%s) didn't have any line in the wavelength "
-		     "range %f - %f, or there was an error.\n"
-		     ,i+1, dname[i], iniw,parw);
+	mperror(MSGP_WARNING,
+		"Database %i (%s) didn't have any line in the wavelength "
+		"range %f - %f, or there was an error.\n"
+		,i+1, dname[i], iniw,parw);
 
     }
     totaliso=dbid[left-1]+nIso[left-1];
@@ -268,14 +262,12 @@ int main(int argc,char *argv[])
 	for(j=0;j<nIso[adb];j++){
 	  fwrite(&adb,sizeof(int),1,fpout);
 	  fwrite(mass[adb]+j,sizeof(PREC_ZREC),1,fpout);
-	  transitDEBUG(22,verblevel,
-		       "Just wrote mass %g at %li\n"
-		       ,mass[adb][j],ftell(fpout));
+	  MESSAGEP(22, "Just wrote mass %g at %li\n"
+		   ,mass[adb][j],ftell(fpout));
 	  rn=strlen(isonames[adb][j]);
 	  fwrite(&rn,sizeof(int),1,fpout);
-	  transitDEBUG(22,verblevel,
-		       "Just wrote name's length %i at %li\n"
-		       ,rn,ftell(fpout));
+	  MESSAGEP(22, "Just wrote name's length %i at %li\n"
+		   ,rn,ftell(fpout));
 	  fwrite(isonames[adb][j],sizeof(char),rn,fpout);
 	  fwrite(Z[adb][j],sizeof(PREC_ZREC),nT[adb],fpout);
 	  fwrite(cs[adb][j],sizeof(PREC_CS),nT[adb],fpout);
@@ -283,7 +275,7 @@ int main(int argc,char *argv[])
       }
     }
 
-    transitprint(1,verblevel,"sorting... ");
+    messagep(1,"sorting... ");
 
     /* Merge and output of sorted data line list */
     while(left){
@@ -324,12 +316,12 @@ int main(int argc,char *argv[])
       free(T[i]);
       free(mass[i]);
     }
-    transitprint(1,verblevel,"done\n");
+    messagep(1,"done\n");
   }
   if(!dummy)
     fclose(fpout);
 
-  transitprint(1,verblevel,"\n");
+  messagep(1,"\n");
 
   // Freeing memory
   for (i=0;i<dbread_nfcn;i++){

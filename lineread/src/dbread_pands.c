@@ -1,6 +1,6 @@
 /*
- * dbread_pands.c - Driver to read Partridge & Schwenke for Transit.
- *              Part of Transit program.
+ * dbread_pands.c - Driver to read Partridge & Schwenke for lineread.
+ *              Part of lineread program.
  *
  * Copyright (C) 2003-2006 Patricio Rojo (pato@astro.cornell.edu)
  *
@@ -25,6 +25,10 @@
 /* TD: Is not safe to use structre to read data, because it may
    contain unexpected padding */
 /* TD: BS can be fooled by lines with identical line centers */
+
+#define RWATER (3.2e-8/2.0)	//water molecule radius (cm)
+#define SIGWATER (PI*RWATER*RWATER) //water cross section (cm * cm)
+#define PI (3.141592653589793)	//PI!
 
 #define PANDS_RECLENGTH 8
 #define PANDS_NCODIDX 32786
@@ -123,7 +127,7 @@ dbread_pands(char *filename,
 	     PREC_ZREC ***Z,        //Partition function:[iso][T]
 	     PREC_ZREC **isomass,   //Isotopes' mass in AMU
 	     PREC_CS ***CS,         //Isotope's cross-section: [iso][T]
-	     PREC_ZREC **T,         //temps for Z
+	     PREC_ZREC **T,         //temps for Z and CS
 	     int *nT,               //number of temperature
 				//points 
 	     int *nIso,             //number of isotopes
@@ -167,30 +171,30 @@ dbread_pands(char *filename,
   ratiolog=log((double)1.0+(double)1.0/(2e+6));
 
   if(stat(filename,&fs)==-1){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Data file '%s' cannot be accesed by stat() in "
-		 "function dbread_pands().\nThis is important to obtain "
-		 "its size and hence the number of lines to be\n "
-		 "examinated\n"
-		 ,filename);
+    mperror(MSGP_USER|MSGP_ALLOWCONT,
+	    "Data file '%s' cannot be accesed by stat() in "
+	    "function dbread_pands().\nThis is important to obtain "
+	    "its size and hence the number of lines to be\n "
+	    "examinated\n"
+	    ,filename);
     return -2;
   }
   nrec=fs.st_size;
   if(nrec/PANDS_RECLENGTH<nrec/(float)PANDS_RECLENGTH){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Data file '%s' does not contain an integer number of "
-		 "%i-bytes records!.\nAre you sure it is the right %s "
-		 "file?\n"
-		 ,filename,PANDS_RECLENGTH,pands_name);
+    mperror(MSGP_USER|MSGP_ALLOWCONT,
+	    "Data file '%s' does not contain an integer number of "
+	    "%i-bytes records!.\nAre you sure it is the right %s "
+	    "file?\n"
+	    ,filename,PANDS_RECLENGTH,pands_name);
     return -3;
   }
   nrec/=PANDS_RECLENGTH;
 
   if((fp=fopen(filename,"r"))==NULL){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Data file '%s' cannot be opened\nas stream in function "
-		 "dbread_pands(), stopping.\n"
-		 ,filename);
+    mperror(MSGP_USER|MSGP_ALLOWCONT,
+	    "Data file '%s' cannot be opened\nas stream in function "
+	    "dbread_pands(), stopping.\n"
+	    ,filename);
     return -1;
   }
   fread(&lnwl1,4,1,fp);
@@ -202,11 +206,11 @@ dbread_pands(char *filename,
 
   lnwl=log(wlbeg)/ratiolog;
   if(lnwl2>0 && lnwl>lnwl2){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Last wavelength in the file (%g %s) is shorter "
-		 "than\nrequested initial wavelength (%g %s)\n"
-		 ,exp(lnwl2*ratiolog), pands_fct_ac, wlbeg
-		 ,pands_fct_ac);
+    mperror(MSGP_USER|MSGP_ALLOWCONT,
+	    "Last wavelength in the file (%g %s) is shorter "
+	    "than\nrequested initial wavelength (%g %s)\n"
+	    ,exp(lnwl2*ratiolog), pands_fct_ac, wlbeg
+	    ,pands_fct_ac);
     return -4;
   }
   if(lnwl1>0 && lnwl<lnwl1){
@@ -222,11 +226,11 @@ dbread_pands(char *filename,
 
   lnwl=log(wlend)/ratiolog;
   if(lnwl1>0 && lnwl<lnwl1){
-    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "First wavelength in the file (%g %s) is longer "
-		 "than\nrequested ending wavelength (%g %s)\n"
-		 ,exp(lnwl1*ratiolog), pands_fct_ac, wlend
-		 ,pands_fct_ac);
+    mperror(MSGP_USER|MSGP_ALLOWCONT,
+	    "First wavelength in the file (%g %s) is longer "
+	    "than\nrequested ending wavelength (%g %s)\n"
+	    ,exp(lnwl1*ratiolog), pands_fct_ac, wlend
+	    ,pands_fct_ac);
     return -5;
   }
   if(lnwl2>0 && lnwl>lnwl2){
@@ -249,10 +253,10 @@ dbread_pands(char *filename,
   }
 
   if(((*lines)=calloc(frec-irec,sizeof(struct linedb)))==NULL){
-    transiterror(TERR_CRITICAL|TERR_ALLOWCONT,
-		 "Cannot allocate memory to hold all the data from %s\n"
-		 "Required memory was %li bytes\n"
-		 ,pands_name,(frec-irec)*sizeof(struct linedb));
+    mperror(MSGP_SYSTEM|MSGP_ALLOWCONT,
+	    "Cannot allocate memory to hold all the data from %s\n"
+	    "Required memory was %li bytes\n"
+	    ,pands_name,(frec-irec)*sizeof(struct linedb));
     return -6;
   }
   if(gabby_dbread>1)
@@ -297,26 +301,26 @@ dbread_pands(char *filename,
     i++;
   }while(line->wl<wlend && i+irec<frec);
   if(gabby_dbread>0)
-    fprintf(stderr,"done\n");
+    fprintf(stderr, "done\n");
 
   fclose(fp);
 
-  if(isonames!=NULL)
-    isoname(isonames,*nIso);
+  if(isonames != NULL)
+    isoname(isonames, *nIso);
 
   if(isomass != NULL){
-    *isomass=(PREC_ZREC *)calloc(*nIso,sizeof(PREC_ZREC));
-    (*isomass)[0]=18.01056468;
-    (*isomass)[1]=19.01478156;
-    (*isomass)[2]=20.01481046;
-    (*isomass)[3]=19.01684143;
+    *isomass = (PREC_ZREC *)calloc(*nIso, sizeof(PREC_ZREC));
+    (*isomass)[0] = 18.01056468;
+    (*isomass)[1] = 19.01478156;
+    (*isomass)[2] = 20.01481046;
+    (*isomass)[3] = 19.01684143;
   }
 
   if(Z!=NULL)
     if((nrec=read_zpands(Zfilename,Z,T,CS,nT,*nIso))!=1)
-      transiterror(TERR_SERIOUS,
-		   "Function read_zpands() return error code '%i'\n",
-		   nrec);
+      mperror(MSGP_USER,
+	      "Function read_zpands() return error code '%i'\n",
+	      nrec);
 
 
   return i;
@@ -350,10 +354,10 @@ static int read_zpands(char *filename, /* Doh! */
 				   temperature info */
 
   if((fp=fopen(filename,"r"))==NULL){
-    transiterror(TERR_SERIOUS,
-		 "Data file '%s' cannot be opened as stream in function "
-		 "read_zpands(), stopping.\n"
-		 ,filename);
+    mperror(MSGP_USER,
+	    "Data file '%s' cannot be opened as stream in function "
+	    "read_zpands(), stopping.\n"
+	    ,filename);
   }
 
   for(i=0;i<ignorelines;i++){
@@ -377,10 +381,10 @@ static int read_zpands(char *filename, /* Doh! */
 
     for(i=0;i<nIso;i++){
       if(sp2==sp){
-	transiterror(TERR_SERIOUS,
-		     "In function read_zpands(): line %i of file\n '%s'"
-		     " has %i columns instead of %i.\n",
-		     cnt+ignorelines,filename, i+1,nIso+1);
+	mperror(MSGP_USER,
+		"In function read_zpands(): line %i of file\n '%s'"
+		" has %i columns instead of %i.\n",
+		cnt+ignorelines,filename, i+1,nIso+1);
       }
       sp = sp2;
       (*Z)[i][cnt] = strtod(sp,&sp2);

@@ -18,7 +18,7 @@ local_$(d)        := $(lib_$(d)) $(bin_PROGRAMS_$(d)) $(test_PROGRAMS_$(d))
 
 #the following per binary
 lineread_FILES_$(d)    := dbread_pands \
-			  lineread dbread_text
+			  lineread dbread_text messagep
 lineread_OBJS_$(d)     := $(lineread_FILES_$(d):%=$(d)/%.o)
 lineread_PIC_OBJS_$(d) := $(lineread_FILES_$(d):%=$(d)/%_pic.o)
 lineread_DEPS_$(d)     := $(lineread_FILES_$(d):%=$(d)/%.o.d)    \
@@ -53,13 +53,13 @@ $(lib_DYN_$(d)): $(PIC_OBJS_$(d))
 $(test_PROGRAMS_$(d):%=%$(EXEEXT)): $(test_FILES_$(d):%=$(d)/%)
 lineread$(EXEEXT):   $(lineread_OBJS_$(d))
 
-LOCAL_INC_$(d) := -I$(d) -I$(d)/../transit
+LOCAL_INC_$(d) := -I$(d) 
 $(OBJS_$(d):.o=.proto): CP_LOCAL :=  $(LOCAL_INC_$(d))
 $(local_$(d)): $(d)/Rules.mk
-$(local_$(d)): CF_LOCAL := -D_USE_GSL $(LOCAL_INC_$(d)) \
-	-DHAVE_INLINE -DGSL_RANGE_CHECK_OFF #\
+$(local_$(d)): CF_LOCAL := $(LOCAL_INC_$(d)) \
+	-DHAVE_INLINE 	-D_BSD_SOURCE #\
 #	`pkg-config --cflags gtk+-2.0`
-$(local_$(d)): LL_LOCAL := -lm -lpu -lgsl \
+$(local_$(d)): LL_LOCAL := -lm -lpu \
 #`pkg-config --libs gtk+-2.0` \
 	-lplplotd -lcfitsio -lblas
 test_pands: CF_TEST := -DTEST_RUN \
