@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* src/transit/idxrefraction.c */
+/* src/idxrefraction.c */
 extern int idxrefrac P_((struct transit *tr));
 extern int freemem_idexrefrac P_((struct idxref *ir, long *pi));
 extern int restidxref P_((FILE *in, long nrad, struct idxref *ir));

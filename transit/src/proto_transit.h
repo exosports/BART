@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* src/transit/transit.c */
+/* src/transit.c */
 extern int main P_((int argc, char **argv));
 extern void freemem_transit P_((struct transit *tr));
 

@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* src/lineread/../transit/transitstd.c */
+/* src/transitstd.c */
 extern inline void transitdot P_((int thislevel, int verblevel, ...));
 extern int transiterror_fcn P_((int flags, const char *file, const long line, const char *str, ...));
 extern int vtransiterror_fcn P_((int flags, const char *file, const long line, const char *str, va_list ap));

@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* src/transit/observable.c */
+/* src/observable.c */
 extern int modulation P_((struct transit *tr));
 extern void printmod P_((struct transit *tr));
 extern int freemem_outputray P_((struct outputray *out, long *pi));

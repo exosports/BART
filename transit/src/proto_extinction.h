@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* src/transit/extinction.c */
+/* src/extinction.c */
 extern inline int newprofile P_((float **pr, int vf, double dwn, float dop, float lor, float ta));
 extern int extradius P_((long r, double **kiso, double temp, int fbinvoigt, float timesalpha, float maxratio));
 extern void savefile_extinct P_((char *filename, double **e, short *c, long nrad, long nwav));

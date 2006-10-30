@@ -37,7 +37,7 @@ DIRECTORIES AND IMPORTANT FILES:
    template-atmosphere.dat   Template input file for the input
                       atmospheric profile file indicated by --atmfile
                       option.
-   template-ascii.twii       These files are the template input file
+   template-ascii.tli       These files are the template input file
                       for the ascii-TLI format of a line-transition
                       database.
    changelog          Contains description of the changes between

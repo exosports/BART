@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* src/transit/tau.c */
+/* src/tau.c */
 extern int tau P_((struct transit *tr));
 extern void outdebtauex P_((char *name, double **e, prop_samp *ip, double **t, long rn, long w));
 extern void outdebex P_((char *name, double **e, double *r, long rn, long wi, long wf));

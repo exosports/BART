@@ -4,7 +4,7 @@
 #define P_(s) ()
 #endif
 
-/* src/transit/atmosphere/readatm.c */
+/* src/atmosphere/readatm.c */
 extern void freemem_onept P_((struct onept *o));
 extern int freemem_atmosphere P_((struct atm_data *at, long *pi));
 extern void saveonept_arr P_((FILE *out, struct onept *onept));
