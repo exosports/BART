@@ -27,6 +27,20 @@ static int msgp_allown=0;
 int msgp_nowarn=0;
 int verblevel;
 int maxline=1000;
+static char *prgname=NULL;
+
+void
+messagep_name(char *name)
+{
+  if(prgname) free(prgname);
+  prgname = (char *)calloc(strlen(name)+1,sizeof(char *));
+  strcpy(prgname, name);
+}
+
+void messagep_free()
+{
+  free(prgname);
+}
 
 inline void msgpdot(int thislevel, int verblevel,...)
 {
@@ -65,7 +79,6 @@ int vmperror_fcn(int flags,
 		      const char *str,
 		      va_list ap)
 {
-  char pre_error[]="\nMsgp";
   char error[7][22]={"",
 		     ":: SYSTEM: ",         /* Produced by the code */
 		     ":: USER: ",          /* Produced by the user */
@@ -81,7 +94,7 @@ int vmperror_fcn(int flags,
   if(msgp_nowarn&&(flags & MSGP_NOFLAGBITS)==MSGP_WARNING)
     return 0;
 
-  len = strlen(pre_error);
+  len = strlen(prgname)+1;
   if(!(flags&MSGP_NOPREAMBLE))
     len += strlen(error[flags&MSGP_NOFLAGBITS]);
   //symbols + digits + file
@@ -93,7 +106,8 @@ int vmperror_fcn(int flags,
   errormessage = (char *)calloc(len, sizeof(char));
   out          = (char *)calloc(lenout, sizeof(char));
 
-  strcat(errormessage,pre_error);
+  strcat(errormessage,"\n");
+  strcat(errormessage,prgname);
   if(flags&MSGP_DBG){
     char debugprint[debugchars];
     sprintf(debugprint," (%s|%li)", file, line);

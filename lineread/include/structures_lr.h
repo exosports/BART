@@ -33,5 +33,11 @@ struct linedb{
   short isoid;              //Isotope ID (Assumed to be in range)
 };
 
+struct hints{
+  int ndb;
+  char **db;
+  char **dbaux;
+  double iniw, finw;
+};
 
 #endif /* _STRUCTURES_LR_H_ */

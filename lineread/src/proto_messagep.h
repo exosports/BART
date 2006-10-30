@@ -5,6 +5,8 @@
 #endif
 
 /* src/messagep.c */
+extern void messagep_name P_((char *name));
+extern void messagep_free P_((void));
 extern inline void msgpdot P_((int thislevel, int verblevel, ...));
 extern int mperror_fcn P_((int flags, const char *file, const long line, const char *str, ...));
 extern int vmperror_fcn P_((int flags, const char *file, const long line, const char *str, va_list ap));
