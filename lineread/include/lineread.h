@@ -42,13 +42,19 @@ extern short gabby_dbread;
 extern double tli_fct;
 extern struct linedb linedb;
 
-#define pfwrite(...) do{if (!dummy) fwrite(__VA_ARGS__);}while(0)
+
+
 
 #include <proto_lineread.h>
-#include <proto_dbread_pands.h>
-#include <proto_dbread_text.h>
 #include <proto_argum.h>
 #include <proto_drivers.h>
+
+extern driver_func * driverf_debug;
+#include <proto_dbread_debug.h>
+extern driver_func * driverf_pands;
+#include <proto_dbread_pands.h>
+extern driver_func * driverf_text;
+#include <proto_dbread_text.h>
 
 /*
   dbread_*: Reading of different line databases.

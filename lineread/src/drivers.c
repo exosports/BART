@@ -24,37 +24,37 @@
 #include <lineread.h>
 #include <version_lr.h>
 
-static int nfcn;
+
+#define pfwrite(...) do{if (!dry) fwrite(__VA_ARGS__);}while(0)
+
+//Add here a content struct for each driver, which should also have an
+//"extern" entry in lineread.h as well as its proto_ file included.
+static const
+driver_func (*drivers)[] = 
+{
+  driverf_debug
+};
+
 static unsigned short ndb = 0;
-static _Bool dummy = 0;
-
-/* \fcnfh
- Returns the name of the ith kind of database
-*/
-static char *
-fcn_name(int dr);
+static _Bool dry = 0;
+static unsigned short *DBdriver = NULL;
 
 
 /* \fcnfh
- Finds the DB driver appropriate to read file 'file'
+   Finds the DB driver appropriate to read file 'file', or -1 if none is
+   found.
 */
-static int
-find_dbd(char *file);
-
-static int
-opendriver(unsigned short db, char *dbname, char *dbaux, int driver);
-
-static int
-closedriver(unsigned short db);
-
-static long int
-readlinetran(unsigned short db, struct linedb **lineinfo, double wav1, double wav2);
+static inline int
+find_dbd(char *file,
+	 unsigned short nfcn)
+{
+  for (int i=0 ; i<nfcn ; i++)
+    if((*(drivers[i]->find))(file))
+      return i;
+  return -1;
+}
 
 
-static int 
-readpartition(unsigned short db, char *name, unsigned short *nT, PREC_TEMP **T, 
-	      unsigned short *niso, char ***isonames, PREC_MASS **mass, 
-	      PREC_Z ***Z, PREC_CS ***CS);
 
 
 /* \fcnfh
@@ -63,11 +63,14 @@ readpartition(unsigned short db, char *name, unsigned short *nT, PREC_TEMP **T,
 int
 db_drivers(struct hints *hint)
 {
+  unsigned short nfcn = sizeof(initdriver)/sizeof(driver_func);
   ndb = hint->ndb;
-  dummy = hint->dummy;
+  dry = hint->dry;
+  DBdriver = (unsigned short *)calloc(ndb, sizeof(unsigned short));
+
 
   /* finding the right driver for each database */
-  find_alldrivers(hint);
+  find_alldrivers(hint, nfcn);
 
 
   /* Setting up drivers & output file */
@@ -85,9 +88,10 @@ db_drivers(struct hints *hint)
 
   /* Closing up drivers & output file */
   for (int i=0 ; i<ndb ; i++)
-    closedriver(i);
-  if (fpout != stdout && !dummy)
+    (*(drivers[DBdriver[i]]->close))();
+  if (fpout != stdout && !dry)
     fclose(fpout);
+  free(DBdriver);
   
 }
 
@@ -100,13 +104,16 @@ db_drivers(struct hints *hint)
    Set-up drivers and open output file
 */
 int
-find_alldrivers(struct hints *hint)
+find_alldrivers(struct hints *hint,
+		unsigned short nfcn)
 {
   int allocnm = 8, lennm=0;
   char *alldb = (char *)calloc(allocnm, sizeof(char));
 
+
   for (int i=0 ; i<nfcn ; i++){
-    char *name = fcn_name(i);
+    (*(drivers[i])->init)();
+    char *name = drivers[i]->name;
     lennm += strlen(name) + 2;
     while (lennm >= allocnm)
       alldb = (char *)realloc(alldb, (allocnm<<=1)*sizeof(char));
@@ -117,7 +124,7 @@ find_alldrivers(struct hints *hint)
 
 
   for (int i=0 ; i<ndb ; i++)
-    if((hint->dbd[i] = find_dbd(hint->db[i])) < 0)
+    if((DBdriver[i] = hint->dbd[i] = find_dbd(hint->db[i], nfcn)) < 0)
       mperror(MSGP_USER,
 	      "The file '%s' could not be associated to any "
 	      "supported database.  Currently, lineread can read: %s."
@@ -136,9 +143,9 @@ setdriversnoutput(struct hints *hint)
 {
   FILE *fpout = NULL;
   for (int i=0 ; i<ndb ; i++)
-    opendriver(i, hint->db[i], hint->dbaux[i], hint->dbd[i]);
+    (*(drivers[DBdriver[i]]->open))(hint->db[i], hint->dbaux[i]);
 
-  if(!dummy){
+  if(!dry){
     if(strcmp("-", hint->datafile) == 0)
       fpout = stdout;
     else if((fpout=fopen(hint->datafile, "w"))==NULL){
@@ -182,17 +189,60 @@ readwritetransition(unsigned short *niso,
 		    double del)
 {
   double wav1 = ini;
-  struct linedb *lineinfo[ndb];
+  struct linedb *lineinfo[ndb], *curr[ndb];
 
   while (wav1 < fin){
     double wav2 = wav1 + del;
-    long int nlines[ndb];
+    long int ncurr[ndb], icurr[ndb];
+    unsigned short acum[ndb];
 
+    //Get line info from the DBs
+    for (int i=0 ; i<ndb ; i++){
+      ncurr[i] = (*(drivers[DBdriver[i]]->info))(lineinfo+i, wav1, wav2);
+      curr[i] = lineinfo[i];
+      acum[i] = icurr[i] = 0;
+    }
+    //Set accumulated number of isotopes
+    for (int i=1 ; i<ndb ; i++)
+      for (int j=0 ; j<i ; j++)
+	acum[i] += niso[j];
+
+    unsigned short left=ndb;
+    while (left){
+
+      //Search for the lowest wavelength among the remaining DBs
+      unsigned short mindb = 0;
+      double wmin = curr[0]->wl;
+      for (int i=1 ; i<left ; i++)
+	if (curr[i]->wl < wmin)
+	  wmin = curr[mindb=i]->wl;
+
+
+      //Write lowest-wavelength transition
+      unsigned short id = acum[mindb] + curr[mindb]->isoid;
+      pfwrite(&(curr[mindb]->wl), sizeof(PREC_LNDATA),    1, fpout);
+      pfwrite(&id,                sizeof(unsigned short), 1, fpout);
+      pfwrite(&curr[mindb]->elow, sizeof(PREC_LNDATA),    1, fpout);
+      pfwrite(&curr[mindb]->gf,   sizeof(PREC_LNDATA),    1, fpout);
+
+
+      //If this was the last transition in this database, in this range,
+      //then discard this database from sorting.
+      if(++icurr[mindb] == ncurr[mindb]){
+	while(++mindb < left){
+	  icurr[mindb-1] = icurr[mindb];
+	  ncurr[mindb-1] = ncurr[mindb];
+	  curr[mindb-1]  = curr[mindb];
+	  acum[mindb-1]  = acum[mindb];
+	}
+	left--;
+      }
+    }
+
+    //free line information from this range and go for the next
+    //wavelength range
     for (int i=0 ; i<ndb ; i++)
-      nlines[i] = readlinetran(i, lineinfo+i, wav1, wav2);
-
-    
-
+      free(lineinfo[i]);
 
     wav1 = wav2;
   }
@@ -217,8 +267,7 @@ readwritepartition(unsigned short *niso,
     PREC_TEMP *T;
     PREC_Z    **Z;
     PREC_CS   **CS;
-    readpartition(i, name, &nT, &T, niso+i, &isonames, &mass, &Z, &CS);
-
+    (*(drivers[DBdriver[i]]->part))(&name, &nT, &T, niso+i, &isonames, &mass, &Z, &CS);
 
     unsigned short rn = strlen(name);
     pfwrite(&rn,    sizeof(unsigned short),  1, fpout); 

@@ -6,7 +6,7 @@
 
 /* src/drivers.c */
 extern int db_drivers P_((struct hints *hint));
-extern int find_alldrivers P_((struct hints *hint));
+extern int find_alldrivers P_((struct hints *hint, unsigned short nfcn));
 extern FILE *setdriversnoutput P_((struct hints *hint));
 extern int readwritetransition P_((unsigned short *niso, FILE *fpout, double ini, double fin, double del));
 extern int readwritepartition P_((unsigned short *niso, FILE *fpout));

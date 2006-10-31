@@ -62,6 +62,9 @@ argum(int argc,
   struct optdocs var_docs[]={
     {NULL,0,HELPTITLE,NULL,
      NULL, "GENERAL ARGUMENTS"},
+    {"dry-run",'n',no_argument,NULL,
+     NULL,"Dry run. No output is written. But otherwise "
+     "the program is executed fully"},
     {"quiet",'q',no_argument,NULL,
      NULL,"No output other than error messages are printed"},
     {"verbose",'v',no_argument,NULL,
@@ -122,6 +125,7 @@ argum(int argc,
   hint->ndb = 0;
   hint->db = (char **)calloc(allocdb, sizeof(char *));
   hint->datafile = NULL;
+  hint->dry = 0;
 
   procopt_debug=1;
   while(1){
@@ -178,6 +182,10 @@ argum(int argc,
       ptr = optarg;
       hint->dbaux[adb-1] = strdup(optarg);
 
+      break;
+
+    case 'n':
+      hint->dry = 1;
       break;
 
     case 'q':
