@@ -33,6 +33,8 @@ main(int argc,
 
   argum(argc, argv, &hint);
 
+  db_drivers(&hint);
+
   lineread_free();
 
   exit(EXIT_SUCCESS);

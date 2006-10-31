@@ -26,6 +26,9 @@
 #define PREC_ZREC double	/* Type for the partition info  */
 #define PREC_LNDATA double	/* Type for the line data output */
 #define PREC_RES double     	/* Type for every partial result */
+#define PREC_Z  double		/* Type for cross-section */
 #define PREC_CS  double		/* Type for cross-section */
+#define PREC_TEMP double        /* Type for isotope mass */
+#define PREC_MASS double        /* Type for isotope mass */
 
 #endif /* _TYPES_LR_H */

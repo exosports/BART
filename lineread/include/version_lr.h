@@ -24,8 +24,8 @@
 #define _VERSION_LR_H_
 
 
-int version = 4;
-int revision = 0;
+unsigned short version = 4;
+unsigned short revision = 0;
 int version_rc = -1;
 
 int TLIversion = 4;

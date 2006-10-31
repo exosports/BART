@@ -19,8 +19,8 @@ include $(d)/Rules.mk
 
 binaries: $(bin_PROGRAMS)
 libraries: $(lib_STATIC) $(lib_DYNAMIC)
-install: install-bin #install-header install-lib
-uninstall: uninstall-bin #uninstall-lib uninstall-header
+install: install-bin install-magic #install-header install-lib
+uninstall: uninstall-bin uninstall-magic #uninstall-lib uninstall-header
 
 #libraries and binaries
 $(lib_STATIC):
@@ -105,6 +105,10 @@ uninstall-lib-hook:
 	$(call cmd,uninstalllib)
 install-bin: install-binPROGRAMS
 uninstall-bin: uninstall-binPROGRAMS
+install-magic:
+	@./scripts/magicadd.sh
+uninstall-magic:
+	@./scripts/magicadd.sh -u
 install-binPROGRAMS: $(bin_PROGRAMS)
 	$(call cmd,mkdirbin)
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \

@@ -37,7 +37,10 @@ struct hints{
   int ndb;
   char **db;
   char **dbaux;
-  double iniw, finw;
+  int *dbd;
+  double iniw, finw, delw;
+  char *datafile;
+  _Bool dummy;
 };
 
 #endif /* _STRUCTURES_LR_H_ */

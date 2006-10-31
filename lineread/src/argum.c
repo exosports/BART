@@ -74,11 +74,20 @@ argum(int argc,
      "filename","Use filename to read parameters"},
 
     {NULL,0,HELPTITLE,NULL,
-     NULL, "DATABASE ARGUMENTS"},
+     NULL, "WAVELENGTH ARGUMENTS"},
     {"wavi",'i',required_argument, "1.9",
      "value", "Value of initial wavelength to consider (in microns)"},
     {"wavf",'f',required_argument, "2.0",
      "value", "Value of final wavelength to consider (in microns)"},
+    {"wavd",'d',required_argument, "0.5",
+     "value", "Range of wavelengths to read at a time (in microns)"},
+
+
+    {NULL,0,HELPTITLE,NULL,
+     NULL, "DATABASE ARGUMENTS"},
+    {"output", 'o', required_argument, "-",
+     "filename", "Output filename.  A dash (-) indicates standard "
+     "output"},
     {"database",LRA_DB,required_argument,NULL,
      "filename", "Indicates another DB to process.  Specifying "
      "--database is optional as DBs can also be specified as non-option "
@@ -112,6 +121,7 @@ argum(int argc,
   int allocdb = 2;
   hint->ndb = 0;
   hint->db = (char **)calloc(allocdb, sizeof(char *));
+  hint->datafile = NULL;
 
   procopt_debug=1;
   while(1){
@@ -123,6 +133,11 @@ argum(int argc,
       break;
 
     switch(rn){
+    case 'o':
+      if (hint->datafile) free(hint->datafile);
+      hint->datafile = strdup(optarg);
+      break;
+
     case 'i':
       hint->iniw = strtod(optarg, &endptr);
       if (endptr==optarg) 
@@ -135,6 +150,13 @@ argum(int argc,
       if (endptr==optarg) 
 	mperror(MSGP_USER, 
 		"Invalid final wavelength.  "
+		"Run 'lineread -h' for syntax help.\n");
+      break;
+    case 'd':
+      hint->delw = strtod(optarg, &endptr);
+      if (endptr==optarg) 
+	mperror(MSGP_USER, 
+		"Invalid wavelength range.  "
 		"Run 'lineread -h' for syntax help.\n");
       break;
 
@@ -234,7 +256,8 @@ argum(int argc,
   hint->dbaux = (char **)realloc(hint->dbaux, hint->ndb*sizeof(char *));
   for(int i=allocaux ; i<hint->ndb ; i++)
     hint->dbaux[i] = NULL;
-    
+
+  hint->dbd = (int *)calloc(hint->ndb, sizeof(int));
 
   procopt_free();
 
@@ -251,6 +274,8 @@ hints_free(struct hints *hint)
   }
   free(hint->db);
   free(hint->dbaux);
+  free(hint->dbd);
+  free(hint->datafile);
 }
 
 #include <version_lr.h>
