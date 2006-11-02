@@ -48,6 +48,7 @@
 #define MSGP_NOPREAMBLE   0x000020
 #define MSGP_ALLOC        0x000040
 #define MSGP_DBG          0x000080
+#define MSGP_NODBG        0x000100
 
 
 /****************************
@@ -59,7 +60,7 @@ extern int msgp_nowarn;
 extern int verblevel;
 
 
-#define DEBUG_ERROR
+//#define DEBUG_ERROR
 #ifdef  DEBUG_ERROR
 #define DBGERR | MSGP_DBG
 #else

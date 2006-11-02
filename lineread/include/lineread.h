@@ -34,6 +34,7 @@
 
 #include <messagep.h>
 
+#include <flags_lr.h>
 #include <types_lr.h>
 #include <structures_lr.h>
 
@@ -49,11 +50,11 @@ extern struct linedb linedb;
 #include <proto_argum.h>
 #include <proto_drivers.h>
 
-extern driver_func * driverf_debug;
+extern const driver_func * driverf_debug;
 #include <proto_dbread_debug.h>
-extern driver_func * driverf_pands;
+extern const driver_func * driverf_pands;
 #include <proto_dbread_pands.h>
-extern driver_func * driverf_text;
+extern const driver_func * driverf_text;
 #include <proto_dbread_text.h>
 
 /*

@@ -45,11 +45,6 @@ struct hints{
 
 typedef struct driver_func{
   const char *name;
-  int (*initd)();		//Any initializing code that the driver
-				//might need to run before it is even
-				//confirm that it is going to be
-				//needed.  NULL if no function is
-				//required.
   _Bool (*find)(const char *name); //Returns true if the driver can
 				//read the given file.
   int (*open)(char *dbname, 

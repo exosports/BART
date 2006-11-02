@@ -74,10 +74,10 @@ mperror_fcn (int flags,
 	   0 if it is a warning call and 'msgp\_nowarn' is 1
 */
 int vmperror_fcn(int flags, 
-		      const char *file,
-		      const long line,
-		      const char *str,
-		      va_list ap)
+		 const char *file,
+		 const long line,
+		 const char *str,
+		 va_list ap)
 {
   char error[7][22]={"",
 		     ":: SYSTEM: ",         /* Produced by the code */
@@ -90,6 +90,11 @@ int vmperror_fcn(int flags,
   char *errormessage,*out;
   int len, lenout, xtr;
 
+  if (((flags & MSGP_NOFLAGBITS) == MSGP_SYSTEM) && 
+      !(flags & MSGP_NODBG))
+    flags |= MSGP_DBG;
+  if (flags & MSGP_NODBG)
+    flags &= !MSGP_DBG;
 
   if(msgp_nowarn&&(flags & MSGP_NOFLAGBITS)==MSGP_WARNING)
     return 0;

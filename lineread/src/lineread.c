@@ -44,6 +44,7 @@ main(int argc,
 void 
 lineread_free()
 {
+  drivers_free(&hint);
   hints_free(&hint);
   messagep_free();
 }
