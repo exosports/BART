@@ -127,6 +127,14 @@ argum(int argc,
   hint->datafile = NULL;
   hint->dry = 0;
 
+  int extra = 40, maxver;
+  char *out = (char *)malloc(1);
+  do{
+    maxver = extra;
+    out = (char *)realloc(out, maxver*sizeof(char));
+    extra = snprintf(out, maxver, "-rc%i", version_rc);
+  }while(extra>maxver);
+
   procopt_debug=1;
   while(1){
 
@@ -197,21 +205,10 @@ argum(int argc,
       break;
 
     case 'V':
-      do{
-	int extra = 40, maxver;
-	char *out = (char *)malloc(1);
-	do{
-	  maxver = extra;
-	  out = (char *)realloc(out, maxver*sizeof(char));
-	  extra = snprintf(out, maxver, "-rc%i", version_rc);
-	}while(extra>maxver);
-	
-	fprintf(stderr, 
-		"This is 'lineread' version %i.%i%s "
-		"(produces TLI format version %i)"
-		, version, revision, version_rc>0?out:"", TLIversion);
-	free(out);
-      }while(0);
+      fprintf(stderr, 
+	      "This is 'lineread' version %i.%i%s "
+	      "(produces TLI format version %i)"
+	      , version, revision, version_rc>0?out:"", TLIversion);
       lineread_free();
       procopt_free();
       exit(EXIT_SUCCESS);
@@ -268,6 +265,13 @@ argum(int argc,
   hint->dbd = (int *)calloc(hint->ndb, sizeof(int));
 
   procopt_free();
+
+  messagep(4,
+	   "--------------------------\n  "
+	   "lineread v%i.%i%s\n"
+	   "--------------------------\n"
+	   , version, revision, version_rc>0?out:"");
+  free(out);
 
   return 0;
 }

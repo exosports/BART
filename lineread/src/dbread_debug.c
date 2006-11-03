@@ -25,7 +25,8 @@
 
 
 FILE *fp = NULL;
-_Bool partitionread=0;
+_Bool partitionread = 0;
+static int verbose_dbdebug = 15;
 
 static _Bool
 db_find(const char *name)
@@ -91,6 +92,8 @@ db_info(struct linedb **lineinfo,
   if (!partitionread)
     return -1;
 
+  messagep(verbose_dbdebug, "DebugDriver: Going to look for wavelength range %g - %g\n"
+	   , wav1, wav2);
   int maxline = 200;
   char line[maxline], *lp;
 
@@ -98,10 +101,16 @@ db_info(struct linedb **lineinfo,
   *lineinfo = (struct linedb *)calloc(alloc, 
 				      sizeof(struct linedb));
 
+  long pos = ftell(fp);
   while((lp = fgets(line, maxline, fp)) != NULL){
     double wav = strtod(lp, &lp);
     if (wav < wav1) continue;
-    if (wav > wav2) break;
+    if (wav > wav2){
+      messagep(verbose_dbdebug, " DebugDriver: Reached upper wavelength %g with %g\n",wav2, wav);
+      fseek(fp, pos, SEEK_SET);
+      break;
+    }
+    messagep(verbose_dbdebug, "  DebugDriver: Read line info (%g): '%s'\n", wav, line);
 
     if (i > alloc) 
       *lineinfo = (struct linedb *)realloc(*lineinfo, 
@@ -111,6 +120,8 @@ db_info(struct linedb **lineinfo,
     (*lineinfo)[i].isoid   = strtol(lp, &lp, 10);
     (*lineinfo)[i].elow = strtod(lp, &lp);
     (*lineinfo)[i++].gf   = strtod(lp, &lp);
+
+    pos = ftell(fp);
   }
   
   return i;
@@ -125,14 +136,14 @@ db_info(struct linedb **lineinfo,
    name
    nt t(1) t(2) t(3) .. t(nt)
    niso m(1)i(1) m(2)i(2) .. m(niso)i(niso)
-   Z(1,1) Z(1,2) .. Z(1,niso)
-   Z(2,1) Z(2,2) .. Z(2,niso)
+   Z(1,1)    Z(1,2)  .. Z(1,nt)
+   Z(2,1)    Z(2,2)  .. Z(2,nt)
    ..
-   Z(nt,1) Z(nt,2) .. Z(nt, niso)
-   CS(1,1) CS(1,2) .. CS(1,niso)
-   CS(2,1) CS(2,2) .. CS(2,niso)
+   Z(niso,1) Z(nt,2) .. Z(niso, nt)
+   CS(1,1)    CS(1,2)  .. CS(1,nt)
+   CS(2,1)    CS(2,2)  .. CS(2,nt)
    ..
-   CS(nt,1) CS(nt,2) .. CS(nt, niso)
+   CS(niso,1) CS(nt,2) .. CS(niso, nt)
    --
 */
 static int
@@ -167,7 +178,10 @@ db_part(char **name,
   *isonames = (char **)calloc(*niso, sizeof(char *));
   for (int i=0 ; i<*niso ; i++){
     (*mass)[i] = strtod(lp, &lp);
-    lp[index(lp, ' ')-lp] = '\0';
+    char *idx = index(lp, ' ');
+    if (!idx)
+      idx = lp+strlen(lp)-1;
+    lp[idx-lp] = '\0';
     (*isonames)[i] = strdup(lp);
     lp += strlen(lp) + 1;
   }
@@ -180,6 +194,8 @@ db_part(char **name,
   for(int i=0 ; i<*niso ; i++){
     if(! (fgets(line, maxlen, fp)) )
       mperror(MSGP_USER, "Invalid debug DB Z\n");
+    messagep(verbose_dbdebug,
+	     "DebugDriver: Reading Z: '%s'\n", line);
     (*Z)[i]  = **Z  + *nT*i;
     for(int j=0 ; j<*nT ; j++)
       (*Z)[i][j]  = strtod(lp, &lp);
@@ -187,6 +203,8 @@ db_part(char **name,
   for(int i=0 ; i<*niso ; i++){
     if(! (fgets(line, maxlen, fp)) )
       mperror(MSGP_USER, "Invalid debug DB CS\n");
+    messagep(verbose_dbdebug,
+	     "DebugDriver: Reading CS: '%s'\n", line);
     (*CS)[i] = **CS + *nT*i;
     for(int j=0 ; j<*nT ; j++)
       (*CS)[i][j] = strtod(lp, &lp);

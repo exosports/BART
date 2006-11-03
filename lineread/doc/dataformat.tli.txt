@@ -8,6 +8,7 @@ human-readable file.
 -------------------------------------------
 
 TLI magic numbers                  :long int
+TLI version                        :unsigned short
 lineread version                   :unsigned short
 lineread revision                  :unsigned short
 initial wavelength (microns)       :double
@@ -17,7 +18,6 @@ size of yet_undefined_string       :unsigned short
 yet_undefined_string               :string
 
 number of databases (nDB)          :unsigned short
-total number of isotopes           :unsigned short
 
 #Foreach database (nDB)	      		
   size of DB_name                  :unsigned short
@@ -36,6 +36,8 @@ total number of isotopes           :unsigned short
 
   database correlative number      :unsigned short
 #End database
+
+total number of isotopes           :unsigned short
 
 #Foreach transition (unknown a-priori number)
   central laboratory wavelength    :double
