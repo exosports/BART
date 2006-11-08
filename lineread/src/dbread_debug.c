@@ -24,8 +24,8 @@
 #include <lineread.h>
 
 
-FILE *fp = NULL;
-_Bool partitionread = 0;
+static FILE *fp = NULL;
+static _Bool partitionread = 0;
 static int verbose_dbdebug = 15;
 
 static _Bool
@@ -146,7 +146,7 @@ db_info(struct linedb **lineinfo,
    CS(niso,1) CS(nt,2) .. CS(niso, nt)
    --
 */
-static int
+static _Bool
 db_part(char **name,
 	unsigned short *nT,
 	PREC_TEMP **T,
@@ -211,7 +211,7 @@ db_part(char **name,
   }
 
   partitionread = 1;
-  return LR_OK;
+  return 0;
 }
 
 

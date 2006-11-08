@@ -50,11 +50,8 @@ extern struct linedb linedb;
 #include <proto_argum.h>
 #include <proto_drivers.h>
 
-extern const driver_func * driverf_debug;
 #include <proto_dbread_debug.h>
-extern const driver_func * driverf_pands;
 #include <proto_dbread_pands.h>
-extern const driver_func * driverf_text;
 #include <proto_dbread_text.h>
 
 /*

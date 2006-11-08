@@ -30,7 +30,8 @@
 static 
 driver_func * (*init_driver[])() = 
 {
-  &initdb_debug
+  &initdb_debug,
+  &initdb_text
 };
 
 static driver_func **drivers=NULL;
@@ -94,13 +95,12 @@ db_drivers(struct hints *hint)
 
   
   /* Reading & writing partition info */
-  unsigned short acum[ndb];
+  unsigned short acum[ndb+1];
   readwritepartition(acum);
 
 
   /* Reading & writing line transitions */
   readwritetransition(acum, hint->iniw, hint->finw, hint->delw);
-
 
   return LR_OK;
 }
@@ -244,6 +244,108 @@ setdriversnoutput(struct hints *hint)
 
 
 /* \fcnfh
+Read partition info and write it on output file 
+*/
+
+int
+readwritepartition(unsigned short *acum)
+{
+  memset(acum, 0, (ndb+1)*sizeof(unsigned short));
+  int rdb=0;
+
+  messagep(2, "Reading and writing partition information");
+  fpos_t ndbpos;
+  fgetpos(fpout, &ndbpos);
+  messagep(verbose_TLIout, "Number of DBs:    "); 
+  pfwrite(&ndb,  sizeof(unsigned short), 1, fpout); 
+
+  //rdb is the "real DB" counter, while i is the counter of the number
+  //of files that are read.
+  for (unsigned short i=0 ; i<ndb ; i++, rdb++){
+    char *name, **isonames;
+    unsigned short nT, niso;
+    PREC_MASS *mass;
+    PREC_TEMP *T;
+    PREC_Z    **Z;
+    PREC_CS   **CS;
+    _Bool moredb = (*(drivers[DBdriver[i]]->part))
+      (&name, &nT, &T, &niso, &isonames, &mass, &Z, &CS);
+
+    messagep(verbose_TLIout," For DB #%i (file #%i):\n", rdb, i);
+    unsigned short rn = strlen(name);
+    messagep(verbose_TLIout," Length of name:         ");
+    pfwrite(&rn,    sizeof(unsigned short),  1, fpout); 
+    messagep(verbose_TLIout," Name:                   ");
+    pfwrite(name,   sizeof(char),           rn, fpout);
+    messagep(verbose_TLIout," Number of temperatures: ");
+    pfwrite(&nT,    sizeof(unsigned short),  1, fpout);
+    messagep(verbose_TLIout," Number of isotopes:     ");
+    pfwrite(&niso, sizeof(unsigned short),  1, fpout);
+    messagep(verbose_TLIout," Temperatures:           ");
+    pfwrite(T,      sizeof(PREC_TEMP),      nT, fpout);
+    
+    for(int j=0 ; j<niso ; j++){
+      messagep(verbose_TLIout,"  For isotope %i:\n", j);
+      rn = strlen(isonames[j]);
+      messagep(verbose_TLIout,"   Length of name: ");
+      pfwrite(&rn,         sizeof(unsigned short),  1, fpout);
+      messagep(verbose_TLIout,"   Name:           ");
+      pfwrite(isonames[j], sizeof(char),           rn, fpout);
+      messagep(verbose_TLIout,"   Masses:         ");
+      pfwrite(mass+j,      sizeof(PREC_MASS),       1, fpout);
+      messagep(verbose_TLIout,"   Partitions:     ");
+      pfwrite(Z[j],        sizeof(PREC_Z),         nT, fpout);
+      messagep(verbose_TLIout,"   Cross sections: ");
+      pfwrite(CS[j],       sizeof(PREC_CS),        nT, fpout);
+    }
+
+    messagep(verbose_TLIout, " DB correlative number: ");
+    pfwrite(&rdb, sizeof(unsigned short),  1, fpout);
+
+    free(name);
+    free(T);
+    for(int j=0 ; j<niso ; j++)
+      free(isonames[j]);
+    free(isonames);
+    free(mass);
+    free(*Z);
+    free(Z);
+    free(*CS);
+    free(CS);
+
+    //Set accumulated number of  for a multi- or single-DB read
+    if(acum[i+1])
+      acum[i+1] += niso;
+    else
+      acum[i+1]  = acum[i] + niso;
+
+    messagep(2,".");
+    if (moredb) i--;
+  }
+
+  fpos_t ndbpos2;
+  fgetpos(fpout, &ndbpos2);
+  fsetpos(fpout, &ndbpos);
+  messagep(verbose_TLIout, "Corrected Number of DBs:    "); 
+  pfwrite(&rdb,  sizeof(unsigned short), 1, fpout); 
+  fsetpos(fpout, &ndbpos2);
+
+
+  messagep(verbose_TLIout, "Total number of isotopes: ");
+  pfwrite(acum+ndb, sizeof(unsigned short), 1, fpout);
+  messagep(verbose_TLIout, "--------------------------\n");
+
+  messagep(2, " done\n");
+
+  return LR_OK;
+}
+
+
+/**********************************************/
+
+
+
+/* \fcnfh
    Read line transition, sort it, and write it on output file 
 */
 int
@@ -260,7 +362,7 @@ readwritetransition(unsigned short *acum,
   while (wav1 < fin){
     double wav2 = wav1 + del;
     if (wav2>fin) wav2 = fin;
-    long int ncurr[ndb], icurr[ndb];
+    long int ncurr[ndb];
 
     messagep(2, " Wavelength range %g to %g microns: reading..."
 	     , wav1, wav2);
@@ -271,7 +373,6 @@ readwritetransition(unsigned short *acum,
       if (ncurr[left] == 0)
 	continue;
       curr[left] = lineinfo[left];
-      acum[left] = icurr[left] = 0;
       left++;
     }
 
@@ -323,91 +424,6 @@ readwritetransition(unsigned short *acum,
   return LR_OK;
 }
 
-
-/**********************************************/
-
-
-
-/* \fcnfh
-Read partition info and write it on output file 
-*/
-int
-readwritepartition(unsigned short *acum)
-{
-  memset(acum, sizeof(unsigned short)*ndb, 0);
-  unsigned short niso[ndb], tiso=0;
-
-  messagep(2, "Reading and writing partition information");
-  messagep(verbose_TLIout, "Number of DBs:    "); 
-  pfwrite(&ndb,  sizeof(unsigned short), 1, fpout); 
-
-  for (unsigned short i=0 ; i<ndb ; i++){
-    char *name, **isonames;
-    unsigned short nT;
-    PREC_MASS *mass;
-    PREC_TEMP *T;
-    PREC_Z    **Z;
-    PREC_CS   **CS;
-    (*(drivers[DBdriver[i]]->part))(&name, &nT, &T, niso+i, &isonames, &mass, &Z, &CS);
-
-    messagep(verbose_TLIout," For DB %i:\n", i);
-    unsigned short rn = strlen(name);
-      messagep(verbose_TLIout," Length of name:         ");
-    pfwrite(&rn,    sizeof(unsigned short),  1, fpout); 
-      messagep(verbose_TLIout," Name:                   ");
-    pfwrite(name,   sizeof(char),           rn, fpout);
-      messagep(verbose_TLIout," Number of temperatures: ");
-    pfwrite(&nT,    sizeof(unsigned short),  1, fpout);
-      messagep(verbose_TLIout," Number of isotopes:     ");
-    pfwrite(niso+i, sizeof(unsigned short),  1, fpout);
-      messagep(verbose_TLIout," Temperatures:           ");
-    pfwrite(T,      sizeof(PREC_TEMP),      nT, fpout);
-
-    for(int j=0 ; j<niso[i] ; j++){
-      messagep(verbose_TLIout,"  For isotope %i:\n", j);
-      rn = strlen(isonames[j]);
-      messagep(verbose_TLIout,"   Length of name: ");
-      pfwrite(&rn,         sizeof(unsigned short),  1, fpout);
-      messagep(verbose_TLIout,"   Name:           ");
-      pfwrite(isonames[j], sizeof(char),           rn, fpout);
-      messagep(verbose_TLIout,"   Masses:         ");
-      pfwrite(mass+j,      sizeof(PREC_MASS),       1, fpout);
-      messagep(verbose_TLIout,"   Partitions:     ");
-      pfwrite(Z[j],        sizeof(PREC_Z),         nT, fpout);
-      messagep(verbose_TLIout,"   Cross sections: ");
-      pfwrite(CS[j],       sizeof(PREC_CS),        nT, fpout);
-    }
-
-    messagep(verbose_TLIout, " DB correlative number: ");
-    pfwrite(&i, sizeof(unsigned short),  1, fpout);
-
-    free(name);
-    free(T);
-    for(int j=0 ; j<niso[i] ; j++)
-      free(isonames[j]);
-    free(isonames);
-    free(mass);
-    free(*Z);
-    free(Z);
-    free(*CS);
-    free(CS);
-
-    //Set accumulated number of isotopes
-    for (int j=0 ; j<i ; j++)
-      acum[i] += niso[j];
-    tiso += niso[i];
-
-    messagep(2,".");
-  }
-
-  messagep(verbose_TLIout, "Total number of isotopes: ");
-  pfwrite(&tiso, sizeof(unsigned short), 1, fpout);
-  messagep(verbose_TLIout, "--------------------------\n");
-
-  messagep(2, " done\n");
-
-  return LR_OK;
-}
 
 
 

@@ -24,14 +24,14 @@ number of databases (nDB)          :unsigned short
   DB_name                          :string
   number of temperatures(nT)       :unsigned short
   number of isotopes(nI)           :unsigned short
-  temperatures                     :double         ;nT
+  temperatures (Kelvin)            :double         ;nT
 
   #Foreach isotope (nI)	      		
     name's length                  :unsigned short
     name                           :string
-    mass                           :double
+    mass (AMU)                     :double
     partition function             :double         ;nT
-    cross section                  :double         ;nT
+    cross section (CM^2)           :double         ;nT
   #End isotope		      			
 
   database correlative number      :unsigned short
@@ -39,10 +39,10 @@ number of databases (nDB)          :unsigned short
 
 total number of isotopes           :unsigned short
 
-#Foreach transition (unknown a-priori number)
-  central laboratory wavelength    :double
-  isotope correlative ID (all DBs) :unsigned short
-  lower energy                     :double
-  gf (osc. strength x degeneracy)  :double
+#Foreach transition (a-priori unknown number)
+  central laboratory wavelength (microns)    :double
+  isotope correlative ID (all DBs)           :unsigned short
+  lower energy (cm^-1)                       :double
+  gf (osc. strength x degeneracy)            :double
 #End transition
 

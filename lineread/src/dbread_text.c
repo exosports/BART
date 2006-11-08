@@ -23,38 +23,11 @@
 
 #define DRIVERNAME "text"
 
-static long maxline=200;
-short gabby_dbread;
+static long int currline = 0;
+static long maxline=300;
+static unsigned short ndb;
+static char *dbfilename;
 
-struct textinfo{
-  PREC_ZREC **Z;
-  PREC_ZREC *T;
-  PREC_CS **c;
-  PREC_ZREC *mass;
-  int nT;
-  int nIso;
-  char **name;
-
-  long currline;
-  char *filename;
-};
-
-static char *dbname;
-
-#define checkprepost(pointer,pre,omit,post) do{                       \
-   if(pre)                                                            \
-     mperror(MSGP_USER,                                               \
-             "Pre-condition failed on line %i(%s)\n while reading:\n" \
-	     "%s\n\nTLI_Ascii format most likely invalid\n"           \
-             ,__LINE__,__FILE__,line);                                \
-   while(omit)                                                        \
-     pointer++;                                                       \
-   if(post)                                                           \
-     mperror(MSGP_USER,                                               \
-             "Post-condition failed on line %i(%s)\n while reading:\n"\
-	     "%s\n\nTLI_Ascii format most likely invalid\n"           \
-             ,__LINE__,__FILE__,line);                                \
-                                             }while(0)
 
 
 /* \fcnfh
@@ -81,6 +54,25 @@ invalidfield(char *line,	/* Contents of the line */
 /*****************************************************/
 
 
+/*************************
+ *************************
+ *************************/
+
+#define checkprepost(pointer,pre,omit,post) do{                       \
+   if(pre)                                                            \
+     mperror(MSGP_USER,                                               \
+             "Pre-condition failed on line %i(%s)\n while reading:\n" \
+	     "%s\n\nTLI_Ascii format most likely invalid\n"           \
+             ,__LINE__,__FILE__,line);                                \
+   while(omit)                                                        \
+     pointer++;                                                       \
+   if(post)                                                           \
+     mperror(MSGP_USER,                                               \
+             "Post-condition failed on line %i(%s)\n while reading:\n"\
+	     "%s\n\nTLI_Ascii format most likely invalid\n"           \
+             ,__LINE__,__FILE__,line);                                \
+                                             }while(0)
+
 /* \fcnfh
    It outputs error. Used when EOF is found before expected
 */
@@ -91,218 +83,321 @@ earlyend(char *file, long lin)
 	       "readlineinfo:: EOF unexpectedly found at line %i in\n"
 	       "ascii-TLI linedb info file '%s'\n"
 	       ,lin,file);
+  lineread_free();
   exit(EXIT_FAILURE);
 }
 
-/*****************/
 
-/* \fcnfh
- Read info from TLI-ASCII file
+void 
+linetoolong_text(int max,		/* Maxiumum length of an accepted line
+					 */ 
+		 char *file,		/* File from which we were reading */
+		 int line)		/* Line who was being read */
 
- @returns fp of the opened file.
-*/
-static FILE *
-readinfo(char *filename,
-	 struct textinfo *textinfo)
 {
-  FILE *fp = verbfileopen(filename, "TLI-ascii database");
-  textinfo->filename = strdup(filename);
-
-  long ndb;
-  char line[maxline+1], *lp, *lp2, rc;
-  textinfo->currline = 0;
-
-  settoolongerr(&linetoolong,filename,&(textinfo->currline));
-
-  //skip comments and blank lines
-  while((rc=fgetupto(line,maxline,fp)) == '#' || rc == '\n')
-    textinfo->currline++;
-  if(!rc) earlyend(filename, textinfo->currline);
-
-  //get number of database which needs to be one at this point. If
-  //omitted number of databases it is assumed to be 1
-  ndb = strtol(line, &lp, 0);
-  while(isspace(*lp++));
-  if(*lp) ndb=1;
-  else 
-    while((rc=fgetupto(line,maxline,fp)) == '#' || rc == '\n')
-      textinfo->currline = '\0';
-  if(ndb != 1)
-    mperror(MSGP_USER,
-		 "TLI-ascii reading by lineread is implemented to read "
-		 "only one database per file (%s)."
-		 ,filename);
-  if(!rc) earlyend(filename, textinfo->currline);
-
-  //read name, number of temps, and number of isotopes
-  if((dbname = readstr_sp_alloc(line,&lp,'_'))==NULL)
-    mpallocerror(0);
-  checkprepost(lp,0,*lp==' '||*lp=='\t',*lp=='\0');
-  long nIso, nT, i;
-  int rn;
-  rn = getnl(2,' ',lp,&nIso,&nT);
-  checkprepost(lp,rn!=2,0,0);
-  textinfo->nT   = nT;
-  textinfo->nIso = nIso;
-
-  //allocate temperature, mass, cross section and partition info
-  textinfo->c   = (PREC_CS **)  calloc(nIso,   sizeof(PREC_CS *));
-  textinfo->Z   = (PREC_ZREC **)calloc(nIso,   sizeof(PREC_ZREC *));
-  textinfo->Z[0]= (PREC_ZREC *) calloc(nIso*nT,sizeof(PREC_ZREC));
-  textinfo->c[0]= (PREC_CS *)   calloc(nIso*nT,sizeof(PREC_CS));
-  textinfo->name= (char **)     calloc(nIso,   sizeof(char *));
-  textinfo->mass= (PREC_ZREC *) calloc(nIso,   sizeof(PREC_ZREC));
-  textinfo->T   = (PREC_ZREC *) calloc(nT,     sizeof(PREC_ZREC));
-
-  //get isotope name and mass
-  while((rc=fgetupto(lp2=line,maxline,fp)) == '#' || rc == '\n')
-    textinfo->currline++;
-  if(!rc) earlyend(filename, textinfo->currline);
-  for(i=0 ; i<nIso ; i++){
-    textinfo->Z[i] = textinfo->Z[0] + nT*i;
-    textinfo->c[i] = textinfo->c[0] + nT*i;
-    if((textinfo->name[i]=readstr_sp_alloc(lp2,&lp,'_'))==NULL)
-      mpallocerror(0);
-    //get mass and convert to cgs
-    textinfo->mass[i]=strtod(lp,&lp2);
-
-    if(i!=nIso-1)
-      checkprepost(lp2,lp==lp2,*lp2==' '||*lp2=='\t',*lp2=='\0');
-  }
-  //Last isotope has to be followed by an end of string
-  checkprepost(lp2,0,*lp2==' '||*lp2=='\t',*lp2!='\0');
-
-  //get for each temperature a line with temperature, partfcn and
-  //cross-sect info
-  long t;
-  for(t=0 ; t<nT ; t++){
-    while((rc=fgetupto(lp=line,maxline,fp)) == '#' || rc == '\n')
-      textinfo->currline++;
-    if(!rc) earlyend(filename, textinfo->currline);
-    while(*lp==' ') lp++;
-    textinfo->T[t] = strtod(lp,&lp);
-    checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
-
-    for(i=0;i<nIso;i++){
-      textinfo->Z[i][t]=strtod(lp,&lp);
-      checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
-    }
-    for(i=0;i<nIso-1;i++){
-      textinfo->c[i][t]=strtod(lp,&lp);
-      checkprepost(lp,*lp=='\0',*lp==' '||*lp=='\t',*lp=='\0');
-    }
-    textinfo->c[i][t]=strtod(lp,&lp);
-    checkprepost(lp,0,*lp==' '||*lp=='\t',*lp!='\0');
-  }
-
-  return fp;
+  char fname[strlen(file)+1];
+  strcpy(fname, file);
+  lineread_free();
+  linetoolong(max, fname, line);
 }
 
-/*****************/
 
-/* \fcnfh
-   Read line info
+static FILE *fp = NULL;
+static _Bool partitionread = 0;
+static int verbose_db = 15;
 
 
-   @returns Error from invalid field
-            0 on success
+/* \fncfh
+   If this driver can read name, then return 1 otherwise 0
 */
-static int
-readline(FILE *fp,
-	 struct textinfo *textinfo,
-	 float wlbeg,
-	 float wlend,
-	 struct linedb **linesp)
+static _Bool
+db_find(const char *name)
 {
-  long na=16, nbeg=0, i=0;
-  char *lp, *lp2, rc, line[maxline+1];
+  FILE *fp;
+  if((fp=fopen (name, "r")) != NULL){
+    int maxlen=50;
+    char line[maxlen];
+    const char *id = "#TLI-ASCII";
 
-  struct linedb *lineinfo = (struct linedb *)calloc(na, sizeof(struct linedb));
-  do{
-    while((rc=fgetupto(lp=line,maxline,fp)) =='#'||rc=='\n')
-      textinfo->currline++;
-    //if it is not end of file, read the records.
-    if(rc){
-      textinfo->currline++;
-      if (i>na)
-	lineinfo = (struct linedb *)realloc(lineinfo, (na<<=1) * 
-					sizeof(struct linedb));
-      double wavl    = strtod(lp, &lp2);
-      if (wavl < wlbeg) continue;
-      if (wavl > wlend) break;
-
-      lineinfo[i].recpos = nbeg+i;
-      lineinfo[i].wl     = wavl;
-      if(lp==lp2) 
-	return invalidfield(line, textinfo->filename, textinfo->currline
-			    , 1, "central wavelength");
-      lineinfo[i].isoid=strtol(lp2, &lp, 0);
-      if(lp==lp2)
-	return invalidfield(line, textinfo->filename, textinfo->currline
-			    , 2, "isotope ID");
-      lineinfo[i].elow=strtod(lp, &lp2);
-      if(lp==lp2)
-	return invalidfield(line, textinfo->filename, textinfo->currline
-			    , 3, "lower energy level");
-      lineinfo[i++].gf=strtod(lp2, &lp);
-      if(lp==lp2)
-	return invalidfield(line, textinfo->filename, textinfo->currline
-			    , 4, "log(gf)");
+    if(fgets(line, maxlen-1, fp) && 
+       strncmp(line, id, strlen(id)) == 0){
+      fclose(fp);
+      return 1;
     }
-  }while(rc);
-
-  *linesp = lineinfo;
+    fclose(fp);
+  }
 
   return 0;
 }
 
-/*********************************************************
- *
- *********************************************************/
+
+/********************************************************/
+
 
 /* \fcnfh
-   Read line info
-
-   @returns number of lines read
+   Open database and auxiliary file, set all FILE pointers.
 */
-PREC_NREC
-dbread_text(char *filename,
-	    struct linedb **lines, //2 pointers in order to be
-	    //able to allocate memory
-	    float wlbeg,           //wavelengths in tli_fct
-	    float wlend,           //units
-	    /* Partition function data file */
-	    char *Zfilename,
-	    /* For the following 3 parameter, the memory is
-	       allocated in the dbread_* functions, and the
-	       size is returned in the last parameters. */
-	    PREC_ZREC ***Z,        //Partition function : [iso][T]
-	    PREC_ZREC **T,         //temps for Z: [T]
-	    PREC_CS ***isocs,      //Isotope's cross-section: [iso][T]
-	    PREC_ZREC **isomass,   //Isotopes' mass in AMU: [iso]
-	    int *nT,               //number of temperature
-	    //points 
-	    int *nIso,             //number of isotopes
-	    char ***isonames)      //Isotope's name
+static int
+db_open(char *dbfilenameo, 
+	char *dbaux)
 {
-  struct textinfo textinfo;
+  dbfilename = strdup(dbfilenameo);
 
-  if(Zfilename)
+  //Open database
+  if((fp = fopen(dbfilename,"r")) == NULL)
+    mperror(MSGP_USER,
+	    "Could not open file '%s' for reading\n"
+	    , dbfilename);
+
+  int maxlen=50;
+  char line[maxlen], *lp;
+  const char *id = "#TLI-ASCII";
+
+  if(fgets(line, maxlen-1, fp) && 
+     strncmp(line, id, strlen(id)) != 0)
     mperror(MSGP_SYSTEM,
-	    "Zfilename needs to be NULL for TLI-ascii file\n");
+	    "File '%s' does not have the proper "
+	    "TLI-ASCII heading, but it was approved "
+	    "by db find(?)\n"
+	    , dbfilename);
 
-  FILE *fp = readinfo(filename, &textinfo);
+  currline = 1;
+  size_t pos = ftell(fp);
+  char rc;
+  settoolongerr(&linetoolong_text,dbfilename,&currline);
 
-  PREC_NREC ret = readline(fp, &textinfo, wlbeg, wlend, lines);
 
-  *Z        = textinfo.Z;
-  *T        = textinfo.T;
-  *isomass  = textinfo.mass;
-  *nT       = textinfo.nT;
-  *nIso     = textinfo.nIso;
-  *isonames = textinfo.name;
-  *isocs    = textinfo.c;
+  //skip comments and blank lines
+  while((rc=fgetupto(line,maxline,fp)) == '#' || 
+	rc == '\n')
+    currline++;
+  if(!rc) earlyend(dbfilename, currline);
 
-  return ret;
+  //get number of database which needs to be one at this point. If
+  //omitted number of databases, it is assumed to be 1
+  if (line[0] == 'd'){
+    ndb = strtol(line+1, &lp, 0);
+    if (lp == line+1) 
+      mperror(MSGP_USER,
+	      "Invalid number of databases in TLI-ASCII '%s'\n"
+	      , dbfilename);
+  }
+  else{
+    currline = ndb = 1;
+    fseek(fp, pos, SEEK_SET);
+  }
+
+  return LR_OK;
+}
+
+
+/********************************************************/
+
+
+/* \fcnfh
+   Close all files
+ */
+static int
+db_close()
+{
+  if(fp)
+    fclose(fp);
+
+  free(dbfilename);
+  freetoolongerr();
+
+  return LR_OK;
+}
+
+
+/********************************************************/
+
+/* \fcnfh
+   Reads partition info 
+*/
+static _Bool
+db_part(char **name,
+	unsigned short *nT,
+	PREC_TEMP **Tp,
+	unsigned short *niso,
+	char ***isonamesp,
+	PREC_MASS **massp,
+	PREC_Z ***Zp,
+	PREC_CS ***CSp)
+{
+  char line[maxline], *lp, *lp2, rc;
+
+
+  //skip comments and blank lines
+  while((rc=fgetupto(line,maxline,fp)) == '#' || 
+	rc == '\n')
+    currline++;
+  if(!rc) earlyend(dbfilename, currline);
+
+
+  //read name, number of temps, and number of isotopes
+  if((*name = readstr_sp_alloc(line, &lp, '_')) == NULL)
+    mpallocerror(0);
+  checkprepost(lp, 0, *lp==' '||*lp=='\t',*lp=='\0');
+  int rn;
+  rn = getnl(2, ' ', lp, niso, nT);
+  checkprepost(lp, rn!=2, 0, 0);
+
+  //allocate temperature, mass, cross section and partition info
+  PREC_CS **CS;
+  PREC_Z  **Z;
+  char **inames;
+  PREC_MASS *mass;
+  PREC_TEMP *T;
+  inames = *isonamesp = (char     **)calloc(*niso,    sizeof(char *));
+  mass   = *massp     = (PREC_MASS *)calloc(*niso,    sizeof(PREC_ZREC));
+  T      = *Tp        = (PREC_TEMP *)calloc(*nT,      sizeof(PREC_ZREC));
+  CS     = *CSp       = (PREC_CS  **)calloc(*niso,    sizeof(PREC_CS *));
+  Z      = *Zp        = (PREC_Z   **)calloc(*niso,    sizeof(PREC_ZREC *));
+  *Z     = (PREC_Z    *)calloc(*niso**nT,sizeof(PREC_ZREC));
+  *CS    = (PREC_CS   *)calloc(*niso**nT,sizeof(PREC_CS));
+
+  //get isotope name and mass
+  while((rc=fgetupto(lp2=line,maxline,fp)) == '#' || rc == '\n')
+    currline++;
+  if(!rc) earlyend(dbfilename, currline);
+  for(int i=0 ; i<*niso ; i++){
+    Z[i]  = Z[0]  + *nT*i;
+    CS[i] = CS[0] + *nT*i;
+    if((inames[i]=readstr_sp_alloc(lp2,&lp,'_')) == NULL)
+      mpallocerror(0);
+    //get mass
+    mass[i] = strtod(lp,&lp2);
+
+    if(i == *niso-1)
+      break;
+
+    checkprepost(lp2, lp==lp2, *lp2==' '||*lp2=='\t',*lp2=='\0');
+  }
+  //Last isotope has to be followed by an end of string
+  checkprepost(lp2, 0, *lp2==' '||*lp2=='\t', *lp2!='\0');
+
+  //get for each temperature a line with temperature, partfcn and
+  //cross-sect info
+  for(long t=0 ; t<*nT ; t++){
+    while((rc=fgetupto(lp=line, maxline, fp)) == '#' || 
+	  rc == '\n')
+      currline++;
+    if (!rc) earlyend(dbfilename, currline);
+    while (*lp==' ') lp++;
+    T[t] = strtod(lp, &lp);
+    checkprepost(lp, *lp=='\0', *lp==' '||*lp=='\t', *lp=='\0');
+
+    for(unsigned short i=0 ; i<*niso ; i++){
+      Z[i][t] = strtod(lp, &lp);
+      checkprepost(lp, *lp=='\0', *lp==' '||*lp=='\t', *lp=='\0');
+    }
+    unsigned short i;
+    for(i=0 ; i<*niso-1 ; i++){
+      CS[i][t] = strtod(lp, &lp);
+      checkprepost(lp, *lp=='\0', *lp==' '||*lp=='\t', *lp=='\0');
+    }
+    CS[i][t] = strtod(lp, &lp);
+    checkprepost(lp, 0, *lp==' '||*lp=='\t', *lp!='\0');
+  }
+
+  partitionread = 1;
+
+  if (--ndb) return 1;
+  else return 0;
+}
+
+
+/********************************************************/
+
+
+/* \fcnfh
+   Reads transition info from DB
+
+   @returns -1 if db_part has not been called before
+*/
+static long int
+db_info(struct linedb **lineinfop,
+	double wav1,
+	double wav2)
+{
+  if (!partitionread)
+    return -1;
+
+  messagep(verbose_db, "Driver: Going to look for wavelength range %g - %g\n"
+	   , wav1, wav2);
+  char line[maxline], *lp, *lp2;
+
+  long int i=0, alloc=8;
+  struct linedb *lineinfo = *lineinfop 
+    = (struct linedb *)calloc(alloc, 
+			      sizeof(struct linedb));
+
+  size_t pos = ftell(fp);
+  long posline = currline;
+  do{
+    char rc;
+    while((rc=fgetupto(lp=line,maxline,fp)) =='#'||rc=='\n')
+      currline++;
+    //if it is not end of file, read the records.
+    if(!rc)
+      break;
+
+    currline++;
+    if (i>alloc)
+      lineinfo = (struct linedb *)realloc(lineinfo, (alloc<<=1) * 
+					  sizeof(struct linedb));
+    double wavl = strtod(lp, &lp2);
+    if(lp==lp2)
+      return invalidfield(line, dbfilename, currline
+			  , 1, "central wavelength");
+    if (wavl < wav1) continue;
+    if (wavl > wav2){
+      fseek(fp, pos, SEEK_SET);
+      currline = posline;
+      break;
+    }
+
+    lineinfo[i].recpos = i;
+    lineinfo[i].wl     = wavl;
+    lineinfo[i].isoid  = strtol(lp2, &lp, 0);
+    if(lp==lp2)
+      return invalidfield(line, dbfilename, currline
+			  , 2, "isotope ID");
+    lineinfo[i].elow=strtod(lp, &lp2);
+    if(lp==lp2)
+      return invalidfield(line, dbfilename, currline
+			  , 3, "lower energy level");
+    lineinfo[i++].gf=strtod(lp2, &lp);
+    if(lp==lp2)
+      return invalidfield(line, dbfilename, currline
+			  , 4, "log(gf)");
+
+    pos = ftell(fp);
+    posline = currline;
+  }while(1);
+
+  
+  return i;
+}
+
+
+/********************************************************/
+
+
+static const driver_func pdriverf_text = {
+  "TLI-ASCII driver",
+  &db_find,
+  &db_open,
+  &db_close,
+  &db_info,
+  &db_part
+};
+
+
+driver_func *
+initdb_text()
+{
+  return (driver_func *)&pdriverf_text;
 }
 

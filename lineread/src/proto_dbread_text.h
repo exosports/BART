@@ -5,6 +5,7 @@
 #endif
 
 /* src/dbread_text.c */
-extern long dbread_text P_((char *filename, struct linedb **lines, float wlbeg, float wlend, char *Zfilename, double ***Z, double **T, double ***isocs, double **isomass, int *nT, int *nIso, char ***isonames));
+extern void linetoolong_text P_((int max, char *file, int line));
+extern driver_func *initdb_text P_((void));
 
 #undef P_

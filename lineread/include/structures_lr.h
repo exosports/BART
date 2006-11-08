@@ -58,16 +58,17 @@ typedef struct driver_func{
 		   double wav2); //Read from wav1 to wav2, allocate and
 				//store in lineinfo.  Returns number of
 				//fields read.
-  int (*part)(char **name,
-	      unsigned short *nT,
-	      PREC_TEMP **T,
-	      unsigned short *niso,
-	      char ***isonames,
-	      PREC_MASS **mass,
-	      PREC_Z ***Z,
-	      PREC_CS ***CS);	//Read partition function information
+  _Bool (*part)(char **name,
+		unsigned short *nT,
+		PREC_TEMP **T,
+		unsigned short *niso,
+		char ***isonames,
+		PREC_MASS **mass,
+		PREC_Z ***Z,
+		PREC_CS ***CS);	//Read partition function information
 				//from database and return the required
-				//components.
+				//components.  Returns true while more
+				//databases need to be read
 } driver_func;
 
 #endif /* _STRUCTURES_LR_H_ */

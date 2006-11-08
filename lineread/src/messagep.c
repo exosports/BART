@@ -145,6 +145,7 @@ int vmperror_fcn(int flags,
     return xtr;
   }
 
+  messagep_free();
   exit(EXIT_FAILURE);
 }
 

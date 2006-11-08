@@ -241,12 +241,23 @@ argum(int argc,
   }
 
 
+  messagep(4,
+	   "--------------------------\n  "
+	   "lineread v%i.%i%s\n"
+	   "--------------------------\n"
+	   , version, revision, version_rc>0?out:"");
+  free(out);
+  procopt_free();
+
+
   //Store the  DBs given as non-option
   argv+=optind;
   argc-=optind;
-  if (hint->ndb+argc<1)
+  if (hint->ndb+argc<1){
+    lineread_free();
     mperror(MSGP_USER,
 	    "No database specified. Run 'lineread -h' for syntax help.\n");
+  }
 
   hint->db = (char **)realloc(hint->db, (hint->ndb+argc)*sizeof(char *));
   while(argc--)
@@ -264,14 +275,6 @@ argum(int argc,
 
   hint->dbd = (int *)calloc(hint->ndb, sizeof(int));
 
-  procopt_free();
-
-  messagep(4,
-	   "--------------------------\n  "
-	   "lineread v%i.%i%s\n"
-	   "--------------------------\n"
-	   , version, revision, version_rc>0?out:"");
-  free(out);
 
   return 0;
 }

@@ -36,7 +36,7 @@
 #define NUM_ISOT 4
 #define DRIVERNAME "pands"
 
-static char *pands_name="Partridge & Schwenke(1997)";
+static char *pands_name="Partridge & Schwenke (1997)";
 static char *isotope[NUM_ISOT]={"1H1H16O","1H1H17O","1H1H18O","1H2H16O"};
 /* Wavelength is stored in nanometers */
 static double pands_fct=1e-7;
