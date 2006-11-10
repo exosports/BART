@@ -112,7 +112,7 @@ db_info(struct linedb **lineinfo,
     }
     messagep(verbose_dbdebug, "  DebugDriver: Read line info (%g): '%s'\n", wav, line);
 
-    if (i > alloc) 
+    if (i == alloc) 
       *lineinfo = (struct linedb *)realloc(*lineinfo, 
 					   (alloc<<=1)*sizeof(struct linedb));
 
@@ -123,6 +123,8 @@ db_info(struct linedb **lineinfo,
 
     pos = ftell(fp);
   }
+  *lineinfo = (struct linedb *)realloc(*lineinfo, 
+				       i*sizeof(struct linedb));
   
   return i;
 }

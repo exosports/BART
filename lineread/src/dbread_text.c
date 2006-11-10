@@ -329,22 +329,22 @@ db_info(struct linedb **lineinfop,
   char line[maxline], *lp, *lp2;
 
   long int i=0, alloc=8;
-  struct linedb *lineinfo = *lineinfop 
-    = (struct linedb *)calloc(alloc, 
-			      sizeof(struct linedb));
+  struct linedb *lineinfo =  (struct linedb *)calloc(alloc, 
+						     sizeof(struct linedb));
 
   size_t pos = ftell(fp);
   long posline = currline;
   do{
     char rc;
-    while((rc=fgetupto(lp=line,maxline,fp)) =='#'||rc=='\n')
+    while((rc=fgetupto(lp=line,maxline,fp))=='#' || 
+	  rc=='\n')
       currline++;
     //if it is not end of file, read the records.
     if(!rc)
       break;
 
     currline++;
-    if (i>alloc)
+    if (i==alloc)
       lineinfo = (struct linedb *)realloc(lineinfo, (alloc<<=1) * 
 					  sizeof(struct linedb));
     double wavl = strtod(lp, &lp2);
@@ -377,7 +377,9 @@ db_info(struct linedb **lineinfop,
     posline = currline;
   }while(1);
 
-  
+  *lineinfop  = (struct linedb *)realloc(lineinfo, 
+					 i*sizeof(struct linedb));
+ 
   return i;
 }
 

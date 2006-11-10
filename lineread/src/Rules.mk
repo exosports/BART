@@ -17,8 +17,8 @@ lib_$(d)          := $(lib_STT_$(d)) $(lib_DYN_$(d))
 local_$(d)        := $(lib_$(d)) $(bin_PROGRAMS_$(d)) $(test_PROGRAMS_$(d))
 
 #the following per binary
-lineread_FILES_$(d)    := lineread argum drivers \
-			  messagep dbread_debug dbread_text #dbread_pands
+lineread_FILES_$(d)    := lineread argum drivers messagep \
+			  dbread_debug dbread_text dbread_pands
 lineread_OBJS_$(d)     := $(lineread_FILES_$(d):%=$(d)/%.o)
 lineread_PIC_OBJS_$(d) := $(lineread_FILES_$(d):%=$(d)/%_pic.o)
 lineread_DEPS_$(d)     := $(lineread_FILES_$(d):%=$(d)/%.o.d)    \

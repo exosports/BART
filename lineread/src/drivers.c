@@ -31,6 +31,7 @@ static
 driver_func * (*init_driver[])() = 
 {
   &initdb_debug,
+  &initdb_pands,
   &initdb_text
 };
 

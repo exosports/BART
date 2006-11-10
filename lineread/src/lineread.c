@@ -24,6 +24,11 @@
 
 static struct hints hint;
 
+//Wavelength units is always microns
+double tli_fct = 1e-4;
+const char *tli_fct_name = "microns";
+
+
 int 
 main(int argc, 
      char **argv)

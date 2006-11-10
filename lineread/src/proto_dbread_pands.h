@@ -5,6 +5,6 @@
 #endif
 
 /* src/dbread_pands.c */
-extern long dbread_pands P_((char *filename, struct linedb **lines, float wlbeg, float wlend, char *Zfilename, double ***Z, double **isomass, double ***CS, double **T, int *nT, int *nIso, char ***isonames));
+extern driver_func *initdb_pands P_((void));
 
 #undef P_

@@ -85,15 +85,16 @@ db_close()
 /********************************************************/
 
 /* \fcnfh
-   Reads partition info 
+   Reads partition info.  Returns true if there are more databases to read.
 */
-static int
+static _Bool
 db_part(char **name,
 	unsigned short *nT,
 	PREC_TEMP **T,
 	unsigned short *niso,
-	char ***isonames,
-	PREC_MASS **mass,
+	char ***isonames,  	/*  Each name on its individually
+				    allocated string */
+	prec_MASS **mass,
 	PREC_Z ***Z,
 	PREC_CS ***CS)
 {
@@ -101,7 +102,7 @@ db_part(char **name,
   "Read all partition info";
 
   partitionread = 1;
-  return LR_OK;
+  return 0;
 }
 
 
@@ -140,8 +141,8 @@ db_info(struct linedb **lineinfo,
 
 
 
-static const driver_func pdriverf_debug = {
-  "DEBUGGING driver",
+static const driver_func pdriverf_TEMPLATE = {
+  "TEMPLATE driver",
   &db_find,
   &db_open,
   &db_close,
@@ -150,7 +151,7 @@ static const driver_func pdriverf_debug = {
 };
 
 driver_func *
-initdb_debug()
+initdb_TEMPLATE()
 {
-  return (driver_func *)&pdriverf_debug;
+  return (driver_func *)&pdriverf_TEMPLATE;
 }
