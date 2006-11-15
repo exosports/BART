@@ -42,7 +42,7 @@ void messagep_free()
   free(prgname);
 }
 
-inline void msgpdot(int thislevel, int verblevel,...)
+inline void mpdot(int thislevel)
 {
   if(thislevel<=verblevel)
     fwrite(".",1,1,stderr);

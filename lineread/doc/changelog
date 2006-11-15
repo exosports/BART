@@ -1,11 +1,14 @@
-XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
+2006-11-15  Patricio Rojo <pato@das.uchile.cl>
 
-	* Fix previous release which was halfway between CS (v4.x)
-	and not CS (v3.x) in the TLI
-	* Verbose corrections for lineread
+	* Release 4.0-rc1
+	* Fix previous release which was halfway between CS and not CS in
+	the TLI.
+	* v4 of TLI is a major rewrite of TLI, compatible with 64 bits
+	CPUs (it was not before).
+	* Verbose corrections for lineread.
 	* Memory leaks were fixed on lineread, after running valgrind.	
-	* First release of lineread independently of transit. They both
-	have now different working directories.
+	* First release of lineread independently of transit.  They both
+	have now different SVN working directories.
 	* Magic bit enabled.
 
 

@@ -324,7 +324,7 @@ db_info(struct linedb **lineinfop,
   if (!partitionread)
     return -1;
 
-  messagep(verbose_db, "Driver: Going to look for wavelength range %g - %g\n"
+  MESSAGEP(verbose_db, "Driver: Going to look for wavelength range %g - %g\n"
 	   , wav1, wav2);
   char line[maxline], *lp, *lp2;
 

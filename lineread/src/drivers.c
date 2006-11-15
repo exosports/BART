@@ -37,8 +37,9 @@ driver_func * (*init_driver[])() =
 
 static driver_func **drivers=NULL;
 
-static unsigned short ndb = 0;
-static _Bool dry = 0;
+static char *outfilename = NULL;
+static unsigned short ndb;
+static _Bool dry;
 static unsigned short *DBdriver = NULL;
 static FILE *fpout = NULL;
 static int verbose_TLIout = 10;
@@ -51,7 +52,7 @@ pfwrite(void *pointer,
 	FILE *fp)
 {
   if(size*nmemb)
-    messagep(verbose_TLIout, "%04hx%s\n",
+    MESSAGEP(verbose_TLIout, "%04hx%s\n",
 	     *((unsigned short *)pointer), size==sizeof(unsigned short)?"":" ..."); 
   if(!dry)
     fwrite(pointer, size, nmemb, fp);
@@ -124,6 +125,8 @@ drivers_free(struct hints *hint)
     fclose(fpout);
   if(drivers)
     free(drivers);
+  if(outfilename)
+    free(outfilename);
 }
 
 
@@ -188,10 +191,9 @@ find_alldrivers(struct hints *hint,
 int
 setdriversnoutput(struct hints *hint)
 {
+  outfilename = strdup(strncmp("-",hint->datafile,2)==0?
+		       "Standard Output":hint->datafile);
 
-  messagep(2, "Opening input DBs (%i), output stream (%s),\n "
-	   "and writing TLI header... "
-	     , ndb, strncmp("-",hint->datafile,2)==0?"Standard Output":hint->datafile);
 
   for (int i=0 ; i<ndb ; i++)
     (*(drivers[DBdriver[i]]->open))(hint->db[i], hint->dbaux[i]);
@@ -209,6 +211,9 @@ setdriversnoutput(struct hints *hint)
   }
   else
     messagep(2, "Dry-");
+  messagep(2, "Opened input DB%s (%i), output stream (%s),\n "
+	   "and writing TLI header... "
+	     , ndb>0?"s":"", ndb, outfilename); 
 
   /* Magic number, which in big endian would be abb3b6ff =
     {(char)0xff-'T',(char)0xff-'L',(char)0xff-'I',(char)0xff},
@@ -217,21 +222,21 @@ setdriversnoutput(struct hints *hint)
   char *undefined_string = "";
   unsigned short rn = strlen(undefined_string);
 
-  messagep(verbose_TLIout, "Magic number:     "); 
+  MESSAGEP(verbose_TLIout, "Magic number:     "); 
   pfwrite(&magic,           sizeof(long int),        1, fpout);
-  messagep(verbose_TLIout, "TLIVersion:       "); 
+  MESSAGEP(verbose_TLIout, "TLIVersion:       "); 
   pfwrite(&TLIversion,      sizeof(unsigned short),  1, fpout); 
-  messagep(verbose_TLIout, "Version:          "); 
+  MESSAGEP(verbose_TLIout, "Version:          "); 
   pfwrite(&version,         sizeof(unsigned short),  1, fpout); 
-  messagep(verbose_TLIout, "Revision:         "); 
+  MESSAGEP(verbose_TLIout, "Revision:         "); 
   pfwrite(&revision,        sizeof(unsigned short),  1, fpout);
-  messagep(verbose_TLIout, "IniW (%7g):   ", hint->iniw); 
+  MESSAGEP(verbose_TLIout, "IniW (%7g):   ", hint->iniw); 
   pfwrite(&(hint->iniw),    sizeof(double),          1, fpout);
-  messagep(verbose_TLIout, "FinW (%7g):   ", hint->finw); 
+  MESSAGEP(verbose_TLIout, "FinW (%7g):   ", hint->finw); 
   pfwrite(&(hint->finw),    sizeof(double),          1, fpout);
-  messagep(verbose_TLIout, "Length undefined: "); 
+  MESSAGEP(verbose_TLIout, "Length undefined: "); 
   pfwrite(&rn,              sizeof(unsigned short),  1, fpout); 
-  messagep(verbose_TLIout, "Undefined:        %s", rn==0?"\n":""); 
+  MESSAGEP(verbose_TLIout, "Undefined:        %s", rn==0?"\n":""); 
   pfwrite(undefined_string, sizeof(char),           rn, fpout);
 
   messagep(2, "done\n");
@@ -255,9 +260,8 @@ readwritepartition(unsigned short *acum)
   int rdb=0;
 
   messagep(2, "Reading and writing partition information");
-  fpos_t ndbpos;
-  fgetpos(fpout, &ndbpos);
-  messagep(verbose_TLIout, "Number of DBs:    "); 
+  long ndbpos = ftell(fpout);
+  MESSAGEP(verbose_TLIout, "Number of DBs:    "); 
   pfwrite(&ndb,  sizeof(unsigned short), 1, fpout); 
 
   //rdb is the "real DB" counter, while i is the counter of the number
@@ -272,35 +276,47 @@ readwritepartition(unsigned short *acum)
     _Bool moredb = (*(drivers[DBdriver[i]]->part))
       (&name, &nT, &T, &niso, &isonames, &mass, &Z, &CS);
 
-    messagep(verbose_TLIout," For DB #%i (file #%i):\n", rdb, i);
+    MESSAGEP(verbose_TLIout," For DB #%i (file #%i):\n", rdb, i);
     unsigned short rn = strlen(name);
-    messagep(verbose_TLIout," Length of name:         ");
+    MESSAGEP(verbose_TLIout," Length of name:         ");
     pfwrite(&rn,    sizeof(unsigned short),  1, fpout); 
-    messagep(verbose_TLIout," Name:                   ");
+    MESSAGEP(verbose_TLIout," Name:                   ");
     pfwrite(name,   sizeof(char),           rn, fpout);
-    messagep(verbose_TLIout," Number of temperatures: ");
+    MESSAGEP(verbose_TLIout," Number of temperatures: ");
     pfwrite(&nT,    sizeof(unsigned short),  1, fpout);
-    messagep(verbose_TLIout," Number of isotopes:     ");
+    MESSAGEP(verbose_TLIout," Number of isotopes:     ");
     pfwrite(&niso, sizeof(unsigned short),  1, fpout);
-    messagep(verbose_TLIout," Temperatures:           ");
+    MESSAGEP(verbose_TLIout," Temperatures:           ");
     pfwrite(T,      sizeof(PREC_TEMP),      nT, fpout);
+    MESSAGEP(verbose_TLIout+1, "Each T: >>");
+    for(int k=0; k<nT ; k++)
+      MESSAGEP(verbose_TLIout+1, "%g__",T[k]);
+    MESSAGEP(verbose_TLIout+1, "<<\n");
     
     for(int j=0 ; j<niso ; j++){
-      messagep(verbose_TLIout,"  For isotope %i:\n", j);
+      MESSAGEP(verbose_TLIout,"  For isotope %i:\n", j);
       rn = strlen(isonames[j]);
-      messagep(verbose_TLIout,"   Length of name: ");
+      MESSAGEP(verbose_TLIout,"   Length of name: ");
       pfwrite(&rn,         sizeof(unsigned short),  1, fpout);
-      messagep(verbose_TLIout,"   Name:           ");
+      MESSAGEP(verbose_TLIout,"   Name:           ");
       pfwrite(isonames[j], sizeof(char),           rn, fpout);
-      messagep(verbose_TLIout,"   Masses:         ");
+      MESSAGEP(verbose_TLIout,"   Masses:         ");
       pfwrite(mass+j,      sizeof(PREC_MASS),       1, fpout);
-      messagep(verbose_TLIout,"   Partitions:     ");
+      MESSAGEP(verbose_TLIout,"   Partition:      ");
       pfwrite(Z[j],        sizeof(PREC_Z),         nT, fpout);
-      messagep(verbose_TLIout,"   Cross sections: ");
+      MESSAGEP(verbose_TLIout+1, "Each Z: >>");
+      for(int k=0; k<nT ; k++)
+	MESSAGEP(verbose_TLIout+1, "%g__",Z[j][k]);
+      MESSAGEP(verbose_TLIout+1, "<<\n");
+      MESSAGEP(verbose_TLIout,"   Cross sections: ");
       pfwrite(CS[j],       sizeof(PREC_CS),        nT, fpout);
+      MESSAGEP(verbose_TLIout+1, "Each CS: >>");
+      for(int k=0; k<nT ; k++)
+	MESSAGEP(verbose_TLIout+1, "%g__",CS[j][k]);
+      MESSAGEP(verbose_TLIout+1, "<<\n");
     }
 
-    messagep(verbose_TLIout, " DB correlative number: ");
+    MESSAGEP(verbose_TLIout, " DB correlative number: ");
     pfwrite(&rdb, sizeof(unsigned short),  1, fpout);
 
     free(name);
@@ -324,17 +340,16 @@ readwritepartition(unsigned short *acum)
     if (moredb) i--;
   }
 
-  fpos_t ndbpos2;
-  fgetpos(fpout, &ndbpos2);
-  fsetpos(fpout, &ndbpos);
-  messagep(verbose_TLIout, "Corrected Number of DBs:    "); 
+  long ndbpos2 = ftell(fpout);
+  fseek(fpout, ndbpos, SEEK_SET);
+  MESSAGEP(verbose_TLIout, "Corrected Number of DBs:    "); 
   pfwrite(&rdb,  sizeof(unsigned short), 1, fpout); 
-  fsetpos(fpout, &ndbpos2);
+  fseek(fpout, ndbpos2, SEEK_SET);
 
 
-  messagep(verbose_TLIout, "Total number of isotopes: ");
+  MESSAGEP(verbose_TLIout, "Total number of isotopes: ");
   pfwrite(acum+ndb, sizeof(unsigned short), 1, fpout);
-  messagep(verbose_TLIout, "--------------------------\n");
+  MESSAGEP(verbose_TLIout, "--------------------------\n");
 
   messagep(2, " done\n");
 
@@ -357,6 +372,7 @@ readwritetransition(unsigned short *acum,
 {
   double wav1 = ini;
   struct linedb *lineinfo[ndb], *curr[ndb];
+  unsigned long nrec=0;
 
   messagep(2, "Reading and writing line transitions:\n");
 
@@ -390,21 +406,27 @@ readwritetransition(unsigned short *acum,
 
       //Write lowest-wavelength transition
       unsigned short id = acum[mindb] + curr[mindb]->isoid;
-      messagep(verbose_TLIout, "Wavelength:  %g - ", curr[mindb]->wl);
+      verbose_TLIout += 2;
+      MESSAGEP(verbose_TLIout, "Wavelength:  %g - ", curr[mindb]->wl);
       pfwrite(&(curr[mindb]->wl), sizeof(PREC_LNDATA),    1, fpout);
-      messagep(verbose_TLIout, " Isotope ID: ");
+      MESSAGEP(verbose_TLIout, " Isotope ID: ");
       pfwrite(&id,                sizeof(unsigned short), 1, fpout);
-      messagep(verbose_TLIout, " Elow:       ");
+      MESSAGEP(verbose_TLIout, " Elow:       ");
       pfwrite(&curr[mindb]->elow, sizeof(PREC_LNDATA),    1, fpout);
-      messagep(verbose_TLIout, " gf:         ");
+      MESSAGEP(verbose_TLIout, " gf:         ");
       pfwrite(&curr[mindb]->gf,   sizeof(PREC_LNDATA),    1, fpout);
+      verbose_TLIout -= 2;
 
+      nrec++;
 
       //If this was the last transition in this database, in this range,
       //then discard this database from sorting.
       curr[mindb]++;
       if(!--ncurr[mindb]){
 	while(++mindb < left){
+	  MESSAGEP(verbose_TLIout,
+		   "changing down %i (n: %li, c: %lx, a: %i)\n"
+		   , mindb, ncurr[mindb], (unsigned long)curr[mindb], acum[mindb]);
 	  ncurr[mindb-1] = ncurr[mindb];
 	  curr[mindb-1]  = curr[mindb];
 	  acum[mindb-1]  = acum[mindb];
@@ -421,6 +443,9 @@ readwritetransition(unsigned short *acum,
 
     wav1 = wav2;
   }
+
+  messagep(3, "\nSuccessfully written %li records in file '%s'.\n"
+	   , nrec, outfilename);
 
   return LR_OK;
 }
