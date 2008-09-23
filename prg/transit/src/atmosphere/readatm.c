@@ -142,6 +142,11 @@ checkaddmm(double *mm,		/* mean molecular mass stored here */
   double sumq;
   int i;
 
+  if(r >= isov[0].n)
+    transiterror(TERR_CRITICAL,
+		 "In file %s (line %li) a radius beyond the allocated"
+		 " has been requested.", __FILE__, __LINE__);
+
   //Computes mean molecular mass
   sumq=*mm=0;
   for(i=0;i<n;i++){
@@ -380,6 +385,7 @@ int getatm(struct transit *tr) /* Containing filename of atmosphere
   for(i=0;i<nmb;i++){
     st_at.isov[i].d=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
     st_at.isov[i].q=(PREC_ATM *)calloc(nrad,sizeof(PREC_ATM));
+    st_at.isov[i].n=nrad;
   }
   iso->isodo=(enum isodo *)realloc(iso->isodo,iso->n_e*sizeof(enum isodo));
 

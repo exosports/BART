@@ -44,12 +44,13 @@ typedef struct {          	/* One item per sampling element */
 typedef struct {          	/* One item per isotope and
 				   miscellaneous conditions, usually
 				   radius or temperature */
-  PREC_ZREC *z;            	/* Partition function [radius or temp] */
-  PREC_CS *c;              	/* Cross section [radius or temp] */
+  double *z;            	/* Partition function [radius or temp] */
+  double *c;              	/* Cross section [radius or temp] */
   PREC_ATM *d;			/* Environment: Density [radius], not
 				   used in lineinfo structure */ 
   PREC_ATM *q;			/* Abundance [radius], not
 				   used in lineinfo structure */ 
+  long int n;			/* Arrays' length */
 } prop_isov;
 
 
@@ -81,7 +82,7 @@ typedef struct {          	/* One item per database */
 
 typedef struct {          	/* One item per database */
   int t;			/* Number of temperatures */
-  PREC_ZREC *T;			/* Temperatures */ 
+  double *T;			/* Temperatures */ 
 } prop_dbnoext;
 
 
@@ -115,7 +116,7 @@ typedef struct {
 
 struct atm_isoprop {
   double f;
-  PREC_ZREC m;
+  double m;
   int eq;
   char n[maxeisoname];
   char t[maxeisoname];
@@ -138,8 +139,9 @@ struct line_transition {	/* One item per transition for the
 struct lineinfo {		/* Used to keep parameters in
 				   readlineinfo() */
   struct line_transition lt;	//Line transition
-  int tli_ver;			/* TLI version */
-  int tli_rev;			/* TLI revision */
+  unsigned short tli_ver;	/* TLI version */
+  unsigned short lr_ver;	/* lineread version */
+  unsigned short lr_rev;	/* lineread revision */
   prop_samp wavs;		/* wavelength sampling extracted */
   double wi, wf;		/* initial and final wavelength in the
 				   database */
@@ -172,7 +174,7 @@ struct atm_data{		/* Keeps parameters in readatminfo() */
   _Bool mass;			/* whether the abundances in 'isov' are
 				   mass abundances or not */
   char **n;			/* Name for isotopes in atmfile order */
-  PREC_ZREC *m;			/* Mass for isotopes in file order [iso]
+  double *m;			/* Mass for isotopes in file order [iso]
 				   */
   int *isoeq;			/* Isotope to which each atmosphere
 				   datafile column corresponds [iso] */
@@ -359,8 +361,9 @@ struct transithint {		/* Structure with user hinted data that
 				   and no warning is issued if
 				   abundances don't ad up to that */
   PREC_RES t;			/* Telescope resolution */
-  PREC_RES m;			/* Amount of nanometers not trusted at
-				   the boundaries, also how much out of
+  PREC_RES margin;		/* Amount not trusted at
+				   the boundaries (uses .wavs.fct
+				   to convert to cgs), also how much out of
 				   requested range it have to look for
 				   transitions */
   PREC_RES wnm;			/* Same as above, but for wavenumbers */
@@ -421,8 +424,8 @@ struct transit {		/* Main data structure */
 				   so that no warning is issued if
 				   abundances don't ad up to that */
   PREC_RES telres;		/* Telescope resolution */
-  PREC_RES m;			/* Amount of nanometers not trusted at
-				   the boundaries, also how much out of
+  PREC_RES margin;		/* Wavelength amount not trusted at
+				   the boundaries in cgs units, also how much out of
 				   requested range it have to look for
 				   transitions */
   PREC_RES wnmi;		/* Amount of cm-1 not trusted at the

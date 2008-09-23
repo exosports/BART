@@ -63,14 +63,14 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   if(hint->i<=0||(margini!=0&&hint->i<ref->i+margini)){
     samp->i=ref->i+margini;
     transitprint(4,verblevel,
-		 "Using ref sampling %g (w/margin) for initial "
-		 "value of %s\n"
-		 ,samp->i,TRH_NAME(fl));
+		 "Using ref sampling %g [cgs] (w/margin %g [cgs]) for initial\n"
+		 " value of %s\n"
+		 ,samp->i*samp->fct,margini*samp->fct,TRH_NAME(fl));
     res|=0x1;
   }
   else if(hint->i>ref->f-marginf){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Hinted initial value for %s sampling(%g)\n"
+		 "Hinted initial value for %s sampling (%g)\n"
 		 " is bigger than maximum allowed final value %.8g.\n"
 		 " Consider final margin %.8g\n"
 		 ,TRH_NAME(fl),hint->i,ref->f-marginf,marginf);
@@ -84,9 +84,9 @@ makesample(prop_samp *samp,	/* Resulting sampled data */
   if(hint->f<=0||(marginf!=0&&hint->f>ref->f-marginf)){
     samp->f=ref->f-marginf;
     transitprint(4,verblevel,
-		 "Using ref sampling %g (w/margin) for final "
-		 "value of %s\n"
-		 ,samp->f,TRH_NAME(fl));
+		 "Using ref sampling %g [cgs] (w/margin %g [cgs]) for final\n"
+		 " value of %s\n"
+		 ,samp->f,marginf,TRH_NAME(fl));
     res|=0x2;
   }
   else if(hint->f<ref->i+margini){
@@ -267,9 +267,23 @@ int makewavsample(struct transit *tr)
     return -10;
   }
 
+  /* TD: Fix the mess if user chooses a factor different from the TLI's
+     (then margin given to makesample won't make sense) */
+
   //make the sampling
+  transitDEBUG(22,verblevel,
+	       "Making wavelength sampling with margins %g and %g (factor: %g)\n"
+	       "#points (ref:%li user:%li), delta (ref: %g, user: %g)\n"
+	       , tr->margin, tr->margin, tr->wavs.fct
+	       , lin->n, samp->n, lin->d, samp->d);
   res=makesample(&tr->wavs,samp,lin,
-		 TRH_WAV,tr->m,tr->m);
+		 TRH_WAV,tr->margin/lin->fct,tr->margin/lin->fct);
+  transitDEBUG(22,verblevel,
+	       "Made following wavelength sampling\n"
+	       " Initial/Final/FCT : %g/%g/%g\n"
+	       " Nsample/Delta     : %li/%g\n"
+	       ,tr->wavs.i, tr->wavs.f, tr->wavs.fct
+	       ,tr->wavs.n, tr->wavs.d);
 
   //set progress indicator if sampling was successful and return status
   if(res>=0)
@@ -293,11 +307,8 @@ int makewnsample(struct transit *tr)
   struct transithint *trh=tr->ds.th;
   prop_samp *wsamp=&tr->wavs;
 
-  //check whetheruser has hinted any multiplicative factor for
-  //wavenumber, otherwise use cm.
+  //use wavenumber in cm.
   fromwav.fct=1;
-  if(trh->wns.fct>0)
-    fromwav.fct=trh->wns.fct;
 
   double wnu_o_wlu=fromwav.fct/wsamp->fct;
 
@@ -316,12 +327,15 @@ int makewnsample(struct transit *tr)
   //convert from wavelength minimum
   fromwav.f=wnu_o_wlu/wsamp->i;
 
+
+
   //set margin. If not given take it from wavelength's
   if(trh->wnm>0)
     tr->wnmf=tr->wnmi=trh->wnm;
   else{
-    tr->wnmf=tr->m*fromwav.f*fromwav.f/wnu_o_wlu;
-    tr->wnmi=tr->m*fromwav.i*fromwav.i/wnu_o_wlu;
+    double fct = fromwav.fct*fromwav.fct;
+    tr->wnmf=tr->margin*fromwav.f*fromwav.f*fct*fct;
+    tr->wnmi=tr->margin*fromwav.i*fromwav.i*fct*fct;
   }
 
   //set spacing such that the wavenumber grid has the same number of
@@ -330,8 +344,8 @@ int makewnsample(struct transit *tr)
   if(wsamp->n<2&&trh->wns.d<=0)
     transiterror(TERR_SERIOUS,
 		 "Spacing among wavelengths is too big(%g),\n"
-		 " unusable as reference for wavenumber spacing. And\n"
-		 " because you haven't hinted any wavenumber spacing I\n"
+		 " unusable as reference for wavenumber spacing. Since\n"
+		 " no wavenumber spacing was hinted I"
 		 " refuse to continue...\n"
 		 ,wsamp->d);
   fromwav.d=(fromwav.f-fromwav.i)/((wsamp->n-1)/wsamp->o);
@@ -342,13 +356,18 @@ int makewnsample(struct transit *tr)
   //don't have information
   res=makesample(&tr->wns,&trh->wns,&fromwav,
 		 TRH_WN,0,0);
-  if ((tr->wns.i < wnu_o_wlu/tr->wavs.f) || 
-      (tr->wns.f > wnu_o_wlu/tr->wavs.i))
+  if ((1.0/(tr->wns.i*tr->wns.fct) > tr->wavs.f*tr->wavs.fct) || 
+      (1.0/(tr->wns.f*tr->wns.fct) < tr->wavs.i*tr->wavs.fct))
     transiterror(TERR_SERIOUS,
-		 "Wavenumber range (%g-%g), where extinction is "
-		 "going to be computed, is beyond wavelength range "
-		 "(%g-%g), where line info was read.\n"
-		 ,tr->wns.i, tr->wns.f, tr->wavs.i, tr->wavs.f);
+		 "Wavenumber range (%g-%g [cgs]), where extinction is "
+		 "going to be computed,\n is beyond wavelength range "
+		 "(%g-%g[cgs]), where line info was read.\n"
+		 "Conversion factor: %g.  Wavelength check (low: %i, high: %i)\n"
+		 ,tr->wns.i*tr->wns.fct, tr->wns.f*tr->wns.fct
+		 , tr->wavs.i*tr->wavs.fct, tr->wavs.f*tr->wavs.fct
+		 ,wnu_o_wlu,
+		 (1.0/(tr->wns.i*tr->wns.fct) > tr->wavs.f*tr->wavs.fct),
+		 (1.0/(tr->wns.f*tr->wns.fct) < tr->wavs.i*tr->wavs.fct));
 
   //set progress indicator if sampling was successful and return status
   if(res>=0)

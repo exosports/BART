@@ -7,7 +7,7 @@ human-readable file.
 
 -------------------------------------------
 
-TLI magic numbers                  :long int
+TLI magic numbers                  :int32_t
 TLI version                        :unsigned short
 lineread version                   :unsigned short
 lineread revision                  :unsigned short
@@ -39,10 +39,17 @@ number of databases (nDB)          :unsigned short
 
 total number of isotopes           :unsigned short
 
-#Foreach transition (a-priori unknown number)
+#Foreach transition (a-priori unknown number of transitions)
   central laboratory wavelength (microns)    :double
   isotope correlative ID (all DBs)           :unsigned short
   lower energy (cm^-1)                       :double
   gf (osc. strength x degeneracy)            :double
 #End transition
 
+
+
+make transit
+gdb transit
+b tau.c:173
+b slantpath.c:51
+r -p test/all.cfg -vvvvvvvvvvvvvvvvvvvv

@@ -236,7 +236,7 @@ extradius(PREC_NREC r,		/* Radius index */
     */
     else
       w=(wavn-iniwn)/dwn;
-    transitDEBUG(21,verblevel,
+    transitDEBUG(25,verblevel,
 		 "wavn:%g lgf:%g\n"
 		 ,wavn,ltgf[ln]);
     //If it is beyond the last then just skip that line
@@ -292,7 +292,7 @@ extradius(PREC_NREC r,		/* Radius index */
     if (propto_k > maxk)
       maxk=propto_k;
 
-    transitDEBUG(21,verblevel,
+    transitDEBUG(24,verblevel,
 		 "i=%i   temp=%g   Elow=%g\n"
 		 "aD=%.7g   aL=%.7g\n"
 		 "wl=%.10g  wn=%.10g\n"
@@ -715,7 +715,7 @@ extwn (struct transit *tr)
   for(i=1;i<niso;i++)
     profile[i]=*profile+i*ex->vf;
 
-  ex->periso=extinctperiso=(tr->fl&TRU_EXTINPERISO);
+  ex->periso=extinctperiso=((tr->fl&TRU_EXTINPERISO)==TRU_EXTINPERISO);
 
   //arrange the extinctions so that the order is [iso][rad][wn]
   ex->e=(PREC_RES ***)calloc(niso,sizeof(PREC_RES **));

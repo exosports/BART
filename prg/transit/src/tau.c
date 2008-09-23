@@ -169,7 +169,7 @@ tau(struct transit *tr)
     for(ri=0;ri<rnn;ri++)
       er[ri]=e[ri][wi]*blowex+e_s[ri]+e_c[ri]+e_cia[wi][ri];
 
-    if( wi==5762 )
+    if( wi==300 )
       rn=56;
 
     //For each resultant impact parameter
@@ -209,6 +209,9 @@ tau(struct transit *tr)
 	tau.last[wi]=ri;
 	break;
       }
+      transitDEBUG(22,verblevel,
+		   "Tau(lambda %li=%9.07g, r=%9.4g) : %g  (toomuch: %g)\n"
+		   ,wi,wn->v[wi], r[ri], tau_wn[ri],tau.toomuch);
     }
     if (ri==inn)
       tau.last[wi] = ri-1;

@@ -1,6 +1,9 @@
-XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
+2008-09-23  Patricio Rojo <pato@das.uchile.cl>
 
-	* Added reading of CS from TLI (v4.x+).
+	* Release 4.0rc2
+	* Enable reading of TLI v4
+	* Improved verbosity
+	* Cleaned unit's mess in makesample.c
 	* Copyright notice updated.
 	* lineread is being developed independently of transit now.  It
 	has its own directory structure in CVS.

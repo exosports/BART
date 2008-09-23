@@ -30,7 +30,7 @@
    There is no ray bending, refr=constant.
    It can take nrad values of 1 or bigger. However, if 2 is given then
    'ex' and 'rad' need to have a referenceable element at position
-   -1; i.e. rad[-1] and ex[-1] exist.
+   -1; i.e. rad[-1] and ex[-1] need to exist.
 
    @returns $\frac{tau}{units_{rad}}$ returns optical depth divided by units
                                       of 'rad'

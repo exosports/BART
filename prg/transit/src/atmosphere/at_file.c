@@ -671,6 +671,7 @@ readatmfile(FILE *fp,		/* File */
 				      nrad*sizeof(PREC_ATM));
 	isov[i].q=(PREC_ATM *)realloc(isov[i].q,
 				      nrad*sizeof(PREC_ATM));
+	isov[i].n=nrad;
       }
     }
 
@@ -809,6 +810,7 @@ readatmfile(FILE *fp,		/* File */
 				  nrad*sizeof(PREC_ATM));
     isov[i].q=(PREC_ATM *)realloc(isov[i].q,
 				  nrad*sizeof(PREC_ATM));
+    isov[i].n=nrad;
   }
 
   //free arrays that were used only to get the factorizing elements

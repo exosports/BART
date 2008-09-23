@@ -64,17 +64,19 @@ int vtransiterror_fcn(int flags,
 		      const char *str,
 		      va_list ap)
 {
-  char pre_error[]="\nTransit";
+  char prepre_error[]="\n******************************************************";
+  char pre_error[]="\n*** Transit";
   char error[7][22]={"",
-		     ":: CRITICAL: ",         /* Produced by the code */
-		     ":: SERIOUS: ",          /* Produced by the user */
-		     ":: Warning: ",
+		     ":: SYSTEM ERROR ***\n",         /* Produced by the code */
+		     ":: USER ERROR ***\n",          /* Produced by the user */
+		     ":: Warning ***\n",
 		     ":: Not implemented",
 		     ":: Not implemented",
 		     ":: Not implemented"
   };
   char *errormessage,*out;
   int len, lenout, xtr;
+  char post_error[]="******************************************************\n";
 
 
   if(transit_nowarn&&(flags & TERR_NOFLAGBITS)==TERR_WARNING)
@@ -82,16 +84,18 @@ int vtransiterror_fcn(int flags,
 
   len = strlen(pre_error);
   if(!(flags&TERR_NOPREAMBLE))
-    len += strlen(error[flags&TERR_NOFLAGBITS]);
+    len += strlen(error[flags&TERR_NOFLAGBITS]) + strlen(post_error) + strlen(prepre_error);
   //symbols + digits + file
   int debugchars = 0;
   if(flags&TERR_DBG) debugchars = 5 + 6 + strlen(file);
   len    += strlen(str) + 1 + debugchars;
   lenout  = len;
 
-  errormessage = (char *)calloc(len, sizeof(char));
-  out          = (char *)calloc(lenout, sizeof(char));
+  errormessage = (char *)calloc(len+10, sizeof(char));
+  out          = (char *)calloc(lenout+10, sizeof(char));
 
+  if(!(flags&TERR_NOPREAMBLE))
+    strcat(errormessage, prepre_error);
   strcat(errormessage,pre_error);
   if(flags&TERR_DBG){
     char debugprint[debugchars];
@@ -99,10 +103,11 @@ int vtransiterror_fcn(int flags,
     strcat(errormessage, debugprint);
   }
 
-  if(!(flags&TERR_NOPREAMBLE)){
+  if(!(flags&TERR_NOPREAMBLE))
     strcat(errormessage, error[flags&TERR_NOFLAGBITS]);
-  }
   strcat(errormessage,str);
+  if(!(flags&TERR_NOPREAMBLE))
+    strcat(errormessage, post_error);
 
 
   va_list aq;

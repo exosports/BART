@@ -153,8 +153,8 @@ int processparameters(int argc, /* number of command line arguments */
      "standard input. By default there is no such output"},
 
     {NULL,0,HELPTITLE,NULL,
-     NULL,"RADIUS OPTIONS (planetary radii units, unless stated "
-     "otherwise)"},
+     NULL,"RADIUS OPTIONS (0-valued defaults would mean to use the"
+     " values given by the atmosphere file)"},
     {"radius",'r',no_argument,NULL,
      NULL,"Interactively input radius parameters"},
     {"rad-low",CLA_RADLOW,required_argument,"0",
@@ -168,7 +168,7 @@ int processparameters(int argc, /* number of command line arguments */
      "data spacing"},
     {"rad-fct",CLA_RADFCT,required_argument,"0",
      "factor","Radius factor. Multiplicating radius values by this\n"
-     "gives centimeters"},
+     "gives centimeters.  If 0 then use atmosphere-file factor."},
 
     {NULL,0,HELPTITLE,NULL,
      NULL,"ATMPOSPHERE OPTIONS"},
@@ -199,7 +199,7 @@ int processparameters(int argc, /* number of command line arguments */
      "warning is issued if abundances don't ad up to that"},
 
     {NULL,0,HELPTITLE,NULL,
-     NULL,"WAVELENGTH OPTIONS (all in nanometers)"},
+     NULL,"WAVELENGTH OPTIONS (all in fct units)"},
     {"wavelength",'w',no_argument,NULL,
      NULL,"Interactively input wavelength parameters"},
     {"wl-low",CLA_WAVLOW,required_argument,"0",
@@ -215,8 +215,8 @@ int processparameters(int argc, /* number of command line arguments */
     {"wl-fct",CLA_WAVFCT,required_argument,"0",
      "factor","Wavelength factor. Multiplicating wavelength values by\n"
      "this gives centimeters. If 0 or 1 then use centimeters"},
-    {"wl-marg",CLA_WAVMARGIN,required_argument,"0.001",
-     "boundary","Not trustable range in microns at boundary\n"
+    {"wl-marg",CLA_WAVMARGIN,required_argument,"0.000001",
+     "boundary","Not trustable range at boundary\n"
      "of line databases. Also transitions this much away from\n"
      "the requested range will be considered"},
 
@@ -241,7 +241,7 @@ int processparameters(int argc, /* number of command line arguments */
      "values by this gives centimeters. If 0 then use wavelength's\n"
      "value. Note that this only applies to output, internally\n"
      "wavenumbers will always be in cm-1."},
-    {"wn-marg",CLA_WAVNMARGIN,required_argument,NULL,
+    {"wn-marg",CLA_WAVNMARGIN,required_argument,"0",
      "boundary","Not trustable range in cm-1 at boundaries.\n"
      "Transitions this much away from the requested range will\n"
      "be considered. Use the maximum of the wavelength boundaries\n"
@@ -315,7 +315,7 @@ int processparameters(int argc, /* number of command line arguments */
     {"modlevel",CLA_MODLEVEL,required_argument,"1",
      "integer","Do an integration of level <integer> to compute modulation.\n"
      "1 doesn't consider limb darkening. -1 doesn't consider limb darkening\n"
-     "but it only returns the moduated radius at which extinction becomes\n"
+     "and additionally only returns the moduated radius at which extinction becomes\n"
      "one."},
     {"detailtau",CLA_DETTAU,required_argument,NULL,
      "filename:wn1,wn2,...","Save optical depth at the particular\n"
@@ -615,7 +615,7 @@ int processparameters(int argc, /* number of command line arguments */
       hints->wavs.o=atof(optarg);
       break;
     case CLA_WAVMARGIN:
-      hints->m=atof(optarg);
+      hints->margin=atof(optarg);
       break;
 
     case CLA_WAVNLOW:

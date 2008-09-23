@@ -22,8 +22,10 @@
 
 #include <transit.h>
 
-#define TLI_WAV_UNITS 1e-7
+#define TLI_WAV_UNITS 1e-4  //Microns as of TLI v4
 #define TLI_E_UNITS   1
+
+static double tli_to_microns = TLI_WAV_UNITS/1e-4;
 
 static void notyet(int lin, char *file);
 static int invalidfield(char *line, char *file, int nmb,
@@ -73,8 +75,8 @@ datafileBS(FILE *fp,		/* File pointer */
     *(resultp)=(fin+ini)/2;
     fseek(fp,offs+reclength*(*resultp),SEEK_SET);
     fread(&temp,trglength,1,fp);
-    transitDEBUG(21,verblevel,"BS: found wl %f at position %li\n"
-		 ,temp,(*resultp));
+    transitDEBUG(21,verblevel,"BS: found wl %f microns at position %li\n"
+		 ,temp*tli_to_microns,(*resultp));
     if(lookfor>temp)
       ini=*(resultp);
     else
@@ -93,7 +95,7 @@ readtli_bin(FILE *fp,
 	     struct transit *tr,
 	     struct lineinfo *li)
 {
-  //'rn', 'i' and 'db' are auxiliary.
+  //'rs' is auxiliary.
   //'ndb', 'nT' and 'nIso' number of databases, temp per db and iso per
   //database respectively.
   //'isonames' array with isotope names.
@@ -101,167 +103,152 @@ readtli_bin(FILE *fp,
   //'CS' is an auxiliary cross section pointer.
   //'T' and 'Z' auxiliary temperature and partition function pointers.
   //'acumiso' keeps the cumulative number of isotopes per database.
+  //'correliso' indicates this isotope's correlative number.
   double iniw,finw;
-  int ndb,db;
-  int i,rn;
-  int nT,nIso;
+  unsigned short ndb;
+  unsigned short rs;
+  unsigned short nT,nIso;
   PREC_ZREC *T,*Z;
   PREC_CS *CS;
   int acumiso=0;
   struct isotopes *iso=tr->ds.iso;
+  int correliso = 0;
 
   //Read datafile name, initial, final wavelength, and
   //number of databases.
-  fread(&li->tli_ver,sizeof(int),1,fp);
-  fread(&li->tli_rev,sizeof(int),1,fp);
+  fread(&li->tli_ver,sizeof(unsigned short),1,fp);
+  fread(&li->lr_ver ,sizeof(unsigned short),1,fp);
+  fread(&li->lr_rev ,sizeof(unsigned short),1,fp);
 
   if(li->tli_ver!=compattliversion)
     transiterror(TERR_SERIOUS,
-		 "The version of the TLI file: %i.%i is not complatible with\n"
+		 "The version of the TLI file: %i (lineread v%i.%i) is not compatible with\n"
 		 "this version of transit, which can only read version %i\n"
-		 ,li->tli_ver,li->tli_rev,compattliversion);
+		 ,li->tli_ver,li->lr_ver,li->lr_rev,compattliversion);
 
   fread(&iniw,sizeof(double),1,fp);
   fread(&finw,sizeof(double),1,fp);
-  fread(&rn,sizeof(int),1,fp);
-  char undefined_string[rn+1];
-  fread(undefined_string,sizeof(char),rn,fp);
-  fread(&ndb,sizeof(int),1,fp);
+  fread(&rs,sizeof(unsigned short),1,fp);
+  char undefined_string[rs+1];
+  fread(undefined_string,sizeof(char),rs,fp);
+  undefined_string[rs]='\0';
+  fread(&ndb,sizeof(unsigned short),1,fp);
 
   //Allocate pointers according to the number of databases
   iso->db=(prop_db *)calloc(ndb,sizeof(prop_db));
   li->db=(prop_dbnoext *)calloc(ndb,sizeof(prop_dbnoext));
 
+  //Allocate isotope info of size 1, it will be reallocated on demand as
+  //new isotopes are read.
+  li->isov    = (prop_isov *)calloc(1, sizeof(prop_isov));
+  iso->isof   = (prop_isof *)calloc(1, sizeof(prop_isof));
+  iso->isov   = (prop_isov *)calloc(1, sizeof(prop_isov));
+  iso->isodo  = (enum isodo *)calloc(1, sizeof(enum isodo));
+  li->isov->z = (double *)calloc(1,sizeof(double));
+  li->isov->c = (double *)calloc(1,sizeof(double));
+
+
   //Read info for each database
-  for(i=0;i<ndb;i++){
+  for(short i=0 ; i<ndb ; i++){
     //Allocate and get DB's name
-    fread(&rn,sizeof(int),1,fp);
-    iso->db[i].n=(char *)calloc(rn+1,sizeof(char));
-    fread(iso->db[i].n,sizeof(char),rn,fp);
-    iso->db[i].n[rn]='\0';
+    fread(&rs, sizeof(unsigned short), 1, fp);
+    iso->db[i].n = (char *)calloc(rs+1, sizeof(char));
+    fread(iso->db[i].n, sizeof(char), rs, fp);
+    iso->db[i].n[rs] = '\0';
     
     //Get number of temperature and isotopes
-    fread(&nT,sizeof(int),1,fp);
-    fread(&nIso,sizeof(int),1,fp);
-    li->db[i].t=nT;
-    iso->db[i].i=nIso;
+    fread(&nT,   sizeof(unsigned short), 1, fp);
+    fread(&nIso, sizeof(unsigned short), 1, fp);
+    li->db[i].t  = nT;
+    iso->db[i].i = nIso;
 
-    //allocate for variable and fixed isotope info as well as for
-    //temperature points.
-    T=li->db[i].T=(PREC_ZREC *) calloc(nT,sizeof(PREC_ZREC)  );
+    //Allocate for the different temperature points and read
+    T = li->db[i].T = (double *) calloc(nT, sizeof(double)  );
+    fread(T, sizeof(double), nT, fp);
 
-    //read temperature points
-    fread(T,sizeof(PREC_ZREC),nT,fp);
-    
-    //Update acumulated isotope count
+    //reallocate memory to account for new isotopes
+    li->isov    = (prop_isov *)realloc(li->isov,
+				       (correliso+nIso)*sizeof(prop_isov));
+    iso->isof   = (prop_isof *)realloc(iso->isof, 
+				       (correliso+nIso)*sizeof(prop_isof));
+    iso->isov   = (prop_isov *)realloc(iso->isov, 
+				       (correliso+nIso)*sizeof(prop_isov));
+    iso->isodo  = (enum isodo *)realloc(iso->isodo,
+					(correliso+nIso)*sizeof(enum isodo));
+    li->isov[correliso].z = (double *)calloc((correliso+nIso)*nT,
+					     sizeof(double));
+    li->isov[correliso].c = (double *)calloc((correliso+nIso)*nT,
+					     sizeof(double));
+    transitDEBUG(21,verblevel,
+		 "So far... Isotopes:%i, databases: %i, position %li\n"
+		 ,correliso+nIso,i,ftell(fp)); 
+
+    //Reading isotopes from this database
+    for (int j=0 ; j<nIso ; j++){
+      transitDEBUG(21,verblevel,"isotope %i/%i para DB %i\n",j,nIso,i);
+
+      //initialize to be modified by getatm() and store DB number
+      iso->isodo[correliso]  = unclear;
+      iso->isof[correliso].d = i;
+
+      transitDEBUG(21,verblevel,
+		   "  belongs to DB %i\n"
+		   "  which have %i temperatures %i isotopes\n"
+		   "  and starts at isotope %i\n"
+		   ,iso->isof[correliso].d,li->db[i].t, iso->db[i].i,iso->db[i].s);
+
+      fread(&rs, sizeof(unsigned short), 1, fp);
+      iso->isof[correliso].n = (char *)calloc(rs+1, sizeof(char));
+      fread(iso->isof[correliso].n, sizeof(char), rs, fp);
+      iso->isof[correliso].n[rs] = '\0';
+      transitDEBUG(21, verblevel,
+		   "  Name's length: %i,"
+		   "position: %li, value: %s\n"
+		   ,rs,(long)(ftell(fp)),iso->isof[i].n);
+      
+      //read mass
+      fread(&iso->isof[correliso].m, sizeof(double), 1, fp);
+
+      transitDEBUG(21,verblevel,
+		   "  Mass read: %g * %g = %g, "
+		   "position: %li, size %i\n"
+		   ,iso->isof[i].m,AMU,iso->isof[i].m*AMU
+		   ,(long)(ftell(fp)),(int)(sizeof(iso->isof[i].m)));
+
+      //read partition function  and cross section
+      Z = li->isov[correliso].z = li->isov[correliso-j].z+nT*j;
+      fread(Z, sizeof(double), nT, fp);
+      CS = li->isov[correliso].c = li->isov[correliso-j].c+nT*j;
+      fread(CS, sizeof(double), nT, fp);
+      li->isov[correliso].n = nT;
+
+      transitDEBUG(12, verblevel,
+		   "Z(%i/%i):%g %g ... %g\n", j+1, nIso, Z[0], Z[1], Z[nT-1]);
+
+      correliso++;
+    }
+
+    //Update acumulated isotope count (right before current DB)
     iso->db[i].s=acumiso;
     acumiso+=nIso;
+
+    fread(&rs, sizeof(unsigned short), 1, fp);
+    if (i!=rs)
+      transiterror(TERR_SERIOUS,
+		   "Problem in TLI file: database correlative number (%i)"
+		   " doesn't match information read (%i)\n", i, rs);
   }
   //read total number of isotopes.
-  fread(&iso->n_i,sizeof(int),1,fp);
-  transitASSERT(iso->n_i!=acumiso,
-		"Given number of isotopes (%i), doesn't equal\n"
-		"real total number of isotopes (%i)\n"
-		,iso->n_i,acumiso);
-
-  li->ni=iso->n_i;
-  li->ndb=ndb;
-
-  //allocate structure that are going to receive the isotope info.
-  li->isov=(prop_isov *)calloc(iso->n_i,sizeof(prop_isov));
-  iso->isof=(prop_isof *)calloc(iso->n_i,sizeof(prop_isof));
-  iso->isov=(prop_isov *)calloc(iso->n_i,sizeof(prop_isov));
-  iso->isodo=(enum isodo *)calloc(iso->n_i,sizeof(enum isodo));
-  transitDEBUG(21,verblevel,
-	       "Isotopes:%i\n"
-	       "databases: %i\n"
-	       "position %li\n"
-	       ,iso->n_i,ndb,ftell(fp)); 
-
-  //info for each isotope in database
-  for(i=0;i<iso->n_i;i++){
-    transitDEBUG(21,verblevel,"isotope %i/%i\n",i,iso->n_i);
-
-    //initialize to be modified by getatm()
-    iso->isodo[i]=unclear;
-
-    //read database index
-    fread(&iso->isof[i].d,sizeof(int),1,fp);
-
-    //set auxiliary variables
-    db=iso->isof[i].d;
-    nT=li->db[db].t;
-
-    transitDEBUG(21,verblevel,
-		 "belongs to DB %i\n"
-		 "which have %i temperatures %i isotopes\n"
-		 "and starts at isotope %i\n"
-		 ,iso->isof[i].d,li->db[db].t, iso->db[db].i,iso->db[db].s);
-    //if this is first isotope in database then allocate room for
-    //partition function and cross section
-    if(iso->db[db].s==i){
-      nIso=iso->db[db].i;
-      Z=li->isov[i].z=(PREC_ZREC *)calloc(nIso*nT,sizeof(PREC_ZREC));
-      CS=li->isov[i].c=(PREC_CS *)calloc(nIso*nT,sizeof(PREC_CS));
-      transitDEBUG(21,verblevel,
-		   "allocating %i * %i = %i spaces of Z and CS\n"
-		   " at %p and %p\n"
-		   ,nIso,nT,nIso*nT,(void *)Z,(void *)CS);
-    }
-    //Otherwise, just position the pointer to the appropiate place in
-    //the array. In this part, 'nIso' will indicate the first isotope of
-    //the database.
-    else{
-      //note that for a little while nIso is the first isotope of the
-      //database 
-      nIso=iso->db[db].s;
-      transitASSERT(nIso>=i,
-		    "readinfo_tli():: Somehow the first isotope of\n"
-		    "current database %i, has an index (%i) greater than\n"
-		    "current isotope (%i)\n"
-		    ,db,nIso,i);
-      Z=li->isov[i].z=li->isov[nIso].z+nT*(i-nIso);
-      CS=li->isov[i].c=li->isov[nIso].c+nT*(i-nIso);
-      transitDEBUG(21,verblevel,
-		   "Partition pointer allocated at %p\n"
-		   "and CS at %p\n"
-		   ,(void *)Z,(void *)CS);
-    }
-
-    //read mass
-    fread(&iso->isof[i].m,sizeof(PREC_ZREC),1,fp);
-
-    transitDEBUG(21,verblevel,
-		 "Mass read: %g * %g = %g\n"
-		 "position: %li, size %i\n"
-		 ,iso->isof[i].m,AMU,iso->isof[i].m*AMU
-		 ,(long)(ftell(fp)),(int)(sizeof(iso->isof[i].m)));
-
-    //allocate and read isotope names
-    fread(&rn,sizeof(int),1,fp);
-    transitDEBUG(21,verblevel,
-		 "Name's length: %i\n"
-		 "position: %li, size %i\n"
-		 ,rn,(long)(ftell(fp)),(int)(sizeof(int)));
-    iso->isof[i].n=(char *)calloc(rn+1,sizeof(char));
-    fread(iso->isof[i].n,sizeof(char),rn,fp);
-    iso->isof[i].n[rn]='\0';
-
-    transitDEBUG(21,verblevel,
-		 "Name: %s\n"
-		 ,iso->isof[i].n);
-
-    //read partition function
-    fread(Z, sizeof(PREC_ZREC), nT, fp);
-
-    //read cross section
-    fread(CS, sizeof(PREC_CS), nT, fp);
-
-    transitDEBUG(12, verblevel,
-		 "Z(%i/%i):%g %g\n", i+1, iso->n_i, Z[nT-1], Z[nT-2]);
-  }
+  fread(&iso->n_i,sizeof(unsigned short),1,fp);
+  if(iso->n_i!=acumiso)
+    transiterror(TERR_SERIOUS,
+		  "Given number of isotopes (%i), doesn't equal\n"
+		  "real total number of isotopes (%i)\n"
+		  ,iso->n_i, acumiso);
 
   //update structure values
+  li->ni=iso->n_i;
+  li->ndb=ndb;
   iso->n_db=ndb;
   li->endinfo=ftell(fp);
 
@@ -539,7 +526,7 @@ int checkrange(struct transit *tr, /* General parameters and
   struct transithint *th=tr->ds.th;
   prop_samp *msamp=&li->wavs;
   prop_samp *hsamp=&th->wavs;
-  PREC_LNDATA dbini=li->wi,dbfin=li->wf;
+  PREC_LNDATA dbini=li->wi*TLI_WAV_UNITS,dbfin=li->wf*TLI_WAV_UNITS;
   double extra;
 
   //initialize modified hints
@@ -549,21 +536,29 @@ int checkrange(struct transit *tr, /* General parameters and
   msamp->fct=1;
 
   //Check that the factor is positive non-zero
+  if(hsamp->fct<0)
+    transiterror(TERR_SERIOUS,
+		 "User specified wavelength factor is negative (%g)"
+		 ,hsamp->fct);
   if(hsamp->fct>0)
     msamp->fct=hsamp->fct;
-  double fct=msamp->fct/TLI_WAV_UNITS;
 
+  double fct=msamp->fct;
+  double fct_to_microns = msamp->fct/1e-4;
 
   //Check that the margin value is reasonable. i.e. whether its
   //leaves a non-zero range if applied to the whole line dataset.
-  if(2*th->m > (li->wf - li->wi)){
+  if(2*th->margin*fct > (dbfin - dbini)){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		 "Margin value (%g) is too big for this dataset whose\n"
-		 "range is %g to %g nanometers\n"
-		 ,th->m*fct,li->wi,li->wf);
+		 "Margin value (%g microns) is too big for this dataset whose\n"
+		 "range is %g to %g microns.\n"
+		 "Factor to convert user margin (%g) to centimeters is %g\n"
+		 ,th->margin*fct_to_microns
+		 ,li->wi*tli_to_microns, li->wf*tli_to_microns
+		 ,th->margin, msamp->fct);
     return -4;
   }
-  margin=tr->m=th->m;
+  margin=tr->margin=th->margin*msamp->fct;
  
   //If an TLI ascii file, then we'll be using limits twice the margin
   //from the minimum or maximum values in the dataset. This is because,
@@ -583,9 +578,9 @@ int checkrange(struct transit *tr, /* General parameters and
     extra=0;
 
   transitDEBUG(21,verblevel,
-	       "hinted initial %g, final %g\n"
+	       "in cgs: Hinted initial %g, final %g\n"
 	       "Databse max %g and min %g\n"
-	       ,hsamp->i*fct,hsamp->f*fct,li->wi,li->wf);
+	       ,hsamp->i*fct,hsamp->f*fct,dbini,dbfin);
 
   //If final wavelength was not hinted correctly then default it to zero
   if(hsamp->f<0){
@@ -599,30 +594,31 @@ int checkrange(struct transit *tr, /* General parameters and
   //special value, it is assumed that user knows what he is doing.
   //\linelabel{finalwav}
   if(hsamp->f<=0){
-      msamp->f=dbfin/fct + extra;
+      msamp->f=(dbfin + extra)/fct;
   }
   //otherwise
   else{
     transitDEBUG(20,verblevel,
 		 "dbini: %g   margin:%g  sampf:%g\n"
-		 ,dbini,fct*margin,fct*hsamp->f);
+		 ,dbini,margin,hsamp->f);
 
     //check that is not below the minimum value
-    if( dbini > fct*(hsamp->f-margin) ){
+    if( dbini + margin > fct*hsamp->f ){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "Considering margin, final wavelength (%g) is\n"
 		   " smaller than first allowed value in database\n"
 		   " (%g = %g + %g)\n"
-		   ,hsamp->f*fct,dbini+fct*margin
-		   ,dbini,fct*margin);
+		   ,hsamp->f*fct,dbini+margin
+		   ,dbini,margin);
       return -3;
     }
     //warn if it is above maximum value with information
-    if( (hsamp->f+margin)*fct > dbfin )
+    if( (hsamp->f)+margin > dbfin )
       transiterror(TERR_WARNING,
-		   "Final wavelength is above the maximum informative\n"
-		   "value in database\n"
-		   );
+		   "Final requested wavelength (%g microns) is above\n"
+		   " the maximum informative\n"
+		   "value in database (%g microns)\n"
+		   ,hsamp->f*1e4,dbfin*1e4);
     //set initial wavelength to be extracted
     msamp->f=hsamp->f;
   }
@@ -631,45 +627,46 @@ int checkrange(struct transit *tr, /* General parameters and
     hsamp->i=0;
     transiterror(TERR_WARNING,
 		 "Setting hinted lower wavelength limit before\n"
-		 "extraction as %g. It was not user-hinted.\n"
+		 "extraction as %g cgs. It was not user-hinted.\n"
 		 ,hsamp->i*fct);
   }
   //Check initial wavelength. See final wavelength treatment above for
   //more detailed comments about the code (\lin{finalwav})
   if(hsamp->i<=0)
-    msamp->i = dbini/fct - extra;
+    msamp->i = (dbini - extra)/fct;
   else{
     transitDEBUG(20,verblevel,
 		 "dbfin: %g   margin:%g  sampi:%g\n"
-		 ,dbfin,fct*margin,fct*hsamp->i);
-    if( dbfin < fct*(margin+hsamp->i) ){
+		 ,dbfin,margin,fct*hsamp->i);
+    if( dbfin < margin+fct*hsamp->i ){
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		   "Initial wavelength (%g) is larger than larger\n"
 		   "allowed value in database (%g = %g + %g),\n"
 		   "note that current margin was considered\n"
-		   ,fct*hsamp->i,dbfin-fct*margin
-		   ,dbfin,margin*fct);
+		   ,fct*hsamp->i,dbfin-margin
+		   ,dbfin,margin);
       return -2;
     }
-    if( fct*(hsamp->i-margin) < dbini )
+    if( fct*hsamp->i-margin < dbini )
       transiterror(TERR_WARNING,
-		   "Final wavelength is above the maximum informative\n"
-		   "value in database\n"
-		   ); 
+		   "Initial requested wavelength (%g microns) is below\n"
+		   " the minimum informative\n"
+		   "value in database (%g microns)\n"
+		   ,hsamp->i*1e4,dbini*1e4);
     msamp->i=hsamp->i;
   }
 
   //Check that we still have a range considering margin
-  if(2*margin>msamp->f-msamp->i){
+  if(2*margin > (msamp->f-msamp->i)*fct){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
 		 "Usable final (%g) has to be larger than usable\n"
 		 "initial wavelength (%g). Note that those values\n"
 		 "could have been modified according to the\n"
-		 "database range (%g - %g) and margin (%g)\n"
-		 ,fct*(msamp->i+margin)
-		 ,fct*(msamp->f-margin)
+		 "database range (%g - %g) and margin (%g) -\n"
+		 ,fct*msamp->i+margin
+		 ,fct*msamp->f-margin
 		 ,dbini,dbfin
-		 ,fct*margin);
+		 ,margin);
     return -1;
   }
 
@@ -712,13 +709,11 @@ int readinfo_tli(struct transit *tr,
   int rn;
   FILE *fp;
 
-  union {char sig[4];int s[2];} sign=
+  union {char sig[4];int32_t s[2];} sign=
     {.s={0,((0xff-'T')<<24)|((0xff-'L')<<16)|((0xff-'I')<<8)|(0xff)}};
   char line[maxline+1];
   //Auxiliary hint structure pointer
   struct transithint *th=tr->ds.th;
-
-  li->asciiline=0;
 
   //Open info file and transport name into transit from hint (setting
   //corresponding flag) if the file opened succesfully
@@ -745,8 +740,15 @@ int readinfo_tli(struct transit *tr,
   //the data file and the one this program is being run have the same
   //endian order. If the first two are '\#TLI', then the first line
   //should also start as '\#TLI-ascii' 
-  fread(sign.s,sizeof(int),1,fp);
-  //is it a binary TLI?
+  fread(sign.s,sizeof(int32_t),1,fp);
+
+  //is it a binary TLI? (asciiline=0 indicates binary, asciiline=1
+  //indicates ASCII TLI)
+  li->asciiline=0;
+  transitDEBUG(13,verblevel,
+	       "Comparing %i and %i for Magic Number (len: %li)\n"
+	       ,sign.s[0],sign.s[1],sizeof(sign.s[0]));
+  
   if(sign.s[0]!=sign.s[1]){
     //does it look like being an Ascii TLI?, if so check it.
     rn=strncasecmp(sign.sig,"#TLI",4);
@@ -788,8 +790,13 @@ int readinfo_tli(struct transit *tr,
       return -6;
     }
 
-  //Wavelength in a TLI file is always in nm and lower energy is always
-  //in cm-1.
+  transitprint(3,verblevel,
+	       "TLI file read from %g to %g microns\n"
+	       , li->wi, li->wf);
+  
+
+  //Wavelength in a TLI file is always in microns (as of TLI v4) and
+  //lower energy is always in cm-1.
   struct line_transition *lt=&li->lt;
   lt->wfct=TLI_WAV_UNITS;
   lt->efct=TLI_E_UNITS;
@@ -947,7 +954,7 @@ int readdatarng(struct transit *tr, /* General parameters and
       return -3;
     }
 
-    //Do the binary search
+    //Do the binary search in units of TLI
     datafileBS(fp, offs, nfields, iniw, &j, rn);
     transitDEBUG(21,verblevel,"Beginning found at position %li ",j);
     //check whether we need to start reading from records further back
@@ -1015,7 +1022,7 @@ int readdatarng(struct transit *tr, /* General parameters and
       fread(ltisoid+i,sizeof(short),1,fp);
       fread(ltelow+i,sizeof(PREC_LNDATA),1,fp);
       fread(ltgf+i,sizeof(PREC_LNDATA),1,fp);
-      transitDEBUG(22,verblevel,"Wavelength:%.8f iso:%i\n",ltwl[i],
+      transitDEBUG(26,verblevel,"Wavelength:%.8f iso:%i\n",ltwl[i],
 		   ltisoid[i]);
     }
 
@@ -1113,12 +1120,14 @@ int readlineinfo(struct transit *tr) /* General parameters and
 		 "checkrange() modified the suggested parameters,\n"
 		 "it returned code 0x%x\n\n"
 		 ,rn);
-  double fct=st_li.wavs.fct/TLI_WAV_UNITS;
+  double fct=st_li.wavs.fct;
+  double fct_to_microns = fct/1e-4;
+
   transitprint(2,verblevel,
 	       "   After checking limits, the wavelength range to be\n"
 	       "  used is %g to %g, including a margin of %g.\n"
 	       ,fct*tr->ds.li->wavs.i,fct*tr->ds.li->wavs.f
-	       ,fct*tr->m);
+	       ,tr->margin);
 
   //read data file
   transitprint(1,verblevel, "\nReading data...\n");
@@ -1132,12 +1141,14 @@ int readlineinfo(struct transit *tr) /* General parameters and
   transitprint(2,verblevel,
 	       "OK, So far:\n"
 	       " * I read %li records from the datafile.\n"
-	       " * The wavelength range read was %.8g to %.8g.\n"
-	       " * Current margin is %.4g.\n"
+	       " * The wavelength range read was %.8g to %.8g microns.\n"
+	       " * Current margin is %.4g microns.\n"
 	       " * Usable range is thus %.8g to %.8g.\n"
 	       , st_li.n_l
-	       , st_li.wavs.i,st_li.wavs.f,tr->m
-	       , st_li.wavs.i+tr->m,st_li.wavs.f-tr->m);
+	       , st_li.wavs.i*fct_to_microns,st_li.wavs.f*fct_to_microns
+	       , tr->margin*1e4
+	       , st_li.wavs.i*fct_to_microns+tr->margin
+	       , st_li.wavs.f*fct_to_microns-tr->margin);
 
 
 
