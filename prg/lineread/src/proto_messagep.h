@@ -7,7 +7,6 @@
 /* src/messagep.c */
 extern void messagep_name P_((char *name));
 extern void messagep_free P_((void));
-extern inline void mpdot P_((int thislevel));
 extern int mperror_fcn P_((int flags, const char *file, const long line, const char *str, ...));
 extern int vmperror_fcn P_((int flags, const char *file, const long line, const char *str, va_list ap));
 extern int fileexistopen P_((char *in, FILE **fp));

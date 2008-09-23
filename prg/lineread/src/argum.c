@@ -97,7 +97,7 @@ argum(int argc,
      "arguments.  Note, however, that using in the same call both "
      "options (with and without explicitly specifying --database) can "
      "yield undesired consequenses as all of those with '--database' "
-     "could be considered first and then those without it (matching "
+     "could be considered before  those without it (matching "
      "--aux could therefore be messed up)."},
     {"aux",'a',required_argument,NULL,
      "[n:]filename", "Auxiliary file per database. If the optional "
@@ -114,7 +114,7 @@ argum(int argc,
 
   var_cfg.contact="Patricio Rojo <pato@das.uchile.cl>";
   var_cfg.files=CFGFILE;
-  var_cfg.nonopt="<wav_i> <wav_f> <database1> [<database2> ...]";
+  var_cfg.nonopt="<database1> [<database2> ...]";
   var_cfg.columns=70;
   verblevel = 2;
 
@@ -207,7 +207,7 @@ argum(int argc,
     case 'V':
       fprintf(stderr, 
 	      "This is 'lineread' version %i.%i%s "
-	      "(produces TLI format version %i)"
+	      "(produces TLI format version %i)\n"
 	      , version, revision, version_rc>0?out:"", TLIversion);
       lineread_free();
       procopt_free();
@@ -253,6 +253,8 @@ argum(int argc,
   //Store the  DBs given as non-option
   argv+=optind;
   argc-=optind;
+  messagep(4,"There are %i DBs specified with --database and %i as non-option"
+	   ,hint->ndb,argc);
   if (hint->ndb+argc<1){
     lineread_free();
     mperror(MSGP_USER,

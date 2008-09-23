@@ -1,3 +1,10 @@
+2008-09-23  Patricio Rojo <pato@das.uchile.cl>
+
+	* Release 4.0-rc2
+	* Improved verbosity
+	* Use of int32_t for magic numbers
+	* Fixed minor memory leak on error
+
 2006-11-15  Patricio Rojo <pato@das.uchile.cl>
 
 	* Release 4.0-rc1

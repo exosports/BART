@@ -42,12 +42,6 @@ void messagep_free()
   free(prgname);
 }
 
-inline void mpdot(int thislevel)
-{
-  if(thislevel<=verblevel)
-    fwrite(".",1,1,stderr);
-}
-
 int
 mperror_fcn (int flags,
 		  const char *file,

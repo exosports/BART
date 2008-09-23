@@ -102,6 +102,13 @@ extern int verblevel;
 #endif
 
 
+inline void mpdot(int thislevel)
+{
+  if(thislevel<=verblevel)
+    fwrite(".",1,1,stderr);
+}
+
+
 #include <proto_messagep.h>
 
 #endif /* _MESSAGEP_H_ */

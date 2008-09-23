@@ -7,7 +7,7 @@ human-readable file.
 
 -------------------------------------------
 
-TLI magic numbers                  :long int
+TLI magic numbers                  :int32_t
 TLI version                        :unsigned short
 lineread version                   :unsigned short
 lineread revision                  :unsigned short

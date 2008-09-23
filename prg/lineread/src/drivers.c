@@ -163,7 +163,7 @@ find_alldrivers(struct hints *hint,
     if((result = find_dbd(hint->db[i], nfcn)) < 0){
       mperror(MSGP_USER|MSGP_ALLOWCONT,
 	      "The file '%s' could not be associated to any "
-	      "supported database.  Currently, lineread can read: %s."
+	      "supported database.  Currently, lineread can read: %s.\n"
 	      , hint->db[i], alldb);
       lineread_free();
       free(alldb);
@@ -218,12 +218,12 @@ setdriversnoutput(struct hints *hint)
   /* Magic number, which in big endian would be abb3b6ff =
     {(char)0xff-'T',(char)0xff-'L',(char)0xff-'I',(char)0xff},
     or in little endian: ffb6b3ab */
-  long int magic=((0xff-'T')<<24)|((0xff-'L')<<16)|((0xff-'I')<<8)|(0xff);
+  int32_t magic=((0xff-'T')<<24)|((0xff-'L')<<16)|((0xff-'I')<<8)|(0xff);
   char *undefined_string = "";
   unsigned short rn = strlen(undefined_string);
 
   MESSAGEP(verbose_TLIout, "Magic number:     "); 
-  pfwrite(&magic,           sizeof(long int),        1, fpout);
+  pfwrite(&magic,           sizeof(int32_t),        1, fpout);
   MESSAGEP(verbose_TLIout, "TLIVersion:       "); 
   pfwrite(&TLIversion,      sizeof(unsigned short),  1, fpout); 
   MESSAGEP(verbose_TLIout, "Version:          "); 
