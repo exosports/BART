@@ -1,3 +1,7 @@
+XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
+
+	* Warnings added if critical tau was found at odd depths
+
 2008-09-23  Patricio Rojo <pato@das.uchile.cl>
 
 	* Release 4.0rc2

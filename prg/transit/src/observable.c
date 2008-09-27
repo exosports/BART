@@ -76,9 +76,10 @@ modulation(struct transit *tr)	/* Main structure */
       case 1:
 	if(modlevel==-1)
 	  transiterror(TERR_SERIOUS,
-		       "Optical depth didn't reach %g at wavenumber %g[cm-1].\n"
+		       "Optical depth didn't reach limiting %g at wavenumber %g[cm-1]\n"
+		       " (Only reached %g)."
 		       " Cannot use critical radius technique (-1)\n"
-		       ,tau->toomuch,wn->v[w]*wn->fct);
+		       ,tau->toomuch,tau->t[w][tau->last[w]],wn->v[w]*wn->fct);
       default:
 	transiterror(TERR_SERIOUS,
 		     "There was a problem while calculating modulation\n"

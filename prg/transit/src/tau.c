@@ -213,8 +213,23 @@ tau(struct transit *tr)
 		   "Tau(lambda %li=%9.07g, r=%9.4g) : %g  (toomuch: %g)\n"
 		   ,wi,wn->v[wi], r[ri], tau_wn[ri],tau.toomuch);
     }
-    if (ri==inn)
+    switch(ri){
+    case inn:
+      transitprint(1,verblevel,
+		   "WARNING: At wavenumber %g (cm-1), the bottom of the atmosphere\n"
+		   " was reached before obtaining the critical TAU value of %g.\n"
+		   " Maximum TAU reached: %g\n",
+		   wn->v[wi], tau.toomuch, tau_wn[ri]);
       tau.last[wi] = ri-1;
+      break;
+    case 1:
+    case 2:
+      transitprint(1,verblevel,
+		   "WARNING: At wavenumber %g (cm-1), the critical TAU value (%g)\n"
+		   " was exceeded with tau=%g at the impact parameter level %li, this \n"
+		   " should have happened in a deeper layer (check IP sampling or ATM file)"
+		   , wn->v[wi], tau.toomuch, tau_wn[ri]);
+    }
 
   }
 
