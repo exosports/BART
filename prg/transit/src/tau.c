@@ -64,9 +64,9 @@ tau(struct transit *tr)
   transitacceptflag(tr->fl,tr->ds.th->fl,TRU_TAUBITS);
 
   //number of elements
-  long wnn=wn->n;
-  long inn=ip->n;
-  long rnn=rad->n;
+  long int wnn=wn->n;
+  long int inn=ip->n;
+  long int rnn=rad->n;
   double wfct=wn->fct;
 
   //set tau structures' value
@@ -207,28 +207,30 @@ tau(struct transit *tr)
 	   fcn(bb[ri]*riw,r+lastr,n+lastr,er+lastr,rnn-lastr,taulevel))
 	  > tau.toomuch){
 	tau.last[wi]=ri;
+	if (ri<3){
+	  transitprint(1,verblevel,
+		       "WARNING: At wavenumber %g (cm-1), the critical TAU"
+		       " value (%g)\n"
+		       " was exceeded with tau=%g at the impact parameter"
+		       " level %li, this \n"
+		       " should have happened in a deeper layer (check"
+		       " IP sampling or ATM file)"
+		       , wn->v[wi], tau.toomuch, tau_wn[ri], ri);
+	}
 	break;
       }
       transitDEBUG(22,verblevel,
 		   "Tau(lambda %li=%9.07g, r=%9.4g) : %g  (toomuch: %g)\n"
 		   ,wi,wn->v[wi], r[ri], tau_wn[ri],tau.toomuch);
     }
-    switch(ri){
-    case inn:
+
+    if(ri==inn){
       transitprint(1,verblevel,
 		   "WARNING: At wavenumber %g (cm-1), the bottom of the atmosphere\n"
 		   " was reached before obtaining the critical TAU value of %g.\n"
 		   " Maximum TAU reached: %g\n",
 		   wn->v[wi], tau.toomuch, tau_wn[ri]);
       tau.last[wi] = ri-1;
-      break;
-    case 1:
-    case 2:
-      transitprint(1,verblevel,
-		   "WARNING: At wavenumber %g (cm-1), the critical TAU value (%g)\n"
-		   " was exceeded with tau=%g at the impact parameter level %li, this \n"
-		   " should have happened in a deeper layer (check IP sampling or ATM file)"
-		   , wn->v[wi], tau.toomuch, tau_wn[ri]);
     }
 
   }
