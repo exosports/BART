@@ -212,10 +212,11 @@ tau(struct transit *tr)
 		       "WARNING: At wavenumber %g (cm-1), the critical TAU"
 		       " value (%g)\n"
 		       " was exceeded with tau=%g at the impact parameter"
-		       " level %li, this \n"
+		       " level %li (%g km), this \n"
 		       " should have happened in a deeper layer (check"
 		       " IP sampling or ATM file)"
-		       , wn->v[wi], tau.toomuch, tau_wn[ri], ri);
+		       , wn->v[wi], tau.toomuch, tau_wn[ri]
+		       , ri, bb[ri]*rfct/1e5);
 	}
 	break;
       }
