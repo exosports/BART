@@ -1,3 +1,7 @@
+XXXX-XX-XX  Patricio Rojo <pato@oan.cl>
+
+	* Now minor memory leak is really fixed (messagep_free)
+
 2008-09-23  Patricio Rojo <pato@das.uchile.cl>
 
 	* Release 4.0-rc2

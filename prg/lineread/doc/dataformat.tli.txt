@@ -1,9 +1,8 @@
 Below is a human readable representation of the TLI format 4.  Each
 field indicates description:type;size.  If 'size' is not present,
-then it is just one element (or variable number characters for
-strings).  Within fields there are no spaces nor line breaks.
-Empty linespaces or lines started with a '#' are comments for this 
-human-readable file.
+then it is just one element.  Within fields there are no spaces nor
+line breaks. Empty linespaces or lines started with a '#' are
+comments for this human-readable file.
 
 -------------------------------------------
 

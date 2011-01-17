@@ -41,6 +41,7 @@ main(int argc,
   db_drivers(&hint);
 
   lineread_free();
+  messagep_free();
 
   exit(EXIT_SUCCESS);
 }
