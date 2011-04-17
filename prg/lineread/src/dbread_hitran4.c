@@ -1,5 +1,4 @@
 #include <lineread.h>
-#include <math.h>
 
 #ifndef __BYTE_ORDER
 #error __BYTE_ORDER not defined, include <endian.h>
@@ -22,11 +21,12 @@ reversebytes(void *pointer, int nbytes)
 #endif   /* __BYTE_ORDER */
 
 #define NUM_MOLEC 39 /*Numero de moleculas*/
-#define PI 3.141592653589793
-#define me 9.10938215E−31 /*Masa del electron en kg (? revisar unidades)*/
-#define e -1.602176487E−19  /*Carga del electron en Coulombs*/
-#define c 299792458 /*Velocidad de la luz en m/s*/
-#define h 6.62606896E-34 /*J s*/
+#define PI (3.141592653589793)
+#define me (9.10938215E−31) /*Masa del electron en kg*/
+#define ec (-1.602176487E−19)  /*Carga del electron en Coulombs*/
+#define c (299792458) /*Velocidad de la luz en m/s*/
+#define h (6.62606896E-34) /*J s*/
+#define k (1.3806504E-23) /*cte. de Boltzman en J/K*/
 
 #define nT 1 /*Temperaturas*/
 #define T 296 /*Temperatura en K*/
@@ -36,13 +36,13 @@ reversebytes(void *pointer, int nbytes)
 /*Info de moleculas*/
 typedef struct molec{
   int ind; /*Numero correlativo*/
-  unsigned short numisot; /*Numero de isotopos*/
+  unsigned short numiso; /*Numero de isotopos*/
   double mass; /*Masa*/
   double xsect; /*Cross-section*/
   char *name; /*String con el nombre*/
   char *filename; /*String con el nombre de archivo*/
 
-  struct isot[numisot]; /*Info de cada isotopo*/
+  /*struct isot[numisot]; /*Info de cada isotopo*/
 }molec;
 
 /*Info de isotopos*/
@@ -58,11 +58,13 @@ static const char *hitran_name="HITRAN (2008)";
 static double hitran_fct=1e-4; /*cm a microns*/
 static const char hitran_fct_ac="cm";
 static const char t_u="K";
-static const char *list="molecule_list.txt";
-static FILE *molec;
+static const char *listname="hitran-molecules.txt";
+static const char *listpath; /*Path de la lista*/
+static const char *hitranpath; /*Hitran path*/
+static FILE *list, *currmolec;
 
 static char *dbfilename=NULL;
-static FILE *fp=NULL;
+/*static FILE *fp=NULL;*/
 static _Bool partitionread=0;
 static int verbose_db=10;
 
@@ -87,35 +89,31 @@ dbreadBSf(FILE *fpbs,		/* File pointer */
 	  int reclength)	/* Total length of record */
 {
   long int irec1,irec2;
-  int temp1=2*sizeof(int);
-  PREC_BREC temp2;
-  int aux;
+  PREC_BREC temp;
   const int trglength=sizeof(PREC_BREC);
 
   irec1=initial;
   irec2=final;
   do{
     *(resultp)=(irec2+irec1)/2;
-    fseek(fpbs,reclength*(*resultp),SEEK_SET);
-    sfread(&aux,2,1,fpbs);
-    sfread(&aux,2,1,fpbs);
-    sfread(&temp2,trglength,1,fpbs);
-    reversebytes(&temp,trglength);
+    fseek(fp,((*resultp)-1)*(HITRAN_RECLENGTH+2),SEEK_SET);
+    fseek(fp,3,SEEK_CUR);
+    fscanf(fp,"%f",&temp);
     if(lookfor>temp)
       irec1=*(resultp);
     else
       irec2=*(resultp);
   }while (irec2-irec1>1);
-  *resultp=irec1;
+  *resultp=irec1+1;
 }
 
 
 static int db_open(char *name){
 
-  if((fp=fopen(name,"r+"))==NULL)
+  if((currmolec=fopen(name,"r+"))==NULL)
     mperror(MSGP_USER,"Could not open file '%s' for reading\n",name);
 
-  dbfilename=name;
+  /*dbfilename=name;*/
 
   return LR_OK;
 }
@@ -128,202 +126,272 @@ static int db_close(){
 }
 
 /*Open file with list of molecules to read*/
+void open_list(){
+  char full[100];
+  sprintf(full,"%s/%s",listpath,listname);
+
+  if((list=fopen(full,"r+"))==NULL)
+    mperror(MSGP_USER,"Could not open molecule list '%s' for reading\n",listname);
+}
+
 /*moleclist: archivo con moleculas seleccionadas para leer.
 Formato:
-<nº molecula> <nombre molecula> <nombre de archivo> <nº isotopos> <masa molecula> <cross-section molecula>
+<nº molecula> <nombre molecula> <nombre de archivo> <xsect> <nº isotopos> <masa molecula>
 Comento con # las que QUIERO usar*/
-static int read_list(char *moleclist){
-  FILE *list;
-  char c;   
-  int ignorelines=3;
-  int maxchar=100;
-  char line[maxchar];
+void read_list(){
+
+  char *c;   
+  int ignorelines=4;
+  int maxchar=500;
+  char *line, *auxline;
+  char *comp;
   int i=0;
   unsigned short nIso=0;
 
-  molecs=(molec *)calloc(NUM_MOLEC,sizeof(molec));
+  c=(char *)malloc(sizeof(char));
+  comp=(char *)malloc(maxchar*sizeof(char));
+  line=(char *)malloc(maxchar*sizeof(char));
+  auxline=(char *)malloc(maxchar*sizeof(char));
+  molecs=(molec *)malloc(NUM_MOLEC*sizeof(molec));
 
-  list=fopen(moleclist,"r+");
+  open_list(); /*Abro la lista*/
 
-  for(int j=0;j<=ignorelines;j++)
+  sprintf(comp,"#");
+  int j;
+  for(j=0;j<=ignorelines;j++){
     fgets(line,maxchar,list);
-	   
-  while(!list.eof()){
-    if(fgets(c,1,line)=="#"){ /*si esta comentado,*/ 
-      sfread(&(molecs[i].ind),2,1,list);
-      sfread(molecs[i].name,sizeof(char)*maxchar,1,list);
-      sfread(molecs[i].filename,sizeof(char)*maxchar,1,list);
-      sfread(&(molecs[i].numiso),2,1,list);
-      sfread(&(molecs[i].mass),4,1,list);
-      sfread(&(molecs[i].xsect),4,1,list);
-      nIso+=molecs[i].numiso;
+    printf("%s",line);
+  }
+
+  int *charaux1;
+  char  *charaux2, *charaux3;
+  double *charaux6;
+  int *charaux4, *aux2; 
+  float *charaux5;
+
+  charaux1=(int *)malloc(sizeof(int));
+  charaux2=(char *)malloc(maxchar*sizeof(char));
+  charaux3=(char *)malloc(maxchar*sizeof(char));
+  charaux4=(int *)malloc(sizeof(int));
+  charaux5=(float *)malloc(sizeof(float));
+  charaux6=(double *)malloc(sizeof(double));
+  aux2=(int *)malloc(sizeof(int));
+
+  unsigned short **corriso;
+  corriso=calloc(NUM_MOLEC,sizeof(unsigned short *));
+  int ni;
+  unsigned short nit=0;
+
+  while(!feof(list)){
+    fgets(c,2,list);
+    sleep(1);
+    printf("c=%s, comp=%s\n",c,comp);
+    if(strncmp(c,comp,1)==0){ /*si esta comentado, */
+      fscanf(list,"%d %s %s %lf %d %f",charaux1,charaux2,charaux3,charaux6,charaux4,charaux5);
+      fseek(list,sizeof(char),SEEK_CUR);
+      molecs[i].ind=*charaux1;
+      molecs[i].name=charaux2;
+      molecs[i].filename=charaux3;
+      molecs[i].numiso=*charaux4;
+      molecs[i].mass=*charaux5;
+      molecs[i].xsect=*charaux6;
+
+      corriso[i]=calloc(molecs[i].numiso,sizeof(unsigned short));
+
+      for(ni=0;ni<molecs[i].numiso;ni++){
+	corriso[i][ni]=nit;
+	nit++;
+      }
+
     }else{ /*si no esta comentado*/
+      fseek(list,-1,SEEK_CUR);
+      fscanf(list,"%d",aux2);
+      fseek(list,sizeof(char)*23,SEEK_CUR);
+      if(*aux2>=10) printf("num=%d\n",*aux2);
+      fgets(auxline,maxchar,list);
       molecs[i].ind=-1; /*Con esto indico que esta molecula NO VA*/
       
     }
     i++;
-  } //while!list.eof()
+  } /*while!list.eof()*/
   
   fclose(list);	
 
-  int k;
-  for(k=0;k<NUM_MOLEC;k++)
-    if(molecs[k].ind!=-1) db_open(molecs[k].filename);
+} /*read_list*/
 
-} //read_list
 
-/*Calcula func particion*/
-/*Para cada isotopo! i=numero de molecula*/
-/*static int db_part(int i, char **name, PREC_TEMP *T, unsigned short *niso, PREC_MASS **mass, PREC_Z ***Z, PREC_CS ***CS){*/
-static _Bool db_part(int i, iso *iso){
-  long maxline=300;
-  char line[maxline], *lp, *lp2;
-  int ignorelines=1, k=1;
-  FILE *f;
+/*Calcula func particion por isotopo*/
+static _Bool db_part(){
+  int y;
+  double **z;
 
-  unsigned short nIso=*niso=numiso[i];
-
-  for(int j=0;j<=ignorelines;j++)
-    fgets(line,maxline,fp);
-
-  /*Pido memoria para Z y CS, por isotopo*/
-  PREC_Z **z=*Z=(PREC_Z **)calloc(nIso,sizeof(PREC_Z *));
-  PREC_CS **cs=*CS=(PREC_CS **)calloc(nIso,sizeof(PREC_CS *));
-  PREC_TEMP *T=(PREC_TEMP *)malloc(sizeof(PREC_TEMP));
-  *z=(PREC_Z *)calloc(nIso,sizeof(PREC_Z));
-  *cs=(PREC_CS *)calloc(nIso,sizeof(PREC_CS));
-  for(int k=1;k<nIso;k++){
-    z[k]=*z+k;
-    cs[k]=*cs+k;
-  }
-	
-  f=fopen(molecfile[i],"r+");
-
-}
-
-static long int db_transition(struct linedb **lineinfo, double wav1, double wav2, char *filename){
-
-  FILE *file=fopen(filename,"r+");
-
-  struct stat st;
-  if(stat(dbfilename,&st) == -1){
-    mperror(MSGP_USER|MSGP_ALLOWCONT,
-	    "Data file '%s' cannot be accesed by stat()."
-	    "\nThis is important to obtain "
-	    "its size and hence the number of lines to be\n "
-	    "examinated\n"
-	    ,dbfilename);
-    exit(EXIT_FAILURE);
-  }
-  off_t nrec = st.st_size, zrec = ftell(fp);
-  nrec/=HITRAN_RECLENGTH;
-  zrec/=HITRAN_RECLENGTH;
+  z=calloc(NUM_MOLEC,sizeof(double *));
   
-  PREC_BREC db1, db2;
-  int aux;
-  off_t irec, frec;
-  
-  sfread(&aux,2,1,file);
-  sfread(&aux,2,1,file);
-  sfread(&db1,4,1,file);
-  reversebytes(&db1,4);
+  for(y=0;y<NUM_MOLEC;y++)
+    z[y]=calloc(NUM_MOLEC, sizeof(double));
 
-  fseek(file,-HITRAN_RECLENGTH,SEEK_END);
-  
-  sfread(&aux,2,1,file);
-  sfread(&aux,2,1,file);
-  sfread(&db2,4,1,file);
-  reversebytes(&db2,4);
+  int i;
+  int ison;
+  int ind;
+  double g, E;
 
-  if(wav1>db2 || lnwav2<db1) return 0;
-  if(wav1<=db1) irec=zrec;
-  else{
-    dbreadBSf(fp,zrec,nrec,wav1,&irec,8);
-    MESSAGEP(verbose_db,"%s driver: Found final wavelength (%f) at record %li, checking twins...",hitran_name,wav2,frec);
+  for(i=0;i<NUM_MOLEC;i++){
+    if(molecs[i].ind!=0){
+      fp=fopen(molecs[i].filename,"r+");*/
+	while(!feof(fp)){
+	  fscanf(fp,"%d %*f %*f %*f %*f %*f %lf",&ind,&E);
+	  fseek(fp,98,SEEK_CUR);
+	  fscanf(fp,"%lf",&g);
+	  if(ind>1000){
+	    if(i<10) ind/=(1E5);
+	    else ind/=(1E4);
+	  }
+	  ison=ind-10*i;
+	  if(isnan(g*exp(-E/(k*T)))==0) /*Si no es NaN*/
+	    z[i][ison]+=g*exp(-E/(k*T));
+	} /*while*/
+    } /*if*/
+  }/*for*/
 
-    int temp;
+  partitionread=1;
+  return 0;
 
-    do{
-      if(irec<zrec) break;
-      fseek(file,HITRAN_RECLENTGH*(irec--),SEEK_SET);
-      sfread(&aux,2,1,file);
-      sfread(&aux,2,1,file);
-      sfread(&temp,4,1,file);
-    }while(temp>=wav1);
-
-    irec++;
-    MESSAGEP(verbose_db,"done (%li)\n",irec);
-  }/*else*/
-
-  if(wav2>=lndb2){
-    frec=nrec-1;
-  }else{
-    dbreadBSf(file,irec,nrec,wav2,&frec,8);
-    MESSAGEP(verbose_db,"%s driver: Found final wavelength (%f) at record %li, checking twins...",wav2,frec);
-    
-    int temp;
-    
-    do{
-      fseek(file,HITRAN_RECLENGTH*(frec++),SEEK_SET);
-      sfread(&aux,2,1,file);
-      sfread(&aux,2,1,file);
-      sfread(&temp,4,1,file);
-    }while(temp<=wav2);
-    
-    frec--;
-    MESSAGEP(verbose_db, "done (%li)\n", frec);
-  } /*else*/
-  
-  MESSAGEP(verbose_db, "%s driver: Target initial and final records found in relative positions %li and %li (of range %li-%li)\n",hitran_name,irec-zrec,frec-zrec,zrec,nrec);
-  
-  struct linedb *line;
-  MESSAGEP(5,"\n%s driver: about to initialize memory space to hold %li records.\nI'll require %.2fMb of available memory.\n",hitran_name,frec-irec+1,(frec-irec+1)*(float)sizeof(struct linedb)/1024.0/1024.0);
-
-  if(((*lineinfo)=(struct linedb *)calloc(frec-irec+1, sizeof(struct linedb)))==NULL){
-    mperror(MSGP_SYSTEM|MSGP_ALLOWCONT,"%s driver: Cannot allocate memory to hold all the data from %s.\n Required memory was %li bytes\n",hitran_name,hitran_name,(frec-irec+1)*sizeof(struct linedb));
-
-    exit(EXIT_FAILURE);
-  }
-
-  line=*lineinfo;
-  MESSAGEP(5,"%s driver: Success in memory allocation\n",hitran_name);
-
-  fseek(file,irec*HITRAN_RECLENGTH,SEEK_SET);
-
-  int cnt=0;
-  int aux;
-  float aux2, S;
-  do{
-    sfread(&aux,2,1,file);
-    sfread(&aux,2,1,file);
-    sfread(line->wl,4,1,file);
-    reversebytes(line->wl,4);
-    sfread(S,4,1,file);
-    line->gf=gf(S,line->wl);
-    reversebytes(line->gf,4);
-    sfread(&aux2,4,1,file);
-    sfread(&aux2,4,1,file);
-    sfread(&aux2,4,1,file);
-    sfread(line->elow,4,1,file);
-    reversebytes(line->elow,4);
-    line++;
-  }while(line-*lineinfo<frec-irec+1);
-
-  return line-*lineinfo;
 }
 
 /*Calcula gf a partir del S leido (para cada transicion)*/
-float gf(float s, float nu){
-  float xp=-(h*nu)/(k*T);
-  return (s*(me*c/PI*pow(e,2)))/(1-exp(xp));
+double S_to_gf(double s, double n){
+  double xp, a, b;
+  xp=-(h*n)/(k*T);
+  a=1-exp(xp);
+  b=s*me*c;
+  return (b/(PI)*pow(ec,2))/a;
+}
+
+static long int db_info(struct linedb **lineinfo, double wav1, double wav2){
+
+  if(!partitionread)
+    return -1;
+
+  int i;
+  for(i=0;i<NUM_MOLEC;i++){
+    if(molecs[i].ind!=-1){
+
+      currmolec=fopen(molecs[i].filename);
+
+      struct stat st;
+      if(stat(dbfilename,&st)==-1){
+	mperror(MSGP_USER|MSGP_ALLOWCONT,
+		"Data file '%s' cannot be accesed by stat() in "
+		"function dbread_hitran().\nThis is important to obtain "
+		"its size and hence the number of lines to be\n "
+		"examinated\n"
+		,dbfilename);
+	exit(EXIT_FAILURE);
+      }
+      
+      off_t nrec=st.st_size, zrec=ftell(fp);
+      
+      if((zrec+nrec)/HITRAN_RECLENGTH < (zrec+nrec)/(float)HITRAN_RECLENGTH){
+	mperror(MSGP_USER|MSGP_ALLOWCONT,
+		"Data file '%s' does not contain an integer number of "
+		"%i-bytes records!.\nAre you sure it is the right '%s' "
+		"file?\n"
+		,dbfilename, HITRAN_RECLENGTH, hitran_name);
+	exit(EXIT_FAILURE);
+      }
+      
+      nrec/=HITRAN_RECLENGTH;
+      zrec/=HITRAN_RECLENGTH;
+      
+      /*Revisar si esto es necesario*/
+      wav1/=hitran_fct/tli_fct;
+      wav2/=hitran_fct/tli_fct;
+      
+      MESSAGEP(verbose_db, "HITRAN (2008) Driver: Going to look for wavelength range %g - %g (%s)\n",wav1,wav2,hitran_fct_ac);
+
+      /****************************************************************/
+      off_t irec, frec;
+      double dbwav1, dbwav2;
+      fseek(currmolec,3,SEEK_SET);
+      fscanf(currmolec,"%f",&dbwav1);
+      fseek(currmolec,-159,SEEK_END);
+      fscanf(currmolec,"%f",&dbwav2);
+
+      if(wav1<dbwav1 || wav2>dbwav2)
+	return 0;
+      if(wav1>=dbwav1)
+	irec=zrec;
+      else{
+	dbreadBSf(currmolec,zrec,nrec,wav1,&irec,HITRAN_RECLENGTH);
+	MESSAGEP(verbose_db,"HITRAN 2008 driver: found initial wavelength (%f) at record %li\n",wav1,irec);
+
+	if(wav2<=dbwav2)
+	  frec=nrec-1;
+	else{
+	  dbreadBSf(fp,irec,nrec,wav2,&frec,HITRAN_RECLENGTH);
+	  MESSAGEP(verbose_db,"HITRAN 2008 driver: found final wavelength (%f) at record %li\n",wav2,frec);
+
+	  MESSAGEP(verbose_db, "HITRAN 2008 driver: Target initial and final records found in relative positions %li and %li (of range %li-%li)\n",irec-zrec,frec-zrec,zrec,nrec);
+
+      /***************************************************************/
+
+      struct linedb *line;
+      messagep(5,
+	       "\nHITRAN driver: About to initialize memory space to hold %li records.\n"
+	       "HITRAN driver: I'll require %.2fMb of available memory.\n"
+	       ,frec-irec+1
+	       ,(frec-irec+1)*(float)sizeof(struct linedb)/1024.0/1024.0);
+      if(((*lineinfo)=(struct linedb *)calloc(frec-irec+1, sizeof(struct linedb))) == NULL){
+	mperror(MSGP_SYSTEM|MSGP_ALLOWCONT,
+		"HITRAN 2008 driver: Cannot allocate memory to hold all the data from %s\n"
+		"HITRAN 2008 driver: Required memory was %li bytes\n"
+		,hitran_name, (frec-irec+1)*sizeof(struct linedb));
+	exit(EXIT_FAILURE);
+      }
+      line = *lineinfo;
+      messagep(5, "HITRAN 2008 driver: Success in memory allocation\n");
+
+
+      /*Voy al primer valor que necesito*/
+      fseek(currmolec,(irec-1)*(HITRAN_RECLENGTH+2),SEEK_SET);
+
+      struct recordstruct{
+	PREC_BREC iwl;
+	short int ielow,igflog;
+      }record;
+
+      int ind;
+      char auxline;
+      double nu, sd, rd, E;
+      auxline=(char *)malloc(HITRAN_RECLENGTH*sizeof(char));
+
+      do{
+	/*fseek(currmolec,3,SEEK_CUR);*/
+	fscanf(currmolec,"%d %lf %lf %*f %*f %*f %lf",&ind,&nu,&sd,&E);
+	int isorest=ind%10;
+	int rest=(ind-rest)/10;
+	line->isoid=corriso[rest][isorest];
+	line->recpos=irec+line-*lineinfo;
+	line->wl=(PREC_LNDATA)(2.0*PI/nu);
+	line->elow=(PREC_LNDATA)abs(E);
+	line->gf=(PREC_LNDATA)S_to_gf(sd,nu);
+
+	fgets(auxline,HITRAN_RECLENGTH,currmolec);
+
+	line++;
+      }while(line-*lineinfo<frec-irec+1);
+
+      fclose(currmolec);
+
+      return line-*lineinfo;
+    }/*if*/
+  }/*for*/
 }
 
 static const driver_func pdriverf_hitran={"HITRAN (2008) driver",
-					  &db_open,
-					  &db_close,
 					  &read_list,
 					  &db_part,
-					  &db_transition};
+					  &db_info};
 
 driver_func *initdb_hitran(){
   return (driver_func *)&pdriverf_hitran;
