@@ -45,15 +45,6 @@ typedef struct molec{
   /*struct isot[numisot];*/ /*Info de cada isotopo*/
 }molec;
 
-/*Info de isotopos*/
-typedef struct iso{
-  unsigned short namelength;
-  char *name;
-  PREC_MASS mass;
-  PREC_Z z[nT];
-  PREC_CS cs[nT];
-}iso;
-
 static const char *hitran_name="HITRAN (2008)";
 static double hitran_fct=1e-4; /*cm a microns*/
 static const char *hitran_fct_ac="cm";
@@ -69,6 +60,7 @@ static _Bool partitionread=0;
 static int verbose_db=10;
 
 molec *molecs; /*Arreglo de moleculas*/
+unsigned short **corriso;
 
 #define sfread(pointer, size, nmemb, f) sfread_fcn(pointer, size, nmemb, f, __LINE__)
 
@@ -107,6 +99,7 @@ dbreadBSf(FILE *fpbs,		/* File pointer */
   *resultp=irec1+1;
 }
 
+/*que es el deftarget?*/
 static _Bool
 db_find(const char *name)
 {
@@ -173,7 +166,6 @@ static void read_list(){
   charaux6=(double *)malloc(sizeof(double));
   aux2=(int *)malloc(sizeof(int));
 
-  unsigned short **corriso;
   corriso=calloc(NUM_MOLEC,sizeof(unsigned short *));
   
   for(int y=0;y<NUM_MOLEC;y++)
@@ -393,7 +385,7 @@ static long int db_info(struct linedb **lineinfo, double wav1, double wav2){
 	fscanf(currmolec,"%d %lf %lf %*f %*f %*f %lf",&ind,&nu,&sd,&E);
 	int isorest=ind%10;
 	int rest=(ind-rest)/10;
-	/*line->isoid=corriso[rest][isorest];*/
+	line->isoid=corriso[rest][isorest];
 	line->recpos=irec+line-*lineinfo;
 	line->wl=(PREC_LNDATA)(2.0*PI/nu);
 	line->elow=(PREC_LNDATA)abs(E);
