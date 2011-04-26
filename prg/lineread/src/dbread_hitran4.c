@@ -107,26 +107,22 @@ dbreadBSf(FILE *fpbs,		/* File pointer */
   *resultp=irec1+1;
 }
 
+static _Bool
+db_find(const char *name)
+{
+  int len = strlen(name), lent = strlen(deftarget);
+  
+  if (len >= lent &&
+      strncmp(deftarget, name+len-lent, lent) == 0)
+    return 1;
 
-static int db_open(char *name){
-
-  if((currmolec=fopen(name,"r+"))==NULL)
-    mperror(MSGP_USER,"Could not open file '%s' for reading\n",name);
-
-  /*dbfilename=name;*/
-
-  return LR_OK;
+  return 0;
 }
 
-static int db_close(){
-  if(currmolec)
-    fclose(currmolec);
 
-  return LR_OK;
-}
 
 /*Open file with list of molecules to read*/
-void open_list(){
+static void open_list(){
   char full[100];
   sprintf(full,"%s/%s",listpath,listname);
 
@@ -138,7 +134,7 @@ void open_list(){
 Formato:
 <nº molecula> <nombre molecula> <nombre de archivo> <xsect> <nº isotopos> <masa molecula>
 Comento con # las que QUIERO usar*/
-void read_list(){
+static void read_list(){
 
   char *c1;   
   int ignorelines=4;
@@ -223,6 +219,26 @@ void read_list(){
 
 } /*read_list*/
 
+static int db_open(char *name){
+
+  read_list();
+
+  if((currmolec=fopen(name,"r+"))==NULL)
+    mperror(MSGP_USER,"Could not open file '%s' for reading\n",name);
+
+  /*dbfilename=name;*/
+
+  return LR_OK;
+}
+
+static int db_close(){
+  if(currmolec)
+    fclose(currmolec);
+
+  return LR_OK;
+}
+
+
 
 /*Calcula func particion por isotopo*/
 static _Bool db_part(){
@@ -265,7 +281,7 @@ static _Bool db_part(){
 }
 
 /*Calcula gf a partir del S leido (para cada transicion)*/
-double S_to_gf(double s, double n){
+static double S_to_gf(double s, double n){
   double xp, a, b;
   xp=-(h*n)/(k*T);
   a=1-exp(xp);
@@ -398,10 +414,13 @@ static long int db_info(struct linedb **lineinfo, double wav1, double wav2){
 }
 
 static const driver_func pdriverf_hitran4={"HITRAN (2008) driver",
-					  &read_list,
-					  &db_part,
-					  &db_info};
+					   &db_find,
+					   &db_open,
+					   &db_close,
+					   &db_info,
+					   &db_part,
+};
 
-driver_func *initdb_hitran(){
+driver_func *initdb_hitran4(){
   return (driver_func *)&pdriverf_hitran4;
 }
