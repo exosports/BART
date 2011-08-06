@@ -214,7 +214,7 @@ tau(struct transit *tr)
 		       " was exceeded with tau=%g at the impact parameter"
 		       " level %li (%g km), this \n"
 		       " should have happened in a deeper layer (check"
-		       " IP sampling or ATM file)"
+		       " IP sampling or ATM file)\n"
 		       , wn->v[wi], tau.toomuch, tau_wn[ri]
 		       , ri, bb[ri]*rfct/1e5);
 	}

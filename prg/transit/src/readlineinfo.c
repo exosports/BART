@@ -107,7 +107,7 @@ readtli_bin(FILE *fp,
   double iniw,finw;
   unsigned short ndb;
   unsigned short rs;
-  unsigned short nT,nIso;
+  unsigned int nT,nIso;
   PREC_ZREC *T,*Z;
   PREC_CS *CS;
   int acumiso=0;
@@ -157,8 +157,8 @@ readtli_bin(FILE *fp,
     iso->db[i].n[rs] = '\0';
     
     //Get number of temperature and isotopes
-    fread(&nT,   sizeof(unsigned short), 1, fp);
-    fread(&nIso, sizeof(unsigned short), 1, fp);
+    fread(&nT,   sizeof(unsigned int), 1, fp);
+    fread(&nIso, sizeof(unsigned int), 1, fp);
     li->db[i].t  = nT;
     iso->db[i].i = nIso;
 
@@ -184,7 +184,7 @@ readtli_bin(FILE *fp,
 		 ,correliso+nIso,i,ftell(fp)); 
 
     //Reading isotopes from this database
-    for (int j=0 ; j<nIso ; j++){
+    for (unsigned int j=0 ; j<nIso ; j++){
       transitDEBUG(21,verblevel,"isotope %i/%i para DB %i\n",j,nIso,i);
 
       //initialize to be modified by getatm() and store DB number
@@ -270,7 +270,8 @@ readtli_ascii(FILE *fp,
   char rc;
   char line[maxline+1],*lp,*lp2;
   int ndb,db;
-  int nIso,nT,acumiso;
+  unsigned int nIso,nT;
+  int acumiso;
   int rn,i;
   prop_isov *isov;
   PREC_ZREC *T;
@@ -308,6 +309,7 @@ readtli_ascii(FILE *fp,
 			 li->asciiline++))=='#'||rc=='\n');
   if(!rc) notyet(li->asciiline,tr->f_line);
   ndb=strtol(line,&lp,0);
+  fprintf(stderr,"%i",ndb);
   checkprepost(lp,errno&ERANGE,*lp==' '||*lp=='\t',*lp!='\0');
   //Allocate pointers according to the number of databases
   iso->db=(prop_db *)calloc(ndb,sizeof(prop_db));
@@ -325,7 +327,7 @@ readtli_ascii(FILE *fp,
     //go to next field and get number of temperatures and isotopes
     checkprepost(lp,0,*lp==' '||*lp=='\t',*lp=='\0');
     rn=getnl(2,' ',lp,&nIso,&nT);
-    checkprepost(lp,rn!=2,0,0);
+    checkprepost(lp,rn!=2,0,nIso==0||nT==0);
     li->db[db].t=nT;
     iso->db[db].i=nIso;
 

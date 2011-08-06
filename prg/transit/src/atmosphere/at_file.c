@@ -784,7 +784,7 @@ readatmfile(FILE *fp,		/* File */
     if((int)(sumq*ROUNDOFF+0.5)<(int)(allowq*ROUNDOFF+0.5))
       transiterror(TERR_WARNING,
 		   "In radius %g(%i: %g in file), abundances\n"
-		   "don't add up to 1: %.9g"
+		   "don't add up to 1: %.9g\n"
 		   ,at->rads.v[r],r,at->rads.v[r]-zerorad,sumq);
 
 

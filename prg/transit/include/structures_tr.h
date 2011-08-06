@@ -50,7 +50,7 @@ typedef struct {          	/* One item per isotope and
 				   used in lineinfo structure */ 
   PREC_ATM *q;			/* Abundance [radius], not
 				   used in lineinfo structure */ 
-  long int n;			/* Arrays' length */
+  unsigned int n;		/* Arrays' length */
 } prop_isov;
 
 
@@ -74,14 +74,14 @@ typedef struct {		/* One item per atmospheric conditions
 
 typedef struct {          	/* One item per database */
   char *n;			/* Name */
-  int i;			/* Number of isotopes */
+  unsigned int i;		/* Number of isotopes */
   int s;			/* Isotopes starting from this index
 				   belong to this database */
 } prop_db;
 
 
 typedef struct {          	/* One item per database */
-  int t;			/* Number of temperatures */
+  unsigned int t;		/* Number of temperatures */
   double *T;			/* Temperatures */ 
 } prop_dbnoext;
 
@@ -360,7 +360,6 @@ struct transithint {		/* Structure with user hinted data that
   float allowrq;		/* How much less than one is accepted,
 				   and no warning is issued if
 				   abundances don't ad up to that */
-  PREC_RES t;			/* Telescope resolution */
   PREC_RES margin;		/* Amount not trusted at
 				   the boundaries (uses .wavs.fct
 				   to convert to cgs), also how much out of

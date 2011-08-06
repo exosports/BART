@@ -280,6 +280,8 @@ extradius(PREC_NREC r,		/* Radius index */
 		     ,nwnh[i],i);
     }
 
+    /* TD: SAHA equation is missing in level population!! Code does not
+       consider ionizable levels of species. Error in thesis' equation 3.35! */
     //Calculate opacity coefficient less the voigt spread
     propto_k=densiso[i]	//mass density
       *SIGCTE			//Constant in sigma

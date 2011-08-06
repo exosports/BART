@@ -322,11 +322,6 @@ int processparameters(int argc, /* number of command line arguments */
      "wavenumbers in the specified filename"},
 
     {NULL,0,HELPTITLE,NULL,
-     NULL,"OBSERVATIONAL OPTIONS:"},
-    {"telres",'t',required_argument,"1",
-     "width","Gaussian width of telescope resolution in nm"},
-
-    {NULL,0,HELPTITLE,NULL,
      NULL,"GEOMETRY PARAMETERS"},
     {"starrad",CLA_STARRAD, required_argument, "1.125",
      "radius_sun", "Stellar radius in solar radius"},
@@ -379,7 +374,9 @@ int processparameters(int argc, /* number of command line arguments */
   procopt_debug=1;
   opterr=0;
   while(1){
+    if(errno&ERANGE) fprintf(stderr,"ERRNO: ERANGE (coming from '%i')\n",rn);
     rn=procopt(argc,argv,var_docs,&var_cfg,NULL);
+    if(errno&ERANGE) fprintf(stderr,"ERRNO: ERANGE (going to '%i')\n",rn);
     if (rn==-1)
       break;
 
@@ -639,10 +636,6 @@ int processparameters(int argc, /* number of command line arguments */
       hints->wns.fct=atof(optarg);
       break;
 
-    case 't':			//Telescope resolution
-      hints->t=atof(optarg);
-      break;
-
     case 'u':			//Change Doppler's maximum accepted
 				//ratio before recalculating
       hints->maxratio_doppler=atof(optarg);
@@ -750,6 +743,7 @@ int processparameters(int argc, /* number of command line arguments */
       hints->cl.maxe=atof(optarg);
       break;
     }
+
     
   }
 

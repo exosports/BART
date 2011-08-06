@@ -1,5 +1,10 @@
 XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
 
+	* Release 4.0rc3
+	* nIso and nT changed to 'unsigned int'
+	* Added comment about ignored saha equation
+	* Removed deprecated (never implemented) option telres
+	* Added \n to some warnings messages
 	* Warnings added if critical tau was found at odd depths
 
 2008-09-23  Patricio Rojo <pato@das.uchile.cl>
