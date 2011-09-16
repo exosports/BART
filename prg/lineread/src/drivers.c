@@ -44,6 +44,7 @@ static _Bool dry;
 static unsigned short *DBdriver = NULL;
 static FILE *fpout = NULL;
 static int verbose_TLIout = 10;
+static int verbose_TLIout2 = 5;
 
 
 static inline void
@@ -223,21 +224,21 @@ setdriversnoutput(struct hints *hint)
   char *undefined_string = "";
   unsigned short rn = strlen(undefined_string);
 
-  MESSAGEP(verbose_TLIout, "Magic number:     "); 
+  MESSAGEP(verbose_TLIout2, "Magic number:     "); 
   pfwrite(&magic,           sizeof(int32_t),        1, fpout);
-  MESSAGEP(verbose_TLIout, "TLIVersion:       "); 
+  MESSAGEP(verbose_TLIout2, "TLIVersion:       "); 
   pfwrite(&TLIversion,      sizeof(unsigned short),  1, fpout); 
-  MESSAGEP(verbose_TLIout, "Version:          "); 
+  MESSAGEP(verbose_TLIout2, "Version:          "); 
   pfwrite(&version,         sizeof(unsigned short),  1, fpout); 
-  MESSAGEP(verbose_TLIout, "Revision:         "); 
+  MESSAGEP(verbose_TLIout2, "Revision:         "); 
   pfwrite(&revision,        sizeof(unsigned short),  1, fpout);
-  MESSAGEP(verbose_TLIout, "IniW (%7g):   ", hint->iniw); 
+  MESSAGEP(verbose_TLIout2, "IniW (%7g):   ", hint->iniw); 
   pfwrite(&(hint->iniw),    sizeof(double),          1, fpout);
-  MESSAGEP(verbose_TLIout, "FinW (%7g):   ", hint->finw); 
+  MESSAGEP(verbose_TLIout2, "FinW (%7g):   ", hint->finw); 
   pfwrite(&(hint->finw),    sizeof(double),          1, fpout);
-  MESSAGEP(verbose_TLIout, "Length undefined: "); 
+  MESSAGEP(verbose_TLIout2, "Length undefined: "); 
   pfwrite(&rn,              sizeof(unsigned short),  1, fpout); 
-  MESSAGEP(verbose_TLIout, "Undefined:        %s", rn==0?"\n":""); 
+  MESSAGEP(verbose_TLIout2, "Undefined:        %s", rn==0?"\n":""); 
   pfwrite(undefined_string, sizeof(char),           rn, fpout);
 
   messagep(2, "done\n");
