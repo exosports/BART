@@ -24,7 +24,7 @@
 
 int version=4;
 int revision=0;
-int version_rc=3;
+int version_rc=0;
 
 
 #endif /* _VERSION_TR_H */
