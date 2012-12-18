@@ -1,7 +1,7 @@
-XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
+2012-12-18  Patricio Rojo <pato@das.uchile.cl>
 
-	* Release 4.0rc3
-	* nIso and nT changed to 'unsigned int'
+	* Release 4.0
+	* nIso and nT changed cleanly to 'unsigned short'
 	* Added comment about ignored saha equation
 	* Removed deprecated (never implemented) option telres
 	* Added \n to some warnings messages
@@ -17,7 +17,7 @@ XXXX-XX-XX  Patricio Rojo <pato@das.uchile.cl>
 	* lineread is being developed independently of transit now.  It
 	has its own directory structure in CVS.
 	* Magic bit enabled.
-	
+
 2006-07-26  Patricio Rojo <pato@astro.cornell.edu>
 
 	* Release 3.3

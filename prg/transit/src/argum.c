@@ -208,7 +208,7 @@ int processparameters(int argc, /* number of command line arguments */
     {"wl-high",CLA_WAVHIGH,required_argument,"0",
      "wavel","Upper wavelength. 0 if you want to use line\n"
      "data maximum"},
-    {"wl-delt",CLA_WAVDELT,required_argument,".2",
+    {"wl-delt",CLA_WAVDELT,required_argument,".00002",
      "spacing","Wavelength spacing. It cannot be 0 or less"},
     {"wl-osamp",CLA_WAVOSAMP,required_argument,"100",
      "integer","Wavelength oversampling. It cannot be 0 or less"},
@@ -342,7 +342,7 @@ int processparameters(int argc, /* number of command line arguments */
 
   struct optcfg var_cfg;
   memset(&var_cfg,0,sizeof(var_cfg));
-  var_cfg.contact="Patricio Rojo <pato@astro.cornell.edu>";
+  var_cfg.contact="Patricio Rojo <pato@das.uchile.cl>";
   var_cfg.files=DOTCFGFILE PREPEXTRACFGFILES;
   var_cfg.columns=70;
 
@@ -374,9 +374,7 @@ int processparameters(int argc, /* number of command line arguments */
   procopt_debug=1;
   opterr=0;
   while(1){
-    if(errno&ERANGE) fprintf(stderr,"ERRNO: ERANGE (coming from '%i')\n",rn);
     rn=procopt(argc,argv,var_docs,&var_cfg,NULL);
-    if(errno&ERANGE) fprintf(stderr,"ERRNO: ERANGE (going to '%i')\n",rn);
     if (rn==-1)
       break;
 

@@ -107,7 +107,7 @@ readtli_bin(FILE *fp,
   double iniw,finw;
   unsigned short ndb;
   unsigned short rs;
-  unsigned int nT,nIso;
+  unsigned short nT,nIso;
   PREC_ZREC *T,*Z;
   PREC_CS *CS;
   int acumiso=0;
@@ -157,8 +157,8 @@ readtli_bin(FILE *fp,
     iso->db[i].n[rs] = '\0';
     
     //Get number of temperature and isotopes
-    fread(&nT,   sizeof(unsigned int), 1, fp);
-    fread(&nIso, sizeof(unsigned int), 1, fp);
+    fread(&nT,   sizeof(unsigned short), 1, fp);
+    fread(&nIso, sizeof(unsigned short), 1, fp);
     li->db[i].t  = nT;
     iso->db[i].i = nIso;
 
@@ -180,22 +180,22 @@ readtli_bin(FILE *fp,
     li->isov[correliso].c = (double *)calloc((correliso+nIso)*nT,
 					     sizeof(double));
     transitDEBUG(21,verblevel,
-		 "So far... Isotopes:%i, databases: %i, position %li\n"
+		 "So far... CumIsotopes:%i, at databases: %i, position %li\n"
 		 ,correliso+nIso,i,ftell(fp)); 
 
     //Reading isotopes from this database
+    transitDEBUG(23,verblevel,
+		 "DB %i: \"%s\"\n"
+		 "  it has %i (%i) temperatures, %i (%i) isotopes,\n"
+		 "  and starts at cumulative isotope %i\n"
+		 ,iso->isof[correliso].d, iso->db[i].n, li->db[i].t,nT, iso->db[i].i,nIso,iso->db[i].s);
+
     for (unsigned int j=0 ; j<nIso ; j++){
-      transitDEBUG(21,verblevel,"isotope %i/%i para DB %i\n",j,nIso,i);
+      transitDEBUG(22,verblevel,"isotope %i/%i for DB %i\n",j+1,nIso,i);
 
       //initialize to be modified by getatm() and store DB number
       iso->isodo[correliso]  = unclear;
       iso->isof[correliso].d = i;
-
-      transitDEBUG(21,verblevel,
-		   "  belongs to DB %i\n"
-		   "  which have %i temperatures %i isotopes\n"
-		   "  and starts at isotope %i\n"
-		   ,iso->isof[correliso].d,li->db[i].t, iso->db[i].i,iso->db[i].s);
 
       fread(&rs, sizeof(unsigned short), 1, fp);
       iso->isof[correliso].n = (char *)calloc(rs+1, sizeof(char));
@@ -236,7 +236,11 @@ readtli_bin(FILE *fp,
     if (i!=rs)
       transiterror(TERR_SERIOUS,
 		   "Problem in TLI file: database correlative number (%i)"
-		   " doesn't match information read (%i)\n", i, rs);
+		   " doesn't match information read (%i)\n"
+		   "Isotopes read: %i\n"
+		   "Last DB #temps: %i\n"
+		   "Last DB #iso: %i\n"
+		   , i, rs, acumiso,nT,nIso);
   }
   //read total number of isotopes.
   fread(&iso->n_i,sizeof(unsigned short),1,fp);

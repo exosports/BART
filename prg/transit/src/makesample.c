@@ -333,7 +333,7 @@ int makewnsample(struct transit *tr)
   if(trh->wnm>0)
     tr->wnmf=tr->wnmi=trh->wnm;
   else{
-    double fct = fromwav.fct*fromwav.fct;
+    double fct = fromwav.fct;
     tr->wnmf=tr->margin*fromwav.f*fromwav.f*fct*fct;
     tr->wnmi=tr->margin*fromwav.i*fromwav.i*fct*fct;
   }
@@ -343,14 +343,14 @@ int makewnsample(struct transit *tr)
   //final point to include margin
   if(wsamp->n<2&&trh->wns.d<=0)
     transiterror(TERR_SERIOUS,
-		 "Spacing among wavelengths is too big(%g),\n"
+		 "Spacing among wavelengths is too big (%g),\n"
 		 " unusable as reference for wavenumber spacing. Since\n"
 		 " no wavenumber spacing was hinted I"
 		 " refuse to continue...\n"
 		 ,wsamp->d);
   fromwav.d=(fromwav.f-fromwav.i)/((wsamp->n-1)/wsamp->o);
-  fromwav.f+=tr->wnmf;
-  fromwav.i-=tr->wnmi;
+  fromwav.f-=tr->wnmf;
+  fromwav.i+=tr->wnmi;
 
   //make the sampling and check we are not trying to compute where we
   //don't have information
@@ -362,10 +362,13 @@ int makewnsample(struct transit *tr)
 		 "Wavenumber range (%g-%g [cgs]), where extinction is "
 		 "going to be computed,\n is beyond wavelength range "
 		 "(%g-%g[cgs]), where line info was read.\n"
-		 "Conversion factor: %g.  Wavelength check (low: %i, high: %i)\n"
+		 "Conversion factor: %g. Wavenumber margin: %g, %g\n"
+		 "Given wavn: (%g-%g [cgs])\n"
+		 "Wavelength check (low: %i, high: %i)\n"
 		 ,tr->wns.i*tr->wns.fct, tr->wns.f*tr->wns.fct
 		 , tr->wavs.i*tr->wavs.fct, tr->wavs.f*tr->wavs.fct
-		 ,wnu_o_wlu,
+		 ,wnu_o_wlu,tr->wnmi,tr->wnmf,
+		 fromwav.i, fromwav.f,
 		 (1.0/(tr->wns.i*tr->wns.fct) > tr->wavs.f*tr->wavs.fct),
 		 (1.0/(tr->wns.f*tr->wns.fct) < tr->wavs.i*tr->wavs.fct));
 
