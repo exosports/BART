@@ -53,7 +53,7 @@ extern struct linedb linedb;
 #include <proto_dbread_debug.h>
 #include <proto_dbread_pands.h>
 #include <proto_dbread_text.h>
-#include <proto_dbread_hitran4.h>
+//#include <proto_dbread_hitran4.h>
 
 /*
   dbread_*: Reading of different line databases.

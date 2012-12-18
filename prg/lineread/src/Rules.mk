@@ -18,7 +18,9 @@ local_$(d)        := $(lib_$(d)) $(bin_PROGRAMS_$(d)) $(test_PROGRAMS_$(d))
 
 #the following per binary
 lineread_FILES_$(d)    := lineread argum drivers messagep \
-			  dbread_debug dbread_text dbread_pands dbread_hitran4
+			  dbread_debug dbread_text dbread_pands
+# While hitran4 is unstable, following is commented from previous line
+# dbread_hitran4
 lineread_OBJS_$(d)     := $(lineread_FILES_$(d):%=$(d)/%.o)
 lineread_PIC_OBJS_$(d) := $(lineread_FILES_$(d):%=$(d)/%_pic.o)
 lineread_DEPS_$(d)     := $(lineread_FILES_$(d):%=$(d)/%.o.d)    \
