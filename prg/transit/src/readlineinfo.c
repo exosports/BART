@@ -624,7 +624,7 @@ int checkrange(struct transit *tr, /* General parameters and
 		   "Final requested wavelength (%g microns) is above\n"
 		   " the maximum informative\n"
 		   "value in database (%g microns)\n"
-		   ,hsamp->f*1e4,dbfin*1e4);
+		   ,hsamp->f*hsamp->fct*1e4,dbfin*hsamp->fct*1e4);
     //set initial wavelength to be extracted
     msamp->f=hsamp->f;
   }
