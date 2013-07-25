@@ -11,10 +11,12 @@ Joseph Harrington
 Jasmina Blecic
 Patricio Cubillos
 Oliver Bowman
+Sarah Blumenthal
+Andrew Foster
 
 With support from:
 
-Jonathan Fortney, Nikku Madhusudhan, Patricio Rojo
+Jonathan Fortney (UCSC), Nikku Madhusudhan (Yale), Patricio Rojo (U. de Chile)
 
 BART Development Plan
 
