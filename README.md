@@ -9,9 +9,9 @@ planetary atmospheres.  It is being developed by:
 
 Joseph Harrington
 Jasmina Blecic
-Oliver Bowman
 Patricio Cubillos
 Sarah Blumenthal
+Oliver Bowman
 Andrew Foster
 Madison Stemm
 
