@@ -10,11 +10,14 @@ planetary atmospheres.  It is being developed by:
 Joseph Harrington
 Jasmina Blecic
 Patricio Cubillos
+Sarah Blumenthal
 Oliver Bowman
+Andrew Foster
+Madison Stemm
 
 With support from:
 
-Jonathan Fortney, Nikku Madhusudhan, Patricio Rojo
+Jonathan Fortney (UCSC), Nikku Madhusudhan (Yale), Patricio Rojo (U. de Chile)
 
 BART Development Plan
 

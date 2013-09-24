@@ -1,0 +1,1060 @@
+
+Testing OPTICAL DEPTH for extinction increasing outwards, alpha=1
+  For planets of radius 10
+    For rays crossing at 1, expected value is 102.492
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   102.7333381 (error 0.00235503)
+        Ray bending technique    : observed   102.5037956 (error 0.000115414)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   102.4972798 (error 5.1841e-05)
+        Ray bending technique    : observed    102.496942 (error 4.85443e-05)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   102.4921139 (error 1.43716e-06)
+        Ray bending technique    : observed   102.4936341 (error 1.62698e-05)
+    For rays crossing at 5, expected value is 119.526
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   119.9449411 (error 0.00350093)
+        Ray bending technique    : observed   119.6949563 (error 0.00140947)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   119.5370845 (error 8.86553e-05)
+        Ray bending technique    : observed   119.5850418 (error 0.000489883)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   119.5268125 (error 2.71684e-06)
+        Ray bending technique    : observed   119.5452362 (error 0.000156855)
+    For rays crossing at 7.5, expected value is 110.883
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed    111.050395 (error 0.00150884)
+        Ray bending technique    : observed   111.9832976 (error 0.00992223)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   110.8959296 (error 0.000115794)
+        Ray bending technique    : observed   110.9911942 (error 0.000974939)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   110.8834872 (error 3.58256e-06)
+        Ray bending technique    : observed   110.9175492 (error 0.000310771)
+    For rays crossing at 9, expected value is 81.4278
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   81.42775939 (error 1.74502e-16)
+        Ray bending technique    : observed   81.42775939 (error 1.74502e-16)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   81.44180973 (error 0.00017255)
+        Ray bending technique    : observed   81.57068035 (error 0.00175519)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   81.42819441 (error 5.34244e-06)
+        Ray bending technique    : observed   81.47306491 (error 0.000556389)
+  For planets of radius 100
+    For rays crossing at 10, expected value is 10249.2
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   10273.33381 (error 0.00235503)
+        Ray bending technique    : observed   10250.37956 (error 0.000115414)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   10249.72798 (error 5.1841e-05)
+        Ray bending technique    : observed    10249.6942 (error 4.85443e-05)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   10249.21139 (error 1.43716e-06)
+        Ray bending technique    : observed   10249.36341 (error 1.62698e-05)
+    For rays crossing at 50, expected value is 11952.6
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   11994.49411 (error 0.00350093)
+        Ray bending technique    : observed   11969.49563 (error 0.00140947)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   11953.70845 (error 8.86553e-05)
+        Ray bending technique    : observed   11958.50418 (error 0.000489883)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   11952.68125 (error 2.71684e-06)
+        Ray bending technique    : observed   11954.52362 (error 0.000156855)
+    For rays crossing at 75, expected value is 11088.3
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed    11105.0395 (error 0.00150884)
+        Ray bending technique    : observed   11198.32976 (error 0.00992223)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   11089.59296 (error 0.000115794)
+        Ray bending technique    : observed   11099.11942 (error 0.000974939)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   11088.34872 (error 3.58256e-06)
+        Ray bending technique    : observed   11091.75492 (error 0.000310771)
+    For rays crossing at 90, expected value is 8142.78
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   8142.775939 (error 2.234e-16)
+        Ray bending technique    : observed   8142.775939 (error 2.234e-16)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   8144.180973 (error 0.00017255)
+        Ray bending technique    : observed   8157.068035 (error 0.00175519)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   8142.819441 (error 5.34244e-06)
+        Ray bending technique    : observed   8147.306491 (error 0.000556389)
+  For planets of radius 1000
+    For rays crossing at 100, expected value is 1.02492e+06
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   1027333.381 (error 0.00235503)
+        Ray bending technique    : observed   1025037.956 (error 0.000115414)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   1024972.798 (error 5.1841e-05)
+        Ray bending technique    : observed    1024969.42 (error 4.85443e-05)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   1024921.139 (error 1.43716e-06)
+        Ray bending technique    : observed   1024936.341 (error 1.62698e-05)
+    For rays crossing at 500, expected value is 1.19526e+06
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   1199449.411 (error 0.00350093)
+        Ray bending technique    : observed   1196949.563 (error 0.00140947)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   1195370.845 (error 8.86553e-05)
+        Ray bending technique    : observed   1195850.418 (error 0.000489883)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   1195268.125 (error 2.71684e-06)
+        Ray bending technique    : observed   1195452.362 (error 0.000156855)
+    For rays crossing at 750, expected value is 1.10883e+06
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed    1110503.95 (error 0.00150884)
+        Ray bending technique    : observed   1119832.976 (error 0.00992223)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   1108959.296 (error 0.000115794)
+        Ray bending technique    : observed   1109911.942 (error 0.000974939)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   1108834.872 (error 3.58256e-06)
+        Ray bending technique    : observed   1109175.492 (error 0.000310771)
+    For rays crossing at 900, expected value is 814278
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   814277.5939 (error 2.85958e-16)
+        Ray bending technique    : observed   814277.5939 (error 2.85958e-16)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   814418.0973 (error 0.00017255)
+        Ray bending technique    : observed   815706.8035 (error 0.00175519)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   814281.9441 (error 5.34244e-06)
+        Ray bending technique    : observed   814730.6491 (error 0.000556389)
+
+Testing OPTICAL DEPTH for extinction increasing inwards, alpha=-1
+  For planets of radius 10
+    For rays crossing at 1, expected value is 96.5055
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   96.26414932 (error 0.00250112)
+        Ray bending technique    : observed   68.89425659 (error 0.286111)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   96.50020758 (error 5.50568e-05)
+        Ray bending technique    : observed   88.39495504 (error 0.0840425)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   96.50537357 (error 1.52631e-06)
+        Ray bending technique    : observed   93.97148983 (error 0.0262579)
+    For rays crossing at 5, expected value is 53.6786
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   53.26013961 (error 0.00779553)
+        Ray bending technique    : observed   27.33135411 (error 0.490833)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed    53.6679963 (error 0.000197409)
+        Ray bending technique    : observed   43.88918016 (error 0.182371)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   53.67826822 (error 6.0496e-06)
+        Ray bending technique    : observed   50.53984087 (error 0.0584731)
+    For rays crossing at 7.5, expected value is 21.4045
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   21.23717051 (error 0.00781636)
+        Ray bending technique    : observed    10.6770894 (error 0.501175)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   21.39163594 (error 0.000599858)
+        Ray bending technique    : observed   15.54293258 (error 0.273847)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   21.40407834 (error 1.8559e-05)
+        Ray bending technique    : observed    19.4865982 (error 0.0896017)
+    For rays crossing at 9, expected value is 5.75022
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   5.750219479 (error 1.08117e-15)
+        Ray bending technique    : observed   5.750219479 (error 1.08117e-15)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   5.736169139 (error 0.00244344)
+        Ray bending technique    : observed   3.345164932 (error 0.418254)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   5.749784456 (error 7.56533e-05)
+        Ray bending technique    : observed   4.914999865 (error 0.14525)
+  For planets of radius 100
+    For rays crossing at 10, expected value is 9650.55
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   9626.414932 (error 0.00250112)
+        Ray bending technique    : observed   6889.425659 (error 0.286111)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   9650.020758 (error 5.50568e-05)
+        Ray bending technique    : observed   8839.495504 (error 0.0840425)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   9650.537357 (error 1.52631e-06)
+        Ray bending technique    : observed   9397.148983 (error 0.0262579)
+    For rays crossing at 50, expected value is 5367.86
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   5326.013961 (error 0.00779553)
+        Ray bending technique    : observed   2733.135411 (error 0.490833)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed    5366.79963 (error 0.000197409)
+        Ray bending technique    : observed   4388.918016 (error 0.182371)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   5367.826822 (error 6.04961e-06)
+        Ray bending technique    : observed   5053.984087 (error 0.0584731)
+    For rays crossing at 75, expected value is 2140.45
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   2123.717051 (error 0.00781636)
+        Ray bending technique    : observed    1067.70894 (error 0.501175)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   2139.163594 (error 0.000599858)
+        Ray bending technique    : observed   1554.293258 (error 0.273847)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   2140.407834 (error 1.8559e-05)
+        Ray bending technique    : observed    1948.65982 (error 0.0896017)
+    For rays crossing at 90, expected value is 575.022
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   575.0219479 (error 5.93167e-16)
+        Ray bending technique    : observed   575.0219479 (error 5.93167e-16)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   573.6169139 (error 0.00244344)
+        Ray bending technique    : observed   334.5164932 (error 0.418254)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   574.9784456 (error 7.56533e-05)
+        Ray bending technique    : observed   491.4999865 (error 0.14525)
+  For planets of radius 1000
+    For rays crossing at 100, expected value is 965055
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   962641.4932 (error 0.00250112)
+        Ray bending technique    : observed   688942.5659 (error 0.286111)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   965002.0758 (error 5.50568e-05)
+        Ray bending technique    : observed   883949.5504 (error 0.0840425)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   965053.7357 (error 1.52631e-06)
+        Ray bending technique    : observed   939714.8983 (error 0.0262579)
+    For rays crossing at 500, expected value is 536786
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   532601.3961 (error 0.00779553)
+        Ray bending technique    : observed   273313.5411 (error 0.490833)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed    536679.963 (error 0.000197409)
+        Ray bending technique    : observed   438891.8016 (error 0.182371)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   536782.6822 (error 6.04961e-06)
+        Ray bending technique    : observed   505398.4087 (error 0.0584731)
+    For rays crossing at 750, expected value is 214045
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   212371.7051 (error 0.00781636)
+        Ray bending technique    : observed    106770.894 (error 0.501175)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   213916.3594 (error 0.000599858)
+        Ray bending technique    : observed   155429.3258 (error 0.273847)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   214040.7834 (error 1.8559e-05)
+        Ray bending technique    : observed    194865.982 (error 0.0896017)
+    For rays crossing at 900, expected value is 57502.2
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   57502.19479 (error 2.53053e-16)
+        Ray bending technique    : observed   57502.19479 (error 2.53053e-16)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   57361.69139 (error 0.00244344)
+        Ray bending technique    : observed   33451.64932 (error 0.418254)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   57497.84456 (error 7.56533e-05)
+        Ray bending technique    : observed   49149.99865 (error 0.14525)
+
+Testing OPTICAL DEPTH for extinction kept constant, alpha=0
+  For planets of radius 10
+    For rays crossing at 1, expected value is 19.8997
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   19.89974874 (error 0)
+        Ray bending technique    : observed   19.91108651 (error 0.000569744)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   19.89974874 (error 7.14164e-16)
+        Ray bending technique    : observed   19.90488817 (error 0.000258266)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   19.89974874 (error 7.14164e-16)
+        Ray bending technique    : observed   19.90142289 (error 8.41289e-05)
+    For rays crossing at 5, expected value is 17.3205
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   17.32050808 (error 0)
+        Ray bending technique    : observed   17.35593087 (error 0.00204514)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   17.32050808 (error 2.46141e-15)
+        Ray bending technique    : observed   17.33231001 (error 0.000681385)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   17.32050808 (error 4.47153e-14)
+        Ray bending technique    : observed   17.32426077 (error 0.000216662)
+    For rays crossing at 7.5, expected value is 13.2288
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   13.22875656 (error 0)
+        Ray bending technique    : observed   13.37959157 (error 0.0114021)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   13.22875656 (error 1.8799e-15)
+        Ray bending technique    : observed   13.24324656 (error 0.00109534)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   13.22875656 (error 3.84041e-14)
+        Ray bending technique    : observed   13.23335359 (error 0.000347503)
+    For rays crossing at 9, expected value is 8.7178
+      Using 10 layers, an interspacing of 1
+        RefIdx constant technique: observed   8.717797887 (error 2.03776e-16)
+        Ray bending technique    : observed   8.717797887 (error 2.03776e-16)
+      Using 100 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   8.717797887 (error 6.52039e-15)
+        Ray bending technique    : observed   8.733749761 (error 0.00182981)
+      Using 1000 layers, an interspacing of 0.01
+        RefIdx constant technique: observed   8.717797887 (error 1.14107e-14)
+        Ray bending technique    : observed   8.722834095 (error 0.000577693)
+  For planets of radius 100
+    For rays crossing at 10, expected value is 198.997
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   198.9974874 (error 0)
+        Ray bending technique    : observed   199.1108651 (error 0.000569744)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   198.9974874 (error 0)
+        Ray bending technique    : observed   199.0488817 (error 0.000258266)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   198.9974874 (error 3.28497e-15)
+        Ray bending technique    : observed   199.0142289 (error 8.41289e-05)
+    For rays crossing at 50, expected value is 173.205
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   173.2050808 (error 0)
+        Ray bending technique    : observed   173.5593087 (error 0.00204514)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   173.2050808 (error 0)
+        Ray bending technique    : observed   173.3231001 (error 0.000681385)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   173.2050808 (error 9.51734e-15)
+        Ray bending technique    : observed   173.2426077 (error 0.000216662)
+    For rays crossing at 75, expected value is 132.288
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   132.2875656 (error 0)
+        Ray bending technique    : observed   133.7959157 (error 0.0114021)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   132.2875656 (error 0)
+        Ray bending technique    : observed   132.4324656 (error 0.00109534)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   132.2875656 (error 3.22272e-14)
+        Ray bending technique    : observed   132.3335359 (error 0.000347503)
+    For rays crossing at 90, expected value is 87.178
+      Using 10 layers, an interspacing of 10
+        RefIdx constant technique: observed   87.17797887 (error 1.6301e-16)
+        Ray bending technique    : observed   87.17797887 (error 1.6301e-16)
+      Using 100 layers, an interspacing of 1
+        RefIdx constant technique: observed   87.17797887 (error 0)
+        Ray bending technique    : observed   87.33749761 (error 0.00182981)
+      Using 1000 layers, an interspacing of 0.1
+        RefIdx constant technique: observed   87.17797887 (error 2.91788e-14)
+        Ray bending technique    : observed   87.22834095 (error 0.000577693)
+  For planets of radius 1000
+    For rays crossing at 100, expected value is 1989.97
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   1989.974874 (error 0)
+        Ray bending technique    : observed   1991.108651 (error 0.000569744)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   1989.974874 (error 0)
+        Ray bending technique    : observed   1990.488817 (error 0.000258266)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   1989.974874 (error 0)
+        Ray bending technique    : observed   1990.142289 (error 8.41289e-05)
+    For rays crossing at 500, expected value is 1732.05
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   1732.050808 (error 0)
+        Ray bending technique    : observed   1735.593087 (error 0.00204514)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   1732.050808 (error 0)
+        Ray bending technique    : observed   1733.231001 (error 0.000681385)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   1732.050808 (error 0)
+        Ray bending technique    : observed   1732.426077 (error 0.000216662)
+    For rays crossing at 750, expected value is 1322.88
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   1322.875656 (error 0)
+        Ray bending technique    : observed   1337.959157 (error 0.0114021)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   1322.875656 (error 0)
+        Ray bending technique    : observed   1324.324656 (error 0.00109534)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   1322.875656 (error 0)
+        Ray bending technique    : observed   1323.335359 (error 0.000347503)
+    For rays crossing at 900, expected value is 871.78
+      Using 10 layers, an interspacing of 100
+        RefIdx constant technique: observed   871.7797887 (error 0)
+        Ray bending technique    : observed   871.7797887 (error 0)
+      Using 100 layers, an interspacing of 10
+        RefIdx constant technique: observed   871.7797887 (error 0)
+        Ray bending technique    : observed   873.3749761 (error 0.00182981)
+      Using 1000 layers, an interspacing of 1
+        RefIdx constant technique: observed   871.7797887 (error 0)
+        Ray bending technique    : observed   872.2834095 (error 0.000577693)
+
+Testing MODULATION for Constant Tau; parameter 0.01
+  For a star of radius 10
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 0.811891
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed  0.8118905316 (error 0)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed  0.8118905316 (error 0)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed  0.8118905316 (error 1.36718e-16)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed  0.8118905316 (error 1.36718e-16)
+      Atmosphere starting at 7.5. Expected result is 0.566853
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed  0.5668531977 (error 1.95861e-16)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed  0.5668531977 (error 1.95861e-16)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed  0.5668531977 (error 3.91722e-16)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed  0.5668531977 (error 7.83444e-16)
+      Atmosphere starting at 5. Expected result is 0.257463
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed  0.2574626247 (error 4.31241e-16)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed  0.2574626247 (error 4.31241e-16)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed  0.2574626247 (error 2.15648e-16)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed  0.2574626247 (error 3.66536e-15)
+      Atmosphere starting at 1. Expected result is 0.0198507
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed 0.01985066459 (error 5.2432e-16)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 0.01985066459 (error 1.38074e-14)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 0.01985066459 (error 7.69025e-15)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed 0.01985066459 (error 1.38074e-14)
+  For a star of radius 100
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 0.00811891
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed 0.008118905316 (error 2.13696e-16)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed 0.008118905316 (error 2.13696e-16)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed 0.008118905316 (error 4.27284e-16)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed 0.008118905316 (error 4.27284e-16)
+      Atmosphere starting at 7.5. Expected result is 0.00566853
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed 0.005668531977 (error 0)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed 0.005668531977 (error 0)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed 0.005668531977 (error 1.53035e-16)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed 0.005668531977 (error 9.18102e-16)
+      Atmosphere starting at 5. Expected result is 0.00257463
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed 0.002574626247 (error 1.68431e-16)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed 0.002574626247 (error 1.68431e-16)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed 0.002574626247 (error 3.36862e-16)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed 0.002574626247 (error 3.53732e-15)
+      Atmosphere starting at 1. Expected result is 0.000198507
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed 0.0001985066459 (error 1.91167e-15)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 0.0001985066459 (error 1.24256e-14)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 0.0001985066459 (error 9.012e-15)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed 0.0001985066459 (error 1.24256e-14)
+    For a planet of radius 100
+      Atmosphere starting at 90. Expected result is 0.811891
+        Using 10 radial layers. Spacing is 1.11111
+          Full eclipse, no LD      : observed  0.8118905316 (error 0)
+        Using 100 radial layers. Spacing is 0.10101
+          Full eclipse, no LD      : observed  0.8118905316 (error 0)
+        Using 1000 radial layers. Spacing is 0.01001
+          Full eclipse, no LD      : observed  0.8118905316 (error 0)
+        Using 10000 radial layers. Spacing is 0.0010001
+          Full eclipse, no LD      : observed  0.8118905316 (error 1.36718e-16)
+      Atmosphere starting at 75. Expected result is 0.566853
+        Using 10 radial layers. Spacing is 2.77778
+          Full eclipse, no LD      : observed  0.5668531977 (error 1.95861e-16)
+        Using 100 radial layers. Spacing is 0.252525
+          Full eclipse, no LD      : observed  0.5668531977 (error 0)
+        Using 1000 radial layers. Spacing is 0.025025
+          Full eclipse, no LD      : observed  0.5668531977 (error 5.87529e-16)
+        Using 10000 radial layers. Spacing is 0.00250025
+          Full eclipse, no LD      : observed  0.5668531977 (error 5.87529e-16)
+      Atmosphere starting at 50. Expected result is 0.257463
+        Using 10 radial layers. Spacing is 5.55556
+          Full eclipse, no LD      : observed  0.2574626247 (error 2.15594e-16)
+        Using 100 radial layers. Spacing is 0.505051
+          Full eclipse, no LD      : observed  0.2574626247 (error 2.15594e-16)
+        Using 1000 radial layers. Spacing is 0.0500501
+          Full eclipse, no LD      : observed  0.2574626247 (error 8.62429e-16)
+        Using 10000 radial layers. Spacing is 0.0050005
+          Full eclipse, no LD      : observed  0.2574626247 (error 2.15594e-16)
+      Atmosphere starting at 10. Expected result is 0.0198507
+        Using 10 radial layers. Spacing is 10
+          Full eclipse, no LD      : observed 0.01985066459 (error 5.24331e-15)
+        Using 100 radial layers. Spacing is 0.909091
+          Full eclipse, no LD      : observed 0.01985066459 (error 2.35949e-14)
+        Using 1000 radial layers. Spacing is 0.0900901
+          Full eclipse, no LD      : observed 0.01985066459 (error 4.0199e-15)
+        Using 10000 radial layers. Spacing is 0.0090009
+          Full eclipse, no LD      : observed 0.01985066459 (error 2.98345e-13)
+  For a star of radius 1000
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 8.11891e-05
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed 8.118905316e-05 (error 3.33826e-16)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed 8.118905316e-05 (error 3.33826e-16)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed 8.118905316e-05 (error 1.66913e-16)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed 8.118905316e-05 (error 1.66913e-16)
+      Atmosphere starting at 7.5. Expected result is 5.66853e-05
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed 5.668531977e-05 (error 0)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed 5.668531977e-05 (error 0)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed 5.668531977e-05 (error 2.39067e-16)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed 5.668531977e-05 (error 8.36787e-16)
+      Atmosphere starting at 5. Expected result is 2.57463e-05
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed 2.574626247e-05 (error 1.31622e-16)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed 2.574626247e-05 (error 1.31622e-16)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed 2.574626247e-05 (error 3.94758e-16)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed 2.574626247e-05 (error 3.55309e-15)
+      Atmosphere starting at 1. Expected result is 1.98507e-06
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed 1.985066459e-06 (error 6.40005e-16)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 1.985066459e-06 (error 1.36545e-14)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 1.985066459e-06 (error 7.89397e-15)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed 1.985066459e-06 (error 1.36545e-14)
+    For a planet of radius 100
+      Atmosphere starting at 90. Expected result is 0.00811891
+        Using 10 radial layers. Spacing is 1.11111
+          Full eclipse, no LD      : observed 0.008118905316 (error 2.13696e-16)
+        Using 100 radial layers. Spacing is 0.10101
+          Full eclipse, no LD      : observed 0.008118905316 (error 2.13696e-16)
+        Using 1000 radial layers. Spacing is 0.01001
+          Full eclipse, no LD      : observed 0.008118905316 (error 2.13696e-16)
+        Using 10000 radial layers. Spacing is 0.0010001
+          Full eclipse, no LD      : observed 0.008118905316 (error 4.27284e-16)
+      Atmosphere starting at 75. Expected result is 0.00566853
+        Using 10 radial layers. Spacing is 2.77778
+          Full eclipse, no LD      : observed 0.005668531977 (error 0)
+        Using 100 radial layers. Spacing is 0.252525
+          Full eclipse, no LD      : observed 0.005668531977 (error 1.52981e-16)
+        Using 1000 radial layers. Spacing is 0.025025
+          Full eclipse, no LD      : observed 0.005668531977 (error 9.18102e-16)
+        Using 10000 radial layers. Spacing is 0.00250025
+          Full eclipse, no LD      : observed 0.005668531977 (error 7.65121e-16)
+      Atmosphere starting at 50. Expected result is 0.00257463
+        Using 10 radial layers. Spacing is 5.55556
+          Full eclipse, no LD      : observed 0.002574626247 (error 0)
+        Using 100 radial layers. Spacing is 0.505051
+          Full eclipse, no LD      : observed 0.002574626247 (error 0)
+        Using 1000 radial layers. Spacing is 0.0500501
+          Full eclipse, no LD      : observed 0.002574626247 (error 8.42208e-16)
+        Using 10000 radial layers. Spacing is 0.0050005
+          Full eclipse, no LD      : observed 0.002574626247 (error 0)
+      Atmosphere starting at 10. Expected result is 0.000198507
+        Using 10 radial layers. Spacing is 10
+          Full eclipse, no LD      : observed 0.0001985066459 (error 3.82328e-15)
+        Using 100 radial layers. Spacing is 0.909091
+          Full eclipse, no LD      : observed 0.0001985066459 (error 2.21203e-14)
+        Using 1000 radial layers. Spacing is 0.0900901
+          Full eclipse, no LD      : observed 0.0001985066459 (error 5.32528e-15)
+        Using 10000 radial layers. Spacing is 0.0090009
+          Full eclipse, no LD      : observed 0.0001985066459 (error 2.97122e-13)
+    For a planet of radius 1000
+      Atmosphere starting at 900. Expected result is 0.811891
+        Using 10 radial layers. Spacing is 11.1111
+          Full eclipse, no LD      : observed  0.8118905316 (error 0)
+        Using 100 radial layers. Spacing is 1.0101
+          Full eclipse, no LD      : observed  0.8118905316 (error 0)
+        Using 1000 radial layers. Spacing is 0.1001
+          Full eclipse, no LD      : observed  0.8118905316 (error 1.36772e-16)
+        Using 10000 radial layers. Spacing is 0.010001
+          Full eclipse, no LD      : observed  0.8118905316 (error 2.7349e-16)
+      Atmosphere starting at 750. Expected result is 0.566853
+        Using 10 radial layers. Spacing is 27.7778
+          Full eclipse, no LD      : observed  0.5668531977 (error 0)
+        Using 100 radial layers. Spacing is 2.52525
+          Full eclipse, no LD      : observed  0.5668531977 (error 0)
+        Using 1000 radial layers. Spacing is 0.25025
+          Full eclipse, no LD      : observed  0.5668531977 (error 1.95807e-16)
+        Using 10000 radial layers. Spacing is 0.0250025
+          Full eclipse, no LD      : observed  0.5668531977 (error 3.91722e-16)
+      Atmosphere starting at 500. Expected result is 0.257463
+        Using 10 radial layers. Spacing is 55.5556
+          Full eclipse, no LD      : observed  0.2574626247 (error 2.15594e-16)
+        Using 100 radial layers. Spacing is 5.05051
+          Full eclipse, no LD      : observed  0.2574626247 (error 2.15648e-16)
+        Using 1000 radial layers. Spacing is 0.500501
+          Full eclipse, no LD      : observed  0.2574626247 (error 6.46835e-16)
+        Using 10000 radial layers. Spacing is 0.050005
+          Full eclipse, no LD      : observed  0.2574626247 (error 6.46835e-16)
+      Atmosphere starting at 100. Expected result is 0.0198507
+        Using 10 radial layers. Spacing is 100
+          Full eclipse, no LD      : observed 0.01985066459 (error 3.32075e-15)
+        Using 100 radial layers. Spacing is 9.09091
+          Full eclipse, no LD      : observed 0.01985066459 (error 3.67035e-15)
+        Using 1000 radial layers. Spacing is 0.900901
+          Full eclipse, no LD      : observed 0.01985066459 (error 3.32075e-15)
+        Using 10000 radial layers. Spacing is 0.090009
+          Full eclipse, no LD      : observed 0.01985066459 (error 1.50308e-14)
+
+Testing MODULATION for Increasing Tau; parameter 0.01
+  For a star of radius 10
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 0.827234
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed  0.8272336017 (error 2.76431e-08)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed  0.8272335788 (error 2.07753e-11)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed  0.8272335788 (error 2.67076e-14)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed  0.8272335788 (error 6.57623e-15)
+      Atmosphere starting at 7.5. Expected result is 0.599382
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed  0.5993827687 (error 6.03046e-07)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed  0.5993824075 (error 4.53094e-10)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed  0.5993824073 (error 4.61958e-13)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed  0.5993824073 (error 2.03751e-14)
+      Atmosphere starting at 5. Expected result is 0.306053
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed  0.3060557713 (error 9.63399e-06)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed   0.306052825 (error 7.23824e-09)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed  0.3060528228 (error 7.08098e-12)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed  0.3060528228 (error 5.02416e-14)
+      Atmosphere starting at 1. Expected result is 0.0741656
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed 0.07418330019 (error 0.000239324)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 0.07416556392 (error 1.79817e-07)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 0.07416555059 (error 1.75201e-10)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed 0.07416555058 (error 3.65069e-13)
+  For a star of radius 100
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 0.00827234
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed 0.008272336017 (error 2.76431e-08)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed 0.008272335788 (error 2.07752e-11)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed 0.008272335788 (error 2.66321e-14)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed 0.008272335788 (error 6.50077e-15)
+      Atmosphere starting at 7.5. Expected result is 0.00599382
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed 0.005993827687 (error 6.03046e-07)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed 0.005993824075 (error 4.53093e-10)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed 0.005993824073 (error 4.61622e-13)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed 0.005993824073 (error 2.01146e-14)
+      Atmosphere starting at 5. Expected result is 0.00306053
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed 0.003060557713 (error 9.63399e-06)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed 0.00306052825 (error 7.23824e-09)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed 0.003060528228 (error 7.08053e-12)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed 0.003060528228 (error 4.97371e-14)
+      Atmosphere starting at 1. Expected result is 0.000741656
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed 0.0007418330019 (error 0.000239324)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 0.0007416556392 (error 1.79817e-07)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 0.0007416555059 (error 1.75199e-10)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed 0.0007416555058 (error 3.62689e-13)
+    For a planet of radius 100
+      Atmosphere starting at 90. Expected result is 0.926553
+        Using 10 radial layers. Spacing is 1.11111
+          Full eclipse, no LD      : observed  0.9265531115 (error 5.80534e-08)
+        Using 100 radial layers. Spacing is 0.10101
+          Full eclipse, no LD      : observed  0.9265530577 (error 4.36206e-11)
+        Using 1000 radial layers. Spacing is 0.01001
+          Full eclipse, no LD      : observed  0.9265530577 (error 4.24174e-14)
+        Using 10000 radial layers. Spacing is 0.0010001
+          Full eclipse, no LD      : observed  0.9265530577 (error 0)
+      Atmosphere starting at 75. Expected result is 0.818235
+        Using 10 radial layers. Spacing is 2.77778
+          Full eclipse, no LD      : observed  0.8182358176 (error 1.20693e-06)
+        Using 100 radial layers. Spacing is 0.252525
+          Full eclipse, no LD      : observed  0.8182348308 (error 9.07383e-10)
+        Using 1000 radial layers. Spacing is 0.025025
+          Full eclipse, no LD      : observed  0.8182348301 (error 8.83039e-13)
+        Using 10000 radial layers. Spacing is 0.00250025
+          Full eclipse, no LD      : observed  0.8182348301 (error 2.71376e-16)
+      Atmosphere starting at 50. Expected result is 0.651926
+        Using 10 radial layers. Spacing is 5.55556
+          Full eclipse, no LD      : observed  0.6519362987 (error 1.61264e-05)
+        Using 100 radial layers. Spacing is 0.505051
+          Full eclipse, no LD      : observed  0.6519257935 (error 1.21452e-08)
+        Using 1000 radial layers. Spacing is 0.0500501
+          Full eclipse, no LD      : observed  0.6519257856 (error 1.1822e-11)
+        Using 10000 radial layers. Spacing is 0.0050005
+          Full eclipse, no LD      : observed  0.6519257855 (error 1.10695e-14)
+      Atmosphere starting at 10. Expected result is 0.480875
+        Using 10 radial layers. Spacing is 10
+          Full eclipse, no LD      : observed  0.4809751534 (error 0.000207348)
+        Using 100 radial layers. Spacing is 0.909091
+          Full eclipse, no LD      : observed  0.4808755204 (error 1.56809e-07)
+        Using 1000 radial layers. Spacing is 0.0900901
+          Full eclipse, no LD      : observed  0.4808754451 (error 1.52677e-10)
+        Using 10000 radial layers. Spacing is 0.0090009
+          Full eclipse, no LD      : observed   0.480875445 (error 1.49954e-13)
+  For a star of radius 1000
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 8.27234e-05
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed 8.272336017e-05 (error 2.76431e-08)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed 8.272335788e-05 (error 2.07752e-11)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed 8.272335788e-05 (error 2.67042e-14)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed 8.272335788e-05 (error 6.71696e-15)
+      Atmosphere starting at 7.5. Expected result is 5.99382e-05
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed 5.993827687e-05 (error 6.03046e-07)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed 5.993824075e-05 (error 4.53093e-10)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed 5.993824073e-05 (error 4.61713e-13)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed 5.993824073e-05 (error 2.01237e-14)
+      Atmosphere starting at 5. Expected result is 3.06053e-05
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed 3.060557713e-05 (error 9.63399e-06)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed 3.06052825e-05 (error 7.23824e-09)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed 3.060528228e-05 (error 7.08086e-12)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed 3.060528228e-05 (error 5.00383e-14)
+      Atmosphere starting at 1. Expected result is 7.41656e-06
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed 7.418330019e-06 (error 0.000239324)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 7.416556392e-06 (error 1.79817e-07)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 7.416555059e-06 (error 1.75201e-10)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed 7.416555058e-06 (error 3.64439e-13)
+    For a planet of radius 100
+      Atmosphere starting at 90. Expected result is 0.00926553
+        Using 10 radial layers. Spacing is 1.11111
+          Full eclipse, no LD      : observed 0.009265531115 (error 5.80534e-08)
+        Using 100 radial layers. Spacing is 0.10101
+          Full eclipse, no LD      : observed 0.009265530577 (error 4.36204e-11)
+        Using 1000 radial layers. Spacing is 0.01001
+          Full eclipse, no LD      : observed 0.009265530577 (error 4.23125e-14)
+        Using 10000 radial layers. Spacing is 0.0010001
+          Full eclipse, no LD      : observed 0.009265530577 (error 1.87242e-16)
+      Atmosphere starting at 75. Expected result is 0.00818235
+        Using 10 radial layers. Spacing is 2.77778
+          Full eclipse, no LD      : observed 0.008182358176 (error 1.20693e-06)
+        Using 100 radial layers. Spacing is 0.252525
+          Full eclipse, no LD      : observed 0.008182348308 (error 9.07383e-10)
+        Using 1000 radial layers. Spacing is 0.025025
+          Full eclipse, no LD      : observed 0.008182348301 (error 8.83013e-13)
+        Using 10000 radial layers. Spacing is 0.00250025
+          Full eclipse, no LD      : observed 0.008182348301 (error 2.11962e-16)
+      Atmosphere starting at 50. Expected result is 0.00651926
+        Using 10 radial layers. Spacing is 5.55556
+          Full eclipse, no LD      : observed 0.006519362987 (error 1.61264e-05)
+        Using 100 radial layers. Spacing is 0.505051
+          Full eclipse, no LD      : observed 0.006519257935 (error 1.21452e-08)
+        Using 1000 radial layers. Spacing is 0.0500501
+          Full eclipse, no LD      : observed 0.006519257856 (error 1.18215e-11)
+        Using 10000 radial layers. Spacing is 0.0050005
+          Full eclipse, no LD      : observed 0.006519257855 (error 1.07768e-14)
+      Atmosphere starting at 10. Expected result is 0.00480875
+        Using 10 radial layers. Spacing is 10
+          Full eclipse, no LD      : observed 0.004809751534 (error 0.000207348)
+        Using 100 radial layers. Spacing is 0.909091
+          Full eclipse, no LD      : observed 0.004808755204 (error 1.56809e-07)
+        Using 1000 radial layers. Spacing is 0.0900901
+          Full eclipse, no LD      : observed 0.004808754451 (error 1.52677e-10)
+        Using 10000 radial layers. Spacing is 0.0090009
+          Full eclipse, no LD      : observed 0.00480875445 (error 1.49889e-13)
+    For a planet of radius 1000
+      Atmosphere starting at 900. Expected result is 0.999985
+        Using 10 radial layers. Spacing is 11.1111
+          Full eclipse, no LD      : observed  0.9999853052 (error 8.07475e-10)
+        Using 100 radial layers. Spacing is 1.0101
+          Full eclipse, no LD      : observed   0.999985306 (error 6.08411e-13)
+        Using 1000 radial layers. Spacing is 0.1001
+          Full eclipse, no LD      : observed   0.999985306 (error 5.55112e-16)
+        Using 10000 radial layers. Spacing is 0.010001
+          Full eclipse, no LD      : observed   0.999985306 (error 0)
+      Atmosphere starting at 750. Expected result is 0.999916
+        Using 10 radial layers. Spacing is 27.7778
+          Full eclipse, no LD      : observed   0.999915929 (error 3.4618e-08)
+        Using 100 radial layers. Spacing is 2.52525
+          Full eclipse, no LD      : observed  0.9999159636 (error 2.63589e-11)
+        Using 1000 radial layers. Spacing is 0.25025
+          Full eclipse, no LD      : observed  0.9999159636 (error 2.56483e-14)
+        Using 10000 radial layers. Spacing is 0.0250025
+          Full eclipse, no LD      : observed  0.9999159636 (error 0)
+      Atmosphere starting at 500. Expected result is 0.999201
+        Using 10 radial layers. Spacing is 55.5556
+          Full eclipse, no LD      : observed  0.9991997865 (error 1.64911e-06)
+        Using 100 radial layers. Spacing is 5.05051
+          Full eclipse, no LD      : observed  0.9992014331 (error 1.27394e-09)
+        Using 1000 radial layers. Spacing is 0.500501
+          Full eclipse, no LD      : observed  0.9992014343 (error 1.242e-12)
+        Using 10000 radial layers. Spacing is 0.050005
+          Full eclipse, no LD      : observed  0.9992014343 (error 1.11109e-15)
+      Atmosphere starting at 100. Expected result is 0.985295
+        Using 10 radial layers. Spacing is 100
+          Full eclipse, no LD      : observed  0.9854219976 (error 0.000129085)
+        Using 100 radial layers. Spacing is 9.09091
+          Full eclipse, no LD      : observed  0.9852949415 (error 1.33144e-07)
+        Using 1000 radial layers. Spacing is 0.900901
+          Full eclipse, no LD      : observed  0.9852948105 (error 1.3108e-10)
+        Using 10000 radial layers. Spacing is 0.090009
+          Full eclipse, no LD      : observed  0.9852948103 (error 1.30933e-13)
+
+Testing MODULATION for Decreasing Tau; parameter 0.01
+  For a star of radius 10
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 0.81093
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed  0.8109302301 (error 3.39317e-08)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed  0.8109302576 (error 2.54867e-11)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed  0.8109302577 (error 1.83456e-14)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed  0.8109302577 (error 7.80376e-15)
+      Atmosphere starting at 7.5. Expected result is 0.567666
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed  0.5676658495 (error 7.49127e-07)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed  0.5676662744 (error 5.6285e-10)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed  0.5676662748 (error 5.72453e-13)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed  0.5676662748 (error 2.65984e-14)
+      Atmosphere starting at 5. Expected result is 0.266409
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed  0.2664060037 (error 1.25414e-05)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed  0.2664093424 (error 9.42259e-09)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed  0.2664093449 (error 9.17965e-12)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed  0.2664093449 (error 2.66711e-14)
+      Atmosphere starting at 1. Expected result is 0.0416253
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed  0.0416063754 (error 0.000455033)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 0.04162530207 (error 3.4189e-07)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 0.04162531628 (error 3.32853e-10)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed  0.0416253163 (error 4.55921e-13)
+  For a star of radius 100
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 0.0081093
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed 0.008109302301 (error 3.39317e-08)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed 0.008109302576 (error 2.54868e-11)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed 0.008109302577 (error 1.83969e-14)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed 0.008109302577 (error 7.70109e-15)
+      Atmosphere starting at 7.5. Expected result is 0.00567666
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed 0.005676658495 (error 7.49127e-07)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed 0.005676662744 (error 5.6285e-10)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed 0.005676662748 (error 5.72673e-13)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed 0.005676662748 (error 2.68918e-14)
+      Atmosphere starting at 5. Expected result is 0.00266409
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed 0.002664060037 (error 1.25414e-05)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed 0.002664093424 (error 9.42259e-09)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed 0.002664093449 (error 9.18007e-12)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed 0.002664093449 (error 2.71855e-14)
+      Atmosphere starting at 1. Expected result is 0.000416253
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed 0.000416063754 (error 0.000455033)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 0.0004162530207 (error 3.4189e-07)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 0.0004162531628 (error 3.32855e-10)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed 0.000416253163 (error 4.58943e-13)
+    For a planet of radius 100
+      Atmosphere starting at 90. Expected result is 0.819033
+        Using 10 radial layers. Spacing is 1.11111
+          Full eclipse, no LD      : observed  0.8190321452 (error 4.53161e-07)
+        Using 100 radial layers. Spacing is 0.10101
+          Full eclipse, no LD      : observed  0.8190325161 (error 3.40484e-10)
+        Using 1000 radial layers. Spacing is 0.01001
+          Full eclipse, no LD      : observed  0.8190325164 (error 3.31291e-13)
+        Using 10000 radial layers. Spacing is 0.0010001
+          Full eclipse, no LD      : observed  0.8190325164 (error 2.71105e-16)
+      Atmosphere starting at 75. Expected result is 0.6106
+        Using 10 radial layers. Spacing is 2.77778
+          Full eclipse, no LD      : observed  0.6105943085 (error 8.67988e-06)
+        Using 100 radial layers. Spacing is 0.252525
+          Full eclipse, no LD      : observed  0.6105996045 (error 6.52393e-09)
+        Using 1000 radial layers. Spacing is 0.025025
+          Full eclipse, no LD      : observed  0.6105996085 (error 6.34988e-12)
+        Using 10000 radial layers. Spacing is 0.00250025
+          Full eclipse, no LD      : observed  0.6105996085 (error 6.72753e-15)
+      Atmosphere starting at 50. Expected result is 0.393469
+        Using 10 radial layers. Spacing is 5.55556
+          Full eclipse, no LD      : observed  0.3934321472 (error 9.4526e-05)
+        Using 100 radial layers. Spacing is 0.505051
+          Full eclipse, no LD      : observed  0.3934693123 (error 7.11349e-08)
+        Using 1000 radial layers. Spacing is 0.0500501
+          Full eclipse, no LD      : observed  0.3934693403 (error 6.92363e-11)
+        Using 10000 radial layers. Spacing is 0.0050005
+          Full eclipse, no LD      : observed  0.3934693403 (error 6.40509e-14)
+      Atmosphere starting at 10. Expected result is 0.268175
+        Using 10 radial layers. Spacing is 10
+          Full eclipse, no LD      : observed  0.2679902183 (error 0.00068759)
+        Using 100 radial layers. Spacing is 0.909091
+          Full eclipse, no LD      : observed  0.2681744732 (error 5.19259e-07)
+        Using 1000 radial layers. Spacing is 0.0900901
+          Full eclipse, no LD      : observed  0.2681746123 (error 5.05528e-10)
+        Using 10000 radial layers. Spacing is 0.0090009
+          Full eclipse, no LD      : observed  0.2681746125 (error 5.09004e-13)
+  For a star of radius 1000
+    For a planet of radius 10
+      Atmosphere starting at 9. Expected result is 8.1093e-05
+        Using 10 radial layers. Spacing is 0.111111
+          Full eclipse, no LD      : observed 8.109302301e-05 (error 3.39317e-08)
+        Using 100 radial layers. Spacing is 0.010101
+          Full eclipse, no LD      : observed 8.109302576e-05 (error 2.5487e-11)
+        Using 1000 radial layers. Spacing is 0.001001
+          Full eclipse, no LD      : observed 8.109302577e-05 (error 1.85507e-14)
+        Using 10000 radial layers. Spacing is 0.00010001
+          Full eclipse, no LD      : observed 8.109302577e-05 (error 7.52057e-15)
+      Atmosphere starting at 7.5. Expected result is 5.67666e-05
+        Using 10 radial layers. Spacing is 0.277778
+          Full eclipse, no LD      : observed 5.676658495e-05 (error 7.49127e-07)
+        Using 100 radial layers. Spacing is 0.0252525
+          Full eclipse, no LD      : observed 5.676662744e-05 (error 5.6285e-10)
+        Using 1000 radial layers. Spacing is 0.0025025
+          Full eclipse, no LD      : observed 5.676662748e-05 (error 5.72501e-13)
+        Using 10000 radial layers. Spacing is 0.000250025
+          Full eclipse, no LD      : observed 5.676662748e-05 (error 2.6739e-14)
+      Atmosphere starting at 5. Expected result is 2.66409e-05
+        Using 10 radial layers. Spacing is 0.555556
+          Full eclipse, no LD      : observed 2.664060037e-05 (error 1.25414e-05)
+        Using 100 radial layers. Spacing is 0.0505051
+          Full eclipse, no LD      : observed 2.664093424e-05 (error 9.42259e-09)
+        Using 1000 radial layers. Spacing is 0.00500501
+          Full eclipse, no LD      : observed 2.664093449e-05 (error 9.17994e-12)
+        Using 10000 radial layers. Spacing is 0.00050005
+          Full eclipse, no LD      : observed 2.664093449e-05 (error 2.69617e-14)
+      Atmosphere starting at 1. Expected result is 4.16253e-06
+        Using 10 radial layers. Spacing is 1
+          Full eclipse, no LD      : observed 4.16063754e-06 (error 0.000455033)
+        Using 100 radial layers. Spacing is 0.0909091
+          Full eclipse, no LD      : observed 4.162530207e-06 (error 3.4189e-07)
+        Using 1000 radial layers. Spacing is 0.00900901
+          Full eclipse, no LD      : observed 4.162531628e-06 (error 3.32852e-10)
+        Using 10000 radial layers. Spacing is 0.00090009
+          Full eclipse, no LD      : observed 4.16253163e-06 (error 4.55003e-13)
+    For a planet of radius 100
+      Atmosphere starting at 90. Expected result is 0.00819033
+        Using 10 radial layers. Spacing is 1.11111
+          Full eclipse, no LD      : observed 0.008190321452 (error 4.53161e-07)
+        Using 100 radial layers. Spacing is 0.10101
+          Full eclipse, no LD      : observed 0.008190325161 (error 3.40484e-10)
+        Using 1000 radial layers. Spacing is 0.01001
+          Full eclipse, no LD      : observed 0.008190325164 (error 3.31469e-13)
+        Using 10000 radial layers. Spacing is 0.0010001
+          Full eclipse, no LD      : observed 0.008190325164 (error 4.23598e-16)
+      Atmosphere starting at 75. Expected result is 0.006106
+        Using 10 radial layers. Spacing is 2.77778
+          Full eclipse, no LD      : observed 0.006105943085 (error 8.67988e-06)
+        Using 100 radial layers. Spacing is 0.252525
+          Full eclipse, no LD      : observed 0.006105996045 (error 6.52393e-09)
+        Using 1000 radial layers. Spacing is 0.025025
+          Full eclipse, no LD      : observed 0.006105996085 (error 6.3501e-12)
+        Using 10000 radial layers. Spacing is 0.00250025
+          Full eclipse, no LD      : observed 0.006105996085 (error 6.81844e-15)
+      Atmosphere starting at 50. Expected result is 0.00393469
+        Using 10 radial layers. Spacing is 5.55556
+          Full eclipse, no LD      : observed 0.003934321472 (error 9.4526e-05)
+        Using 100 radial layers. Spacing is 0.505051
+          Full eclipse, no LD      : observed 0.003934693123 (error 7.11349e-08)
+        Using 1000 radial layers. Spacing is 0.0500501
+          Full eclipse, no LD      : observed 0.003934693403 (error 6.92367e-11)
+        Using 10000 radial layers. Spacing is 0.0050005
+          Full eclipse, no LD      : observed 0.003934693403 (error 6.43683e-14)
+      Atmosphere starting at 10. Expected result is 0.00268175
+        Using 10 radial layers. Spacing is 10
+          Full eclipse, no LD      : observed 0.002679902183 (error 0.00068759)
+        Using 100 radial layers. Spacing is 0.909091
+          Full eclipse, no LD      : observed 0.002681744732 (error 5.19259e-07)
+        Using 1000 radial layers. Spacing is 0.0900901
+          Full eclipse, no LD      : observed 0.002681746123 (error 5.05528e-10)
+        Using 10000 radial layers. Spacing is 0.0090009
+          Full eclipse, no LD      : observed 0.002681746125 (error 5.09081e-13)
+    For a planet of radius 1000
+      Atmosphere starting at 900. Expected result is 0.878861
+        Using 10 radial layers. Spacing is 11.1111
+          Full eclipse, no LD      : observed  0.8788501689 (error 1.19948e-05)
+        Using 100 radial layers. Spacing is 1.0101
+          Full eclipse, no LD      : observed  0.8788607026 (error 9.05061e-09)
+        Using 1000 radial layers. Spacing is 0.1001
+          Full eclipse, no LD      : observed  0.8788607106 (error 8.81068e-12)
+        Using 10000 radial layers. Spacing is 0.010001
+          Full eclipse, no LD      : observed  0.8788607106 (error 8.08484e-15)
+      Atmosphere starting at 750. Expected result is 0.830671
+        Using 10 radial layers. Spacing is 27.7778
+          Full eclipse, no LD      : observed  0.8305421926 (error 0.000155124)
+        Using 100 radial layers. Spacing is 2.52525
+          Full eclipse, no LD      : observed   0.830670951 (error 1.19025e-07)
+        Using 1000 radial layers. Spacing is 0.25025
+          Full eclipse, no LD      : observed  0.8306710497 (error 1.15989e-10)
+        Using 10000 radial layers. Spacing is 0.0250025
+          Full eclipse, no LD      : observed  0.8306710498 (error 1.1561e-13)
+      Atmosphere starting at 500. Expected result is 0.820539
+        Using 10 radial layers. Spacing is 55.5556
+          Full eclipse, no LD      : observed  0.8196047031 (error 0.00113868)
+        Using 100 radial layers. Spacing is 5.05051
+          Full eclipse, no LD      : observed  0.8205382916 (error 9.0694e-07)
+        Using 1000 radial layers. Spacing is 0.500501
+          Full eclipse, no LD      : observed   0.820539035 (error 8.85363e-10)
+        Using 10000 radial layers. Spacing is 0.050005
+          Full eclipse, no LD      : observed  0.8205390358 (error 8.82995e-13)
+      Atmosphere starting at 100. Expected result is 0.82
+        Using 10 radial layers. Spacing is 100
+          Full eclipse, no LD      : observed  0.8149943292 (error 0.00610448)
+        Using 100 radial layers. Spacing is 9.09091
+          Full eclipse, no LD      : observed  0.8199956902 (error 5.25584e-06)
+        Using 1000 radial layers. Spacing is 0.900901
+          Full eclipse, no LD      : observed  0.8199999958 (error 5.14543e-09)
+        Using 10000 radial layers. Spacing is 0.090009
+          Full eclipse, no LD      : observed          0.82 (error 5.13478e-12)
+
+###########################################################################
+slantpath.txc result is FAILURE: 137 differences bigger than 0.0001
+                                 found out of 504 tests

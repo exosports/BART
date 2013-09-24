@@ -1,0 +1,100 @@
+\documentclass{article}
+
+\pagestyle{empty}
+\addtolength{\hoffset}{-1cm}
+\addtolength{\voffset}{-1cm}
+\addtolength{\textwidth}{2cm}
+\addtolength{\textheight}{2cm}
+
+\begin{document}
+
+\begin{center}
+{\large {\bf Allocatable variable usage in ``transit''}}\\
+\vfill
+In the following tables, \\
+\begin{tabular}{ll}
+if... & variable...\\
+\hline
+a & was allocated (and used) \\
+s & was set (not an allocatable structure)\\
+c & have components allocated (not exhaustive list) \\
+r & was reallocated \\
+u & was used \\
+p & have non-allocables fields in use \\
+f & was freed \\
+\end{tabular}
+\end{center}
+
+\vfill
+
+\begin{center}
+{\large Structures in {\bf tr.ds.xxx}}\\[.5cm]
+\begin{tabular}{l|cccccccccc}
+function
+  & th & li & at & ir & ex & tau & iso & out & sf & sg \\
+\hline
+acceptgenhints
+  & u  & .  & .  & .  & .  & .   & .   & .   & a  & s  \\
+readlineinfo
+  & u  & a  & .  & .  & .  & .   & a   & .   & .  & .  \\
+getatm
+  & u  & .  & a  & .  & .  & .   & ur  & .   & .  & .  \\
+makewavsample
+  & u  & u  & .  & .  & .  & .   & .   & .   & .  & .  \\
+makewnsample
+  & u  & .  & .  & .  & .  & .   & .   & .   & .  & .  \\
+makeradsample
+  & u  & u  & uf  & .  & .  & .   & uc  & .   & .  & .  \\
+idxrefrac
+  & u  & .  & .  & a  & .  & .   & .   & .   & .  & .  \\
+extwn
+  & u  & u  & .  & .  & a  & .   & u   & .   & u  & .  \\
+makeipsample
+  & u  & .  & .  & .  & .  & .   & .   & .   & .  & .  \\
+tau
+  & u  & uf & .  & u  & u  & a   & .   & .   & u  & .  \\
+modulation
+  & u  & .  & .  & f  & f  & uf  & .   & a   & u  & u  \\
+telescope
+  & u  & .  & .  & .  & .  & .   & f   & uf  & .  & .  \\
+\hline
+\end{tabular}
+\end{center}
+
+\vfill
+
+\begin{center}
+{\large Sampling structures in {\bf tr.xxx}}\\[.5cm]
+\begin{tabular}{l|ccccccc}
+function
+   & atm & rds & wvs & wns & ips \\
+\hline
+accepgenhints
+   & .   & .   & .   & .   & .   \\
+readlineinfo
+   & .   & .   & p   & .   & .   \\
+getatm
+   & .   & .   & .   & .   & .   \\
+makewavsample
+   & .   & .   & a   & .   & .   \\
+makewnsample
+   & .   & .   & u   & a   & .   \\
+makeradsample
+   & a   & a   & .   & .   & .   \\
+idxrefrac
+   & u   & u   & .   & .   & .   \\
+extwn
+   & u   & u   & .   & u   & .   \\
+makeipsample
+   & .   & u   & .   & .   & a   \\
+tau
+   & .   & u   & .   & u   & u   \\
+modulation
+   & .   & .   & .   & u   & u   \\
+telescope
+   & .   & .   & .   & .   & .   \\
+\hline
+\end{tabular}
+\end{center}
+
+\end{document}
