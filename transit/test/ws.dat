@@ -1,0 +1,89 @@
+at wn index 432 there is a jump up in extinction,
+wn index 499 is the last one before going back to normality
+solved above(Tau is not equispaced, not posible to do interp_parab)
+
+-----------
+
+For LINE+ATMOSP1
+density: 1.9407846285389364e-13       checked
+CTE:     533129067721.43524           checked
+gf:      2.4717241449999998e-07       checked
+popexp:  -0.43891544125889292         checked
+indexp:  -10.035892953792835          checked
+mass:    18.010000000000002           checked
+partfcn: 858.41433369159699           checked
+
+For LINE+ATMOSP2
+density: 1.3585708359321155e-08
+CTE:     533129067721.43524
+gf:      2.4717241449999998e-07
+popexp:  -0.24408069779313993
+indexp:  -5.5809559766527821
+mass:    18.010000000000002    
+partfcn: 2612.3094051474332
+
+LINE info
+wavelength: 1749.141079 
+isotope:    0 
+Elow:       250.0345362
+GF:         2.471724145e-07
+
+Let's try in calc:
+
+calc
+config("mode","exp")
+
+
+h=6.6260755e-27
+k=(1.380658e-16)
+c=2.99792458e10
+e=4.8032068e-10
+me=9.1093897e-28
+AMU=1.6605402e-24
+
+elow=250.0345362
+gf=2.471724145e-07
+mw=18.01
+wav=1749.141079
+
+!#cond1
+temp= 819.61539938933731
+qw= 6.447764903151737E-004
+P=1.1
+Z=858.41433369159699
+
+!#cond2
+temp=1473.8644142620342
+qw=6.467157545641794E-004
+P=0.11e6
+Z= 2612.3094051474332
+
+wn=1e7/wav
+cte=pi()*e*e/me/AMU/c/c
+dens=P*AMU*mw*qw/k/temp
+popexp=h*c*elow/k/temp
+pop=exp(-popexp)
+indexp=h*c*wn/k/temp
+induced=(1-exp(-indexp))
+
+extinct=cte*dens*gf*pop*induced/Z/mw
+
+----------------------------------------
+idl
+
+nel=3352
+wn=(dindgen(nel)-nel/2)*dwn
+prof=fltarr(nel)
+openr,lun,"gdbout",/get_lun
+readu,lun,prof
+
+al= 0.33514200429174867
+ad= 0.021135717081042754
+pi= 3.1415912
+
+plot,wn,prof,/ystyle,yrange=[0,.001],/xstyle,xrange=[-18,-10]
+oplot,wn,voigt(al/ad,wn/ad)/ad/sqrt(pi),color=1000
+
+plot,wn,(prof-voigt(al/ad,wn/ad)/ad/sqrt(pi))/prof
+
+------------------------------------------

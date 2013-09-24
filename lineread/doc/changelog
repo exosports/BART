@@ -1,0 +1,88 @@
+2012-12-18  Patricio Rojo <pato@oan.cl>
+
+	* Release 4.0
+	* Now minor memory leak is really fixed (messagep_free)
+	* Buggy Hitran4 driver is commented out
+
+2008-09-23  Patricio Rojo <pato@das.uchile.cl>
+
+	* Release 4.0-rc2
+	* Improved verbosity
+	* Use of int32_t for magic numbers
+	* Fixed minor memory leak on error
+
+2006-11-15  Patricio Rojo <pato@das.uchile.cl>
+
+	* Release 4.0-rc1
+	* Fix previous release which was halfway between CS and not CS in
+	the TLI.
+	* v4 of TLI is a major rewrite of TLI, compatible with 64 bits
+	CPUs (it was not before).
+	* Verbose corrections for lineread.
+	* Memory leaks were fixed on lineread, after running valgrind.	
+	* First release of lineread independently of transit.  They both
+	have now different SVN working directories.
+	* Magic bit enabled.
+
+
+2004-03-24 Patricio Rojo <pato@astro.cornell.edu>
+
+	* Release 1.8 (Several others 1.x dark releases included in this
+	one)
+	* Isotope information in the Infofile is now given in a
+         sequential order and not per database as before. 040125. v1.2.
+	* Version of TWII is now stored in the .inf file. 040212. v1.3.
+	* Bug found and corrected that wrote a lot of masses instead of
+	1 per isotope. 040312. v1.4.
+	* Change to directory structure and linking (several files
+	instead of one). 040309. v1.5.
+	* Magic bytes are added as the first two in twii. 040315. v1.6.
+	* Two files merged into one, marks are no more. 040316. v1.7.
+	* Help fixed and default ouput changed. 040324. v1.8.
+
+2003-11-09 Patricio Rojo <pato@astro.cornell.edu>
+
+	* Release 0.13
+	* added option '-n' for no file output.
+	* Verbose improved.
+
+2003-10-09 Patricio Rojo <pato@astro.cornell.edu>
+
+	* Release 0.9
+	* Changed 'dbid' function, now we store a correlative number in
+         '.isoid' that starts at 0 in the first isotope of the first
+         database and increase from there.
+
+2003-10-07 Patricio Rojo <pato@astro.cornell.edu>
+	
+	* Release 0.8
+	* First light of procedure.
+	* Added 'dbid' and its effect on '.isoid' field. Added a starting
+	value of 0 for 'dindex' marks in infofile. Added transitprint().
+
+
+
+2004-08-12 Patricio Rojo <pato@das.uchile.cl>
+
+	* Release 3.1
+	* Change magic bits, which is 4 bytes now. Change file extension
+        TWII => TLI. Big bug fix regarding reading of P&S, wasn't
+	divided by freq before.
+
+2004-03-25 Patricio Rojo <pato@das.uchile.cl>
+
+	* Release 2.1
+	* Change from structure storage to array in TWII file.  
+
+
+   4.1:  Include cross section in TLI. 112205. PMR
+*/
+
+
+	* Release 3.0rc2: Fixed bug regarding to P&S
+	* Release 1.0: Use of v2 of TWII
+	* Release 1.0pre1: ASCII reading of TWII should be working. Fixed
+	Voigt profile (average rather than sum per bin). Fixes total
+	pressure (now uses mean molecular weight). TD: Lorentz profile
+	only uses one specie rather than an average.
+	* Release 1.0pre0: All (?) but ASCII TWII should be working.

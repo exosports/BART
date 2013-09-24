@@ -1,0 +1,23 @@
+#TLI-ASCII
+#Previous line is mandatory. All other lines that begin with the
+#number sign (#) are comments.
+#This template is valid for version 3 of TLI.
+
+#Number of databases
+<m-database>
+
+#For each database, one after the other, give info about isotope
+#number, temperature points number, isotope's name and mass, and
+#temperature dependent cross section and partition function, for each
+#column, respectively.  Use the following format for each database i
+<DATABASENAMEi> <NISOi> <NTEMPi>
+<ISONAME-1> <ISOMASS-1> ... <ISONAME-NISOi> <ISOMASS-NISOi>
+<TEMP,1>      <Z,1-1>      ... <Z,1-NISO1>      <CS,1-1>      ... <CS,1-NISO1>
+...
+<TEMP,NTEMP1> <Z,NTEMP1-1> ... <Z,NTEMP1-NISO1> <CS,NTEMP1-1> ... <CS,NTEMP1-NISO1>
+
+#Now all the transition info, in the following format
+<CENTERWAV1> <ISOID1> <LOWENERGY1> <LOGGF1>
+<CENTERWAV2> <ISOID2> <LOWENERGY2> <LOGGF2>
+...
+...

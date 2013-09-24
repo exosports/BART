@@ -1,0 +1,7 @@
+Monotonous Temperature
+======================
+
+  Temperature is assumed increasing monotonous inwards. Otherwise CIA
+calculations are in mistake. This is necesary for GSL spline.
+  Changes to correct this would have to be made at the beginning of
+interpolatecia function on cia.c.
