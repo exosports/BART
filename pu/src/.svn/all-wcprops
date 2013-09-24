@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src
+END
+Rules.mk
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/Rules.mk
+END
+numerical.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/numerical.c
+END
+xmalloc.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/xmalloc.c
+END
+iomisc.c
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/iomisc.c
+END
+messagep.c
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/messagep.c
+END
+procopt.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/procopt.c
+END
+obsoletecode.c
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/obsoletecode.c
+END
+voigt.c
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/voigt.c
+END
+sampling.c
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/astro/!svn/ver/3561/tags/sw/pu/1.987/src/sampling.c
+END
