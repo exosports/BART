@@ -1,0 +1,64 @@
+#Comments are ignored.  Parameter lines *lines starting withj an
+#identifier, could appear in any order unless otherwise specified.
+#Atmospheric profile (non-parameter ) lines must come after all
+#parameter lines.
+
+#An optional line starting with 'n' stores identification info about
+#the file (e.g., 'Data from Blah et al. 2009'). Only the first of such
+#lines will be stored
+n <source of this info>
+
+
+#Indication of whether abundances below are by mass or number.  Only
+#one such line should exist indicating abundances by mass or by
+#number.  This parameter has precedence over the command line option.
+q mass
+#or
+q number
+
+
+#Unit conversion or offset.  Optional factors can also be specified in
+#a line starting with u<variable>, where <variable> can be either 'r',
+#'t', or 'p' for radius, temperature or pressure, respectively.  These
+#quantities will be in c.g.s. units after being multiplied by such
+#factors.  The optional radius offset is specified in file
+#units. i.e., before multiplication by the 'ur' factor.
+ur <factor to convert radius to cm>
+ut <factor to convert temperature to K>
+up <factor to convert pressure to dynes/cm2>
+z  <radius offset in same units as tabulated data>
+
+
+#Lines starting with i contain isotope information.  The number of
+#isotopes must coincide with the number of abundance columns in the
+#atmospheric profile lines below.
+i <mass1-name1>           <mass2-name2>
+i <mass3name3>
+i    <mass4-name4> <mass5-name5>
+
+#An isotope starting with '!' is ignored but has to have a column
+#below.  This can be used for reference to isotopes specified in lines
+#with 'f'.
+i !<massi6-namei6>
+
+
+#Lines starting with f contain isotopes that are going to be obtained
+#from other isotopes abundances.  Equal sign is optional.  They MUST
+#come after 'i' lines.
+
+#In the following example the 7th isotope will have <fct> times the
+#abundance of the Xth isotope.
+f <massi7-namei7> = <fct> <nameX>
+
+#You can use the special keyword 'other' as the reference isotope to
+#indicate that the reference abundance will be whathever is needed to
+#complete a total abundance of 1.  The line below sets the abundance
+#of the 8th isotope to <fct> of the non-accounted atmospheric
+#abundance (typically used for Helium and Hydrogen abundances)
+f <massi8-namei8> <fct> other
+
+
+#From the first non-keyworded line everything is atmospheric info
+<radius1> <pressure1> <temperature1> <abund1,iso1> ... <abund1,iso6>
+<radius2> <pressure2> <temperature2> <abund2,iso1> ... <abund2,iso6>
+.....

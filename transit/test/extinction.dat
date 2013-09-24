@@ -1,0 +1,5 @@
+ tau::ex->e[0][12][25] = 6.1193981760289215e-07
+
+at wavenumber 5500.156778 the 3rd layer is below 20 in the new version
+but above 20 in the old one??
+

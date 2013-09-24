@@ -1,0 +1,102 @@
+    ********* LINEREAD *********
+
+
+  Readme file for version 4.x  
+
+========================================================================
+
+CONTACT INFO AND HOMEPAGE
+
+  Patricio Rojo
+     Departamento de Astronomia
+     Universidad de Chile
+     Casilla 36-D
+     Santiago, RM
+     Chile
+    pato@das.uchile.cl
+
+ Check for the most recent release of lineread at:
+  http://www.das.uchile.cl/~pato/sw/
+
+========================================================================
+DIRECTORIES AND IMPORTANT FILES:
+
+---
+ ./             Directory will contain, in addition to the files
+                below, a copy of the binaries after running 'make'.
+   Makefile
+   Rules.mk
+   Beauty.mk          These 3 files contains the instructions for
+                      Makefile to compile the code.  Target
+                      directories should be changed in './Makefile'.
+   README             This file.
+   COPYING            Full GNU General Public License text.
+
+---
+ ./doc/         Documentation
+   template-ascii.tli       These files are the template input file
+                      for the ascii-TLI format of a line-transition
+                      database.
+   changelog          Contains description of the changes between
+                      different releases.
+
+---
+  ./src         Commented source code.
+
+---
+  ./include     Headers for the code.
+
+---
+  ./scripts     Scripts required for the compilation of the code.
+
+---
+  ./tests       Test routines during different development stages.
+                Files could be very obsolete.
+
+========================================================================
+PRE-REQUIREMENTS:
+
+  pu library: This is a C code library by Patricio Rojo available
+              under the GNU General Public License on the author's
+              website: http://www.das.uchile.cl/~pato/sw/. Version
+              1.28 of this library was used for this version of
+              transit.
+  line database(s): This are a requirement to run lineread, not to compile
+              it.  Supported databases are shown below.
+
+=======================================================================
+LINE DATABASES:
+  P&S Water Lines:  The water transition database in a version readable
+              by this program is available from Dr. Robert L. Kurucz's
+              website:  http://kurucz.harvard.edu/molecules/H2O/.
+              Original data from Harry Partridge and David W. Schwenke
+              in J. Chem. Phys. 106, pp 4618-4639, 1997.
+
+========================================================================
+COMPILATION: 
+
+  Edit Makefile to make sure that BIN is the directory where you want
+the binaries to be.  Then, execute one after the other the following
+commands:
+
+   make clean
+   make 
+   make install
+
+========================================================================
+EXECUTING LINEREAD:
+  This program is used to build the binary TLI file that transit uses.
+Right now it can only read the Partridge and Schwenke database as
+prepared by Kurucz in the default location:
+    ./oth/pands/h2ofast.bin
+    ./oth/pands/h2opartfn.dat
+
+  To get a list of options
+
+   lineread -h
+
+-----
+ EXAMPLE:
+
+    lineread 1748.5 1828.5 >./res/lineread.tli
+
