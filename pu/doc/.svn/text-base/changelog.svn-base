@@ -1,0 +1,23 @@
+2012-12-18   Patricio Rojo <pato@oan.cl>
+
+        * Release 1.987
+        * prochelp() in procopt now prints in stdout, optionally in
+	stderr
+
+2011-05-13   Patricio Rojo <pato@oan.cl>
+
+	* Release 1.98
+	* Fix src/Rules.mk recursivity
+	* Improve padding of procopt (ignore multiple spaces)
+
+2006-09-11   Patricio Rojo <pato@astro.cornell.edu>
+
+	* Release 1.28
+	* Lots of debugging. Especially procopt.c
+	* General documentation improved.
+
+2004-09-19   Patricio Rojo <pato@astro.cornell.edu>
+
+	* Release 1.0
+	* Copyright notices added.
+	* First public release.
