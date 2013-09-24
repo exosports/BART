@@ -17,7 +17,7 @@ Madison Stemm
 
 With support from:
 
-Jonathan Fortney (UCSC), Nikku Madhusudhan (Yale), Patricio Rojo (U. de Chil)
+Jonathan Fortney (UCSC), Nikku Madhusudhan (Yale), Patricio Rojo (U. de Chile)
 
 BART Development Plan
 
