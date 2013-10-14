@@ -22,33 +22,33 @@
 
 #include <messagep.h>
 
-/* keeps tracks of number of errors that where allowed to continue. */
+/* Keeps tracks of number of errors that where allowed to continue. */
 static int msgp_allown=0;
 int msgp_nowarn=0;
 int verblevel;
 int maxline=1000;
 static char *prgname=NULL;
 
+/* Set the value of prgname   */
 void
-messagep_name(char *name)
-{
+messagep_name(char *name){
   if(prgname) free(prgname);
-  prgname = (char *)calloc(strlen(name)+1,sizeof(char *));
+  prgname = (char *)calloc(strlen(name)+1, sizeof(char *));
   strcpy(prgname, name);
 }
 
-void messagep_free()
-{
+/* Free prgname variable      */
+void 
+messagep_free(){
   free(prgname);
 }
 
 int
-mperror_fcn (int flags,
-		  const char *file,
-		  const long line,
-		  const char *str,
-		  ...)
-{
+mperror_fcn(int flags,
+            const char *file,
+            const long line,
+            const char *str,
+            ...){
   va_list ap;
 
   va_start(ap,str);
@@ -65,21 +65,20 @@ mperror_fcn (int flags,
   @returns Number of characters wrote to the standard error file
              descriptor if PERR\_ALLOWCONT is set, otherwise, it ends
              execution of program.
-	   0 if it is a warning call and 'msgp\_nowarn' is 1
-*/
-int vmperror_fcn(int flags, 
-		 const char *file,
-		 const long line,
-		 const char *str,
-		 va_list ap)
-{
+             0 if it is a warning call and 'msgp\_nowarn' is 1           */
+int 
+vmperror_fcn(int flags, 
+                 const char *file,
+                 const long line,
+                 const char *str,
+                 va_list ap){
   char error[7][22]={"",
-		     ":: SYSTEM: ",         /* Produced by the code */
-		     ":: USER: ",          /* Produced by the user */
-		     ":: Warning: ",
-		     ":: Not implemented",
-		     ":: Not implemented",
-		     ":: Not implemented"
+                     ":: SYSTEM: ",        /* Produced by the code */
+                     ":: USER: ",          /* Produced by the user */
+                     ":: Warning: ",
+                     ":: Not implemented",
+                     ":: Not implemented",
+                     ":: Not implemented"
   };
   char *errormessage,*out;
   int len, lenout, xtr;
@@ -102,7 +101,7 @@ int vmperror_fcn(int flags,
   len    += strlen(str) + 1 + debugchars;
   lenout  = len;
 
-  errormessage = (char *)calloc(len, sizeof(char));
+  errormessage = (char *)calloc(len,    sizeof(char));
   out          = (char *)calloc(lenout, sizeof(char));
 
   strcat(errormessage,"\n");
@@ -121,17 +120,17 @@ int vmperror_fcn(int flags,
 
   va_list aq;
   va_copy(aq, ap);
-  xtr=vsnprintf(out,lenout,errormessage,ap)+1;
+  xtr=vsnprintf(out, lenout, errormessage, ap)+1;
   va_end(ap);
 
   if(xtr>lenout){
     out=(char *)realloc(out,xtr+1);
-    xtr=vsnprintf(out,xtr+1,errormessage,aq)+1;
+    xtr=vsnprintf(out, xtr+1, errormessage, aq)+1;
   }
   va_end(aq);
   free(errormessage);
 
-  fwrite(out,sizeof(char),xtr-1,stderr);
+  fwrite(out, sizeof(char), xtr-1, stderr);
   free(out);
 
   if (flags&MSGP_ALLOWCONT||(flags&MSGP_NOFLAGBITS)==MSGP_WARNING){
@@ -153,35 +152,31 @@ int vmperror_fcn(int flags,
            0 if no file was given
            -1 File doesn't exist
            -2 File is not of a valid kind (it is a dir or device)
-	   -3 File is not openable (permissions?)
-	   -4 Some error happened, stat returned -1
-*/
-int fileexistopen(char *in,	/* Input filename */
-		  FILE **fp)	/* Opened file pointer if successful */
-{
+           -3 File is not openable (permissions?)
+           -4 Some error happened, stat returned -1                 */
+int fileexistopen(char *in,    /* Input filename                    */
+                  FILE **fp){  /* Opened file pointer if successful */
   struct stat st;
   *fp=NULL;
 
   if(in){
-    //Check whether the suggested file exists, if it doesn't, then use
-    //defaults.
+    /* Check whether the suggested file exists, if it doesn't, 
+       then use defaults                                        */
     if (stat(in, &st) == -1){
       if(errno == ENOENT)
-	return -1;
+        return -1;
       else
-	return -4;
+        return -4;
     }
-    //Not of the valid type
-    else if(!(S_ISREG(st.st_mode)||S_ISFIFO(st.st_mode)))
+    /* Invalid type:            */
+    else if( !(S_ISREG(st.st_mode) || S_ISFIFO(st.st_mode)) )
       return -2;
-    //Not openable
+    /* Not openable:           */
     else if(((*fp)=fopen(in,"r"))==NULL)
       return -3;
-    //No problem!
     return 1;
   }
-
-  //No file was requested
+  /* No file was requested:    */
   return 0;
 
 }
@@ -190,76 +185,57 @@ int fileexistopen(char *in,	/* Input filename */
   Output for the different cases. of fileexistopen()
 
   @return fp of opened file on success
-          NULL on error (doesn't always returns though
-*/
+          NULL on error (doesn't always returns though   */
 FILE *
-verbfileopen(char *in,		/* Input filename */
-	     char *desc)	/* Comment on the kind of file */
-{
+verbfileopen(char *in,          /* Input filename               */
+             char *desc){       /* Comment on the kind of file  */
   FILE *fp;
 
-  switch(fileexistopen(in,&fp)){
-    //Success in opening or user don't want to use atmosphere file
+  switch(fileexistopen(in, &fp)){
+    /* Success in opening or user don't want to use atmosphere file */
   case 1:
     return fp;
   case 0:
-    mperror(MSGP_USER,
-		 "No file was given to open\n");
+    mperror(MSGP_USER, "No file was given to open\n");
     return NULL;
-    //File doesn't exist
+    /* File doesn't exist */
   case -1:
-    mperror(MSGP_USER,
-		 "%s info file '%s' doesn't exist."
-		 ,desc,in);
+    mperror(MSGP_USER, "%s info file '%s' doesn't exist.", desc, in);
     return NULL;
-    //Filetype not valid
+    /* Filetype not valid */
   case -2:
-    mperror(MSGP_USER,
-		 "%sfile '%s' is not of a valid kind\n"
-		 "(it is a dir or device)\n"
-		 ,desc,in);
+    mperror(MSGP_USER, "%sfile '%s' is not of a valid kind (it is a dir or "
+                       "device)\n", desc, in);
     return NULL;
-    //file not openable.
+    /* File not openable  */
   case -3:
-    mperror(MSGP_USER,
-		 "%sfile '%s' is not openable.\n"
-		 "Probably because of permissions.\n"
-		 ,desc,in);
+    mperror(MSGP_USER, "%sfile '%s' is not openable.  Probably because of "
+                       "permissions.\n", desc, in);
     return NULL;
-    //stat returned -1.
+    /* Stat returned -1   */
   case -4:
-    mperror(MSGP_USER,
-		 "Some error happened for %sfile '%s',\n"
-		 "stat() returned -1, but file exists\n"
-		 ,desc,in);
+    mperror(MSGP_USER, "Some error happened for %sfile '%s', stat() returned "
+                       "-1, but file exists\n", desc, in);
     return NULL;
   default:
-    mperror(MSGP_USER,
-		 "Ooops, something weird in file %s, line %i\n"
-		 __FILE__,__LINE__);
+    mperror(MSGP_USER, "Ooops, something weird in file %s, line %i\n",
+                        __FILE__, __LINE__);
   }
   return NULL;
 }
 
 
-
-
-
-
 /* \fcnfh
    This function is called if a line of 'file' was longer than 'max'
-   characters
-*/
+   characters                                                         */
 void 
-linetoolong(int max,		/* Maxiumum length of an accepted line
-				 */ 
-	    char *file,		/* File from which we were reading */
-	    int line)		/* Line who was being read */
+linetoolong(int max,     /* Maxiumum length of an accepted line */
+            char *file,  /* File from which we were reading     */
+            int line)    /* Line who was being read             */
 {
   mperror(MSGP_USER|MSGP_ALLOWCONT,
-	  "Line %i of file '%s' has more than %i characters,\n"
-	  "that is not allowed\n"
-	  ,file,max);
+          "Line %i of file '%s' has more than %i characters, that is not "
+          "allowed\n", file, max);
   exit(EXIT_FAILURE);
 }
 
