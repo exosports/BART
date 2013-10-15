@@ -20,4 +20,5 @@
  *
  **********************************************************************/
 
+/* FINDME: Comment me, what is this, what it is for? */
 #define LR_OK   0x0001

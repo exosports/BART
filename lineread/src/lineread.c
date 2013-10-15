@@ -24,32 +24,30 @@
 
 static struct hints hint;
 
-//Wavelength units is always microns
+/* Wavelength units is always microns */
 double tli_fct = 1e-4;
 const char *tli_fct_name = "microns";
 
 
 int 
-main(int argc, 
-     char **argv)
-{
-
+main(int argc, char **argv){
+  /* Set prgname FINDME: for what?                      */
   messagep_name("lineread");
-
+  /* Read-in command parameters and populate hint       */
   argum(argc, argv, &hint);
-
+  /* Read the data bases using the corresponding driver */
   db_drivers(&hint);
-
+  /* Free drivers and hint structs                      */
   lineread_free();
+  /* Free prgname variable                              */
   messagep_free();
 
   exit(EXIT_SUCCESS);
 }
 
-
+/* Free drivers, hint, and prgname memory: */
 void 
-lineread_free()
-{
+lineread_free(){
   drivers_free(&hint);
   hints_free(&hint);
 }
