@@ -21,8 +21,8 @@ Jonathan Fortney (UCSC), Nikku Madhusudhan (Yale), Patricio Rojo (U. de Chile)
 
 BART Development Plan
 
-0. Fully understand Pato's code (all)
-1. Split transit code into initialization and loop (Patricio)
+0. Fully understand Pato's code (all, esp. Patricio, Jasmina)
+1. Split transit code into initialization and loop (Patricio, Andrew)
 2. Drive loop with arbitrary parameters (Patricio)
    (hope to get here by end of Pato/Patricio visit)
 3. Interface transit code with MC driver (Jasmina, help from Patricio)
