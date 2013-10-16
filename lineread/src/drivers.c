@@ -23,7 +23,8 @@
 
 /* List of functions defined here: 
 
-static inline void pfwrite(void *pointer, size_t size, size_t nmemb, FILE *fp)
+static inline void pfwrite(void *pointer, size_t nmemb, FILE *fp,
+                           ptype t, int verbose_level)
     Print to screen  and write to file the specified data
 
 static inline int find_dbd(char *file, unsigned short nfcn)
