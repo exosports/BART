@@ -88,51 +88,61 @@ typedef enum {CHAR, INT, USHORT, DOUBLE, MASS, Zt, TEMP, CSt, LNDATA} ptype;
 /* Print to screen and write to file the specified data.                  */
 static inline void
 pfwrite(void *pointer,  /* Pointer to the array of elements to be written */
-         size_t size,   /* Size of each element to be writen              */
          size_t nmemb,  /* Number of elements to be writen                */
          FILE *fp,      /* Pointer to file to write in                    */
          ptype t,       /* Input type                                     */
          int verbose_level){ /* Verbosity level                           */
   int i;
+  size_t size;
   char *array;
-  if(size*nmemb)
+  if(nmemb)
     switch(t){
-      case CHAR:
+      case CHAR: /* For a char array print the whole text             */
+        size = sizeof(char);
         array = (char *)malloc(nmemb+1);
         for (i=0; i<nmemb; i++)
           array[i] = *((char *)pointer+i);
         array[i] = '\0';
         MESSAGEP(verbose_level, "%s\n", array);
+        free(array);
         break;
-      case INT:
+      case INT:  /* For all other types, print only the first element */
+        size = sizeof(int32_t);
         MESSAGEP(verbose_level, "%i%s\n",
                  *((int32_t *)pointer), nmemb==1?"":" ...");
         break;
       case USHORT:
+        size = sizeof(unsigned short);
         MESSAGEP(verbose_level, "%u%s\n",
                  *((unsigned short *)pointer), nmemb==1?"":" ...");
         break;
       case DOUBLE:
+        size = sizeof(double);
         MESSAGEP(verbose_level, "%g%s\n",
                  *((double *)pointer), nmemb==1?"":" ...");
         break;
       case MASS:
+        size = sizeof(PREC_MASS);
         MESSAGEP(verbose_level, "%g%s\n",
                  *((PREC_MASS *)pointer), nmemb==1?"":" ...");
         break;
       case TEMP:
+        size = sizeof(PREC_TEMP);
         MESSAGEP(verbose_level, "%g%s\n",
                  *((PREC_TEMP *)pointer), nmemb==1?"":" ...");
         break;
       case Zt:
+        size = sizeof(PREC_Z);
         MESSAGEP(verbose_level, "%g%s\n",
                  *((PREC_Z *)pointer), nmemb==1?"":" ...");
         break;
       case CSt:
+        size = sizeof(PREC_CS);
         MESSAGEP(verbose_level, "%g%s\n",
                  *((PREC_CS *)pointer), nmemb==1?"":" ...");
         break;
       case LNDATA:
+        size = sizeof(PREC_LNDATA);
         MESSAGEP(verbose_level, "%g%s\n",
                  *((PREC_LNDATA *)pointer), nmemb==1?"":" ...");
         break;
@@ -305,21 +315,21 @@ setdriversnoutput(struct hints *hint){
 
   /* Print basic info:  */
   MESSAGEP(verbose_TLIout2, "Magic number:  "); 
-  pfwrite(&magic,           sizeof(int32_t),         1, fpout, INT,    verbose_TLIout2);
+  pfwrite(&magic,             1, fpout, INT,    verbose_TLIout2);
   MESSAGEP(verbose_TLIout2, "TLIVersion:    "); 
-  pfwrite(&TLIversion,      sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout2); 
+  pfwrite(&TLIversion,        1, fpout, USHORT, verbose_TLIout2); 
   MESSAGEP(verbose_TLIout2, "Version:       "); 
-  pfwrite(&version,         sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout2); 
+  pfwrite(&version,           1, fpout, USHORT, verbose_TLIout2); 
   MESSAGEP(verbose_TLIout2, "Revision:      "); 
-  pfwrite(&revision,        sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout2);
+  pfwrite(&revision,          1, fpout, USHORT, verbose_TLIout2);
   MESSAGEP(verbose_TLIout2, "Initial wl:    ");
-  pfwrite(&(hint->iniw),    sizeof(double),          1, fpout, DOUBLE, verbose_TLIout2);
+  pfwrite(&(hint->iniw),      1, fpout, DOUBLE, verbose_TLIout2);
   MESSAGEP(verbose_TLIout2, "Final   wl:    ");
-  pfwrite(&(hint->finw),    sizeof(double),          1, fpout, DOUBLE, verbose_TLIout2);
+  pfwrite(&(hint->finw),      1, fpout, DOUBLE, verbose_TLIout2);
   MESSAGEP(verbose_TLIout2, "Length undefined: "); 
-  pfwrite(&rn,              sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout2); 
+  pfwrite(&rn,                1, fpout, USHORT, verbose_TLIout2); 
   MESSAGEP(verbose_TLIout2, "Undefined:        %s", rn==0?"\n":""); 
-  pfwrite(undefined_string, sizeof(char),           rn, fpout, CHAR,   verbose_TLIout2);
+  pfwrite(undefined_string,  rn, fpout, CHAR,   verbose_TLIout2);
 
   messagep(2, "done.\n");
 
@@ -342,7 +352,7 @@ readwritepartition(unsigned short *acum){
   messagep(2, "Reading and writing partition function information:\n");
   long ndbpos = ftell(fpout); /* Get current file pointer position */
   MESSAGEP(verbose_TLIout, "Number of DBs:    ");
-  pfwrite(&ndb,  sizeof(unsigned short), 1, fpout, USHORT, verbose_TLIout);
+  pfwrite(&ndb, 1, fpout, USHORT, verbose_TLIout);
 
   /* Read info:                                                       */
   for (unsigned short i=0; i<ndb; i++, rdb++){
@@ -361,15 +371,15 @@ readwritepartition(unsigned short *acum){
     MESSAGEP(verbose_TLIout2," For DB #%i (file #%i):\n", rdb, i);
     unsigned short rn = strlen(name);
     MESSAGEP(verbose_TLIout2," Length of name:  ");
-    pfwrite(&rn,    sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout2); 
+    pfwrite(&rn,    1, fpout, USHORT, verbose_TLIout2); 
     MESSAGEP(verbose_TLIout2," Name:  ");
-    pfwrite(name,   sizeof(char),           rn, fpout, CHAR,   verbose_TLIout2); 
+    pfwrite(name,  rn, fpout, CHAR,   verbose_TLIout2); 
     MESSAGEP(verbose_TLIout2," Number of temperatures: ");
-    pfwrite(&nT,    sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout2);
+    pfwrite(&nT,    1, fpout, USHORT, verbose_TLIout2);
     MESSAGEP(verbose_TLIout2," Number of isotopes:     ");
-    pfwrite(&niso,  sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout2);
+    pfwrite(&niso,  1, fpout, USHORT, verbose_TLIout2);
     MESSAGEP(verbose_TLIout2," Temperatures:           ");
-    pfwrite(T,      sizeof(PREC_TEMP),      nT, fpout, TEMP,   verbose_TLIout2); 
+    pfwrite(T,     nT, fpout, TEMP,   verbose_TLIout2); 
     MESSAGEP(verbose_TLIout+1, "Each T: \n");
     for(int k=0; k<nT ; k++)
       MESSAGEP(verbose_TLIout+1, "%5g", T[k]);
@@ -380,19 +390,19 @@ readwritepartition(unsigned short *acum){
       MESSAGEP(verbose_TLIout,"  For isotope %i:\n", j);
       rn = strlen(isonames[j]);
       MESSAGEP(verbose_TLIout,"   Length of name: ");
-      pfwrite(&rn,         sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout);
+      pfwrite(&rn,          1, fpout, USHORT, verbose_TLIout);
       MESSAGEP(verbose_TLIout,"   Name:           ");
-      pfwrite(isonames[j], sizeof(char),           rn, fpout, CHAR,   verbose_TLIout); 
+      pfwrite(isonames[j], rn, fpout, CHAR,   verbose_TLIout); 
       MESSAGEP(verbose_TLIout,"   Masses:         ");
-      pfwrite(mass+j,      sizeof(PREC_MASS),       1, fpout, MASS,   verbose_TLIout);
+      pfwrite(mass+j,       1, fpout, MASS,   verbose_TLIout);
       MESSAGEP(verbose_TLIout,"   Partition:      ");
-      pfwrite(Z[j],        sizeof(PREC_Z),         nT, fpout, Zt,     verbose_TLIout);
+      pfwrite(Z[j],        nT, fpout, Zt,     verbose_TLIout);
       MESSAGEP(verbose_TLIout+1, "Each Z: \n");
       for(int k=0; k<nT; k++)
         MESSAGEP(verbose_TLIout+1, "%8g ", Z[j][k]);
       MESSAGEP(verbose_TLIout+1, "\n");
       MESSAGEP(verbose_TLIout,"   Cross sections: ");
-      pfwrite(CS[j],       sizeof(PREC_CS),        nT, fpout, CSt,    verbose_TLIout);
+      pfwrite(CS[j],       nT, fpout, CSt,    verbose_TLIout);
       MESSAGEP(verbose_TLIout+1, "Each CS: \n");
       for(int k=0; k<nT; k++)
         MESSAGEP(verbose_TLIout+1, "%g  ", CS[j][k]);
@@ -400,7 +410,7 @@ readwritepartition(unsigned short *acum){
     }
 
     MESSAGEP(verbose_TLIout, " DB correlative number: ");
-    pfwrite(&rdb, sizeof(unsigned short),  1, fpout, USHORT, verbose_TLIout);
+    pfwrite(&rdb, 1, fpout, USHORT, verbose_TLIout);
 
     /* Free memory: */
     free(name);
@@ -428,11 +438,11 @@ readwritepartition(unsigned short *acum){
   long ndbpos2 = ftell(fpout);
   fseek(fpout, ndbpos, SEEK_SET);
   MESSAGEP(verbose_TLIout, "Corrected Number of DBs:  "); 
-  pfwrite(&rdb, sizeof(unsigned short), 1, fpout, USHORT, verbose_TLIout); 
+  pfwrite(&rdb, 1, fpout, USHORT, verbose_TLIout); 
   fseek(fpout, ndbpos2, SEEK_SET);
 
   MESSAGEP(verbose_TLIout, "Total number of isotopes: ");
-  pfwrite(acum+ndb, sizeof(unsigned short), 1, fpout, USHORT, verbose_TLIout);
+  pfwrite(acum+ndb, 1, fpout, USHORT, verbose_TLIout);
   MESSAGEP(verbose_TLIout, "--------------------------\n");
 
   messagep(2, "done.\n");
@@ -482,13 +492,13 @@ readwritetransition(unsigned short *acum, /* Cumul. number of isotopes/DB    */
       unsigned short id = acum[mindb] + curr[mindb]->isoid;
       verbose_TLIout += 2;
       MESSAGEP(verbose_TLIout, "Wavelength:  %g - ", curr[mindb]->wl);
-      pfwrite(&(curr[mindb]->wl), sizeof(PREC_LNDATA),    1, fpout, LNDATA, verbose_TLIout);
+      pfwrite(&(curr[mindb]->wl), 1, fpout, LNDATA, verbose_TLIout);
       MESSAGEP(verbose_TLIout, " Isotope ID: ");
-      pfwrite(&id,                sizeof(unsigned short), 1, fpout, USHORT, verbose_TLIout);
+      pfwrite(&id,                1, fpout, USHORT, verbose_TLIout);
       MESSAGEP(verbose_TLIout, " Elow:       ");
-      pfwrite(&curr[mindb]->elow, sizeof(PREC_LNDATA),    1, fpout, LNDATA, verbose_TLIout);
+      pfwrite(&curr[mindb]->elow, 1, fpout, LNDATA, verbose_TLIout);
       MESSAGEP(verbose_TLIout, " gf:         ");
-      pfwrite(&curr[mindb]->gf,   sizeof(PREC_LNDATA),    1, fpout, LNDATA, verbose_TLIout);
+      pfwrite(&curr[mindb]->gf,   1, fpout, LNDATA, verbose_TLIout);
       verbose_TLIout -= 2;
 
       nrec++; /* Count number of lines records */
