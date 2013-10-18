@@ -78,8 +78,8 @@ argum(int argc,             /* Number of arguments in call */
      "the program is executed fully"},
     {"quiet",   'q', no_argument,  NULL,
      NULL, "No output other than error messages are printed"},
-    {"verbose", 'v', no_argument,  NULL,
-     NULL, "Increase verbose by one level for each 'v'"},
+    {"verbose", 'v', required_argument, "2",
+     "integer value", "Set the verbose level"},
     {"help",    'h', no_argument,  NULL,
      NULL, "Prints list of possible parameters"},
     {"version", 'V', no_argument,  NULL,
@@ -214,7 +214,7 @@ argum(int argc,             /* Number of arguments in call */
       break;
 
     case 'v':
-      verblevel++;
+      verblevel = strtol(optarg, &endptr, 10);
       break;
 
     case 'V':
@@ -260,8 +260,8 @@ argum(int argc,             /* Number of arguments in call */
   /* Store the DBs given as non-option */
   argv += optind;
   argc -= optind;  /* Number of non-option arguments */
-  messagep(4,"There are %i DBs specified with --database and %i as non-option.\n",
-           hint->ndb, argc);
+  messagep(4,"There are %i DBs specified with --database and %i as "
+           "non-option.\n", hint->ndb, argc);
   /* No data bases case: */
   if (hint->ndb+argc<1){
     lineread_free();
