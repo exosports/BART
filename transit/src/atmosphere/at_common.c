@@ -21,21 +21,17 @@
 
 #include <readatm.h>
 
-
 /* \fcnfh
-   Skip to the next field pointed by 'lp', omits leading and trailing
-   spaces.
-
-   @returns pointer to the beginning of next non-space
-*/
+   Move pointer 'lp' to next field.
+   @returns pointer to the beginning of next non-space                  */
 inline static char *
-nextfield(char *lp)
-{
-  while(*lp==' '||*lp=='\t') lp++;
-  while(*lp!=' '&&*lp!='\0') lp++;
-  while(*lp==' '||*lp=='\t') lp++;
+nextfield(char *lp){
+  /* Skip leading blank spaces and tabs: */
+  while(*lp == ' ' || *lp == '\t') lp++;
+  /* Skip field                          */
+  while(*lp != ' ' && *lp != '\0') lp++;
+  /* Skip trailing blank spaces and tabs */
+  while(*lp == ' ' || *lp == '\t') lp++;
 
   return lp;
 }
-
-

@@ -132,25 +132,25 @@ int _voigt_computeeach=10;
 
 static inline int
 meanintegSimp(PREC_VOIGT *in,
-	      PREC_VOIGT *out,
-	      int ni,
-	      int no,
-	      int ipo,
-	      PREC_VOIGT d);
+              PREC_VOIGT *out,
+              int ni,
+              int no,
+              int ipo,
+              PREC_VOIGT d);
 
 static inline int
 meanintegTrap(PREC_VOIGT *in,
-	      PREC_VOIGT *out,
-	      int ni,
-	      int no,
-	      int ipo,
-	      PREC_VOIGT d);
+              PREC_VOIGT *out,
+              int ni,
+              int no,
+              int ipo,
+              PREC_VOIGT d);
 
 static inline void voigtxy(double x,
-			   double y,
-			   PREC_VOIGT *res,
-			   PREC_VOIGT eps,
-			   PREC_VOIGTP alphaD)
+                           double y,
+                           PREC_VOIGT *res,
+                           PREC_VOIGT eps,
+                           PREC_VOIGTP alphaD)
 {
   int i,n;
   long double or,nr,oi,ni,ar,ai; 
@@ -176,9 +176,9 @@ static inline void voigtxy(double x,
       if(n==MAXCONV){
         if(i>n){
           fprintf(stderr,
-		  "%s:: No convergence after %i iterations in "
-		  "VOIGTXY() calculations (voigt.c file)\n"
-		  ,__FILE__,MAXCONV);
+                  "%s:: No convergence after %i iterations in "
+                  "VOIGTXY() calculations (voigt.c file)\n"
+                  ,__FILE__,MAXCONV);
           break;
         }
         if(fabs(ferf[i]*(cosxy*nr + sinxy*ni))<eps)
@@ -186,7 +186,7 @@ static inline void voigtxy(double x,
       }
       else 
 #endif /* Precision convergence */
-	if(i>n) break;
+        if(i>n) break;
       ai+=ni*ferf[i];
       ar+=nr*ferf[i];
 
@@ -222,23 +222,23 @@ static inline void voigtxy(double x,
 
 //\fcnfh
 //Computes Voigt Profile 
-inline int voigtf(int nwn,	/* Number of wavenumber bins where the
-				   function is to be computed. In other
-				   words, the size of the following
-				   array 'wn'. */
-		  PREC_VOIGT *wn, /* Array with the value of wavenumber
-				     bins for which the Voigt function
-				     wants to be calculated. */
-		  PREC_VOIGT wn0, /* Value of the wavenumber to be the
-				     center of the profile. */
-		  PREC_VOIGTP alphaL, /* Lorentz width '$\alpha_L$'. */
-		  PREC_VOIGTP alphaD, /* Doppler width '$\alpha_D$'. */
-		  PREC_VOIGT *vpro, /* Array of length 'nwn' where the
-				       final profile will be stored */
+inline int voigtf(int nwn,        /* Number of wavenumber bins where the
+                                   function is to be computed. In other
+                                   words, the size of the following
+                                   array 'wn'. */
+                  PREC_VOIGT *wn, /* Array with the value of wavenumber
+                                     bins for which the Voigt function
+                                     wants to be calculated. */
+                  PREC_VOIGT wn0, /* Value of the wavenumber to be the
+                                     center of the profile. */
+                  PREC_VOIGTP alphaL, /* Lorentz width '$\alpha_L$'. */
+                  PREC_VOIGTP alphaD, /* Doppler width '$\alpha_D$'. */
+                  PREC_VOIGT *vpro, /* Array of length 'nwn' where the
+                                       final profile will be stored */
                   PREC_VOIGTP eps) /* Precision to which the profile is
-				      to be calculated. If negative,
-				      a fixed number of iterations is
-				      calculated. */
+                                      to be calculated. If negative,
+                                      a fixed number of iterations is
+                                      calculated. */
 {
   double y,x;
   int i;
@@ -255,39 +255,34 @@ inline int voigtf(int nwn,	/* Number of wavenumber bins where the
 
 
 /*\fcnfh
-  Computes voigt profile at equispaced points.
+  Compute Voigt profile on equispaced grid
 
-  @returns 1 on success
-*/
-inline int voigtn(int m,	/* Number of fine resolution bins that
-				   are going to be calculated for
-				   deviations of line center from bin
-				   center. */
-		  int nwn,	/* Number of wavenumber bins where the
-				   function is to be computed. In other
-				   words, the size of the following
-				   array 'vpro'. */
-		  PREC_VOIGTP dwn, /* Total wavenumber half width to
-				      sample. */
-		  PREC_VOIGTP alphaL, /* Lorentz width '$\alpha_L$'. */
-		  PREC_VOIGTP alphaD, /* Doppler width '$\alpha_D$'. */
-		  PREC_VOIGT **vpro, /* Array of length 'm' by 'nwn'
-				       where the final profile will be
-				       stored. The first dimension is
-				       deviation of line center from bin
-				       center (center shift position)
-				       and the second dimension is the
-				       wavenumber separation from the
-				       central bin. */
-		  PREC_VOIGTP eps, /* Precision to which the profile is
-				      to be calculated. If negative, a
-				      fixed number of iterations are
-				      performed. */
-		  int flags)	/* Miscellaneous flags, so far there is
-				   support for: 'VOIGT\_QUICK' that
-				   performs a quick integration, i.e.,
-				   just the height multiplied by the bin
-				   width */
+  Return: 1 on success                           */
+inline int voigtn(int m,        /* Number of fine resolution bins to be
+                                   calculated for deviations of line center
+                                   from bin center.   */
+                  int nwn,        /* Number of wavenumber bins where the
+                                   function is to be computed (size of vpro) */
+                  PREC_VOIGTP dwn, /* Wavenumber half-width sample   */
+                  PREC_VOIGTP alphaL, /* Lorentz width '$\alpha_L$'  */
+                  PREC_VOIGTP alphaD, /* Doppler width '$\alpha_D$'  */
+                  PREC_VOIGT **vpro, /* Array of length 'm' by 'nwn'
+                                       where the final profile will be
+                                       stored. The first dimension is
+                                       deviation of line center from bin
+                                       center (center shift position)
+                                       and the second dimension is the
+                                       wavenumber separation from the
+                                       central bin. */
+                  PREC_VOIGTP eps, /* Precision to which the profile is
+                                      to be calculated. If negative, a
+                                      fixed number of iterations are
+                                      performed. */
+                  int flags)        /* Miscellaneous flags, so far there is
+                                   support for: 'VOIGT\_QUICK' that
+                                   performs a quick integration, i.e.,
+                                   just the height multiplied by the bin
+                                   width */
 {
   //The calculation is going to be done filling the array from the
   //centerpoint outwards. The wavenumber value of each bin is
@@ -355,9 +350,9 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
   //Initialize \vr{aint} array
   if((aint=(PREC_VOIGT *)calloc(nint,sizeof(PREC_VOIGT)))==NULL){
     fprintf(stderr,
-	    "\nUnable to allocate memory in voigtxy for %i double\n"
-	    "elements (%.3g MB).\n"
-	    ,nint,(sizeof(PREC_VOIGT)*nint)/1024.0/1024.0);
+            "\nUnable to allocate memory in voigtxy for %i double\n"
+            "elements (%.3g MB).\n"
+            ,nint,(sizeof(PREC_VOIGT)*nint)/1024.0/1024.0);
     fprintf(stderr,"nwn: %i\n",nwn);
     exit(EXIT_FAILURE);
   }
@@ -376,7 +371,7 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
       x=SQRTLN2*fabs(dint*i-shft)/alphaD;
       voigtxy(x,y,aint+i,eps,alphaD);
       /*      if(!(i%100))
-	      getchar();*/
+              getchar();*/
     }
 
     //Integration!
@@ -384,7 +379,7 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
     if(flags&VOIGT_QUICK){
       //if so, just return the value at the beginning of each bin
       for(i=0;i<nwn;i++)
-	vpro[j][i]=aint[i];
+        vpro[j][i]=aint[i];
     }
     //If a slow integration is preferred, then
     //calculate the number of fine-point per regular points, note that
@@ -394,19 +389,19 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
       ddwn=(float)(nint-1)/nwn;
       i=(int)ddwn+1;
       if(ddwn+1!=i){
-	fprintf(stderr,
-		"%s:: There are not an integer number(%f!=%i) of\n"
-		"fine-bins(%i) for each bin(%i)\n"
-		,__FILE__,ddwn+1,i,nint-1,nwn);
-	exit(EXIT_FAILURE);
+        fprintf(stderr,
+                "%s:: There are not an integer number(%f!=%i) of\n"
+                "fine-bins(%i) for each bin(%i)\n"
+                ,__FILE__,ddwn+1,i,nint-1,nwn);
+        exit(EXIT_FAILURE);
       }
 
       //Is this number an odd number?
       //If so, use Simpson's integration, otherwise use trapezoidal. 
       if(i&1)
-	meanintegSimp(aint,vpro[j],nint,nwn,i,dint);
+        meanintegSimp(aint,vpro[j],nint,nwn,i,dint);
       else
-	meanintegTrap(aint,vpro[j],nint,nwn,i,dint);
+        meanintegTrap(aint,vpro[j],nint,nwn,i,dint);
     }
 
   }
@@ -423,12 +418,12 @@ inline int voigtn(int m,	/* Number of fine resolution bins that
   @returns 1 if success
 */
 static inline int
-meanintegSimp(PREC_VOIGT *in,	/* Input array */
-	      PREC_VOIGT *out,	/* Output array */
-	      int ni,		/* Number of input elements */
-	      int no,		/* Number of output elements */
-	      int ipo,		/* Number of inputs per output */
-	      PREC_VOIGT d)     /* bin width */
+meanintegSimp(PREC_VOIGT *in,        /* Input array */
+              PREC_VOIGT *out,        /* Output array */
+              int ni,                /* Number of input elements */
+              int no,                /* Number of output elements */
+              int ipo,                /* Number of inputs per output */
+              PREC_VOIGT d)     /* bin width */
 {
   //Indexes for the in array. To speed up, \vr{ipo} will be the
   //last index in the sub-arrays instead of the number of elements
@@ -461,12 +456,12 @@ meanintegSimp(PREC_VOIGT *in,	/* Input array */
   @returns 1 if success.
 */
 static inline int
-meanintegTrap(PREC_VOIGT *in,	/* Input Array */
-	      PREC_VOIGT *out,	/* Output Array */
-	      int ni,		/* Number of input elements */	 
-	      int no,		/* Number of output elements */	 
-	      int ipo,		/* Number of inputs per output */
-	      PREC_VOIGT d)	/* bin width */
+meanintegTrap(PREC_VOIGT *in,        /* Input Array */
+              PREC_VOIGT *out,        /* Output Array */
+              int ni,                /* Number of input elements */         
+              int no,                /* Number of output elements */         
+              int ipo,                /* Number of inputs per output */
+              PREC_VOIGT d)        /* bin width */
 {
   //Index for the in array. To speed up, \vr{ipo} will be the
   //last index in the sub-arrays instead of the number of elements

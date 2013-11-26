@@ -19,6 +19,36 @@
  * 02111-1307, USA.
  */
 
+
+/* List of functions defined in this file:
+int    ncharchg (char *str, char car, char chg)
+int    nchar (char *str, char car)
+char  *readstr_sp_alloc (char *line, char **next, char fspace)
+void   freetoolongerr ()
+void   settoolongerr (void (*errfcn)(int, char *, int), char *filename,
+                      long *currline)
+inline
+ char fgetupto_err (char *line, int max, FILE *fp,
+                    void (*errfcn)(int, char *, int), char *name, long curr)
+inline
+  char fgetupto (char *line, int max, FILE *fp)
+int    getad (int n, char sep, char *str, double **array)
+int    getnd (int n, char sep, char *str, ...)
+int    getnl (int n, char sep, char *str, ...)
+void   fprintpad (FILE *fp, int indent, char *fmt, ...)
+double readds (FILE *fp, char *c, char *string, int maxstring)
+double getds (char *in, char *c, char *string, int maxstring) 
+long   readl (FILE *fp, char *c)
+char  *linepad (char *out, int nc, char *in)
+double askforposd (char *fmt, ...)
+long   askforposl (char *fmt, ...)
+char  *fgets_alloc (FILE *fp, int *max)
+void   splitnzero_add (char ***array, char *string, char sep)
+char **splitnzero_alloc (char *string, char sep) 
+void   splitnzero_free (char **multi)
+long   countfields (char *l, char sep)
+*/
+
 #include <pu/iomisc.h>
 
 char *linepad_break="-";
@@ -27,13 +57,11 @@ char printpad_endpadchar=' ';
 
 
 /* \fcnfh
-   Count ocurrences of 'car' in 'str', replacing each of them by 'chg'.
-*/
+   Count ocurrences of 'car' in 'str', replacing each of them by 'chg' */
 int
 ncharchg(char *str,
-	 char car,
-	 char chg)
-{
+         char car,
+         char chg){
   int n=0;
   while(*str)
     if(*str++==car){
@@ -45,12 +73,10 @@ ncharchg(char *str,
 
 
 /* \fcnfh
-   Count ocurrences of 'car' in 'str'.
-*/
+   Count ocurrences of 'car' in 'str'  */
 int
 nchar(char *str,
-      char car)
-{
+      char car){
   int n=0;
   while(*str)
     if(*str++==car)
@@ -64,39 +90,37 @@ nchar(char *str,
    indicates a false space character, which is going to be replaced
    before returning.
 
-   @returns string in a newly allocated array
-            NULL if allocation was not possible
-*/
+   Return: string in a newly allocated array, else
+           NULL if allocation was not possible                               */
 char *
-readstr_sp_alloc(char *line,	/* Input array */
-		 char **next,	/* pointer to the character after the
-				   last one used */
-		 char fspace)	/* False space character, any ocurrence
-				   of this will be replaced by space
-				   before returning */
-{
+readstr_sp_alloc(char *line,   /* Input array                                */
+                 char **next,  /* pointer to char after the last one used    */
+                 char fspace){ /* Character to be replaced by the space char */
   char *lp;
   static char *ret;
   int rn;
 
-  while(*line==' ')
+  while(*line==' ')  /* Skip empty chars                          */
     line++;
-  lp=line;
-  while(*lp&&*lp!=' '&&*lp!='\t')
+  /* Use lp to keep reading, until NULL, empty or tab char found: */
+  lp = line;
+  while(*lp && *lp!=' ' && *lp!='\t')
     lp++;
 
-  rn=lp-line;
-  if((ret=(char *)calloc(rn+1,sizeof(char)))==NULL)
+  rn = lp-line; /* Length of string    */
+  if((ret=(char *)calloc(rn+1, sizeof(char)))==NULL)
     return NULL;
+  /* Set next if not NULL input:       */
   if(next)
-    *next=lp;
-  strncpy(lp=ret,line,rn);
+    *next = lp;
+  /* Copy result into ret and lp:      */
+  strncpy(lp=ret, line, rn);
   ret[rn]='\0';
-  //change 'fspace' per spaces
+  /* Replace 'fspace' by blank spaces: */
   if(fspace)
     while(*lp)
-      if(*lp++==fspace)
-	lp[-1]=' ';
+      if(*lp++ == fspace)
+        lp[-1]=' ';
 
   return ret;
 }
@@ -105,25 +129,23 @@ static void (*fgut_errfcn)(int, char *, int) = NULL;
 static char *fgut_file = NULL;
 static long *fgut_currline = NULL;
 
+
 /* \fcnfh
-   Free memory for fgetupto_se()
-*/
+   Free memory for fgetupto_se() */
 void
-freetoolongerr()
-{
+freetoolongerr(){
   if(fgut_file)
     free(fgut_file);
 }
 
+
 /* \fcnfh
    Store error call for fgetupto_se() so that they don't need to be
-   specified each time
-*/
+   specified each time                                               */
 void
 settoolongerr(void (*errfcn)(int, char *, int),
-	      char *filename,
-	      long *currline)
-{
+              char *filename,
+              long *currline){
   fgut_errfcn = errfcn;
   if(fgut_file)
     free(fgut_file);
@@ -132,80 +154,69 @@ settoolongerr(void (*errfcn)(int, char *, int),
   fgut_currline = currline;
 }
 
+
 /* \fcnfh
-   reads into 'line' from 'fp' up to 'max' characters, it checks that the
-   last character read is '\\n', if not and it is not the end of file,
-   then it assumes error as max was too small and calls errfcn with
-   parameters 'max' and 'name'. If '\\n' is found then it takes it out
-   from the returned value. the idea behind returning the first
-   character is to quickly identify comment lines
+   Reads characters from 'fp' into 'line' until 'max' characters have been 
+   read, or newline or end-of-file is reached.  Strips off the newline
+   character in 'line' if exists.  If no newline nor end-of-file
+   is reached before 'max' chars have been read, call errfcn.
 
-   @returns 0 if end of file is reached while no characters were read
-            first character read otherwise.
-	    -1 if no error function was given.
-*/
+   @returns: 0, if end of file is reached while no characters were read.
+             1, if no error function was given.
+             The first character read, otherwise.                          */
 inline char
-fgetupto_err(char *line,		/* Where input is stored, it
-					   has to have dimension 'max'
-					*/ 
-	     int max, 		/* dimension of 'line' */
-	     FILE *fp,		/* File pointer to read from */
-	     void (*errfcn)(int,char *, int), /* Error funtion to call
-						 in case a newline is
-						 not the last
-						 character read and we
-						 reached 'max' */
-	     char *name,	/* Second parameter with which errfcn
-				   is going to be called */
-	     long curr)
-{
+fgetupto_err(char *line,  /* Where input is stored                         */
+             int max,     /* Maximum number of characters to read          */
+             FILE *fp,    /* File pointer to read from                     */
+             void (*errfcn)(int, char *, int),
+                          /* Error funtion to call in case a newline is not
+                             the last character read and we reached 'max'  */
+             char *name,  /* Second argument for errfcn                    */
+             long curr){  /* Third argument for errfcn                     */
   char *lp;
-  int n=0;
+  int n=0;      /* Size of output (does not include `\\0')  */
 
-  if((lp=fgets(line,max,fp))==NULL)
-    return 0;
-  //'n' does not include `\\0'
-  while(*lp++)
+  if((lp=fgets(line, max, fp))==NULL)
+    return 0;   /* End-of-line case   */
+  while(*lp++)  /* Get length of char */
     n++;
 
   if(n==0){
     fprintf(stderr,
-	    "UYYUYUY!, this should had not happened ever, maybe\n"
-	    "fgets() is not working?. File %s, line %i\n"
-	    ,__FILE__,__LINE__);
+            "This should had never happen, maybe fgets() is not working?. "
+            "File %s, line %i.\n", __FILE__, __LINE__);
     exit(EXIT_FAILURE);
   }
 
-  //regular line
-  if(line[n-1]=='\n'){
-    line[--n]='\0';
-    if(!n)
+  /* Strip off \n character:        */
+  if(line[n-1] == '\n'){
+    line[--n] = '\0';
+    if(!n) /* Zero-length output    */
       return '\n';
     return *line;
   }
-  //End of file without a newline
+
+  /* End of line without a newline: */
   else if(n<max-1)
     return *line;
 
-  //Line too large
+  /* Line too long:                 */
   if(errfcn)
-    errfcn(max,name,curr);
+    errfcn(max, name, curr);
   return -1;
 }
 
 
 /* \fcnfh
-   Wrapper for fgetupto() with error parameters previously stored
-*/
+   Wrapper for fgetupto() with error parameters previously stored */
 inline char
 fgetupto(char *line,
-	 int max,
-	 FILE *fp)
-{
-  long zero=0;
+         int max,
+         FILE *fp){
+  long zero = 0;
   if (!fgut_currline) fgut_currline = &zero;
   return fgetupto_err(line, max, fp, fgut_errfcn, fgut_file,
-		      *fgut_currline);
+                      *fgut_currline);
 }
 
 
@@ -214,13 +225,12 @@ fgetupto(char *line,
    they are separated by 'sep'. Allocate and store them in 'array'
 
    @returns number of converted values
-            -x if there were 'x' fields separated by car instead of 'n'.
-*/
+            -x if there were 'x' fields separated by car instead of 'n'. */
 int
-getad(int n,			/* Number of float field to accept */
-      char sep,			/* separation character */
-      char *str,		/* String where to look for values */
-      double **array)		/* Pointers to double value */
+getad(int n,          /* Number of float field to accept */
+      char sep,       /* Separation character            */
+      char *str,      /* String where to look for values */
+      double **array) /* Pointers to double value        */
 {
   char *ptr=str;
   int rn=1;
@@ -230,9 +240,9 @@ getad(int n,			/* Number of float field to accept */
     if(!isdigit(sep)) break;
   case 'e': case 'E': case '.': case '-': case '+':
     fprintf(stderr,
-	    "iomisc:: getnd: invalid separator '%c'. It cannot be a\n"
-	    "digit, '+', '-', 'e', 'E', nor '.'\n"
-	    ,sep);
+            "iomisc:: getnd: invalid separator '%c'. It cannot be a\n"
+            "digit, '+', '-', 'e', 'E', nor '.'\n"
+            ,sep);
     exit(EXIT_FAILURE);
   }
 
@@ -245,23 +255,23 @@ getad(int n,			/* Number of float field to accept */
     return 0;
   if (n&&rn!=n)
     return -rn;
-  n=rn;
-  *array=(double *)calloc(n,sizeof(double));
+  n = rn;
+  *array = (double *)calloc(n, sizeof(double));
 
-  for(rn=0;rn<n;rn++){
-    (*array)[rn]=strtod(str,&ptr);
+  for(rn=0; rn<n; rn++){
+    (*array)[rn] = strtod(str, &ptr);
 
-    while(*ptr!=sep)
+    while(*ptr != sep)
       if(!*ptr++){
-	if(rn!=n-1)
-	  fprintf(stderr,
-		  "iomisc:: getnd: the one with %f was not supposed to\n"
-		  "be the last(%ith) field but it is in: %s\n"
-		  ,(*array)[rn],n,str);
-	else
-	  break;
+        if(rn != n-1)
+          fprintf(stderr,
+                  "iomisc:: getnd: the one with %f was not supposed to\n"
+                  "be the last(%ith) field but it is in: %s\n",
+                  (*array)[rn], n, str);
+        else
+          break;
       }
-    str=ptr+1;
+    str = ptr+1;
   }
 
   return rn;
@@ -269,62 +279,62 @@ getad(int n,			/* Number of float field to accept */
 
 
 /* \fcnfh
-   get 'n' double format numbers from 'str', they are separated by
-   'sep'. There is no way to know which of the 'n' were really
-   converted. The pointers to the non-converted doubles are returned
-   untouched.
+   Get 'n' double-format numbers from 'str' delimited  by 'sep'. 
+   There is no way to know which of the 'n' were really converted. 
+   The pointers to the non-converted doubles are returned untouched.
 
-   @returns number of converted values
-            -x if there were only 'x' fields separated by car instead 
-	       of 'n'.
-*/
+   @Returns number of converted values. else -x if there were only
+    x (<n) values in 'str'.                                          */
 int
-getnd(int n,			/* Number of float field to accept */
-      char sep,			/* separation character. If it is a
-				   space, then it also accept tabs as
-				   separation character */
-      char *str,		/* String where to look for values */
-      ...)			/* Pointers to double value */
-{
-  char *ptr=str;
-  int rn=1,nc=0;
-  double out,*in;
+getnd(int n,     /* Number of float field to accept                */
+      char sep,  /* Separation character.  If it is a space, also
+                    accept tabs as separation character.           */
+      char *str, /* String where to look for values                */
+      ...){      /* Pointers to double values returned             */
+  char *ptr = str; /* Pointer to first character in str       */
+  int rn=1,        /* Number of 'sep' separated values in str */ 
+      nc=0;        /* Number of read values                   */
+  double out, *in;
   va_list ap;
 
   switch(sep){
   default:
     if(!isdigit(sep)) break;
   case 'e': case 'E': case '.': case '-': case '+':
-    fprintf(stderr,
-	    "iomisc:: getnd: invalid separator '%c'. It cannot be a\n"
-	    "digit, '+', '-', 'e', 'E', nor '.'\n"
-	    ,sep);
+    fprintf(stderr, "iomisc:: getnd: Invalid separator '%c'. It cannot be a"
+            "digit, '+', '-', 'e', 'E', nor '.'\n", sep);
     exit(EXIT_FAILURE);
   }
 
+  /* Count the number of 'sep' separated strings in 'str':  */
   do{
-    if(*ptr==sep||(sep==' '&&*ptr=='\t'))
+    if(*ptr==sep || (sep==' ' && *ptr=='\t'))
       rn++;
   }while(*ptr++);
-  if(ptr-1==str)
+  /* Empty str string:                                      */
+  if(ptr-1 == str)
     return 0;
+  /* There were less 'sep'-separated values than requested: */
   if (rn<n)
     return -rn;
 
-  va_start(ap,str);
-  for(rn=0;rn<n;rn++){
-    in=(double *)va_arg(ap,double *);
-    out=strtod(str,&ptr);
-    if(str!=ptr){
-      nc++;
-      *in=out;
+  /* Read the values:                               */
+  va_start(ap, str);
+  for(rn=0; rn<n; rn++){
+    /* Get pointer to store a value in:             */
+    in  = (double *)va_arg(ap, double *);
+    /* Read value from string and conver to double: */
+    out = strtod(str, &ptr);
+    if(str != ptr){  /* If it was correctly read,   */
+      nc++;          /* count that a value was read */
+      *in = out;     /* Assign it to the pointer    */
     }
-
-    while(!(*ptr==sep||(sep==' '&&*ptr=='\t')))
+    /* FINDME: I don't understand what's going on here */
+    while(!(*ptr==sep || (sep==' ' && *ptr=='\t')))
       if(!*ptr++)
-	if(rn==n-1)
-	  break;
-    str=ptr+1;
+        if(rn == n-1) /* If this is the last one,  */
+          break;      /* break out of the for loop */
+    str = ptr+1;
   }
   va_end(ap);
 
@@ -333,115 +343,115 @@ getnd(int n,			/* Number of float field to accept */
 
 
 /* \fcnfh
-   get 'n' long format numbers from 'str', they are separated by
-   'sep'. There is no way to know which of the 'n' were really
-   converted. The non-converted doubles are returned untouched.
+   Split the first 'n' strings of 'str' using 'sep' as delimiter.  Format the
+   substrings as long integers if possible.
 
-   @returns number of converted values
-            -x if there were 'x' fields separated by car instead of 'n'.
-*/
+   @returns: number of converted values
+            -x if there were 'x' fields separated by car instead of 'n'.     */
 int
-getnl(int n,			/* Number of long fields to accept */
-      char sep,			/* separation character. If it is a
-				   space, then it also accept tabs as
-				   separation character */
-      char *str,		/* String where to look for values */
-      ...)			/* Pointers to long value */
-{
-  char *ptr=str;
-  int rn=1,nc=0;
-  long out,*in;
-  va_list ap;
+getnl(int n,     /* Number of long fields to read                            */
+      char sep,  /* Separator character. If it is a space, also accept tabs  */
+      char *str, /* Input string                                             */
+      ...){      /* Pointers to long values                                  */
 
+  char *ptr=str;   /* Pointer to the input string         */
+  int rn=1,        /* Number of sub-strings               */
+      nc=0;        /* Number or stored values             */
+  long out, *in;   /* */
+  va_list ap;      /* Object to handle variable arguments */
+
+  /* Complain if sep is a digit, '+', or '-' sign.        */
   switch(sep){
   default:
     if(!isdigit(sep)) break;
-  case '-': case '+':
+  case '-':
+  case '+':
     fprintf(stderr,
-	    "iomisc:: getnd: invalid separator '%c'. It cannot be a\n"
-	    "digit, '+', nor '-'\n"
-	    ,sep);
+            "iomisc:: getnd: invalid separator '%c'. It cannot be a "
+            "digit, '+', nor '-'.\n", sep);
     exit(EXIT_FAILURE);
   }
 
+  /* Count the number of sub-strings delimited by sep:    */
   do{
-    if(*ptr==sep||(sep==' '&&*ptr=='\t')){
+    if(*ptr==sep || (sep==' ' && *ptr=='\t')){
       rn++;
-      while(*ptr==sep||(sep==' '&&*ptr=='\t'))
-	ptr++;
+      while(*ptr==sep || (sep==' ' && *ptr=='\t'))
+        ptr++;
     }
   }while(*ptr++);
+
+  /* Empty imput string:                                  */
   if(ptr-1==str)
     return 0;
+  /* rn is not the number of requested numbers:           */
   if (rn!=n)
     return -rn;
-  va_start(ap,str);
-  for(rn=0;rn<n;rn++){
-    in=(long *)va_arg(ap,long *);
-    out=strtol(str,&ptr,0);
-    if(str!=ptr){
-      nc++;
-      *in=out;
-    }
 
-    while(!(*ptr==sep||(sep==' '&&*ptr=='\t')))
-      if(!*ptr++){
-	if(rn!=n-1)
-	  fprintf(stderr,
-		  "iomisc:: getnl: the one with %li was not supposed to\n"
-		  "be the last(%ith) field but it is in: %s\n"
-		  ,out,n,str);
-	else
-	  break;
+  /* Store values in input pointers:                      */
+  va_start(ap, str);
+  for(rn=0; rn<n; rn++){
+    in = (long *)va_arg(ap, long *); /* Get pointer       */
+    out = strtol(str, &ptr, 0);      /* Read a number     */
+    if(str != ptr){
+      nc++;               /* Number of saved longs        */
+      *in = out;          /* Set value of the pointer     */
+    }
+    /* Skip separator chars:                              */
+    while(!(*ptr==sep || (sep==' ' && *ptr=='\t')))
+      if(!*ptr++){        /* End of string reached:       */
+        if(rn != n-1)     /* Stored/requested don't match */
+          fprintf(stderr,
+                  "iomisc:: getnl: the one with %li was not supposed to "
+                  "be the last(%ith) field but it is in: %s.\n", out, n, str);
+        else
+          break;
       }
-    str=ptr+1;
+    str = ptr+1; /* Move str pointer to next value       */
   }
   va_end(ap);
   return nc;
 }
 
 /* \fcnfh
-   Prints a parragraph with justification using linepad, it takes a indent
-   value
-*/
+   Prints a parragraph with justification using linepad, it takes a
+   indent value                                                      */
 void
-fprintpad(FILE *fp,		/* File pointer to print */
-	  int indent,		/* Number of blanks to leave at the
-				   beggining */ 
-	  char *fmt,		/* format */
-	  ...)			/* parameters */
-{
-  char *out,*ptr;
+fprintpad(FILE *fp,    /* File pointer to print                      */
+          int indent,  /* Number of blanks to leave at the beginning */ 
+          char *fmt,   /* Format                                     */
+          ...){        /* Parameters                                 */
+  char *out, *ptr;
   int cols;
-  int length=80,reall;
+  int length=80, reall;
   va_list ap;
 
-  out=getenv("COLUMNS");
-  if(!out||!(cols=atoi(out)))
-    cols=printpad_columns;
-  if(indent>=cols)
+  out = getenv("COLUMNS");
+  if(!out || !(cols=atoi(out)))
+    cols = printpad_columns;
+  if(indent >= cols)
     fprintf(stderr,
-	    "iomisc::fprintpad(): Indent(%i) is bigger than columns(%i)\n"
-	    ,indent,cols);
+            "iomisc::fprintpad(): Indent(%i) is bigger than columns(%i).\n",
+            indent, cols);
 
   char top[cols+1];
 
-  out=(char *)calloc(length,sizeof(char));
-  va_start(ap,fmt);
-  reall=vsnprintf(out,length,fmt,ap);
-  if(reall>=length){
-    out=(char *)realloc(out,(reall+1)*sizeof(char));
-    reall=vsnprintf(out,reall+1,fmt,ap);
+  out = (char *)calloc(length, sizeof(char));
+  va_start(ap, fmt);
+  reall = vsnprintf(out, length, fmt, ap);
+  if(reall >= length){
+    out = (char *)realloc(out, (reall+1)*sizeof(char));
+    reall = vsnprintf(out, reall+1, fmt, ap);
   }
   va_end(ap);
 
-  ptr=out;
-  fprintf(stderr,"%*s",indent,"");
-  while((ptr=linepad(top,cols-indent,ptr))){
-    fprintf(stderr,"%s\n",top);
-    fprintf(stderr,"%*s",indent,"");
+  ptr = out;
+  fprintf(stderr,   "%*s",  indent, "");
+  while((ptr=linepad(top, cols-indent, ptr))){
+    fprintf(stderr, "%s\n", top);
+    fprintf(stderr, "%*s",  indent, "");
   }
-  fprintf(stderr,"%s",top);
+  fprintf(stderr, "%s", top);
 
 }
 
@@ -449,49 +459,46 @@ fprintpad(FILE *fp,		/* File pointer to print */
 /* \fcnfh
    read a double value and optionally return the rest of the string
 
-   @returns on-success double value read, and -1 on 'c'
-            on-failure 0 returned and first character read on 'c'
-*/
+   Return: on-success double value read, and -1 on 'c'
+            on-failure 0 returned and first character read on 'c' */
 double readds(FILE *fp,
-	      char *c,
-	      char *string,	/* NULL if no string return is desired
-				   */ 
-	      int maxstring)	/* includes '\\0' */
-{
-  char *str,*cur,car;
-  int salloc=8,ns;
+              char *c,
+              char *string,   /* NULL if no string return is desired */ 
+              int maxstring){ /* includes '\\0'                      */
+  char *str, *cur, car;
+  int salloc=8, ns;
   _Bool atleast=0;
-  enum {ent=0x1,dec=0x2,man=0x4,unsig=0x8} stage=ent|unsig;
+  enum {ent=0x1, dec=0x2, man=0x4, unsig=0x8} stage=ent|unsig;
 
-  cur=str=(char *)calloc(salloc,sizeof(char));
+  cur = str = (char *)calloc(salloc, sizeof(char));
 
   fflush(fp);
-  while(fread(&car,1,1,fp)){
-    if(cur-str==salloc){
-      cur=(str=(char *)realloc(str,(salloc<<1)*sizeof(char)))+salloc;
-      salloc<<=1;
+  while(fread(&car, 1, 1, fp)){
+    if(cur-str == salloc){
+      cur = (str=(char *)realloc(str,( salloc<<1)*sizeof(char))) + salloc;
+      salloc <<= 1;
     }
-    *cur=car;
-    if(car=='\n')
+    *cur = car;
+    if(car == '\n')
       break;
-    if(car=='e'||car=='E'){
-      if(!atleast||stage&man)
-	break;
-      stage=man|unsig;
+    if(car=='e' || car=='E'){
+      if(!atleast || stage&man)
+        break;
+      stage = man|unsig;
     }
-    else if(car=='+'||car=='-'){
-      if(!(stage&unsig))
-	break;
-      stage&=~unsig;
+    else if(car=='+' || car=='-'){
+      if(!(stage & unsig))
+        break;
+      stage &= ~unsig;
     }
-    else if(car=='.'){
-      if(!stage&ent)
-	break;
-      stage=dec;
+    else if(car == '.'){
+      if(!stage & ent)
+        break;
+      stage = dec;
     }
     else if(isdigit(car)){
-      atleast=1;
-      stage&=~unsig;
+      atleast = 1;
+      stage &= ~unsig;
     }
     else
       break;
@@ -499,95 +506,94 @@ double readds(FILE *fp,
     cur++;
   }
   if(string){
-    ns=0;
-    //an optional dash can separate number from string
+    ns = 0;
+    /* An optional dash can separate number from string: */
     if(car=='-')
       fread(&car,1,1,fp);
-    while(car!='\n'){
-      //if line is bigger than wanted, stop storing and discard rest of
-      //line
-      if(ns++>=maxstring)
-	break;
-      *string++=car;
-      fread(&car,1,1,fp);
+    while(car != '\n'){
+      /* If line is bigger than wanted, stop and discard rest of line: */
+      if(ns++ >= maxstring)
+        break;
+      *string++ = car;
+      fread(&car, 1, 1, fp);
     }
-    *string='\0';
+    *string = '\0';
   }
-  while(car!='\n' && fread(&car,1,1,fp));
+  while(car!='\n' && fread(&car, 1, 1, fp));
 
   if(!atleast){
-    if(c) *c=*cur;
+    if(c) *c = *cur;
     return 0;
   }
-  *cur='\0';
-  if(c) *c=-1;
+  *cur = '\0';
+  if(c) *c = -1;
   return atof(str);
 }
 
 
 /* \fcnfh
-   read a double value from a string and optionally return the rest of
-   the field in 'string', a field ends in space and can be separated
-   from the number by a dash.
+   Read a double value from a field in a string and optionally return the
+   rest of the field in 'string'. A field ends in space and can be 
+   separated from the number by a dash.
+   @returns on-success the double value read.  Else, returns 0.          */
+double 
+getds(char *in,       /* input field                                          */
+      char *c,        /* If not NULL pointer, store a -1 in it if there was a
+                         valid number in the field; otherwise, store the first
+                         character of the field                               */
+      char *string,   /* If not NULL, store the string trailing the value     */
+      int maxstring){ /* Maximum number of characters to read                 */
+  char *cur,       /* Copy of *in                 */
+        car;       /* Pointer to chars in *cur    */
+  _Bool atleast=0; /* There is at least one digit */
+  enum {ent=0x1, dec=0x2, man=0x4, unsig=0x8} stage = ent|unsig;
 
-   @returns on-success double value read, and -1 on 'c'
-            on-failure 0 returned and first character read on 'c'
-*/
-double getds(char *in,		/* input field */
-	     char *c,		/* 0 if there is a valid number at the
-				   beggining of the field, otherwie
-				   return here the first character of
-				   the field. Optional  */
-	     char *string,	/* return string here. Optional: NULL if
-				   no return is desired */
-	     int maxstring)	/* includes '\\0' */
-{
-  char *cur,car;
-  _Bool atleast=0;
-  enum {ent=0x1,dec=0x2,man=0x4,unsig=0x8} stage=ent|unsig;
-
-  cur=in;
+  /* Read until *cur is no longer a vaild numeric value: */
+  cur = in;
+  /* Go over each character: */
   while((car=*cur)){
-    if(car=='\n')
+    if(car == '\n')  /* Stop if we reached the end of line */
       break;
-    if(car=='e'||car=='E'){
-      if(!atleast||stage&man)
-	break;
-      stage=man|unsig;
+    if(car=='e' || car=='E'){
+      if(!atleast || stage&man) /* Stop if no digit read before or */
+        break;                  /* if stage is already man         */
+      stage = man|unsig;
     }
-    else if(car=='+'||car=='-'){
-      if(!(stage&unsig))
-	break;
-      stage&=~unsig;
+    else if(car=='+' || car=='-'){
+      if(!(stage&unsig)) /* Stop if we already had read a digit */
+        break;
+      stage &= ~unsig;
     }
     else if(car=='.'){
-      if(!stage&ent)
-	break;
+      if(!stage&ent)     /* */
+        break;
       stage=dec;
     }
     else if(isdigit(car)){
       atleast=1;
-      stage&=~unsig;
+      stage &= ~unsig;
     }
     else
       break;
-
     cur++;
   }
+
+  /* Set the return string:  */
   if(string){
-    //an optional dash can separate number from string
-    if(*cur=='-')
+    /* Skip dash if present: */
+    if(*cur == '-')
       cur++;
-    while(*cur!=' '&&*cur!='\t'&&*cur!='\0'){
-      //if line is bigger than wanted, stop storing and discard rest of
-      //line
+    /* read until blank, tab, or termination character: */
+    while(*cur!=' ' && *cur!='\t' && *cur!='\0'){
+      /* If line is larger than wanted, stop and discard the rest: */
       if(!--maxstring)
-	break;
-      *string++=*cur++;
+        break;
+      *string++ = *cur++;
     }
-    *string='\0';
+    *string = '\0';
   }
 
+  /* There was not a valid number: */
   if(!atleast){
     if(c) *c=*in;
     return 0;
@@ -604,7 +610,7 @@ double getds(char *in,		/* input field */
             on-failure 0 returned and first character read on 'c'
 */
 long readl(FILE *fp,
-	   char *c)
+           char *c)
 {
   char *str,*cur,car;
   int salloc=8;
@@ -624,7 +630,7 @@ long readl(FILE *fp,
       break;
     if(car=='+'||car=='-'){
       if(!unsig)
-	break;
+        break;
       unsig=0;
     }
     else if(isdigit(car)){
@@ -657,11 +663,11 @@ long readl(FILE *fp,
             NULL if all is processed, in this case it doesn't do alignement.
 */
 char *
-linepad(char *out,		/* output, it has to have a length of,
-				   at least, nc+1 characters
-				   allocated. */ 
-	int nc,			/* number of columns */
-	char *in)		/* input array */
+linepad(char *out,                /* output, it has to have a length of,
+                                   at least, nc+1 characters
+                                   allocated. */ 
+        int nc,                        /* number of columns */
+        char *in)                /* input array */
 {
   //word count 'wc' initializes to zero, it will be counting
   //interspaces.'out' index 'o' also initialize to zero.
@@ -677,10 +683,10 @@ linepad(char *out,		/* output, it has to have a length of,
     }
     if(*in==' '||*in=='\n'||*in=='\t'){
       if(!prev){
-	wc++;
-	out[o]=' ';
-	lasto=o;
-	prev=1;
+        wc++;
+        out[o]=' ';
+        lasto=o;
+        prev=1;
       }
     }
     else{
@@ -713,11 +719,11 @@ linepad(char *out,		/* output, it has to have a length of,
     if(!wc){
       nc=nc-lasto;
       while(nc--){
-	out[lasto]=*out;
-	out--;
+        out[lasto]=*out;
+        out--;
       }
       while(lasto)
-	out[lasto--]=printpad_endpadchar;
+        out[lasto--]=printpad_endpadchar;
       break;
     }
     //if space found, then add 'lasto'/'wc' (+1 if they were not an
@@ -726,7 +732,7 @@ linepad(char *out,		/* output, it has to have a length of,
     if(*out==' '){
       o=(int)((float)lasto/wc--+0.999999999999);
       while(o--)
-	out[lasto--]=' ';
+        out[lasto--]=' ';
     }
     out[lasto]=*out;
     out--;
@@ -739,30 +745,32 @@ linepad(char *out,		/* output, it has to have a length of,
 
 
 /* \fcnfh
-   ask for a positive double value from stdin with the question 'fmt';
-   to stderr
-*/
+   ask for a positive double value from stdin with the question 'fmt'
+   from stdin          */
 double
-askforposd(char *fmt,		/* Question asked */
-	   ...)			/* parameters for the question if any */
-{
-  va_list ap;
-  va_start(ap,fmt);
-  double val;
-  char rc;
+askforposd(char *fmt,  /* Question asked                     */
+           ...){       /* Parameters for the question if any */
+
+  va_list ap;         /* Handle variable arguments list */
+  va_start(ap, fmt);  
+  double val;         /* Returned value                 */
+  char rc;            /* Returned value from stdin      */
 
   while(1){
-    vfprintf(stderr,fmt,ap);
-    val=readd(stdin,&rc);
+    vfprintf(stderr, fmt, ap); /* Print question */
+    val = readd(stdin, &rc);   /* Request answer */
+    /* Quit program:                   */
     if(rc=='q'){
-      fprintf(stderr,"User interrupt!\n");
+      fprintf(stderr, "User interrupt!\n");
       exit(EXIT_SUCCESS);
     }
+    /* Ask again if value is negative: */
     if(val<=0)
-      fprintf(stderr," Invalid value %g, it has to be positive\n",val);
+      fprintf(stderr," Invalid value %g, must be positive.\n", val);
+    /* Break if NULL answer:           */
     else if(!rc)
       break;
-    fprintf(stderr,"Try again!\n");
+    fprintf(stderr, "Try again.\n");
   }
   va_end(ap);
 
@@ -771,30 +779,32 @@ askforposd(char *fmt,		/* Question asked */
 
 
 /* \fcnfh
-   ask for a positive long value from stdin with the question 'fmt';
-   to stderr
-*/
+   Ask for a positive long value from stdin with the question 'fmt'
+   from stdin  */
 long
-askforposl(char *fmt,		/* Question asked */
-	   ...)			/* parameters for the question if any */
-{
-  va_list ap;
-  va_start(ap,fmt);
-  long val;
-  char rc;
+askforposl(char *fmt, /* Question asked                     */
+           ...){      /* Parameters for the question if any */
+
+  va_list ap;        /* Handle variable arguments list */
+  va_start(ap, fmt);
+  long val;          /* Returned value                 */
+  char rc;           /* Returned value from stdin      */
 
   while(1){
-    vfprintf(stderr,fmt,ap);
-    val=readl(stdin,&rc);
-    if(rc=='q'){
-      fprintf(stderr,"User interrupt!\n");
+    vfprintf(stderr, fmt, ap); /* Print question */
+    val = readl(stdin, &rc);   /* Request answer */
+    /* Quit program:                   */
+    if(rc == 'q'){
+      fprintf(stderr, "User interrupt!\n");
       exit(EXIT_SUCCESS);
     }
-    if(val<=0)
-      fprintf(stderr," Invalid value %li, it has to be positive\n",val);
+    /* Ask again if value is negative: */
+    if(val <= 0)
+      fprintf(stderr, " Invalid value %li, must be positive.\n", val);
+    /* Break if NULL answer:           */
     else if(!rc)
       break;
-    fprintf(stderr,"Try again!\n");
+    fprintf(stderr, "Try again!\n");
   }
   va_end(ap);
 
@@ -809,9 +819,9 @@ askforposl(char *fmt,		/* Question asked */
             NULL if end of file was found
  */
 char *
-fgets_alloc(FILE *fp, 		/* where to read from */
-	    int *max)		/* Number of characters read if pointer was
-				   given */
+fgets_alloc(FILE *fp,                 /* where to read from */
+            int *max)                /* Number of characters read if pointer was
+                                   given */
 {
   static char *str;
   char *rp;
@@ -835,7 +845,7 @@ fgets_alloc(FILE *fp, 		/* where to read from */
     if(rp[-1]=='\n'){
       rp[-1]='\0';
       if(max)
-	*max=rp-str;
+        *max=rp-str;
       str=(char *)realloc(str,(rp-str)*sizeof(char));
       return str;
     }
@@ -845,7 +855,7 @@ fgets_alloc(FILE *fp, 		/* where to read from */
     //without a final newline should have ocurred
     if(rp-str+1<alloc){
       if(max)
-	*max=rp-str+1;
+        *max=rp-str+1;
       str=(char *)realloc(str,(rp-str+1)*sizeof(char));
       return str;
     }
@@ -868,17 +878,17 @@ fgets_alloc(FILE *fp, 		/* where to read from */
 
 */
 void
-splitnzero_add(char ***array,	/* Pointer to the already allocated
-				   array. If it is null, then allocates
-				   a new array */
-	       char *string,	/* string to parse */
-	       char sep)	/* separator */
+splitnzero_add(char ***array,        /* Pointer to the already allocated
+                                   array. If it is null, then allocates
+                                   a new array */
+               char *string,        /* string to parse */
+               char sep)        /* separator */
 {
   if(!array){
     fprintf(stderr,
-	    "iomisc:: there was no pointer address given to"
-	    " splitnzero_add!\n"
-	    );
+            "iomisc:: there was no pointer address given to"
+            " splitnzero_add!\n"
+            );
     exit(EXIT_FAILURE);
   }
 
@@ -943,8 +953,8 @@ splitnzero_add(char ***array,	/* Pointer to the already allocated
                      returned array is null.
 */
 char **
-splitnzero_alloc(char *string,	/* String to split */
-		 char sep)	/* Separator */
+splitnzero_alloc(char *string,        /* String to split */
+                 char sep)        /* Separator */
 {
   //'nf' starts at 1 because there at least the starting field. 'len' is
   //the string's length until the loop in \lin{looplen}
@@ -1010,7 +1020,7 @@ splitnzero_free(char **multi)
 */
 long
 countfields(char *l,
-	    char sep)
+            char sep)
 {
   //If there is an empty string return 0, otherwise there will always be
   //at least one field.
@@ -1022,14 +1032,14 @@ countfields(char *l,
   if(sep){
     while(*l)
       if(*l++==sep)
-	n++;
+        n++;
   }
   //or blanks?
   else{
     while(*l)
       if(isblank(*l++)){
-	while(isblank(*l++));
-	n++;
+        while(isblank(*l++));
+        n++;
       }
   }
   return n;

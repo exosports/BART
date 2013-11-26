@@ -22,45 +22,40 @@
 #include <pu/numerical.h>
 
 /* \fcnfh
-   Search for index such that val is between arr[index] inclusive and
-   arr[index+1] exclusive.
+   Binary search for index such that arr[index] <= val < arr[index+1]
 
-   @returns index that is looked for
-            -1 if value is before first element 'i' of array
-	    -2 if value is after last element 'f' of array
-	    -3 if only one element in array and it was not the looked
-               one 
-	    -4 if 'f' is equal or smaller than 'i', or 'i' is less than
-	       0 
-	    -5 if value is the last element of the array
-*/
+   Return: index, on success, else:
+           -1 if val    < arr[i]
+           -2 if arr[f] < val
+           -3 if only one element in array and it was not the looked one 
+           -4 if indices are invalid:  f < i, or i < 0
+           -5 if the value is the last element in arr: val = arr[f]    */
 inline int
-binsearchie(double *arr,	/* Array of length of at least 'f' */
-	    long i,		/* initial search index, cannot be
-				   negative */
-	    long f,		/* final search index (or array
-				   length minus 1) */
-	    double val)		/* number to look for in the array */
-{
+binsearchie(double *arr,  /* Array of values                           */
+            long i,       /* Index of first element to consider in arr */
+            long f,       /* Index of final element to consider        */
+            double val){  /* Value to look for in the array            */
   long m;
 
+  /* Exceptional cases: */
   if(arr[i]>val)
     return -1;
   if(arr[f]<val)
     return -2;
   if(arr[f]==val)
     return -5;
-  if(i==f&&arr[i]!=val)
+  if(i==f && arr[i]!=val)
     return -3;
-  if(f<i&&i<0)
+  if(f<i && i<0)
     return -4;
 
+  /* Binary search:     */
   while(f-i>1){
-    m=(f+i)>>1;
+    m = (f+i)>>1;
     if(arr[m]>val)
-      f=m;
+      f = m;
     else
-      i=m;
+      i = m;
   }
 
   return i;
@@ -73,21 +68,18 @@ binsearchie(double *arr,	/* Array of length of at least 'f' */
 
    @returns index that is looked for
             -1 if value is before first element 'i' of array
-	    -2 if value is after last element 'f' of array
-	    -3 if only one element in array and it was not the looked
+            -2 if value is after last element 'f' of array
+            -3 if only one element in array and it was not the looked
                one 
-	    -4 if 'f' is equal or smaller than 'i', or 'i' is less than
-	       0 
-	    -6 if it is first index of the array
+            -4 if 'f' is equal or smaller than 'i', or 'i' is less than
+               0 
+            -6 if it is first index of the array
 */
 inline int
-binsearchei(double *arr,	/* Array of length of at least 'f' */
-	    long i,		/* initial search index, cannot be
-				   negative */
-	    long f,		/* final search index (or array
-				   length minus 1) */
-	    double val)		/* number to look for in the array */
-{
+binsearchei(double *arr,  /* Array of length of at least 'f'              */
+            long i,       /* initial search index, cannot be negative     */
+            long f,       /* final search index (or array length minus 1) */
+            double val){  /* number to look for in the array              */
   long m;
 
   if(arr[i]>val)
@@ -115,15 +107,13 @@ binsearchei(double *arr,	/* Array of length of at least 'f' */
 /*\fcnfh
   binsearch() defaults to an inclusive, exclusive search
 
-  @return binsearchie findings.
-*/
+  Return: output from binsearchie                          */
 inline int 
-binsearch(double *arr,
-	  long i,
-	  long f,
-	  double val)
-{
-  return binsearchie(arr,i,f,val);
+binsearch(double *arr,  /* Array to search in              */ 
+          long i,       /* Index of first element to check */
+          long f,       /* Index of final element to check */
+          double val){  /* Value to compare                */
+  return binsearchie(arr, i, f, val);
 }
 
 
@@ -135,17 +125,17 @@ binsearch(double *arr,
 */
 inline double
 integ_trasim(double dx,
-	     double *y,
-	     long n)
+             double *y,
+             long n)
 {
   double restrap=0,res=0;
   long i;
 
   if(n<2){
     fprintf(stderr,
-	    "%s:: integ_trasim: At least 2 points are required to perform\n"
-	    "integration\n"
-	    ,__FILE__);
+            "%s:: integ_trasim: At least 2 points are required to perform\n"
+            "integration\n"
+            ,__FILE__);
     exit(EXIT_FAILURE);
   }
 
@@ -186,15 +176,14 @@ integ_trasim(double dx,
    @returns value interpolated
 */
 inline double
-interp_parab(double *x,		/* x-array with at least 3 equispaced
-				   elements */
-	     double *y,		/* y-array with at least 3 elements */
-	     double xr)		/* requested x-value to interpolate */
-{
+interp_parab(double *x,   /* x-array with at least 3 equispaced elements */
+             double *y,   /* y-array with at least 3 elements            */
+             double xr){  /* requested x-value to interpolate            */
+
   const double dx = x[1] - x[0];
   const double x0 = x[0] / dx;
   const double my = y[0] + y[2] - 2*y[1];
-  const double a  = my / 2.0 / dx / dx;
+  const double a  = my / (2.0 * dx * dx);
   const double b  = (y[2] - y[1] - (x0 + 1.5) * my) / dx;
   const double c  = y[0] + x0 * ( y[2] - 4*y[1] + 3*y[0] + x0 * my ) / 2.0;
 
@@ -209,9 +198,9 @@ interp_parab(double *x,		/* x-array with at least 3 equispaced
    @returns value interpolated
 */
 inline double
-interp_line(double *x,		/* x-array with at least 2 elements */
-	    double *y,		/* y-array with at least 2 elements */
-	    double xr)		/* requested x-value to interpolate */
+interp_line(double *x,                /* x-array with at least 2 elements */
+            double *y,                /* y-array with at least 2 elements */
+            double xr)                /* requested x-value to interpolate */
 {
   const double dx = x[1] - x[0];
   const double m  = (y[1] - y[0]) / dx;
@@ -260,14 +249,14 @@ powi(double x,
 */
 _Bool
 fixedcmp(double d1,
-	 double d2,
-	 int prec)
+         double d2,
+         int prec)
 {
   if(prec>8){
     fprintf(stderr,
-	    "fixedcmp:: Sorry, but requested precision can be 8 at"
-	    " most. Not %i. STOPPING\n"
-	    ,prec);
+            "fixedcmp:: Sorry, but requested precision can be 8 at"
+            " most. Not %i. STOPPING\n"
+            ,prec);
     exit(EXIT_FAILURE);
   }
 

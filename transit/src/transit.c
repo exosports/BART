@@ -19,106 +19,91 @@
  * 02111-1307, USA.
  */
 
-/* TD: calloc checks */
+/* TBD: calloc checks */
 
 #include <transit.h>
 
-//\fcnfh
-int main (int argc,		/* Number of variables */
-	  char **argv)		/* Variables*/
-{
+/* \fcnfh  */
+int main (int argc,      /* Number of variables */
+          char **argv){  /* Variables           */
 
-  //Initialization of data structure's pointers. Note that s\_lt is not
-  //assigned because the array that is going to point has not been
-  //initialized yet.
+  /* FINDME: What is s_lt? */
+  /* Initialization of data structure's pointers. Note that s_lt is not
+     assigned because the array that is going to point has not been
+     initialized yet.  */
   struct transit transit;
   memset(&transit, 0, sizeof(struct transit));
 
   verblevel=2;
 
-  //Command line parameters' processing
+  /* Command line parameters' processing:        */
   fw(processparameters, !=0, argc, argv, &transit);
 
-
-  //Accept all general hints
+  /* Accept all general hints:                   */
   fw(acceptgenhints, !=0, &transit);
 
-
-  //Presentation
+  /* Presentation:                               */
   printintro();
 
-  //No program warnings if verblevel is 0 or 1
+  /* No program warnings if verblevel is 0 or 1: */
   if(verblevel<2)
-    transit_nowarn=1;
+    transit_nowarn = 1;
 
-
-  //Read line info
+  /* Read line info:                             */
   fw(readlineinfo, !=0, &transit);
 
-
-  //Read Atmosphere information
+  /* Read Atmosphere information:                */
   fw(getatm, !=0, &transit);
 
-
-  //Make wavelength binning
+  /* Make wavelength binning:                    */
   fw(makewavsample, <0, &transit);
   if(fw_status>0)
-    transitprint(7,verblevel,
-		 "makewavsample() modified some of the hinted\n"
-		 " parameters according to returned flag: 0x%lx\n"
-		 ,fw_status);
+    transitprint(7, verblevel,
+                 "makewavsample() modified some of the hinted "
+                 "parameters according to returned flag: 0x%lx.\n",
+                 fw_status);
 
-
-  //Make wavenumber binning
+  /* Make wavenumber binning:                    */
   fw(makewnsample, <0, &transit);
   if(fw_status>0)
-    transitprint(7,verblevel,
-		 "makewnsample() modified some of the hinted\n"
-		 " parameters according to returned flag: 0x%lx\n"
-		 ,fw_status);
+    transitprint(7, verblevel,
+                 "makewnsample() modified some of the hinted "
+                 "parameters according to returned flag: 0x%lx.\n",
+                 fw_status);
 
-
-  //Make radius binning and interpolate data to new value
+  /* Make radius binning and interpolate data to new value: */
   fw(makeradsample, <0, &transit);
   if(fw_status>0)
-    transitprint(7,verblevel,
-		 "makeradsample() modified some of the hinted\n"
-		 " parameters according to returned flag: 0x%lx\n"
-		 ,fw_status);
+    transitprint(7, verblevel,
+                 "makeradsample() modified some of the hinted "
+                 "parameters according to returned flag: 0x%lx.\n",
+                 fw_status);
 
-
-  //Initializes CIA
+  /* Initializes CIA:                       */
   fw(interpolatecia, !=0, &transit);
 
-
-  //Computes index of refraction
+  /* Computes index of refraction:          */
   fw(idxrefrac, !=0, &transit);
 
-
-  //Calculates extinction coefficient
+  /* Calculates extinction coefficient:     */
   fw(extwn, !=0, &transit);
 
-
-  //Computes sampling of impact parameter
+  /* Computes sampling of impact parameter: */
   fw(makeipsample, <0, &transit);
   if(fw_status>0)
-    transitprint(7,verblevel,
-		 "makeipsample() modified some of the hinted\n"
-		 " parameters according to returned flag: 0x%lx\n"
-		 ,fw_status);
+    transitprint(7, verblevel,
+                 "makeipsample() modified some of the hinted "
+                 "parameters according to returned flag: 0x%lx.\n",
+                 fw_status);
 
-
-  //Prints sampling info
+  /* Prints sampling info:                  */
   fw(outsample, !=0, &transit);
 
-
-  //Calculates optical depth
+  /* Calculates optical depth:              */
   fw(tau, !=0, &transit);
 
-
-  //Calculates eclipse modulation
+  /* Calculates eclipse modulation:         */
   fw(modulation, !=0, &transit);
-
 
   free(transit.save.ext);
   freemem_isotopes (transit.ds.iso, &transit.pi);
@@ -131,11 +116,9 @@ int main (int argc,		/* Number of variables */
 
 
 /* \fcnfh
-   Frees transit structure
-*/
+   Frees transit structure.                 */
 void
-freemem_transit(struct transit *tr)
-{
+freemem_transit(struct transit *tr){
   freemem_hints(tr->ds.th);
 
   freemem_samp(&tr->rads);
@@ -145,8 +128,6 @@ freemem_transit(struct transit *tr)
   free_atm(&tr->atm);
 
   free(tr->outpret);
-  /* TD:Free saves once it is enabled
-     freemem_saves(); */
-
-
+  /* TBD: Free saves once it is enabled
+  freemem_saves();                          */
 }

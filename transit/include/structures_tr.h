@@ -21,446 +21,375 @@
 #ifndef _TRANSIT_STRUCTURES_H
 #define _TRANSIT_STRUCTURES_H
 
-/***** Structures *****/
+/*  Structures  */
 
 /* Forward declarations */
 struct transit;
 struct geometry;
 
-
 /* Structure definitions */
-typedef struct {          	/* One item per sampling element */
-  PREC_NREC n;			/* number of elements */
-  PREC_RES d;			/* Spacing */
-  PREC_RES i;			/* initial value */
-  PREC_RES f;			/* final value */
-  int o;			/* oversampling */
-  PREC_RES *v;			/* values of the sampling */
-  double fct;			/* Factor to multiply v with to obtain a
-				   cgs value */
+typedef struct {    /* Sampling struct        */
+  PREC_NREC n;      /* Number of elements     */
+  PREC_RES d;       /* Spacing                */
+  PREC_RES i;       /* Initial value          */
+  PREC_RES f;       /* Final value            */
+  int o;            /* Oversampling           */
+  PREC_RES *v;      /* Values of the sampling */
+  double fct;       /* v units factor to cgs  */
 } prop_samp;
 
 
-typedef struct {          	/* One item per isotope and
-				   miscellaneous conditions, usually
-				   radius or temperature */
-  double *z;            	/* Partition function [radius or temp] */
-  double *c;              	/* Cross section [radius or temp] */
-  PREC_ATM *d;			/* Environment: Density [radius], not
-				   used in lineinfo structure */ 
-  PREC_ATM *q;			/* Abundance [radius], not
-				   used in lineinfo structure */ 
-  unsigned int n;		/* Arrays' length */
+typedef struct {    /* Isotope's variable (per layer) information: */
+  double *z;        /* Partition function [radius or temp]         */
+  double *c;        /* Cross section      [radius or temp]         */
+  PREC_ATM *d;      /* Density   [nradius]                         */ 
+  PREC_ATM *q;      /* Abundance [nradius]                         */ 
+  unsigned int n;   /* Arrays' length                              */
 } prop_isov;
 
 
-typedef struct {          	/* One item per isotope */
-  int d;			/* Database to which they belong */
-  char *n;			/* Name */
-  PREC_ZREC m;			/* Mass */
+typedef struct {    /* Isotope's fixed information:  */
+  int d;            /* Database to which they belong */
+  char *n;          /* Isotope name                  */
+  PREC_ZREC m;      /* Isotope mass                  */
 } prop_isof;
 
 
-typedef struct {		/* One item per atmospheric conditions
-				   in the atmosphere */
-  double *mm;			/* Mean molecular mass [rad] */
-  PREC_ATM *p;			/* Pressure (cgs=dyne/cm2) */
-  PREC_ATM *t;			/* Temperature [radius] */
-  PREC_ATM pfct;		/* Pressure factor to convert to cgs. */
-  PREC_ATM tfct;		/* Temperature factor to convert to
-				   Kelvin */
+typedef struct {    /* Atmospheric conditions:          */
+  double *mm;       /* Mean molecular mass [rad]        */
+  PREC_ATM *p;      /* Pressure    [rad]                */
+  PREC_ATM *t;      /* Temperature [rad]                */
+  PREC_ATM pfct;    /* p units factor to cgs (dyne/cm2) */
+  PREC_ATM tfct;    /* t units factor to cgs (Kelvin)   */
 } prop_atm;
 
 
-typedef struct {          	/* One item per database */
-  char *n;			/* Name */
-  unsigned int i;		/* Number of isotopes */
-  int s;			/* Isotopes starting from this index
-				   belong to this database */
+typedef struct {    /* Database properties:             */
+  char *n;          /* Database name                    */
+  unsigned int i;   /* Number of isotopes               */
+  int s;            /* Cumulative first isotope's index */
 } prop_db;
 
 
-typedef struct {          	/* One item per database */
-  unsigned int t;		/* Number of temperatures */
-  double *T;			/* Temperatures */ 
+typedef struct {    /* One item per database  */
+  unsigned int t;   /* Number of temperatures */
+  double *T;        /* Temperatures           */ 
 } prop_dbnoext;
 
 
-typedef struct {
-  const char *name;
-  const char *file;
-  const short monoip;
-
-  PREC_RES (*tauperb)		/* Optical depth per impact
-				   parameter */
-       (PREC_RES b,		/* impact parameter */
-	PREC_RES *rad,		/* radius array */
-	PREC_RES *refr,		/* refractivity index */
-	PREC_RES *ex,		/* extinction[rad] */
-	long nrad,		/* number of radii elements */
-	int exprlevel);
-  PREC_RES (*obsperwn)		/* Quantity obtained from
-				   integration of optical depth
-				*/ 
-       (PREC_RES *tau,
-	long last,
-	PREC_RES toomuch,
-	prop_samp *ip,
-	struct geometry *star,
-	int exprlevel);
-
-  const int nobs;		/* Number of levels of details as it can
-				   be handled by the above function */
+typedef struct {         /* Ray solution properties:              */
+  const char *name;      /* Ray solution name                     */
+  const char *file;      /* Ray solution filename (FINDME)        */
+  const short monoip;    /* Request equispaced inpact parameter?  */
+  PREC_RES (*tauperb)    /* Optical depth per impact parameter:   */
+       (PREC_RES b,      /*  Impact parameter                     */
+        PREC_RES *rad,   /*  Radius array                         */
+        PREC_RES *refr,  /*  Refractivity index                   */
+        PREC_RES *ex,    /*  Extinction[rad]                      */
+        long nrad,       /*  Number of radii elements             */
+        int exprlevel);  /*  FINDME                               */
+  PREC_RES (*obsperwn)         /* Integrated optical depth:          */
+        (PREC_RES *tau,        /*  Optical depth                     */
+        long last,             /*  index where tau exceeded toomuch  */
+        PREC_RES toomuch,      /*  Cutoff optical depth to calculate */ 
+        prop_samp *ip,         /*  Impact parameter                  */
+        struct geometry *star, /*  Geometry structure                */
+        int exprlevel);        /*  Modulation level                  */
+  const int nobs;        /* Number of levels of details as it can
+                            be handled by obsperwn                */
 } transit_ray_solution;
 
 
-struct atm_isoprop {
-  double f;
-  double m;
-  int eq;
-  char n[maxeisoname];
-  char t[maxeisoname];
+struct atm_isoprop{    /* Proportional-abundance isotopic parameters: */
+  double f;            /* Fractional abundance                        */
+  double m;            /* Isotope mass                                */
+  int eq;              /* Isotope index from transit.ds.isotopes      */
+  char n[maxeisoname]; /* Isotope name                                */
+  char t[maxeisoname]; /* Molecule name                               */
 };
 
 
-struct line_transition {	/* One item per transition for the
-				   following arrays */
-  PREC_LNDATA *wl;		//Wavelength
-  PREC_LNDATA *elow;		//Lower energy level
-  PREC_LNDATA *gf;		//gf value
-  short *isoid;			//Isotope ID (Assumed to be in range)
-  double wfct;			//'.wl' multiplied by this factor yields
-				//cgs.
-  double efct;			//'.elow' multiplied by this factor
-				//yields cgs.
+struct line_transition{  /* Line transition parameters:         */
+  PREC_LNDATA *wl;       /* Wavelength                          */
+  PREC_LNDATA *elow;     /* Lower energy level                  */
+  PREC_LNDATA *gf;       /* gf value                            */
+  short *isoid;          /* Isotope ID (Assumed to be in range) */
+  double wfct;           /* wl units factor to cgs              */
+  double efct;           /* elow units factor to cgs            */
 };
 
 
-struct lineinfo {		/* Used to keep parameters in
-				   readlineinfo() */
-  struct line_transition lt;	//Line transition
-  unsigned short tli_ver;	/* TLI version */
-  unsigned short lr_ver;	/* lineread version */
-  unsigned short lr_rev;	/* lineread revision */
-  prop_samp wavs;		/* wavelength sampling extracted */
-  double wi, wf;		/* initial and final wavelength in the
-				   database */
-  long endinfo;			/* position at the end of the info part
-				   of the info file */
-  int asciiline;		/* line number in an TLI-ascii file
-				   being read, it is zero if a binary
-				   file. And the maximum value it gets
-				   is the first line of the transition
-				   info. */
-  int ni;			/* number of isotopes */
-  int ndb;			/* number of databases */
-  prop_isov *isov;		/* Variable isotope information (w/temp)
-				   [iso] */
-  prop_dbnoext *db;		/* Temperature info from databases [DB]
-				   */
-  PREC_NREC n_l;		/* Number of lines in database */
+struct lineinfo{             /* Line information parameters:    */
+  struct line_transition lt; /* Line transitions                            */
+  unsigned short tli_ver;    /* TLI version                                 */
+  unsigned short lr_ver;     /* lineread version                            */
+  unsigned short lr_rev;     /* lineread revision                           */
+  prop_samp wavs;            /* Wavelength sampling                         */
+  double wi, wf;             /* Initial and final wavelength in database    */
+  long endinfo;              /* Position at the end of the info part
+                                of the info file                            */
+  int asciiline;             /* TLI line of first transition.
+                                Zero if a binary file.                      */
+  int ni;                    /* Number of isotopes                          */
+  int ndb;                   /* Number of databases                         */
+  prop_isov *isov;           /* Variable isotope information (w/temp) [iso] */
+  prop_dbnoext *db;          /* Temperature info from databases [DB]        */
+  PREC_NREC n_l;             /* Number of lines in database                 */
 };
 
 
-struct atm_data{		/* Keeps parameters in readatminfo() */
-  struct atm_isoprop *isoprop;	/* Store info about molecules with
-				   abundances proportional to other */
-  int ipa;			/* number of elements in above array */
-  prop_samp rads;		/* radius sampling */
-  prop_isov *isov;		/* variable isotope info [isoext] */
-  prop_atm atm;			/* Atmospheric properties */
-  int n_niso;			/* Number of new isotopes */
-  double *mm;			/* Mean molecular mass [rad] */
-  _Bool mass;			/* whether the abundances in 'isov' are
-				   mass abundances or not */
-  char **n;			/* Name for isotopes in atmfile order */
-  double *m;			/* Mass for isotopes in file order [iso]
-				   */
-  int *isoeq;			/* Isotope to which each atmosphere
-				   datafile column corresponds [iso] */
-  enum isodo *isodo;		/* What is required from each isotope,
-				   it can be given, ignore, or fixed */
-  int n_nonignored;		/* Number of non ignored isotopes */
-  int n_aiso;			/* Number of isotopes in the atmosphere
-				   file */
-  char *info;			/* Optional atmosphere file information
-				   or label */
-  int begline;			/* line of beginning of radius dependent
-				   info */
-  long begpos;			/* position of beginning of radius
-				   dependent info*/
+struct atm_data{     /* Atmospheric file parameters:                    */
+  struct atm_isoprop *isoprop; /* Proportional-abundance isotopes info  */
+  int ipa;           /* Number of elements in isoprop                   */
+  prop_samp rads;    /* Radius sampling                                 */
+  prop_isov *isov;   /* Variable isotope info [isoext]                  */
+  prop_atm atm;      /* Atmospheric properties                          */
+  int n_niso;        /* Number of new isotopes                          */
+  double *mm;        /* Mean molecular mass [rad]                       */
+  _Bool mass;        /* Abundances in isov by mass (1) of by number (0) */
+  char **n;          /* Isotopes name                                   */
+  double *m;         /* Isotopes mass  [iso]                            */
+  int *isoeq;        /* Index of isotope in lineinfo                    */
+  enum isodo *isodo; /* What is required from each isotope, it can
+                        be given, ignore, or fixed                      */
+  int n_nonignored;  /* Number of non ignored isotopes                  */
+  int n_aiso;        /* Number of isotopes in atmosphere file           */
+  char *info;        /* Optional atmosphere file information or label   */
+  int begline;       /* Line of first radius dependent info             */
+  long begpos;       /* Position of first radius dependent info         */
 };
 
 
 struct extinction{
-  PREC_RES ***e;		/* Extinction value [iso:][rad][wav]*/
-  float maxratio;		/* Maximum Doppler width ratio between
-				   current and last calculated profile.
-				   If the value is greater than this,
-				   then recalculate */
-  int vf;			/* Number of fine-bins of the Voigt
-				   function */
-  float ta;			/* number of alphas that have to be
-				   contained in the profile */
-  _Bool periso;			/* Extinction per isotope */
-  _Bool *computed;		/* Whether the extinction at the given
-				   radius was computed [rad] */
-  double minelow;		/* Only use transitions with this
-				   minimum low energy (in cm-1) */
+  PREC_RES ***e;     /* Extinction value [iso:][rad][wav]                 */
+  float maxratio;    /* Maximum Doppler width ratio between current and
+                        last calculated profile.  If the value is greater
+                        than this, then recalculate                       */
+  int vf;            /* Number of fine-bins of the Voigt function         */
+  float ta;          /* Number of alphas that have to be contained in
+                        the profile                                       */
+  _Bool periso;      /* Extinction per isotope                            */
+  _Bool *computed;   /* Whether the extinction at the given radius was
+                        computed [rad]                                    */
+  double minelow;    /* Only use transitions with this minimum low
+                        energy (in cm-1)                                  */
 };
 
 
-struct idxref {
-  PREC_RES *n;			/* Index of refraction [rad] */
+struct idxref{
+  PREC_RES *n;       /* Index of refraction [rad] */
 };
 
 
-struct onept {
-  double p,t;			/* pressure, temperature */
-  double *q;			/* abundances for isotopes */
-  int nq;			/* number of given abundances */
-  _Bool one;			/* One point is required? */
-  char **n;			/* Names of extra isotopes */
-  PREC_ZREC *m;			/* Mass of extra isotopes */
-  int nm;			/* number of given name and masses */
-  int ne;			/* Number of extra isotopes */
+struct onept{
+  double p, t;   /* Pressure and temperature        */
+  int ne;        /* Number of extra isotopes        */
+  _Bool one;     /* One PT required?                */
+  double *q;     /* Isotopes abundances             */
+  int nq;        /* Number of input abundances      */
+  char **n;      /* Names of extra isotopes         */
+  PREC_ZREC *m;  /* Mass of extra isotopes          */
+  int nm;        /* Number of input mass-name pairs */
 };
 
 
 #if 0
 struct savefiles {
-  char *ext;			/* saves extinction */
-  char *tau;			/* after tau() savefile */
-  char *modulation;		/* after modulation() savefile */
+  char *ext;   /* saves extinction */
+  char *tau;   /* after tau() savefile */
+  char *modulation;  /* after modulation() savefile */
 };
 #endif
 
 
-struct optdepth {
-  PREC_RES **t;			/* Optical depth [wn][ip] */
-  long *last;			/* Index of the lowest impact parameter
-				   value, lower than this the optical
-				   depth is greater than '.toomuch'. It
-				   is naturally assumed that optical
-				   depth increases inward the
-				   planet. [wn] */
-  double toomuch;		/* Optical depth values greater than
-				   this won't be calculated: the
-				   extinction is assumed to be zero. */
+struct optdepth{
+  PREC_RES **t;     /* Optical depth [wn][ip]                             */
+  long *last;       /* Index of the lowest impact parameter value, lower
+                       than this the optical depth is greater than
+                       '.toomuch'.  It is naturally assumed that optical 
+                       depth increases inward the planet. [wn]            */
+  double toomuch;   /* Optical depth values greater than this won't be
+                       calculated: the extinction is assumed to be zero.  */
 };
 
 
-struct geometry {
-  float smaxis;			/* Semimajor axis */
-  double smaxisfct;		/* 'smaxis' times this gives cgs
-				   units. */
-  double time;			/* this value is 0 when in the middle of
-				   the eclipse */
-  double timefct;		/* 'time' times this gives cgs units */
-  float incl;			/* inclination of the planetary orbit
-				   with respect to the observer, 90
-				   degrees is edge on */
-  float inclfct;		/* Units to convert inclination to
-				   radians */
-  double ecc;			/* eccentricty */
-  double eccfct;		/* eccentricity's units */
-  double lnode;			/* longitud of the ascending node */
-  double lnodefct;		/* longitud of the ascending node units */
-  double aper;			/* argument of the pericenter */
-  double aperfct;		/* argument of the pericenter units */
+struct geometry{
+  float smaxis;       /* Semimajor axis                                    */
+  double smaxisfct;   /* 'smaxis' times this gives cgs units.              */
+  double time;        /* this value is 0 when in the middle of the eclipse */
+  double timefct;     /* 'time' times this gives cgs units                 */
+  float incl;         /* inclination of the planetary orbit with respect
+                         to the observer, 90 degrees is edge on            */
+  float inclfct;      /* Units to convert inclination to radians           */
+  double ecc;         /* eccentricty                                       */
+  double eccfct;      /* eccentricity's units                              */
+  double lnode;       /* longitud of the ascending node                    */
+  double lnodefct;    /* longitud of the ascending node units              */
+  double aper;        /* argument of the pericenter                        */
+  double aperfct;     /* argument of the pericenter units                  */
 
+  double starmass;    /* Mass of the star                                  */
+  double starmassfct; /* 'starmass' times this gives cgs units.            */
 
-  double starmass;		/* Mass of the star */
-  double starmassfct;		/* 'starmass' times this gives cgs
-				   units. */
+  double starrad;     /* Star's radius                                     */
+  double starradfct;  /* 'starrad' times this gives cgs units.             */
 
-  double starrad;		/* Star's radius */
-  double starradfct;		/* 'starrad' times this gives cgs
-				   units. */
+  double x,y;         /* coordinates of the center of the planet with
+                         respect to the star. 'fct' to convert to cgs is
+                         found in rads.fct. These fields are not hinted.   */
 
-  double x,y;			/* coordinates of the center of the
-				   planet with respect to the
-				   star. 'fct' to convert to cgs is
-				   found in rads.fct. These fields are
-				   not hinted. */
-
-  _Bool transpplanet;		/* Planet is transparent? */
+  _Bool transpplanet; /* If true, set maximum optical depth to toomuch     */
 };
 
 
-struct isotopes {
-  enum isodo *isodo;		/* What to do with every isotope */
-  prop_isof *isof;		/* Fixed isotope information
-				   [isoextended] */
-  prop_isov *isov;		/* Variable isotope information
-				   [isoextended] */
-  prop_db *db;			/* Database's info [DB] */
-  int n_db,n_i,n_e;		/* Number of databases, of regular
-				   isotopes, of extended isotopes */
+struct isotopes{
+  enum isodo *isodo;  /* What to do with every isotope               */
+  prop_isof *isof;    /* Fixed isotope information [isoextended]     */
+  prop_isov *isov;    /* Variable isotope information [isoextended]  */
+  prop_db *db;        /* Database's info [DB]                        */
+  int n_db,n_i,n_e;   /* Number of databases, of regular isotopes,
+                         of extended isotopes                        */
 };
 
 
-struct outputray {
-  PREC_RES *o;			/* Output as seen before interaction
-				   with telescope */
+struct outputray{
+  PREC_RES *o;     /* Output as seen before interaction with telescope */
 };
 
-struct extcloud {
-  double maxe;			/* Maximum opacity in [cm-1] */
-  double rini;			/* Radius at which clouds start */
-  double rfin;			/* Radius at which clouds has it maximum
-				   thickness 'maxe'. rfin < rini */
-  double rfct;			/* Factor that will make the two radius
-				   values above into cgs */
+struct extcloud{
+  double maxe;     /* Maximum opacity in [cm-1]                          */
+  double rini;     /* Radius at which clouds start                       */
+  double rfin;     /* Radius at which clouds has it maximum thickness
+                      'maxe'. rfin < rini                                */
+  double rfct;     /* Factor that will make the two radius values above
+                      into cgs                                           */
 };
 
-struct extscat {
+struct extscat{
   double prm;
 };
 
-struct saves {
+struct saves{
   char *ext;
 };
 
-struct detailfld {
-  int n;
-  PREC_RES *ref;
-  char file[80];
-  char name[30];
+/* Struct to store requested ext, tau, or cia detailed information:  */
+struct detailfld{
+  int n;         /* Number of requested wavenumber samples */
+  PREC_RES *ref; /* Array of wavenumbers requested         */
+  char file[80]; /* Output filename                        */
+  char name[30]; /* Name of field                          */
 };
 
 
-struct detailout {
-  struct detailfld ext,tau,cia;
+struct detailout{
+  struct detailfld ext, tau, cia;
 };
 
 
-struct cia {
-  PREC_CIA **e;			/* Extinction from all CIA sources
-				   [wn][tmp] */
+struct cia{
+  PREC_CIA **e;   /* Extinction from all CIA sources [wn][tmp] */
   char **file;
   int n;
 };
 
+/* Structure with user hinted data that should go to the 'struct
+   transit' upon approval                                         */
+struct transithint{  
+  char *f_atm,          /* Atmosphere filename      */
+       *f_line,         /* TLI filename             */
+       *f_out,          /* Output (main) filename   */
+       *f_toomuch,      /* Output toomuch filename  */
+       *f_outsample;    /* Output sample filename   */
+  PREC_NREC ot;         /* Radius index at which to print output from tau    */
+  prop_samp rads, wavs, wns; /* Sampling properties of radius, wavelength
+                                and wavenumber                               */
+  prop_samp ips;        /* Impact parameter sampling, at what radius
+                           sampling does the user wants ray optical depth to
+                           be calculated                                     */
+  float allowrq;        /* How much less than one is accepted, and no warning
+                           is issued if abundances don't ad up to that       */
+  PREC_RES margin;      /* Amount not trusted at the boundaries (uses
+                           .wavs.fct to convert to cgs), also how much out of
+                           requested range it have to look for transitions   */
+  PREC_RES wnm;         /* Same as above, but for wavenumbers                */
+  float maxratio_doppler; /* Maximum doppler width deformation ratio before
+                             recalculate profile                             */
+  float timesalpha;     /* Number of alphas that have to be contained in a
+                           calculated profile, one side only                 */
+  int voigtfine;        /* Fine-binning for Voigt function in kapwl(), if
+                           accepted it goes to tr.ds.op.vf                   */
+  int verbnoise;        /* Noisiest verbose level in a non debugging run     */ 
+  _Bool mass;           /* Whether the abundances read by getatm are by
+                           mass or number                                    */
+  long fl;              /* flags                                             */
+  _Bool userefraction;  /* Whether to use variable refraction                */
 
-struct transithint {		/* Structure with user hinted data that
-				   should go to the 'struct transit'
-				   upon approval */
-  char *f_atm,*f_line,*f_out,
-    *f_toomuch,*f_outsample;	/* Filenames */
-  PREC_NREC ot;			/* Radius index at which to print output
-				   from tau. */
-
-  prop_samp rads,wavs,wns;	/* Sampling properties of
-				   radius, wavelength and
-				   wavenumber */
-  prop_samp ips;		/* Impact parameter sampling, at what
-				   radius sampling does the user wants
-				   ray optical depth to be calculated */
-  float allowrq;		/* How much less than one is accepted,
-				   and no warning is issued if
-				   abundances don't ad up to that */
-  PREC_RES margin;		/* Amount not trusted at
-				   the boundaries (uses .wavs.fct
-				   to convert to cgs), also how much out of
-				   requested range it have to look for
-				   transitions */
-  PREC_RES wnm;			/* Same as above, but for wavenumbers */
-  float maxratio_doppler;	/* Maximum doppler width deformation
-				   ratio before recalculate profile */
-  float timesalpha;		/* Number of alphas that have to be
-				   contained in a calculated profile,
-				   one side only */
-  int voigtfine;		/* Fine-binning for Voigt function in
-				   kapwl(), if accepted it goes to
-				   tr.ds.op.vf */
-  int verbnoise;		/* noisiest verbose level in a non
-				   debugging run */ 
-  _Bool mass;			/* whether the abundances read by getatm
-				   are by mass or number */
-  long fl;			/* flags */
-  _Bool userefraction;		/* Whether to use variable refraction */
-
-  double toomuch;		/* Optical depth values greater than
-				   this won't be calculated: the
-				   extinction is assumed to be zero. */
-  short tauiso;			/* Whether user want to calculate
-				   optical depth for all or some
-				   isotopes, TRU_EXTPERISO has to be
-				   on. */
-  double blowex;		/* Blow extinction by this amount before
-				   computing tau, this option has no
-				   physical meaning, but mostly
-				   debugging. */
-  int taulevel;			/* Tau integration level of precision */
-  int modlevel;			/* Modulation integration level of
-				   precision */
-  char *solname;		/* Name of the type of solution */
-  struct geometry sg;		/* System geometry */
-  struct onept onept;		/* Parameters for onept atmosphere */
-  struct saves save;		/* Saves indicator of program stats */
+  double toomuch;       /* Optical depth values greater than this won't be
+                           calculated: the extinction is assumed to be zero  */
+  short tauiso;         /* Whether user want to calculate optical depth for
+                           all or some isotopes, TRU_EXTPERISO has to be on. */
+  double blowex;        /* Blow extinction by this amount before computing
+                           tau, this option has no physical meaning, but
+                           mostly debugging                                  */
+  int taulevel;         /* Tau integration level of precision                */
+  int modlevel;         /* Modulation integration level of precision         */
+  char *solname;        /* Name of the type of solution                      */
+  struct geometry sg;   /* System geometry                                   */
+  struct onept onept;   /* Parameters for onept atmosphere                   */
+  struct saves save;    /* Saves indicator of program stats                  */
 
   struct extcloud cl;
   struct detailout det;
 
-  double minelow;		/* Only use transitions with this
-				   minimum low energy (in cm-1) */
-
+  double minelow;       /* Only use transitions with this minimum low
+                           energy (in cm-1)                                  */
   char **ciafile;
   int ncia;
 
 };
 
+/* Main data structure */
+struct transit{  
+  char *f_atm,       /* Atmosphere filename      */
+       *f_line,      /* TLI filename             */
+       *f_out,       /* Output (main) filename   */
+       *f_toomuch,   /* Output toomuch filename  */
+       *f_outsample; /* Output sample filename   */
+  PREC_NREC ot;     /* Radius index at which to print output from tau        */
 
-struct transit {		/* Main data structure */
-  char *f_atm,*f_line,*f_out,
-    *f_toomuch,*f_outsample;	/* Filenames */
-  PREC_NREC ot;			/* Radius index at which to print output
-				   from tau. */
+  FILE *fp_atm, *fp_out, *fp_line; /* Pointers to files                      */
+  float allowrq;    /* How much less than one is accepted, so that no warning
+                       is issued if abundances don't ad up to that           */
+  PREC_RES telres;  /* Telescope resolution                                  */
+  PREC_RES margin;  /* Wavelength amount not trusted at the boundaries in
+                       cgs units, also how much out of requested range it
+                       have to look for transitions                          */
+  PREC_RES wnmi;    /* Amount of cm-1 not trusted at the beginning           */
+  PREC_RES wnmf;    /* Amount of cm-1 not trusted at the end                 */
+  prop_samp rads, wavs, wns; /* Sampling properties of radius, wavelength
+                                and wavenumber                               */
+  prop_samp ips;    /* Impact parameter sampling, at what radius sampling does
+                       the user wants ray optical depth to be calculated     */
+  prop_atm atm;     /* Sampled atmospheric data                              */
+  short tauiso;     /* Isotope from which to calculate the optical depth     */
+  double blowex;    /* Blow extinction by this amount before computing tau,
+                       this option has no physical meaning, but mostly
+                       debugging                                             */
+  int taulevel;     /* Tau integration level of precision                    */
+  int modlevel;     /* Modulation integration level of precision             */
 
-  FILE *fp_atm,*fp_out,*fp_line;/* Filepointers */
-  float allowrq;		/* How much less than one is accepted,
-				   so that no warning is issued if
-				   abundances don't ad up to that */
-  PREC_RES telres;		/* Telescope resolution */
-  PREC_RES margin;		/* Wavelength amount not trusted at
-				   the boundaries in cgs units, also how much out of
-				   requested range it have to look for
-				   transitions */
-  PREC_RES wnmi;		/* Amount of cm-1 not trusted at the
-				   beginning */
-  PREC_RES wnmf;		/* Amount of cm-1 not trusted at the end
-				   */
-  prop_samp rads,wavs,wns;	/* Sampling properties of radius,
-				   wavelength and wavenumber */
-  prop_samp ips;		/* Impact parameter sampling, at what
-				   radius sampling does the user wants
-				   ray optical depth to be calculated */
-  prop_atm atm;			/* Sampled atmospheric data. */
-  short tauiso;			/* Isotope from which to calculate the
-				   optical depth */
-  double blowex;		/* Blow extinction by this amount before
-				   computing tau, this option has no
-				   physical meaning, but mostly
-				   debugging. */
-  int taulevel;			/* Tau integration level of precision */
-  int modlevel;			/* Modulation integration level of
-				   precision */
+  long fl;          /* flags                                                 */
+  long pi;          /* progress indicator                                    */
 
-  long fl;			/* flags */
-  long pi;			/* progress indicator */
+  transit_ray_solution *sol; /* Solution type                                */
+  PREC_RES *outpret; /* Output dependent on wavelength only as it travels
+                        to Earth before telescope                            */
 
-  transit_ray_solution *sol;	/* Solution type */
-  PREC_RES *outpret;		/* Output dependent on wavelength only
-				   as it travels to Earth before
-				   telescope */
+  struct saves save; /* Saves indicator of program stats                     */
 
-  struct saves save;		/* Saves indicator of program stats */
-
-
-  struct {			/* data structures pointers, this is
-				   data that is not required for the
-				   final computation */
+  struct {          /* Data structures pointers, this is data that is not
+                       required for the final computation                    */
     struct transithint *th;
     struct lineinfo    *li;
     struct atm_data    *at;
@@ -479,7 +408,5 @@ struct transit {		/* Main data structure */
     struct cia         *cia;
   }ds;
 };
-
-
 
 #endif /* _TRANSIT_STRUCTURES_H */

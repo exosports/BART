@@ -48,23 +48,19 @@
 
 /*****   Macros   *****/
 static __inline__ void
-printextprogress(long wi, long wnn)
-{
+printextprogress(long wi, long wnn){
 }
 
 /* 
 
 */
 static __inline__ double
-stateeqnford(_Bool mass,	/* Mass abundance? (as opposed to
-				   abundance by number. */
-	     double q,		/* abundance */
-	     double ma,		/* Average molecular weight (in AMU) */
-	     double mi,		/* Molecular weight of the particular
-				   specie (in AMU) */
-	     double p,		/* Pressure */
-	     double t)		/* Temperature */
-{
+stateeqnford(_Bool mass, /* Abundance by mass (1) or by number (0)  */
+             double q,   /* Abundance                               */
+             double ma,  /* Mean molecular mass (in AMU)            */
+             double mi,  /* Molecular mass of the specie (in AMU)   */
+             double p,   /* Pressure                                */
+             double t){  /* Temperature                             */
   const double rho = AMU * q * p / KB / t;
   if(mass)
     return rho * ma;
@@ -89,21 +85,25 @@ long fw_status;
 #define fw(fcn, failurecondition, ...) do{               \
     if((fw_status=fcn(__VA_ARGS__)) failurecondition)    \
       transiterror(TERR_SERIOUS,                         \
-		   #fcn "() returned error code %li\n"   \
-                   , fw_status);                         \
+                   #fcn "() returned error code %li\n",  \
+                   fw_status);                           \
                                        }while(0)
 
 
-#define transitassert(a,...) if(a) transiterror(TERR_CRITICAL,__VA_ARGS__)
+#define transitassert(a, ...) if(a) transiterror(TERR_CRITICAL, __VA_ARGS__)
+
 #define transitprint(thislevel, verblevel, ...) do{                         \
-  if(thislevel <= verblevel)  fprintf(stderr,__VA_ARGS__); }while(0)
-#define transitacceptflag(transit,hint,flag) do{                            \
-        transit|=hint&flag;hint&=~(flag);}while(0)
+  if(thislevel <= verblevel)  fprintf(stderr, __VA_ARGS__); }while(0)
+
+/* Add flag to transit if present in hint and change hint flag value: */
+#define transitacceptflag(transit, hint, flag) do{                          \
+        transit |= hint&flag; hint &= ~(flag); }while(0)
+
 #define transitallocerror(nmb)                                              \
         transiterror(TERR_CRITICAL,                                         \
-	             "transit:: %s: Allocation failed for %i allocation\n"  \
-	             "units in line %i. Impossible to continue.\n"          \
-	             ,__FILE__,nmb,__LINE__)
+                     "transit:: %s: Allocation failed for %i allocation\n"  \
+                     "units in line %i. Impossible to continue.\n",         \
+                     __FILE__, nmb, __LINE__)
 #define free_null(x) do{free(x);x=NULL;}while(0)
 
 #ifdef NODEBUG_TRANSIT
@@ -115,6 +115,7 @@ long fw_status;
 #define transitDEBUG(...) transitprint(__VA_ARGS__)
 #endif
 
+/* Maximum name length: */
 #define maxeisoname 20
 
 #ifndef HAVE__BOOL
@@ -122,13 +123,12 @@ long fw_status;
 #endif
 
 extern int transit_nowarn;
-extern int verblevel;              /* verbose level, greater than 10 
-				      is only for debuging */
-extern int maxline;		/* initialized in transitstd */
+extern int verblevel;      /* Verbose level > 10 is only for debuging */
+extern int maxline;        /* Initialized in transitstd */
 extern int version;
 extern int revision;
 
-enum isodo {unclear=0,atmfile,ignore,fixed,factor};
+enum isodo {unclear=0, atmfile, ignore, fixed, factor};
 
 #include <structures_tr.h>
 

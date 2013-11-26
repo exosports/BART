@@ -25,18 +25,17 @@
 */
 static __inline__ void
 computeextscat(double *e, 
-	       long n, 
-	       struct extscat *sc,
-	       double *rad,
-	       double trad,
-	       double *temp,
-	       double tcft,
-	       double wn)
-{
+               long n, 
+               struct extscat *sc,
+               double *rad,
+               double trad,
+               double *temp,
+               double tcft,
+               double wn){
   long i;
 
-  for(i=0;i<n;i++)
-    e[i]=0;
+  for(i=0; i<n; i++)
+    e[i] = 0;
 }
 
 
@@ -45,44 +44,44 @@ computeextscat(double *e,
 */
 static __inline__ void
 computeextcloud(double *e, 
-	       long n,
-	       struct extcloud *cl,
-	       prop_samp *rad,
-	       double *temp,
-	       double tcft,
-	       double wn)
-{
+               long n,
+               struct extcloud *cl,
+               prop_samp *rad,
+               double *temp,
+               double tcft,
+               double wn){
   long i;
   double *r = rad->v;
   double rfct = rad->fct;
-  double rini = cl->rini * cl->rfct;
-  double rfin = cl->rfin * cl->rfct;
+  double rini = cl->rini*cl->rfct;
+  double rfin = cl->rfin*cl->rfct;
 
-  //If there is no clouds, set array to zero
+  /* If there are no clouds, set array to zero: */
   if(rini==0){
-    memset(e,0,n*sizeof(double));
+    memset(e, 0, n*sizeof(double));
     return;
   }
 
   if(rad->d == 0)
     transiterror(TERR_SERIOUS,
-		 "Radius needs to be equispaced for clouds prescription\n"
-		 " to work. Stopping\n");
+                 "Radius needs to be equispaced for clouds prescription.\n");
   double slp = cl->maxe / (rfin - rini);
 
-  for(i=n-1;i>=0;i--){
-    if(r[i] * rfct <= rini)
+  /* Find radius index right below the cloud top layer: */
+  for(i=n-1; i>=0; i--){
+    if(r[i]*rfct <= rini)
       break;
-    e[i] = 0;
+    e[i] = 0; /* Zero extinction in this range          */
   }
 
-  for(;i>=0;i--){
+  /* Set cloud extinction between cloud top and maxe:   */
+  for(; i>=0; i--){
     if(r[i] * rfct <= rfin)
       break;
     e[i] = slp * (r[i]*rfct - rini);
   }
 
-  for(;i>=0;i--)
+  /* Keep constant extinction maxe until the bottom:    */
+  for(; i>=0; i--)
       e[i] = cl->maxe;
-
 }

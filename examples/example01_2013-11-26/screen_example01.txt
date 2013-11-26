@@ -1,0 +1,102 @@
+-----------------------------------------------
+                TRANSIT v4.0
+-----------------------------------------------
+Started on Mon Nov 25 18:50:52 2013
+
+
+Reading info file '../lines/lineread.2-4um.tli' ...
+ Done.
+
+After checking limits, the wavelength range to be used is 0.00025 to 0.00035 cm, including a margin of 1e-10 cm.
+
+Reading data ...
+Done.
+
+Status so far:
+ * I read 8633499 records from the datafile.
+ * The wavelength range read was 2.5 to 3.5 microns.
+ * Current margin is 1e-06 microns.
+ * Usable range is thus 2.500001 to 3.499999 microns.
+Reading atmosphere file: '../inputs/atmosph.dat'.
+ Done.
+
+Computing CIA opacities for 1 database ...
+Done.
+
+There are 130 radii samples.
+
+Printing sampling information in 'samples_example01.dat'.
+
+Computing extinction in the outtermost layer.
+Done.
+Calculating optical depth at various radius ...
+Radius 129: 100361.69 cm ... Done.
+Radius 128: 100261.69 cm ... Done.
+Radius 127: 100161.69 cm ... Done.
+Radius 126: 100061.69 cm ... Done.
+Radius 125: 99961.69 cm ... Done.
+Radius 124: 99861.69 cm ... Done.
+Radius 123: 99761.69 cm ... Done.
+Radius 122: 99661.69 cm ... Done.
+Radius 121: 99561.69 cm ... Done.
+Radius 120: 99461.69 cm ... Done.
+Radius 119: 99361.69 cm ... Done.
+Radius 118: 99261.69 cm ... Done.
+Radius 117: 99161.69 cm ... Done.
+Radius 116: 99061.69 cm ... Done.
+Radius 115: 98961.69 cm ... Done.
+Radius 114: 98861.69 cm ... Done.
+Radius 113: 98761.69 cm ... Done.
+Radius 112: 98661.69 cm ... Done.
+Radius 111: 98561.69 cm ... Done.
+Radius 110: 98461.69 cm ... Done.
+Radius 109: 98361.69 cm ... Done.
+Radius 108: 98261.69 cm ... Done.
+Radius 107: 98161.69 cm ... Done.
+Radius 106: 98061.69 cm ... Done.
+Radius 105: 97961.69 cm ... Done.
+Radius 104: 97861.69 cm ... Done.
+Radius 103: 97761.69 cm ... Done.
+Radius 102: 97661.69 cm ... Done.
+Radius 101: 97561.69 cm ... Done.
+Radius 100: 97461.69 cm ... Done.
+Radius 99: 97361.69 cm ... Done.
+Radius 98: 97261.69 cm ... Done.
+Radius 97: 97161.69 cm ... Done.
+Radius 96: 97061.69 cm ... Done.
+Radius 95: 96961.69 cm ... Done.
+Radius 94: 96861.69 cm ... Done.
+Radius 93: 96761.69 cm ... Done.
+Radius 92: 96661.69 cm ... Done.
+Radius 91: 96561.69 cm ... Done.
+Radius 90: 96461.69 cm ... Done.
+Radius 89: 96361.69 cm ... Done.
+Radius 88: 96261.69 cm ... Done.
+Radius 87: 96161.69 cm ... Done.
+Radius 86: 96061.69 cm ... Done.
+Radius 85: 95961.69 cm ... Done.
+Radius 84: 95861.69 cm ... Done.
+Radius 83: 95761.69 cm ... Done.
+Radius 82: 95661.69 cm ... Done.
+10%
+20%
+30%
+40%
+50%
+60%
+70%
+80%
+90%
+100%
+ Done.
+Optical depth calculated up to 10.
+
+Printing in 'toomuch_example01.dat'.
+Maximum depth before optical depth got larger than 10, and therefore impact parameter was not calculated for deeper layers.
+
+
+Integrating over wavelength.
+0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 
+Done.
+
+Printing in-eclipse/out-eclipse flux ratio in 'output_example01.dat'.

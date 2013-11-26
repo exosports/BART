@@ -12,13 +12,13 @@
 
 #define INTERP_LINEAR 0x0000001
 
-
-#define resamplex(fl,nrefx,refx,ndatx,datx)      \
-          resample(1,fl,nrefx,refx,ndatx,datx,0)
-#define resampley(fl,ny,...)                     \
-          resample(0,fl,0,NULL,0,NULL,ny,__VA_ARGS__)
-#define resample_free()                          \
-          resample(2,0,0,NULL,0,NULL,0)
+/* resample wrappers: */
+#define resamplex(fl, nrefx, refx, ndatx, datx)     \
+          resample(1, fl, nrefx, refx, ndatx, datx,0)
+#define resampley(fl, ny, ...)                             \
+          resample(0, fl, 0, NULL, 0, NULL, ny, __VA_ARGS__)
+#define resample_free()                     \
+          resample(2, 0, 0, NULL, 0, NULL, 0)
 
 
 //function definition (proto_sampling.h)
