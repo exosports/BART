@@ -22,64 +22,32 @@
 
 static inline void datafileBS(FILE *fp, PREC_NREC offs, PREC_LNDATA target,
                               PREC_NREC *resultp, int reclength)
-    Do a binary search in file pointed by 'fp' between 'off' and
-    'off+nfields' looking for 'target' as the first item of a record
-    of length 'reclength', result index (with respect to offs) is
-    stored in 'resultp'.
 
 int readlineinfo(struct transit *tr)
-    Driver function to read TLI: read isotopes info, check margin and
-    ranges, and read line transition information.
 
 int readinfo_tli(struct transit *tr, struct lineinfo *li)
-    Check TLI file exists.  Check that machine formating is compatible
-    with lineread.  Determine if TLI is ASCII or binary.  Read either
-    ASCII or binary TLI file. Declare line_transition.
 
 int readtli_bin(FILE *fp, struct transit *tr, struct lineinfo *li)
-    Read initial and final wavelength limits and number of databases.
-    Allocate pointers to database, and isotope arrays.
-    Get databases info: names, number of temperatures, temperatures, number
-    of isotopes, isotope names and masses, partition function, and
-    cross sections. Get cumulative number of isotopes.
 
 int readtli_ascii(FILE *fp, struct transit *tr, struct lineinfo *li)
-    Get number of databases and names.  Get number of temperatures, 
-    number of isotopes.  Allocate pointers to databases and isotopes
-    arrays.  Get isotope names and masses.  Get temperatures, partition
-    function, and cross sections.  Get initial and final wavelength
-    limits of databases.  Count cumulative number of isotopes.
 
 int getinifinasctli(double *ini, double *fin, FILE *fp, char *file)
-    Find initial and final wavelength of ASCII TLI file.
 
 int checkrange(struct transit *tr, struct lineinfo *li)
-    Initialize wavelength sample struct.  Set margin.  
-    Set initial and final wavelengths to use.  
-    Check that margin leaves a non-zero wavelength range.
 
 int readdatarng(struct transit *tr, struct lineinfo *li)
-    Read and store the line transition info (central wavelength, isotope
-    ID, lowE, log(gf)) into lineinfo.  Return the number of lines read.
 
 static void notyet(int lin, char *file)
-    Outputs error and exit the program when EOF is found before
-    expected.
 
 static int invalidfield(char *line, char *file, int nmb, int fld, char *fldn)
-    Print out error when a line transition record has an invalid field
 
 int freemem_isotopes(struct isotopes *iso, long *pi)
-    Frees lineinfo structure 
 
 int freemem_lineinfotrans(struct lineinfo *li, long *pi)
-    Free lineinfo structure
 
 void saveline(FILE *fp, struct lineinfo *li)
-    Saves line information
 
 int main(int argc, char **argv)
-    For debugging only
  */
 
 
@@ -1188,7 +1156,7 @@ readlineinfo(struct transit *tr){
 
 /* \fcnfh
    Frees lineinfo structure 
-   @returns 0 on success                                      */
+   Return: 0 on success                                      */
 int
 freemem_isotopes(struct isotopes *iso,
                  long *pi){

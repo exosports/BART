@@ -392,3 +392,16 @@ linetoolong(int max,     /* Maxiumum length of an accepted line */
 }
 
 
+void
+timecheck(int verblevel, long iter, long index, char *str, struct timeval tv1,
+          struct timeval tv2){
+  /* Get time now:                             */
+  gettimeofday(&tv2, NULL);  
+  /* Calculate time difference in miliseconds: */
+  float msec = 1e-3*(float)(tv2.tv_usec-tv1.tv_usec);
+  /* Print time stamp:                         */
+  transitprint(1, verblevel, "Check point: %02li - %02li %s:  dt = %.4f "
+                             "msec.\n\n", iter, index, str, msec);
+  /* Reset tv1 to current time:                */
+  gettimeofday(&tv1, NULL); 
+}

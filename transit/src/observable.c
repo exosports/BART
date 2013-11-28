@@ -54,7 +54,8 @@ modulation(struct transit *tr){ /* Main structure */
   struct optdepth *tau = tr->ds.tau;
 
   /* Set time to the user hinted default, and other user hints: */
-  setgeom(sg, HUGE_VAL, &tr->pi);
+  // Hack: commented out setgeom
+  //setgeom(sg, HUGE_VAL, &tr->pi);
   const int modlevel = tr->modlevel = tr->ds.th->modlevel;
 
   /* Integrate for each wavelength: */
@@ -118,7 +119,7 @@ printmod(struct transit *tr){
     outf = fopen(tr->f_out, "w");
 
   transitprint(1, verblevel,
-               "\nPrinting in-eclipse/out-eclipse flux ratio in '%s'.\n",
+               "\nPrinting in-transit/out-transit modulation in '%s'.\n",
                tr->f_out?tr->f_out:"standard output");
 
   /* Print: */

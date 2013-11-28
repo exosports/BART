@@ -73,30 +73,44 @@ isisoline(char *name,         /* Isotope name                           */
   /* Note that here, even though the isotope might be ignored, it will
      still have an equivalent lineiso associated if one is found.
      \refline{isodbassoc}  */
+  //transitprint(1, verblevel, " FLAG: isisoline 01.\n");
+  //transitprint(1, verblevel, " FLAG: name is: %s.\n", name);
+  //transitprint(1, verblevel, " FLAG: nliso: %li\n", nliso);
   for(i=0; i<nliso; i++){
+    //transitprint(1, verblevel, " FLAG: isisoline: %s.\n", isof[i].n);
     if(strcasecmp(name, isof[i].n)==0){
+      //transitprint(1, verblevel, " FLAG: isisoline 02.\n");
       *isoeq = i;
+      //transitprint(1, verblevel, " FLAG: isisoline 03.\n");
       if(isolineinatm[i])
         transiterror(TERR_SERIOUS,
                      "Isotope %s has been defined more than once in the "
                      "atmosphere file.\n", name);
       isolineinatm[i] = 1;
+      //transitprint(1, verblevel, " FLAG: isisoline 04.\n");
       if(isodo[i] != ignore)
         isodo[i] = atisodo;
+      //transitprint(1, verblevel, " FLAG: isisoline 05.\n");
       if(isodo[i] == ignore)
         transitprint(2, verblevel, "Ignoring isotope %s (%g AMU).\n",
                      isof[i].n, isof[i].m);
-      else if(isof[i].m!=mass && mass!=0)
+      else if(isof[i].m!=mass && mass!=0){
         transiterror(TERR_WARNING,
                      "Mass of isotope %s, is not the same in the atmosphere "
                      "file %s(%g) than in the transition info file(%g).\n",
                      name, atmfilename, mass, isof[i].m);
+        //transitprint(1, verblevel, " FLAG: isisoline 08.\n"); 
+      }
       break;
     }
   }
+  //transitprint(1, verblevel, " FLAG: isisoline 10.\n");
   /* Count non-matched and ignored atmosphere-file isotopes:  */
-  if(*isoeq == -1  &&  atisodo == ignore)
+  if(*isoeq == -1  &&  atisodo == ignore){
+    //transitprint(1, verblevel, " FLAG: isisoline 11.\n");
     nfonly++;
+    //transitprint(1, verblevel, " FLAG: isisoline 12.\n");
+  }
 }
 
 
@@ -300,6 +314,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
   struct isotopes *iso   = tr->ds.iso;
   enum   isodo    *isodo = iso->isodo;
 
+  transitprint(1, verblevel, "FLAG: getmnfromfile 02.\n");
   /* Set variable to handle isotopic abundance porportions: */
   int ipi = 0,           /* Current number of proportional-isotopes read */
       ipa = at->ipa = 4; /* Number of elements in isoprop                */
@@ -307,6 +322,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
   isolineinatm = (_Bool *)calloc(iso->n_i, sizeof(_Bool));
   isoprop = (struct atm_isoprop *)calloc(ipa, sizeof(struct atm_isoprop));
 
+  transitprint(1, verblevel, "FLAG: getmnfromfile 05.\n");
   /* Allocate atm_data:                               */
   at->begline = 0; /* Line where the info begins      */
   enum isodo atisodo;
@@ -322,6 +338,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
     at->isoeq[i] = -1;
   }
 
+  //transitprint(1, verblevel, "FLAG: getmnfromfile 08.\n");
   /* While t,p data doesn't start, check for the various modifiers */
   while(1){
     switch(fgetupto_err(line, maxline, fp, &atmerr, atmfilename,
@@ -340,6 +357,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
 
     /* Determine whether abundance is by mass or number: */
     case 'q':  
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 10a.\n");
       lp = line+1;
       while(*lp++==' '); /* Skip blank spaces */
       lp--;
@@ -357,15 +375,19 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
                      "by number). '%s' is invalid.\n", line);
         break;
       }
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 10b.\n");
       continue;
 
     /* Zero radius value: */
     case 'z':  
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 11a.\n");
       zerorad = atof(line+1);
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 11b.\n");
       continue;
 
     /* Change factorization of radius, temperature, or pressure: */
     case 'u':
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 12a.\n");
       switch(line[1]){
       case 'r':
         at->rads.fct = atof(line+2);
@@ -381,13 +403,17 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
                      "Invalid unit factor indication in atmosphere file.\n");
         exit(EXIT_FAILURE);
       }
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 12b.\n");
       continue;
 
     case 'n':  /* Name or identifier for file data */
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 13a.\n");
       storename(at, line+1);
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 13b.\n");
       continue;
 
     case 'i':  /* Isotope information */
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 14a.\n");
       lp = line+1;
       while(*lp==' ' || *lp=='\t') lp++;
       /* 'i' isotopes must be defined before 'f': */
@@ -396,10 +422,12 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
                      "In line '%s': 'f' lines have to come after all the 'i' "
                      "lines in atmosphere file '%s'.\n", line, atmfilename);
       /* For each field: */
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 14b.\n");
       while(*lp){
         atisodo = atmfile;
         /* Allocate if necessary: */
         if(ison==nmb){
+          //transitprint(1, verblevel, "FLAG: getmnfromfile 14c.\n");
           nmb <<= 1;
           at->isodo = (enum isodo *)realloc(at->isodo, nmb*sizeof(enum isodo));
           at->isoeq = (int *)       realloc(at->isoeq, nmb*sizeof(int));
@@ -410,14 +438,17 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
             at->n[i] = at->n[0]+i*maxeisoname;
           for(i=nmb/2; i<nmb; i++)
             at->isoeq[i] = -1;
+          //transitprint(1, verblevel, "FLAG: getmnfromfile 14d.\n");
         }
 
         /* Get mass and name, checking that is correct. First see if this
            isotope wants to be ignored. */
+        //transitprint(1, verblevel, "FLAG: getmnfromfile 14e.\n");
         if(*lp == '!'){
           lp++;
           atisodo = ignore;
         }
+        //transitprint(1, verblevel, "FLAG: getmnfromfile 14f.\n");
         /* Get mass and name: */
         at->m[ison] = getds(lp, 0, at->n[ison], maxeisoname-1);
         if(at->m[ison]<0 || at->n[ison]=='\0'){
@@ -426,9 +457,11 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
                        "isotope info at:\n%s\n", atmfilename, at->begline, lp);
         }
 
+        //transitprint(1, verblevel, "FLAG: getmnfromfile 14g.\n");
         /* Check if isotope is in the lineinfo file, set isoeq and isodo: */
         isisoline(at->n[ison], at->m[ison], at->isoeq+ison, atisodo,
                   iso->isof, isodo, iso->n_i);
+        //transitprint(1, verblevel, "FLAG: getmnfromfile 14h.\n");
         /* Set atm isodo and increase ison counter by 1:                 */
         at->isodo[ison++] = atisodo;
 
@@ -436,10 +469,12 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
         while(*lp!=' ' && *lp!='\0') lp++;
         while(*lp==' ' || *lp=='\t') lp++;
       }
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 14i.\n");
       continue;
 
     /* An isotope is to be taken as proportional to other */
     case 'f':
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 15a.\n");
       /* Move pointer 1 character and skip blank and tabs: */
       lp = line+1;
       while(*lp==' ' || *lp=='\t') lp++;
@@ -479,6 +514,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
 
       /* Increase index and go for the next line: */
       ipi++;
+      //transitprint(1, verblevel, "FLAG: getmnfromfile 15b.\n");
       continue;
 
     /* End of keyword variables: */
@@ -488,6 +524,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
     break;
   }
 
+  //transitprint(1, verblevel, "FLAG: getmnfromfile 20.\n");
   transitprint(3, verblevel,
                "Read all keywords in atmosphere file without problems.\n");
 
@@ -601,11 +638,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
   for(i=0; i<at->n_aiso; i++)
     if(at->isodo[i]==factor){
       int feq = at->isoeq[i];
-      /* FINDME: should be isoprop.t !! */
-      /* FINDME:DEBUG: */
-      //transitprint(2, verblevel, " Ref isotope name: %s\n",   isoprop[feq].n);
-      //transitprint(2, verblevel, " Real ref    name: %s\n\n", isoprop[feq].t);
-      if(strcasecmp(isoprop[feq].n, "other")==0)
+      if(strcasecmp(isoprop[feq].t, "other")==0)
         cumulother += isoprop[feq].f;
     }
   /* It doesn't make sense for cumulother to be anything different from
@@ -616,6 +649,8 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
                  "Sum of fractional abundance of isotopes proportional to "
                  "'other' (%g) must add to 1.0.\n", cumulother);
 
+  transitprint(1, verblevel, " FLAG: %i+%i+%i, %i+%i.\n", nfonly, lineignore,
+                             nmb-lineignore, ison, ipa);
   transitASSERT(nmb+nfonly != ison+ipa,
                 "Number of ignored-nonline elements (%i), plus the "
                 "number of ignored-line elements (%i), plus the "
@@ -815,6 +850,7 @@ readatmfile(FILE *fp,            /* Atmospheric file  */
 
   /* Free arrays that were used only to get the factorizing elements: */
   free(fonly);
+  nfonly = 0;
 
   return nrad;
 }

@@ -430,7 +430,7 @@ processparameters(int argc,            /* Number of command-line args  */
         strcpy(hints->f_line, optarg);
         break;
     case 'o':            /* Output file name           */
-      hints->f_out = (char *)realloc(hints->f_out, strlen(optarg)+1);
+      hints->f_out = (char *)realloc(hints->f_out, strlen(optarg)+2);
       strcpy(hints->f_out, optarg);
       break;
     case CLA_OUTSAMPLE:  /* Sampling output file name  */
