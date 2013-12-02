@@ -21,6 +21,6 @@ extern void free_atm P_((prop_atm *atm));
 extern void savestr P_((FILE *out, char *str));
 extern int reststr P_((FILE *in, char **str));
 extern void linetoolong P_((int max, char *file, int line));
-extern void timecheck P_((int verblevel, long iter, long index, char *str, struct timeval tv1, struct timeval tv2));
+extern double timecheck P_((int verblevel, long iter, long index, char *str, struct timeval tv1, double t0));
 
 #undef P_
