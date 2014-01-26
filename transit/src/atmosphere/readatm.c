@@ -141,7 +141,7 @@ getatm(struct transit *tr){
   /* Initialize atmosphere temperature-pressure arrays:    */
   st_at.atm.tfct = 1; /* Default temperature units are cgs */
   st_at.atm.pfct = 1; /* Default pressure    units are cgs */
-  transitprint(1, verblevel, "FLAG: getatm 00.\n");
+  //transitprint(1, verblevel, "FLAG: getatm 00.\n");
   rads->v     = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
   st_at.atm.t = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
   st_at.atm.p = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
@@ -173,7 +173,7 @@ getatm(struct transit *tr){
     break;
   }
 
-  transitprint(1, verblevel, "FLAG: getatm 05.\n");
+  //transitprint(1, verblevel, "FLAG: getatm 05.\n");
 
   /* Total number of allocated isotopes:    */
   nmb = iso->n_e = iso->n_i + newiso;
@@ -208,7 +208,7 @@ getatm(struct transit *tr){
     st_at.m = onept->m;
     break;
   case file:
-    transitprint(1, verblevel, "FLAG: getatm 09.\n");
+    //transitprint(1, verblevel, "FLAG: getatm 09.\n");
     if((i=getmnfromfile(fp, &st_at, tr, nmb))<1){
       /* On success getmnfromfile returns at.begline, not an error code */
       transiterror(TERR_SERIOUS, "getmnfromfile() returned error code %i\n", i);
@@ -219,7 +219,7 @@ getatm(struct transit *tr){
     break;
   }
 
-  transitprint(1, verblevel, "FLAG: getatm 10.\n");
+  //transitprint(1, verblevel, "FLAG: getatm 10.\n");
 
   /* Allocate isotope information for depth dependent information: */
   st_at.n_nonignored = nmb = iso->n_e;
@@ -234,7 +234,7 @@ getatm(struct transit *tr){
   /* FINDME: This was already reallocated in getmnfromfile */
   iso->isodo = (enum isodo *)realloc(iso->isodo, iso->n_e*sizeof(enum isodo));
 
-  transitprint(1, verblevel, "FLAG: getatm 14.\n");
+  //transitprint(1, verblevel, "FLAG: getatm 14.\n");
 
   /* Get isotopic abundances: */
   switch(inp){
@@ -288,7 +288,7 @@ getatm(struct transit *tr){
     break;
   }
 
-  transitprint(1, verblevel, "FLAG: getatm 20.\n");
+  //transitprint(1, verblevel, "FLAG: getatm 20.\n");
 
   /* Set required values in 'rads' structure: */
   rads->i = rads->v[0];
@@ -458,7 +458,7 @@ freemem_atmosphere(struct atm_data *at,
   free(at->info);
 
   /* Clear progress indicator and return success: */
-  *pi&=~(TRPI_GETATM);
+  *pi &= ~(TRPI_GETATM);
   return 0;
 }
 

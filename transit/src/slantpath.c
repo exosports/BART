@@ -127,8 +127,8 @@ totaltau1(PREC_RES b,    /* Impact parameter         */
   /* Use spline if GSL is available along with at least 3 points: */
 #ifdef _USE_GSL
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
-  gsl_interp *spl = gsl_interp_alloc(gsl_interp_cspline, nrad);
-  gsl_interp_init(spl, s, ex,nrad);
+  gsl_interp       *spl = gsl_interp_alloc(gsl_interp_cspline, nrad);
+  gsl_interp_init(spl, s, ex, nrad);
   res = gsl_interp_eval_integ(spl, s, ex, 0, s[nrad-1], acc);
   gsl_interp_free(spl);
   gsl_interp_accel_free(acc);
@@ -147,7 +147,7 @@ totaltau1(PREC_RES b,    /* Impact parameter         */
 
 /* \fcnfh
    Computes optical depth at a given impact parameter for a medium with
-   changing index of refraction.
+   variable index of refraction.
 
  The impact parameter b needs to be given in units of 'rad' and the result
  needs to be multiplied by the units 'rad' to be real.
@@ -289,7 +289,7 @@ totaltau(PREC_RES b,      /* Differential impact parameter WRT maximum value */
 
    Return: the transit's modulation:
    1 - in-transit/out-of-transit flux ratio (Equation 3.12):
-     M_{\lambda} = \frac{1}{R_\star^2}\left(R^2 - 
+    M_{\lambda} = \frac{1}{R_\star^2}\left(R^2 - 
                    2\int_{0}^{R} \exp^{-\tau_\lambda(r)} r\,{\rm d}r\right)  */
 static PREC_RES
 modulation1(PREC_RES *tau,        /* Optical depth array              */
@@ -299,6 +299,7 @@ modulation1(PREC_RES *tau,        /* Optical depth array              */
             struct geometry *sg){ /* Geometry struct                  */
   /* General variables: */
   PREC_RES res;
+  /* Stellar radius:    */
   double srad = sg->starrad*sg->starradfct;
 
   /* Impact parameter variables: */
@@ -353,12 +354,15 @@ modulation1(PREC_RES *tau,        /* Optical depth array              */
   /* TD: Add real unblocked area of the star, considering geometry */
   /* Substract the total area blocked by the planet. This is from the
      following:
-     1-M = &1-\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
-                  +\int_{r_p}^{R_s}\dd A} {\pi R_s^2}  \\
-         = & -\frac{\int_0^{r_p}\int\ee^{-\tau}\dd \theta r\dd r
-                  + Area_{planet}} {\pi R_s^2}
-         = & -\frac{2\int_0^{r_p}\ee^{-\tau}r\dd r
-                +r_p^2} {\pi R_s^2}            */
+     \begin{eqnarray}
+     1-M = &1-\frac{\int_0^{r_p}\int e^{-\tau}r{\rm d}\theta {\rm d}r
+                  \ +\ \int_{r_p}^{R_s}{\rm d}A} {\pi R_s^2}       \\
+         = & -\frac{\int_0^{r_p}\int e^{-\tau}r{\rm d}\theta {\rm d}r
+                  \ +\ Area_{p}} {\pi R_s^2}                       \\
+         = & -\frac{2\int_0^{r_p} e^{-\tau}r{\rm d}r
+                \ +\ r_p^2} {\pi R_s^2}   
+     \end{eqnarray}                                                */
+
   res = ipv[ipn1]*ipv[ipn1] - 2.0*res;
 
   /* If the planet is going to be transparent with its maximum optical

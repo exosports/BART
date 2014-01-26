@@ -54,8 +54,7 @@ modulation(struct transit *tr){ /* Main structure */
   struct optdepth *tau = tr->ds.tau;
 
   /* Set time to the user hinted default, and other user hints: */
-  // Hack: commented out setgeom
-  //setgeom(sg, HUGE_VAL, &tr->pi);
+  setgeom(sg, HUGE_VAL, &tr->pi);
   const int modlevel = tr->modlevel = tr->ds.th->modlevel;
 
   /* Integrate for each wavelength: */
@@ -100,7 +99,7 @@ modulation(struct transit *tr){ /* Main structure */
   freemem_tau(tr->ds.tau,       &tr->pi);
 
   /* Set progress indicator, and print output: */
-  tr->pi &= TRPI_MODULATION;
+  tr->pi |= TRPI_MODULATION;
   printmod(tr);  
   return 0;
 }

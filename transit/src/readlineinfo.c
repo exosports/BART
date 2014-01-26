@@ -1177,8 +1177,7 @@ freemem_isotopes(struct isotopes *iso,
   free(iso->db);
 
   /* Unset appropiate flags:                                  */
-  *pi&=~(TRPI_READINFO|TRPI_READDATA|TRPI_CHKRNG|
-         TRPI_GETATM);
+  *pi &= ~(TRPI_READINFO | TRPI_READDATA | TRPI_CHKRNG | TRPI_GETATM);
   return 0;
 }
 
@@ -1186,14 +1185,14 @@ freemem_isotopes(struct isotopes *iso,
 
 /* \fcnfh
    Free lineinfo structure.
-   @returns 0 on success                */
+   Return: 0 on success                */
 int
 freemem_lineinfotrans(struct lineinfo *li,
                       long *pi){
   int i;
 
   /* Free the four arrays of lt:        */
-  struct line_transition *lt=&li->lt;
+  struct line_transition *lt = &li->lt;
   free(lt->wl);
   free(lt->elow);
   free(lt->gf);
@@ -1203,17 +1202,17 @@ freemem_lineinfotrans(struct lineinfo *li,
   free_isov(li->isov);
   free(li->isov);
 
-  for(i=0;i<li->ndb;i++)
+  for(i=0; i<li->ndb; i++)
     free_dbnoext(li->db+i);
   free(li->db);
 
   free_samp(&li->wavs);
 
   /* Zero all the structure:            */
-  memset(li,0,sizeof(struct lineinfo));
+  memset(li, 0, sizeof(struct lineinfo));
 
   /* Unset appropiate flags:            */
-  *pi &= ~(TRPI_READDATA|TRPI_READINFO|TRPI_CHKRNG);
+  *pi &= ~(TRPI_READDATA | TRPI_READINFO | TRPI_CHKRNG);
   return 0;
 }
 

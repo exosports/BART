@@ -314,7 +314,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
   struct isotopes *iso   = tr->ds.iso;
   enum   isodo    *isodo = iso->isodo;
 
-  transitprint(1, verblevel, "FLAG: getmnfromfile 02.\n");
+  //transitprint(1, verblevel, "FLAG: getmnfromfile 02.\n");
   /* Set variable to handle isotopic abundance porportions: */
   int ipi = 0,           /* Current number of proportional-isotopes read */
       ipa = at->ipa = 4; /* Number of elements in isoprop                */
@@ -322,7 +322,7 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
   isolineinatm = (_Bool *)calloc(iso->n_i, sizeof(_Bool));
   isoprop = (struct atm_isoprop *)calloc(ipa, sizeof(struct atm_isoprop));
 
-  transitprint(1, verblevel, "FLAG: getmnfromfile 05.\n");
+  //transitprint(1, verblevel, "FLAG: getmnfromfile 05.\n");
   /* Allocate atm_data:                               */
   at->begline = 0; /* Line where the info begins      */
   enum isodo atisodo;
@@ -649,8 +649,8 @@ getmnfromfile(FILE *fp,            /* Pointer to atmospheric file    */
                  "Sum of fractional abundance of isotopes proportional to "
                  "'other' (%g) must add to 1.0.\n", cumulother);
 
-  transitprint(1, verblevel, " FLAG: %i+%i+%i, %i+%i.\n", nfonly, lineignore,
-                             nmb-lineignore, ison, ipa);
+  //transitprint(1, verblevel, " FLAG: %i+%i+%i, %i+%i.\n", nfonly, lineignore,
+  //                           nmb-lineignore, ison, ipa);
   transitASSERT(nmb+nfonly != ison+ipa,
                 "Number of ignored-nonline elements (%i), plus the "
                 "number of ignored-line elements (%i), plus the "
