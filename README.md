@@ -1,19 +1,19 @@
 BART
 ====
 
-Bayesian Atmospheric Radiative-Transfer fitting code
+Bayesian Atmospheric Radiative Transfer fitting code
 
 This code will implement a Bayesian, Monte Carlo-driven,
 radiative-transfer scheme for extracting parameters from spectra of
 planetary atmospheres.  It is being developed by:
 
-Joseph Harrington
-Jasmina Blecic
-Patricio Cubillos
-Sarah Blumenthal
-Oliver Bowman
-Andrew Foster
-Madison Stemm
+Joseph Harrington  
+Jasmina Blecic  
+Patricio Cubillos  
+Sarah Blumenthal  
+Oliver Bowman  
+Andrew Foster  
+Madison Stemm  
 
 With support from:
 
@@ -43,21 +43,26 @@ BART Development Plan
    flux-balanced layers (a la Burrows)
    constant abundances/T(p) throughout atmosphere
    line-list-difference tests
-   face map
+   dayside map
    phase curve
-   face map + face curve
+   dayside map + phase curve
 
 Test after each upgrade, record output, compare output of next upgrade
 with upgrade turned off to previous output to make sure we didn't
 wreck anything.
 
-STATUS OF COMPONENTS
+**STATUS OF COMPONENTS**
 
-Component		   Code	Doc	   Package	Git Centralgit(here)
-comm loop		   dev	-	      -	      y	 -
-DEMC 			      done	-	      -	      -	 -
-TEA			      done	dev	   -	      y	 -
-input converter	ready	incode	-	      -	 -
-transit			   dev	thesis	-	      y2	 outdated
-lineread		      dev	-	      -	      y	 outdated
-output converter	ready	incode	-	      -	 -
+Apparently GIThub's Markdown doesn't support tables yet...
+
+|------------------|--------|-------|--------|----|----------------|  
+|Component		    |Code	 |Doc	   |Package	|Git |Centralgit(here)|  
+|------------------|--------|-------|--------|----|----------------|  
+|comm loop		    |dev	    |-      |-	      |y	  |-               |  
+|DEMC 		       |done	 |-      |-	      |-	  |-               |  
+|TEA			       |done    |dev	   |-	      |y	  |-               |  
+|input converter   |ready   |incode	|-	      |-	  |-               |  
+|transit		       |dev	    |thesis	|-	      |y2  |outdated        |  
+|lineread	       |dev	    |-      |-	      |y	  |outdated        |  
+|output converter  |ready	 |incode	|-	      |-	  |-               |  
+|------------------|--------|-------|--------|----|----------------|  
