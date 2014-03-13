@@ -274,7 +274,7 @@ makesample0(prop_samp *samp,       /* transit sampling    */
   /* Make sampling based on spacing:       */
   if(samp->d<0) okfinalexcess = -okfinalexcess;
   /* Define number of points:              */
-  samp->n = ((1.0+okfinalexcess)*samp->f - sample->i)/samp->d + 1;
+  samp->n = ((1.0+okfinalexcess)*samp->f - samp->i)/samp->d + 1;
   if(samp->n<0)  /* FINDME: Explain how can this happen */
     samp->n = -samp->n;
 
@@ -677,7 +677,7 @@ makewnsample0(struct transit *tr){
     rsamp.i = 1.0/(wlsamp->f*wlsamp->fct);
   }
   else
-    transiterror(TERR_SEROIUS, "Initial wavenumber (nor final wavelength) "
+    transiterror(TERR_SERIOUS, "Initial wavenumber (nor final wavelength) "
                                "were correctly provided by the user.\n");
 
   /* Get final point: */
@@ -694,7 +694,7 @@ makewnsample0(struct transit *tr){
     rsamp.f = 1.0/(wlsamp->i*wlsamp->fct);
   }
   else
-    transiterror(TERR_SEROIUS, "Final wavenumber (nor initial wavelength) "
+    transiterror(TERR_SERIOUS, "Final wavenumber (nor initial wavelength) "
                                "were correctly provided by the user.\n");
 
   /* Set up reference wavenumber sampling:  */
