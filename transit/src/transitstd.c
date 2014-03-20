@@ -30,7 +30,7 @@ int maxline=1000;
 inline void transitdot(int thislevel,
                        int verblevel,
                        ...){
-  if(thislevel<=verblevel)
+  if(thislevel <= verblevel)
     fwrite(".", 1, 1, stderr);
 }
 
@@ -171,8 +171,8 @@ fileexistopen(char *in,    /* Input filename                    */
   }
   /* No file was requested: */
   return 0;
-
 }
+
 
 /*\fcnfh
   Output for the different cases. of fileexistopen()
@@ -283,6 +283,19 @@ error(int exitstatus,
   exit(exitstatus);
 }
 
+void
+freemem_molecules(struct molecules *mol, long *pi){
+  /* Free structures: */
+  for(int i=0; i<mol->nmol;  i++)
+    free_mol(mol->molec+i);
+  /* Free arrays:     */
+  free(mol->name[0]);
+  free(mol->name);
+  free(mol->molec);
+  free(mol->mass);
+  free(mol->radius);
+  /* FINDME: Define a pi for molec */
+}
 
 /* \fcnfh
    Frees array in prop_isov, this should be called only once for all the
@@ -291,27 +304,28 @@ void
 free_isov(prop_isov *isov){
   free(isov->z);
   free(isov->c);
-  if(isov->d)
-    free(isov->d);
-  if(isov->q)
-    free(isov->q);
 }
 
 
 /* \fcnfh
    Frees array in prop_isof, this should be called for each of the
-   isotopes.
-*/
+   isotopes.                                                       */
 void
 free_isof(prop_isof *isof){
   free(isof->n);
 }
 
 
+void
+free_mol(prop_mol *molec){
+  free(molec->d);
+  free(molec->q);
+}
+
+
 /* \fcnfh
    Frees array in prop_db, this should be called for each of the
-   isotopes.
-*/
+   isotopes.                                                       */
 void
 free_db(prop_db *db){
   free(db->n);
@@ -320,8 +334,7 @@ free_db(prop_db *db){
 
 /* \fcnfh
    Frees array in prop_dbnoext, this should be called once per each
-   database.
-*/
+   database.                                                       */
 void
 free_dbnoext(prop_dbnoext *db){
   free(db->T);

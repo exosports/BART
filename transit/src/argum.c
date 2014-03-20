@@ -322,7 +322,7 @@ processparameters(int argc,            /* Number of command-line args  */
      "Units convertion factors to the cgs system of the orbital parameters. "
      "Same order of g-orbpar.  Default: AU, hours, deg, 1, deg, deg."},
     {"transparent", CLA_TRANSPARENT, no_argument,       NULL,    NULL,
-     "If selected the planet will have a maximum optical depth given by "
+     "If selected, the planet will have a maximum optical depth given by "
      "toomuch, it will never be totally opaque."},
 
     {NULL, 0, 0, NULL, NULL, NULL}

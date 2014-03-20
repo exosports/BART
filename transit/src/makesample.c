@@ -51,8 +51,7 @@ makesample1(prop_samp *samp,       /* transit sampling    */
   PREC_RES *v;            /* The sampling values       */
   double osd,             /* Oversampled delta         */
          si;              /* Sample initial value      */
-  _Bool nhint=ref->n>0,   /* True if hint.n is defined */
-        dhint=ref->d!=0;  /* True if hint.d is defined */
+  _Bool dhint=ref->d!=0;  /* True if hint.d is defined */
   /* Acceptable ratio exceeding final value without truncating the last bin: */
   double okfinalexcess = 1e-8;
 
@@ -172,8 +171,7 @@ makesample0(prop_samp *samp,       /* transit sampling    */
   PREC_RES *v;            /* The sampling values       */
   double osd,             /* Oversampled delta         */
          si;              /* Sample initial value      */
-  _Bool nhint=hint->n> 0, /* True if hint.n is defined */
-        dhint=hint->d!=0; /* True if hint.d is defined */
+  _Bool dhint=hint->d!=0; /* True if hint.d is defined */
   /* Acceptable ratio exceeding final value without truncating the last bin: */
   double okfinalexcess = 1e-8;
 
@@ -274,7 +272,7 @@ makesample0(prop_samp *samp,       /* transit sampling    */
   /* Make sampling based on spacing:       */
   if(samp->d<0) okfinalexcess = -okfinalexcess;
   /* Define number of points:              */
-  samp->n = ((1.0+okfinalexcess)*samp->f - sample->i)/samp->d + 1;
+  samp->n = ((1.0+okfinalexcess)*samp->f - samp->i)/samp->d + 1;
   if(samp->n<0)  /* FINDME: Explain how can this happen */
     samp->n = -samp->n;
 
@@ -677,7 +675,7 @@ makewnsample0(struct transit *tr){
     rsamp.i = 1.0/(wlsamp->f*wlsamp->fct);
   }
   else
-    transiterror(TERR_SEROIUS, "Initial wavenumber (nor final wavelength) "
+    transiterror(TERR_SERIOUS, "Initial wavenumber (nor final wavelength) "
                                "were correctly provided by the user.\n");
 
   /* Get final point: */
@@ -694,7 +692,7 @@ makewnsample0(struct transit *tr){
     rsamp.f = 1.0/(wlsamp->i*wlsamp->fct);
   }
   else
-    transiterror(TERR_SEROIUS, "Final wavenumber (nor initial wavelength) "
+    transiterror(TERR_SERIOUS, "Final wavenumber (nor initial wavelength) "
                                "were correctly provided by the user.\n");
 
   /* Set up reference wavenumber sampling:  */
@@ -814,28 +812,30 @@ makeradsample(struct transit *tr){
   int res,    /* Return output                       */
       i, j,   /* Auxiliary for-loop indices          */
       iso1db; /* First isotope's index in a database */
-  struct isotopes *iso=tr->ds.iso;
-  int nrad,            /* Number of radii to sample  */
-      neiso=iso->n_e,  /* Number of extra isotopes   */
-      niso =iso->n_i,  /* Number of regular isotopes */
-      ndb  =iso->n_db; /* Number of data bases       */
+  struct lineinfo *li=tr->ds.li;    /* transit's lineinfo struct        */
+  struct atm_data *atms=tr->ds.at;  /* transit's atmosphere data struct */
+  struct isotopes  *iso=tr->ds.iso;
+  struct molecules *mol=tr->ds.mol;
 
-  int flag;         /* Flag for interpolation function          */
-  prop_isov *isovs; /* lineinfo's isotope variable information  */
+  int nrad,            /* Number of radii to sample */
+      niso=iso->n_i,   /* Number of isotopes        */
+      ndb =iso->n_db,  /* Number of data bases      */
+      nmol=mol->nmol;  /* Number of molecules       */        
 
-  struct lineinfo *li=tr->ds.li;   /* transit's lineinfo struct            */
-  struct atm_data *atms=tr->ds.at; /* transit's atmosphere data struct     */
-  prop_atm        *atmt=&tr->atm;  /* Array to store p, t, and mm sampling */
+  int flag;         /* Flag for interpolation function           */
+  prop_isov *isovs; /* lineinfo's isotopes information           */
+  prop_samp *rsamp = &atms->rads; /* Atmosphere's radii sampling */
 
-  prop_isov *isovt=iso->isov;   /* iso's isotope variable information */
-  prop_samp *rsamp=&atms->rads; /* Atmosphere's radii sampling        */
-  prop_samp *rad  =&tr->rads;   /* Output radius sampling             */
+  prop_samp *rad   = &tr->rads;  /* Output radius sampling             */
+  prop_atm  *atmt  = &tr->atm;   /* Array to store p, t, and mm sampling */
+  prop_mol  *molec = mol->molec; /* Molecular variable information       */
+
 
   /* Check that getatm() and readinfo_tli() have been already called: */
   transitcheckcalled(tr->pi, "makeradsample", 2, "getatm",       TRPI_GETATM,
                                                  "readinfo_tli", TRPI_READINFO);
   /* Check that variables are not NULL: */
-  transitASSERT(atms->rads.n<1 || !ndb || !niso || !neiso,
+  transitASSERT(atms->rads.n<1 || !ndb || !niso || !nmol,
                 "makeradsample():: called but essential variables are "
                 "missing!.\n");
 
@@ -876,18 +876,16 @@ makeradsample(struct transit *tr){
   nrad = rad->n;
 
   /* Allocate arrays that will receive the interpolated data: */
-  isovt->d = (PREC_ATM  *)calloc(nrad*neiso, sizeof(PREC_ATM ));
-  isovt->q = (PREC_ATM  *)calloc(nrad*neiso, sizeof(PREC_ATM ));
-  isovt->c = (PREC_CS   *)calloc(nrad*niso,  sizeof(PREC_CS  ));
-  isovt->z = (PREC_ZREC *)calloc(nrad*niso,  sizeof(PREC_ZREC));
-  for(i=1; i<neiso; i++){
-    isovt[i].d = isovt->d+i*nrad;
-    isovt[i].q = isovt->q+i*nrad;
-    if(i < niso){
-      isovt[i].c = isovt->c+i*nrad;
-      isovt[i].z = isovt->z+i*nrad;
-    }
+  for(i=0; i<nmol; i++){
+    molec[i].d = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
+    molec[i].q = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
+    molec[i].n = nrad;
   }
+  for (i=0; i<niso; i++){
+    iso->isov[i].z = (PREC_ZREC *)calloc(nrad, sizeof(PREC_ZREC));
+    iso->isov[i].c = (PREC_CS   *)calloc(nrad, sizeof(PREC_CS  ));
+  }
+
   atmt->tfct = atms->atm.tfct;
   atmt->pfct = atms->atm.pfct;
   atmt->t  = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
@@ -895,38 +893,34 @@ makeradsample(struct transit *tr){
   atmt->mm = (double   *)calloc(nrad, sizeof(double));
 
   resamplex(flag, rsamp->n, rsamp->v, nrad, rad->v);
-  /* Interpolate tr.atm values according to rad.v sampling: */
-  resampley(flag, 3, atms->atm.t, atmt->t, atms->atm.p, atmt->p,
+  /* Interpolate atmospheric temperature, pressure, and
+     mean molecular mass:                                       */
+  resampley(flag, 3, atms->atm.t, atmt->t,
+                     atms->atm.p, atmt->p,
                      atms->mm,    atmt->mm);
 
-  /* Interpolate density and abundance arrays for all isotopes,
-     according to tr.rads.v:                                    */
-  for(i=0; i<neiso; i++){
-  /* TD-BUG: Find out why it fails if I take the brackets away. */
-    resampley(flag, 2, atms->isov[i].d, isovt[i].d, atms->isov[i].q,
-              isovt[i].q);
-  }
+  /* Interpolate molecular density and abundance:               */
+  for(i=0; i<nmol; i++)
+    resampley(flag, 2, atms->molec[i].d, molec[i].d,
+                       atms->molec[i].q, molec[i].q);
+  
   resample_free();
-     
-  /* Interpolate partition-function and cross-section values of
-     line-database isotopes according to temperature sampling:        */
+ 
+  /* Interpolate isotopic partition function and cross section: */
   for(i=0; i<ndb; i++){       /* For each database separately:        */
     iso1db = iso->db[i].s;    /* Index of first isotope in current DB */
-    isovs  = li->isov+iso1db;
+    isovs  = li->isov + iso1db;
 
     resamplex(flag, li->db[i].t, li->db[i].T, nrad, atmt->t);
-    for(j=0; j<iso->db[i].i; j++){
-      transitASSERT(iso1db+j>niso-1,
+    for(j=0; j < iso->db[i].i; j++){
+      transitASSERT(iso1db + j > niso-1,
                     "Trying to reference an isotope (%i) outside the extended "
                     "limit (%i).\n", iso1db+j, niso-1);
-      resampley(flag, 2, isovs[j].z, isovt[iso1db+j].z, isovs[j].c, 
-                isovt[iso1db+j].c);
+      resampley(flag, 2, isovs[j].z, iso->isov[iso1db+j].z,
+                         isovs[j].c, iso->isov[iso1db+j].c);
     }
   }
   resample_free();
-
-  /* Free atmosphere info that won't be used anymore: */
-  //freemem_atmosphere(tr->ds.at, &tr->pi);
 
   /* Set progress indicator and return: */
   if(res>=0)

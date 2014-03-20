@@ -535,14 +535,15 @@ double readds(FILE *fp,
    Read a double value from a field in a string and optionally return the
    rest of the field in 'string'. A field ends in space and can be 
    separated from the number by a dash.
-   @returns on-success the double value read.  Else, returns 0.          */
+   Return: the read value, on success;
+           0, else.                                                           */
 double 
-getds(char *in,       /* input field                                          */
-      char *c,        /* If not NULL pointer, store a -1 in it if there was a
-                         valid number in the field; otherwise, store the first
-                         character of the field                               */
+getds(char *in,       /* Input field                                          */
+      char *c,        /* If not NULL, store a -1 for a valid number field; 
+                         else, store the first character of the field         */
       char *string,   /* If not NULL, store the string trailing the value     */
       int maxstring){ /* Maximum number of characters to read                 */
+
   char *cur,       /* Copy of *in                 */
         car;       /* Pointer to chars in *cur    */
   _Bool atleast=0; /* There is at least one digit */
@@ -551,7 +552,7 @@ getds(char *in,       /* input field                                          */
   /* Read until *cur is no longer a vaild numeric value: */
   cur = in;
   /* Go over each character: */
-  while((car=*cur)){
+  while((car = *cur)){
     if(car == '\n')  /* Stop if we reached the end of line */
       break;
     if(car=='e' || car=='E'){
@@ -560,12 +561,12 @@ getds(char *in,       /* input field                                          */
       stage = man|unsig;
     }
     else if(car=='+' || car=='-'){
-      if(!(stage&unsig)) /* Stop if we already had read a digit */
+      if(!(stage & unsig)) /* Stop if we already had read a digit */
         break;
       stage &= ~unsig;
     }
-    else if(car=='.'){
-      if(!stage&ent)     /* */
+    else if(car == '.'){
+      if(!stage & ent)     /* */
         break;
       stage=dec;
     }
@@ -593,12 +594,13 @@ getds(char *in,       /* input field                                          */
     *string = '\0';
   }
 
-  /* There was not a valid number: */
+  /* Not a valid number: */
   if(!atleast){
-    if(c) *c=*in;
+    if(c) *c = *in;
     return 0;
   }
-  if(c) *c=-1;
+  if(c)
+    *c = -1;
   return atof(in);
 }
 
@@ -1012,37 +1014,65 @@ splitnzero_free(char **multi)
   free(multi);
 }
 
-/* \fcnfh
-   Count the number of fields, if no separator is given, then it will
-   use any number of adjacents blank characters (as given by isblank)
 
-   @returns number of fields
-*/
+/* Count the number of fields in a string lp separated by the character sep
+   Return: number of fields  */
 long
-countfields(char *l,
-            char sep)
-{
-  //If there is an empty string return 0, otherwise there will always be
-  //at least one field.
-  if(!*l)
-    return 0;
-  long n=1;
+countfields(char *lp,  /* Input string    */
+            char sep){ /* Field separator */
+  long nfields = 0;  /* Number of fields in lp */
 
-  //Are we skiping a specific character
-  if(sep){
-    while(*l)
-      if(*l++==sep)
-        n++;
+  /* Skip sep chars at beginning: */
+  while(*lp++ == sep){}
+
+  /* Count fields:                      */
+  while(*lp){
+    /* Go through a field:              */
+    while(*lp++ != sep  &&  *lp){}
+    nfields++;
+    /* Skip sep chars until next field: */
+    while(*lp++ == sep){}
   }
-  //or blanks?
-  else{
-    while(*l)
-      if(isblank(*l++)){
-        while(isblank(*l++));
-        n++;
-      }
-  }
-  return n;
+  return nfields;
 }
 
 
+/* Reads characters from current position of line until it reaches a blank
+   space or line-break, store string in name.                               */
+void
+getname(char *line,
+        char *name){
+  /* Copy characters from line into name: */
+  while (*line != ' ' && *line != '\n')
+    *name++ = *line++;
+}
+
+/* Search for string atom in list.
+   Return: the index in list if found,
+           -1, else                       */
+int
+findstring(char *string,  /* String being searched      */
+           char **list,   /* List of strings            */
+           int size){     /* Number of elements in list */
+  int i;
+  for (i=0; i<size; i++)
+    if (strcmp(string, list[i]) == 0)
+      return i;
+  return -1;
+}
+
+
+/* \fcnfh
+   Move pointer 'lp' to next field.
+   @returns pointer to the beginning of next non-space                  */
+char *
+nextfield(char *lp){
+  /* Skip leading blank spaces and tabs: */
+  while(*lp == ' ' || *lp == '\t') lp++;
+  /* Skip field                          */
+  while(*lp != ' ' && *lp) lp++;
+  /* Skip trailing blank spaces and tabs */
+  while(*lp == ' ' || *lp == '\t') lp++;
+
+  return lp;
+}

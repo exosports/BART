@@ -38,7 +38,8 @@
 #define DEGREES (PI/180.0)       /* to make degrees to radian                */
 #define GGRAV (6.673e-8)         /* Gravitational constant (erg * cm / g^2)  */
 #define HOUR (3600.0)            /* 1 hour (s)                               */
-#define AU (14959786896040.492)  /* Astronomical unit (cm)                   */
+#define AU (14959786896040.492)  /* 1 Astronomical unit (cm)                 */
+#define ANGSTROM (1e-8)          /* 1 Angstrom (cm)                          */
 #define SUNMASS (1.9891e33)      /* Solar mass (g)                           */
 #define SUNRADIUS (6.95508e10)   /* solar volumetric mean radius (cm)        */
 #define AMU (1.66053886e-24)     /* Atomic Mass unit (g)                     */
@@ -54,6 +55,8 @@
 
 #define ONEOSQRT2PI (0.3989422804)         /* 1.0/sqrt(2pi)                  */
 #define SQRTLN2  (0.83255461115769775635)  /* sqrt(ln(2))                    */
+
+#define MAXNAMELEN 20
 
 #ifdef __LITTLE_ENDIAN
 /* {0xff-'t',0xff-'r',0xff-'s',0xff-'f'} */

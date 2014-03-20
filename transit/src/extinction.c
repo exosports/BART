@@ -28,9 +28,8 @@
 
 static _Bool extinctperiso, extwncalledonce=0, gominelow;
 static PREC_VOIGT ***profile;
-//kalt[nrad][niso][nwn]
-static PREC_RES ***kalt, minelow;
-
+static PREC_RES ***kalt, /* Shape: [nrad, niso, nwn] */
+                minelow; 
 /* Line info content: */
 static EXTINCTION_Q PREC_LNDATA *ltwl;
 static EXTINCTION_Q PREC_LNDATA *ltgf, *ltelow;
@@ -38,16 +37,16 @@ static EXTINCTION_Q short *ltisoid;
 static double efct, wfct;
 
 /* Various radius independent variable: */
-static int niso, neiso;
+static int niso, nmol; //neiso
 static PREC_RES *wn, iniwn, wni, wnf, dwn, wavfct;
 static PREC_NREC nwn, nlines, nrad;
 static struct isotopes *iso;
+struct molecules *mol;
 
 /* Following to store isotope data, these are auxiliary variables: */
 static PREC_NREC *wa, *wrc, *nwnh;
 static PREC_VOIGTP *alphal, *alphad;
 static PREC_ATM *densiso;
-static PREC_CS *csiso;
 static PREC_ZREC *ziso, *mass;
 
 
@@ -136,17 +135,17 @@ extradius(PREC_NREC r,      /* Radius index                          */
                                    recalculating profile             */
 
   PREC_NREC ln;
-  int i;
+  int i, imol;
   long j, maxj, minj;
   PREC_VOIGT *profwn;
   PREC_NREC w, subw;
   PREC_RES *k, wavn;
+  double csdiameter; /* Collision diameter */
   double propto_k;
   double maxk = 0;
 
   if(!extwncalledonce)
-    transiterror(TERR_CRITICAL,
-                 "trying to call extradius before calling extwn.\n");
+    transiterror(TERR_CRITICAL, "Trying to call extradius before extwn.\n");
 
   /* Constant proportionality factor of the Doppler width (in
      sqrt(AMU) units):
@@ -155,38 +154,40 @@ extradius(PREC_NREC r,      /* Radius index                          */
       \label{dopbr}                                               */
   double propto_adop = sqrt(2*KB*temp/AMU) * SQRTLN2/LS;
 
-  /* Constant proportionality factor of the Lorenz width (in 
-     FINDME units?):
+  /* Constant proportionality factor of the Lorenz width (FINDME: units?):
      \alpha_L = \underbrace{\Gamma_{nat}}_{\mathrm{ignored}} +
-                \underbrace{\sqrt{\frac{2k_B T}{\pi^3c^2}}}_{\rm{propto\_alor}}
-                \sigma_c\sum_{\rm{coll}}n_i
-                   \sqrt{\left(\frac{1}{m_r} + \frac{1}{m_i}\right)}
+                \underbrace{\sqrt{\frac{2k_B T}{\pi c^2}}}_{\rm{propto\_alor}}
+                \sum_{i}n_i\sigma_{ir}^2
+                      \sqrt{\left(\frac{1}{m_r} + \frac{1}{m_i}\right)}
      \label{lorwidth}                                                 */
-  double propto_alor = sqrt(2*KB*temp/PI/AMU)/(AMU*LS*PI);
+  double propto_alor = sqrt(2*KB*temp/PI/AMU)/(AMU*LS);
 
   /* Initialize a Voigt profile for every isotope as well for
-     the mass, ziso, densiso and csiso arrays:                */
+     the mass, ziso, and densiso arrays:                      */
+  for (i=0; i<nmol; i++)
+    densiso[i] = mol->molec[i].d[r];
   for(i=0; i<niso; i++){    /* Initialize arrays:             */
     mass[i]    = iso->isof[i].m;
     ziso[i]    = iso->isov[i].z[r];
-    densiso[i] = iso->isov[i].d[r];
-    csiso[i]   = iso->isov[i].c[r];
 
-    /* Skip ignored isotopes (no density info): */
-    if(iso->isodo[i]==ignore)
-      continue;
+    imol = iso->imol[i];  /* Isotope's molecule index */
+    /* Calculate Lorentz line width: */
+    alphal[i] = 0.0;
+    for(j=0; j<nmol; j++){
+      csdiameter = (mol->radius[j] + mol->radius[imol]);
+      transitprint(20, verblevel, "Iso's coll diameter square %.21f.\n"
+                                  "Iso's cross section/pi:  %.21f.\n",
+                                  csdiameter*csdiameter, iso->isov[i].c[r]/PI);
+      alphal[i] += mol->molec[j].d[r]/mol->mass[j] * csdiameter * csdiameter *
+                   sqrt(1/mass[i] + 1/mol->mass[j]);
+    }
+    alphal[i] *= propto_alor;
 
-    /* Calculate Lorentz width (omitting collisions with ignored isotopes): */
-    alphal[i] = 0;
-    for(j=0; j<neiso; j++)
-      if(iso->isodo[j] != ignore)
-        alphal[i] += iso->isov[j].d[r]/iso->isof[j].m *
-                     sqrt(1/mass[i] + 1/iso->isof[j].m);
-    alphal[i] *= csiso[i]*propto_alor;
-
-    /* Calculates Doppler width divided by central wavenumber: */
+    /* Calculate Doppler width divided by central wavenumber: */
     alphad[i] = propto_adop/sqrt(mass[i]);
 
+    transitprint(30, verblevel, "Lorentz: %.9f, Doppler: %.9f broadening.\n",
+                               alphal[i], alphad[i]);
     /* Get a new profile: 'profile[i]' has dimensions ex->vf x (2*nwnh[i]+1).
        The latter is calculated by newprofile, though: */
     if((nwnh[i] = newprofile(profile[i], fbinvoigt, dwn,
@@ -214,7 +215,7 @@ extradius(PREC_NREC r,      /* Radius index                          */
     wavn = 1.0/(ltwl[ln]*wfct);
 
     /* If it is beyond lower limit, skip to next line transition: */
-    if(wavn<iniwn)
+    if(wavn < iniwn)
       continue;
     else
       /* Closest wavenumber index to transition, but no larger than: */
@@ -222,12 +223,12 @@ extradius(PREC_NREC r,      /* Radius index                          */
     transitDEBUG(25, verblevel, "wavn: %g,  lgf: %g.\n", wavn, ltgf[ln]);
 
     /* If it is beyond the last index, skip to next line transition: */
-    if(w>=nwn)
+    if(w >= nwn)
       continue;
 
     /* Distance from center of line to sampled wavenumber by 'w', in number
        of fine bins:  */
-    subw = fbinvoigt*(wavn-w*dwn-iniwn)/dwn;
+    subw = fbinvoigt*(wavn - w*dwn - iniwn)/dwn;
 
     i = ltisoid[ln]; /* Isotope ID of line     */
     k = kiso[i];     /* Extinction coefficient array[wn] for given isotope */
@@ -260,12 +261,11 @@ extradius(PREC_NREC r,      /* Radius index                          */
        consider ionizable levels of species. Error in thesis' equation 3.35! */
 
     /* Calculate opacity coefficient except the broadening factor: */
-    propto_k = densiso[i] *                        /* Density            */
-               SIGCTE     *                        /* Constant in sigma  */
-               ltgf[ln]   *                        /* gf                 */
+    propto_k = densiso[iso->imol[i]] * iso->isoratio[i] * /* Density     */
+               SIGCTE     * ltgf[ln]             * /* Constant * gf      */
                exp(-EXPCTE*efct*ltelow[ln]/temp) * /* Level population   */
                (1-exp(-EXPCTE*wavn/temp))        / /* Induced emission   */
-               mass[i]    /                        /* Mass               */
+               mass[i]                           / /* Mass               */
                ziso[i];                            /* Partition function */
 
     /* Maximum line opacity coefficient at central wavenumber: */
@@ -276,7 +276,8 @@ extradius(PREC_NREC r,      /* Radius index                          */
                  "i=%i   temp=%g   Elow=%g\n"
                  "aD=%.7g   aL=%.7g\n"
                  "wl=%.10g  wn=%.10g\n"
-                 "k =%12.5g   // densiso[i] \n"
+                 "k =%12.5g   // densiso[imol]\n"
+                 "  *%12.5g   // isoratio\n"
                  "  *%12.5g   // SIGCTE\n"
                  "  *%12.5g   // ltgf[ln]\n"
                  "  *%12.5g   // exp(-EXPCTE*ltelow[ln]/temp)\n"
@@ -287,7 +288,8 @@ extradius(PREC_NREC r,      /* Radius index                          */
                  i, temp, ltelow[ln],
                  alphad[i]*wavn, alphal[i],
                  ltwl[ln], 1.0/(wfct*ltwl[ln]*wavfct),
-                 densiso[i],
+                 densiso[iso->imol[i]],
+                 iso->isoratio[i],
                  SIGCTE,
                  ltgf[ln],
                  exp(-EXPCTE*ltelow[ln]/temp),
@@ -332,13 +334,11 @@ extradius(PREC_NREC r,      /* Radius index                          */
 
     wa[i] = w;  /* Last wavelength per isotope */
   }
+
   /* Free the profiles of every non-ignored isotopes: */
   for(i=0; i<niso; i++)
-    if(iso->isodo[i] != ignore)
       free(profile[i][0]);
-
   transitprint(2, verblevel, "Done.\n");
-
   return 0;
 }
 
@@ -583,9 +583,10 @@ extwn(struct transit *tr){
 
   /* Radius-independent variables: */
   iso    = tr->ds.iso;
-  neiso  = iso->n_e;
+  mol    = tr->ds.mol;
+  nmol   = mol->nmol;
   niso   = iso->n_i;
-  wavfct = tr->wavs.f;  /* FINDME: typo, should be wavs.fct? */
+  wavfct = tr->wavs.fct;  /* FINDME: typo, should be wavs.fct? */
   wn     = tr->wns.v;
   nwn    = tr->wns.n;
   iniwn  = tr->wns.i;
@@ -597,8 +598,7 @@ extwn(struct transit *tr){
   /* Allocate line-profile info: */
   alphal  = (PREC_VOIGTP *)calloc(niso*2, sizeof(PREC_VOIGTP));
   ziso    = (PREC_ZREC   *)calloc(niso*2, sizeof(PREC_ZREC)  );
-  densiso = (PREC_ATM    *)calloc(niso  , sizeof(PREC_ATM)   );
-  csiso   = (PREC_CS     *)calloc(niso  , sizeof(PREC_CS)    );
+  densiso = (PREC_ATM    *)calloc(nmol  , sizeof(PREC_ATM)   );
   wa      = (PREC_NREC   *)calloc(niso*3, sizeof(PREC_NREC)  );
   wrc    = wa     + niso;
   nwnh   = wa     + niso*2;
@@ -609,10 +609,10 @@ extwn(struct transit *tr){
   /* Do not allocate memory in multidimensional arrays if we are
      ignoring that particular isotope. We are not using this in
      unidimensional arrays because of the extra hassle:           */
-  int nisoalloc = niso; /* FINDME: Number of isotopes to alloc? for what?*/
-  for(i=0; i<niso; i++)
-    if(iso->isodo[i]==ignore)
-      nisoalloc--;
+  //int nisoalloc = niso; /* FINDME: Number of isotopes to alloc? for what?*/
+  //for(i=0; i<niso; i++)
+  //  if(iso->isodo[i]==ignore)
+  //    nisoalloc--;
   /* FINDME: nisoalloc unused */
 
   /* Check there is at least one atmospheric layer:        */
@@ -632,7 +632,7 @@ extwn(struct transit *tr){
   /* Check there is at least one isotope linelist          */
   /* FINDME: This should not be a condition, we may want
      to calculate an atmosphere with only CIA for example. */
-  if(neiso<1){
+  if(niso < 1){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
                  "You are requiring a spectra of zero isotopes!.\n");
     return -5;
@@ -703,24 +703,22 @@ printone(struct transit *tr){
   int rn;
   FILE *out=stdout;
 
-  //open file
-  if(tr->f_out&&tr->f_out[0]!='-')
-    out=fopen(tr->f_out,"w");
+  /* Open file: */
+  if(tr->f_out && tr->f_out[0] != '-')
+    out = fopen(tr->f_out, "w");
 
-  transitprint(1,verblevel,
-               "\nPrinting extinction for one radius (at %gcm) in '%s'\n"
-               ,tr->rads.v[0],tr->f_out?tr->f_out:"standard output");
+  transitprint(1, verblevel, "\nPrinting extinction for one radius (at %gcm) "
+                             "in '%s'\n", tr->rads.v[0],
+                             tr->f_out?tr->f_out:"standard output");
 
-  //print!
-  fprintf(out,
-          "#wavenumber[cm-1]\twavelength[nm]\textinction[cm-1]\t"
-          "cross-section[cm2]\n");
-  for(rn=0;rn<tr->wns.n;rn++)
-    fprintf(out,"%12.6f%14.6f%17.7g%17.7g\n"
-            ,tr->wns.fct*tr->wns.v[rn]
-            ,1/tr->wavs.fct/tr->wns.v[rn]/tr->wns.fct,
+  /* Print: */
+  fprintf(out, "#wavenumber[cm-1]   wavelength[nm]   extinction[cm-1]   "
+               "cross-section[cm2]\n");
+  for(rn=0; rn < tr->wns.n; rn++)
+    fprintf(out, "%12.6f%14.6f%17.7g%17.7g\n", tr->wns.fct*tr->wns.v[rn],
+            1/(tr->wavs.fct * tr->wns.v[rn] * tr->wns.fct),
             tr->ds.ex->e[0][0][rn],
-            AMU*tr->ds.ex->e[0][0][rn]*iso->isof[0].m/iso->isov[0].d[0]);
+            AMU*tr->ds.ex->e[0][0][rn] * iso->isof[0].m/mol->molec[iso->imol[0]].d[0]);
 
   exit(EXIT_SUCCESS);
 }
@@ -938,5 +936,4 @@ freemem_localextinction(){
   free(alphal);
   free(ziso);
   free(densiso);
-  free(csiso);
 }

@@ -41,7 +41,7 @@ int main(int argc,      /* Number of variables */
 
   /* Process the command line arguments:         */
   fw(processparameters, !=0, argc, argv, &transit);
-  t0 = timecheck(verblevel, 0, 0, "processparameters", tv, t0);
+  t0 = timecheck(verblevel, itr,  0, "processparameters", tv, t0);
 
   /* Accept all general hints:                   */
   fw(acceptgenhints, !=0, &transit);
@@ -55,20 +55,20 @@ int main(int argc,      /* Number of variables */
 
   /* Make wavenumber binning:                    */
   fw(makewnsample0, <0, &transit);
-  t0 = timecheck(verblevel, itr, 1, "makewnsample0", tv, t0);
+  t0 = timecheck(verblevel, itr,  1, "makewnsample0", tv, t0);
   if(fw_status>0)
     transitprint(7, verblevel,
                  "makewnsample() modified some of the hinted "
                  "parameters according to returned flag: 0x%lx.\n",
                  fw_status);
 
-  /* Read line info:                             */
-  fw(readlineinfo, !=0, &transit);
-  t0 = timecheck(verblevel, itr, 2, "readlineinfo", tv, t0);
-
   /* Read Atmosphere information:                */
   fw(getatm, !=0, &transit);
-  t0 = timecheck(verblevel, itr, 3, "getatm", tv, t0);
+  t0 = timecheck(verblevel, itr,  2, "getatm", tv, t0);
+
+  /* Read line info:                             */
+  fw(readlineinfo, !=0, &transit);
+  t0 = timecheck(verblevel, itr,  3, "readlineinfo", tv, t0);
 
   /* Hack: add an index to f_out filename to get different files
      and compare them:                                               */
@@ -83,67 +83,47 @@ int main(int argc,      /* Number of variables */
 
   /* Make radius binning and interpolate data to new value: */
   fw(makeradsample, <0, &transit);
-  t0 = timecheck(verblevel, itr, 4, "makeradsample", tv, t0);
+  t0 = timecheck(verblevel, itr,  4, "makeradsample", tv, t0);
   if(fw_status>0)
     transitprint(7, verblevel,
                  "makeradsample() modified some of the hinted "
                  "parameters according to returned flag: 0x%lx.\n",
                  fw_status);
- 
+
   /* Compute sampling of impact parameter: */
   fw(makeipsample, <0, &transit);
-  t0 = timecheck(verblevel, itr, 5, "makeipsample", tv, t0);
+  t0 = timecheck(verblevel, itr,  5, "makeipsample", tv, t0);
   if(fw_status>0)
     transitprint(7, verblevel,
                  "makeipsample() modified some of the hinted "
                  "parameters according to returned flag: 0x%lx.\n",
                  fw_status);
  
-    /* Print sampling info:                  */
-    fw(outsample, !=0, &transit);
-    t0 = timecheck(verblevel, itr, 10, "outsample", tv, t0);
+  /* Print sampling info:                  */
+  fw(outsample, !=0, &transit);
+  t0 = timecheck(verblevel, itr,  6, "outsample", tv, t0);
 
   /* EDIT: The loop should enclose getatm (getatm will change in the future,
      but for the moment we will leave it as it is).  */
-  for (itr=0; itr<2; itr++){
-    t0 = timecheck(verblevel, itr, 0, "Start loop", tv, t0);
+  for (itr=0; itr<1; itr++){
+    t0 = timecheck(verblevel, itr,  7, "Start loop", tv, t0);
 
-    /* Make wavelength binning:                    */
-    //fw(makewavsample, <0, &transit);
-    //t0 = timecheck(verblevel, itr, 3, "makewavsample", tv, t0);
-    //if(fw_status>0)
-    //  transitprint(7, verblevel,
-    //               "makewavsample() modified some of the hinted "
-    //               "parameters according to returned flag: 0x%lx.\n",
-    //               fw_status);
- 
-    /* Make wavenumber binning:                    */
-    //fw(makewnsample, <0, &transit);
-    //t0 = timecheck(verblevel, itr, 4, "makewnsample", tv, t0);
-    //if(ifw_status>0)
-    //  transitprint(7, verblevel,
-    //               "makewnsample() modified some of the hinted "
-    //               "parameters according to returned flag: 0x%lx.\n",
-    //               fw_status);
- 
     /* Initialize CIA:                       */
     fw(interpolatecia, !=0, &transit);
-    t0 = timecheck(verblevel, itr, 6, "interpolatecia", tv, t0);
+    t0 = timecheck(verblevel, itr,  8, "interpolatecia", tv, t0);
  
     /* Compute index of refraction:          */
     fw(idxrefrac, !=0, &transit);
-    t0 = timecheck(verblevel, itr, 7, "idxrefrac", tv, t0);
+    t0 = timecheck(verblevel, itr,  9, "idxrefrac", tv, t0);
  
     /* Calculate extinction coefficient:     */
     fw(extwn, !=0, &transit);
-    t0 = timecheck(verblevel, itr, 8, "extwn", tv, t0);
+    t0 = timecheck(verblevel, itr, 10, "extwn", tv, t0);
  
     /* Calculate optical depth:              */
     fw(tau, !=0, &transit);
     t0 = timecheck(verblevel, itr, 11, "tau", tv, t0);
 
-    //transitprint(1, verblevel, "len: %i, word: %s.\n",
-    //                           (int)strlen(transit.f_out), transit.f_out); 
     sprintf(str_iter, "%li", itr);
     strncpy(fout+dot_pos, str_iter, 1);
     strcpy(transit.f_out, fout);
@@ -155,12 +135,13 @@ int main(int argc,      /* Number of variables */
     free(transit.save.ext);
     freemem_cia      (transit.ds.cia, &transit.pi);
     freemem_outputray(transit.ds.out, &transit.pi);
-    transitprint(1, verblevel, "----------------------------\n");
     t0 = timecheck(verblevel, itr, 13, "THE END", tv, t0);
+    transitprint(1, verblevel, "----------------------------\n");
   }
-  freemem_isotopes(transit.ds.iso, &transit.pi);
-  freemem_atmosphere(transit.ds.at, &transit.pi);
-  freemem_lineinfotrans(transit.ds.li, &transit.pi);
+  freemem_isotopes(     transit.ds.iso, &transit.pi);
+  freemem_molecules(    transit.ds.mol, &transit.pi);
+  freemem_atmosphere(   transit.ds.at,  &transit.pi);
+  freemem_lineinfotrans(transit.ds.li,  &transit.pi);
   freemem_transit(&transit);
 
   return EXIT_SUCCESS;
@@ -174,7 +155,6 @@ freemem_transit(struct transit *tr){
   freemem_hints(tr->ds.th);
 
   freemem_samp(&tr->rads);
-  //freemem_samp(&tr->wavs);
   freemem_samp(&tr->wns);
   freemem_samp(&tr->ips);
   free_atm(&tr->atm);

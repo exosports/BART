@@ -26,7 +26,7 @@
 
 /* \fcnfh
    Do resampling of arrays. If getingx then process the x axis,
-   otherwise processing y axis. Errors are not continued in this
+   otherwise process the y axis. Errors are not continued in this
    function because it is not expected to run with checks.
 
    Return: 0 on success
@@ -42,8 +42,6 @@ resample(const short getingx, /* Axis flag: 0:y, 1:x,  2:free arrays      */
          ...){                /* Pairs of reference and output data
                                  y-axis (in that order)                   */
   double *soutx;
-  //'indx' will store the position in the data arrays where the
-  //reference value was found.
   //'D' and 'h' will be used to store info for the spline function.
   //'x' is pointing to the array's x-axis array; it is assumed that that
   //won't change between calls to resamplex() and resampley().
@@ -53,7 +51,8 @@ resample(const short getingx, /* Axis flag: 0:y, 1:x,  2:free arrays      */
   //y-axis.
   //'i', 'f' and 'm' will be used for binary search.
   static float *t=NULL;
-  static long *indx=NULL; /*  */
+  static long *indx=NULL; /* Position in the data arrays where the
+                             reference value was found */
   static double *x;
   static long ndat=0, nout=0;
   double *out, *y;
@@ -86,8 +85,8 @@ resample(const short getingx, /* Axis flag: 0:y, 1:x,  2:free arrays      */
     }
     /* Check that we are not asked to extrapolate and that we are within
        the range: */
-    if ((outx[0]<refx[0] || outx[noutx-1]>refx[nrefx-1]) ||
-        (outx[noutx-1]<refx[0] || outx[0]>refx[nrefx-1]) ){
+    if ((outx[0]       < refx[0] || outx[noutx-1] > refx[nrefx-1]) ||
+        (outx[noutx-1] < refx[0] || outx[0]       > refx[nrefx-1]) ){
       fprintf(stderr,
               "%s:: Data x array (%g to %g), spans outside the values "
               "of reference x array (%g to %g). No extrapolation.\n",
@@ -181,10 +180,10 @@ resample(const short getingx, /* Axis flag: 0:y, 1:x,  2:free arrays      */
       switch(flags&SAMP_BITS){
       //use spline interpolation
       case SAMP_SPLINE:
-        natcubspline(ndat,x,y,nout,indx,t,out,soutx);
+        natcubspline(ndat, x, y, nout, indx, t, out, soutx);
         break;
       case SAMP_LINEAR:
-        lineinterpol(ndat,x,y,nout,indx,t,out,NULL);
+        lineinterpol(ndat, x, y, nout, indx, t, out, NULL);
         break;
       default:
         fprintf(stderr,

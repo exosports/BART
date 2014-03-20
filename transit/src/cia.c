@@ -76,7 +76,7 @@ interpolatecia(struct transit *tr){
   double *tmpt = malloc(tr->rads.n * sizeof(double)); /* wavenumber array   */
   prop_atm *atm = &tr->atm;
   double *densiso1, *densiso2, amagat2; /* Density arrays and square amagat */
-  struct isotopes *iso=tr->ds.iso;
+  struct molecules *mol=tr->ds.mol;
 
   /* Assure that radius and wavenumber samples exist: */
   transitcheckcalled(tr->pi, "interpolatecia", 2, "makewnsample", TRPI_MAKEWN,
@@ -223,7 +223,7 @@ interpolatecia(struct transit *tr){
       if(!rc)
         break;
 
-      /* Re-allocate (double size) if necessary: */
+      /* Re-allocate (double the size) if necessary: */
       if(n==wa){
         wn   = (double  *)realloc(wn,   sizeof(double)*(wa<<=1));
         a    = (double **)realloc(a,    sizeof(double)*wa);
@@ -244,7 +244,7 @@ interpolatecia(struct transit *tr){
         a[n][i] = strtod(lpa, &lp); /* Store cross section */
         if(lp==lpa)
           transiterror(TERR_CRITICAL,
-                       "Less fields(%i) than expected(%i) were read "
+                       "Less fields (%i) than expected (%i) were read "
                        "for the %ith wavenumber in the CIA file '%s'.\n",
                        i, nt, n+1, file);
         lpa=lp;
@@ -269,19 +269,19 @@ interpolatecia(struct transit *tr){
 
     /* Get density profile of isotopes from atmosphere-file isotopes: */
     densiso1 = densiso2 = 0;
-    for(i=0; i<iso->n_e; i++){
-      if(strcmp(iso->isof[i].n, colname1)==0)
-        densiso1 = iso->isov[i].d;
-      if(strcmp(iso->isof[i].n, colname2)==0)
-        densiso2 = iso->isov[i].d;
+    for(i=0; i<mol->nmol; i++){
+      if(strcmp(mol->name[i], colname1)==0)
+        densiso1 = mol->molec[i].d;
+      if(strcmp(mol->name[i], colname2)==0)
+        densiso2 = mol->molec[i].d;
     }
 
     /* If either isotope name was not found in atmosphere file: */
     if(!densiso1 || !densiso2)
       transiterror(TERR_SERIOUS,
-                   "One or both of the names of the isotopes in CIA (%s, %s) "
-                   "file '%' do not match any in the atmsopheric "
-                   "database '%s'", colname1, colname2, file, tr->f_atm);
+                   "One or both name(s) of the molecules in CIA (%s, %s) "
+                   "file '%s' do not match any in the atmsopheric "
+                   "database '%s'.\n", colname1, colname2, file, tr->f_atm);
 
     nt = tr->rads.n; /* Reset nt to the transit number of samples */
     /* Calculate absorption coefficients in cm-1 units: */
@@ -365,7 +365,7 @@ bicubicinterpolate(double **res, /* target array [t1][t2]  */
   gsl_interp       *spl;
 
   for(i=0; i<nx1; i++){
-    acc = gsl_interp_accel_alloc ();
+    acc = gsl_interp_accel_alloc();
     spl = gsl_interp_alloc(gsl_interp_cspline, nx2);
     gsl_interp_init(spl, x2, src[i], nx2);
     for(j=fj; j<lj; j++)
@@ -384,12 +384,10 @@ bicubicinterpolate(double **res, /* target array [t1][t2]  */
     gsl_interp_accel_free(acc);
   }
 
-
   free(f2[0]);
   free(f2);
 
   return 0;
-    
 }
 
   

@@ -22,8 +22,8 @@
 /* List of functions:
 int    getatm(struct transit *tr) 
 
-double checkaddmm(double *mm, PREC_NREC r, prop_isov *isov, prop_isof *isof,
-                  int n, _Bool mass, enum isodo *isodo)
+double checkaddmm(double *mm, PREC_NREC r, prop_mol *molec,
+                  struct molecules *mol, int n, _Bool mass)
 
 void   telldefaults(struct isotopes *iso, struct atm_data *at)
 
@@ -35,7 +35,8 @@ int    freemem_atmosphere(struct atm_data *at, long *pi)
 
 void   freemem_onept(struct onept *o)                                         */
 
-#include "at_common.c"
+//#include "at_common.c"
+#include <readatm.h>
 
 /* \fcnfh
    Initialize ds.at (atm_data).  Set abundance mass and allowrq parameters.
@@ -52,17 +53,20 @@ void   freemem_onept(struct onept *o)                                         */
     -5 if requested isotope is an ignored one                */
 int
 getatm(struct transit *tr){
-  int nmb,      /* 'nmb' auxiliar variable for a number */
-      nrad,     /* Number of radius samples             */
-      i;        /* for index                            */
-  double sumq;  /* Sum of the proportional abundances   */
-  float allowq; /* Maximum allowed value for: 1-sumq    */
+  int nmol,     /* Number of molecules      */
+      nrad,     /* Number of radius samples */
+      i;        /* for-loop index           */
   struct transithint *th = tr->ds.th; /* Get transithint                  */
   struct onept *onept = &th->onept;   /* Get onept from transit hint      */
-  static struct atm_data st_at;       /* Declare atm_data structure       */
-  prop_samp *rads = &st_at.rads;      /* Radius sample                    */
-  memset(&st_at, 0, sizeof(struct atm_data)); /* Set atm_data mem to 0    */
-  tr->ds.at = &st_at;                 /* Set transit's atm_data structure */
+  static struct atm_data at;       /* Declare atm_data structure       */
+  static struct molecules mol;
+  prop_samp *rads = &at.rads;      /* Radius sample                    */
+  memset(&at,  0, sizeof(struct atm_data));  /* Set atm_data  mem to 0  */
+  memset(&mol, 0, sizeof(struct molecules)); /* Set molecules mem to 0  */
+  tr->ds.at  = &at;                 /* Set transit's atm_data structure */
+  tr->ds.mol = &mol;
+
+  PREC_ZREC *f_remainder;
 
   /* How the atmospheric parameters are input: */
   enum {invalid,       /* Unvalid input                   */
@@ -73,13 +77,11 @@ getatm(struct transit *tr){
 
   /* 'fp' and 'newiso' are initialized to avoid compiler output: */
   FILE *fp = NULL;
-  int newiso = 0;
-  struct isotopes *iso = tr->ds.iso; /* Get isotopes structure from transit  */
 
   /* Pass atmospheric flags into transit struct: */
-  transitacceptflag(tr->fl, th->fl, TRU_ATMBITS);    /* See transit.h */
-  st_at.mass = th->mass;
-  allowq = 1 - (tr->allowrq=th->allowrq);
+  transitacceptflag(tr->fl, th->fl, TRU_ATMBITS); /* See transit.h */
+  at.mass     = th->mass;  /* bool, abundance by mass (1) or by number (0) */
+  tr->allowrq = th->allowrq;
 
   /* If --onept parameter was given, force a given one point: */
   if(onept->one){
@@ -94,7 +96,7 @@ getatm(struct transit *tr){
     nrad = rads->n = 1;
     rads->fct      = 1;
 
-    /* See how does the user wants the default to be handled: */
+    /* Set how to handle the default case: */
     switch(tr->fl & TRU_ATM1PBITS){
     case TRU_ATMNODEF:    /* throw error message:             */
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
@@ -102,7 +104,7 @@ getatm(struct transit *tr){
       return -1;
       break;
     case TRU_ATMHARDC1P:  /* Use hard-coded values:           */
-      sethcdef(tr, &st_at, rads);
+      sethcdef(tr, &at, rads);
       return 0;
       break;
     case TRU_ATMASK1P:    /* Get values from standard input:  */
@@ -122,7 +124,8 @@ getatm(struct transit *tr){
        in transit structure:                                              */
     if((tr->fp_atm=verbfileopen(th->f_atm, "Atmospheric info ")) == NULL)
       exit(EXIT_FAILURE);
-    atmfilename = tr->f_atm = th->f_atm; /* Set file name */
+    atmfilename = tr->f_atm = th->f_atm; /* Set file name  */
+    /* FINDME: seems that there is no need to set th.f_atm */
     inp = file;
     fp  = tr->fp_atm; /* Pointer to file */
     transitprint(1, verblevel, "Reading atmosphere file: '%s'.\n", atmfilename);
@@ -139,32 +142,29 @@ getatm(struct transit *tr){
                               __FILE__, __LINE__);  /* See transit.h */
 
   /* Initialize atmosphere temperature-pressure arrays:    */
-  st_at.atm.tfct = 1; /* Default temperature units are cgs */
-  st_at.atm.pfct = 1; /* Default pressure    units are cgs */
-  //transitprint(1, verblevel, "FLAG: getatm 00.\n");
-  rads->v     = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
-  st_at.atm.t = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
-  st_at.atm.p = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
+  at.atm.tfct = 1; /* Default temperature units are cgs */
+  at.atm.pfct = 1; /* Default pressure    units are cgs */
+  rads->v  = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
+  at.atm.t = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
+  at.atm.p = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
   rads->v[0] = 1.0;
 
   /* Set p, t, and newiso: */
   switch(inp){
   case given:
-    newiso = st_at.n_niso = onept->ne; /* Number of new isotopes, FINDME */
-    st_at.atm.t[0] = onept->t;
-    st_at.atm.p[0] = onept->p;
+    //newiso = at.n_niso = onept->ne; /* Number of new isotopes, FINDME */
+    at.atm.t[0] = onept->t;
+    at.atm.p[0] = onept->p;
     break;
   case ask:
     /* FINDME: askonenpt ?? */
-    askonenpt(onept, &st_at, -1);
-    newiso = st_at.n_niso;
+    askonenpt(onept, &at, -1);
     break;
   case file:
     /* T, P, and number of extra isotopes will be read from the file.
        Line beginning with 'i' will contain fields with mass and name,
        'newiso' will contain the number of currently allocated extra
        isotopes.                                                     */
-    newiso = iso->n_i; /* Start with same number of isotopes in iso  */
     break;
 
   default: /* Just to avoid compiler output, it should never happen: */
@@ -173,122 +173,37 @@ getatm(struct transit *tr){
     break;
   }
 
-  //transitprint(1, verblevel, "FLAG: getatm 05.\n");
-
-  /* Total number of allocated isotopes:    */
-  nmb = iso->n_e = iso->n_i + newiso;
-  /* Re-allocate to new number of isotopes: */
-  iso->isof = (prop_isof *)realloc(iso->isof, nmb*sizeof(prop_isof));
-  /* Allocate new isotopes names:           */
-  iso->isof[iso->n_i].n = (char *)calloc(newiso*maxeisoname, sizeof(char));
-  for(i=1; i<newiso; i++)
-    iso->isof[iso->n_i+i].n = iso->isof[iso->n_i].n + i*maxeisoname;
-
-  /* Set mass and names for the new isotopes: */
-  switch(inp){
-  case given:
-    /* An exact number of masses and names for the extra isotopes were given */
-    if(onept->nm==newiso){
-      for(i=0; i<newiso; i++){
-        strcpy(iso->isof[i+iso->n_i].n, onept->n[i]);
-        iso->isof[i+iso->n_i].m = onept->m[i];
-      }
-    }
-    else if(onept->nm>0){
-      free(onept->m);
-      free(onept->n[0]);
-      free(onept->n);
-    }
-  case ask:
-    /* If there are new isotopes and they were not given exactly. Note
-       that no ignoring is possible if using interactive input.        */
-    if(newiso>0 && onept->nm!=newiso)
-      askonemn(onept, iso->isof, newiso, iso->n_i);
-    st_at.n = onept->n;
-    st_at.m = onept->m;
-    break;
-  case file:
-    //transitprint(1, verblevel, "FLAG: getatm 09.\n");
-    if((i=getmnfromfile(fp, &st_at, tr, nmb))<1){
-      /* On success getmnfromfile returns at.begline, not an error code */
-      transiterror(TERR_SERIOUS, "getmnfromfile() returned error code %i\n", i);
-      exit(EXIT_FAILURE);
-    }
-    break;
-  default:
-    break;
+  /* Remainder molecules' abundance fraction: */
+  f_remainder = (PREC_ZREC *)calloc(1, sizeof(PREC_ZREC));
+  /* Read keyword-variables from file:        */
+  if((i=getmnfromfile(fp, &at, tr, f_remainder))<1){
+    /* On success getmnfromfile returns at.begline, not an error code */
+    transiterror(TERR_SERIOUS, "getmnfromfile() returned error code %i\n", i);
+    exit(EXIT_FAILURE);
   }
+  nmol = at.n_aiso;
 
-  //transitprint(1, verblevel, "FLAG: getatm 10.\n");
+  /* Allocate mass and radius array of the molecules: */
+  mol.nmol   = nmol;
+  mol.mass   = (PREC_ZREC *)calloc(nmol, sizeof(PREC_ZREC));
+  mol.radius = (PREC_ZREC *)calloc(nmol, sizeof(PREC_ZREC));
+  mol.molec  = (prop_mol  *)calloc(nmol, sizeof(prop_mol));
+  /* Get values from 'molecules.dat' file: */
+  getmass(&at, &mol);
 
-  /* Allocate isotope information for depth dependent information: */
-  st_at.n_nonignored = nmb = iso->n_e;
-  st_at.isov = (prop_isov *)calloc (nmb,           sizeof(prop_isov));
-  iso->isov  = (prop_isov *)realloc(iso->isov, nmb*sizeof(prop_isov));
-  st_at.mm   = (double    *)calloc (nrad,          sizeof(double));
-  for(i=0; i<nmb; i++){
-    st_at.isov[i].d = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
-    st_at.isov[i].q = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
-    st_at.isov[i].n = nrad;
+  /* Allocate arrays for the mean molecular mass, density, and abundance: */
+  at.molec        = (prop_mol *)calloc(nmol, sizeof(prop_mol));
+  at.mm           = (double   *)calloc(nrad, sizeof(double));
+  for(i=0; i<nmol; i++){
+    at.molec[i].d = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
+    at.molec[i].q = (PREC_ATM *)calloc(nrad, sizeof(PREC_ATM));
+    at.molec[i].n = nrad;
   }
-  /* FINDME: This was already reallocated in getmnfromfile */
-  iso->isodo = (enum isodo *)realloc(iso->isodo, iso->n_e*sizeof(enum isodo));
-
-  //transitprint(1, verblevel, "FLAG: getatm 14.\n");
 
   /* Get isotopic abundances: */
-  switch(inp){
-  case given:
-    if(onept->nq == nmb)
-      for(i=0; i<nmb; i++){
-        st_at.isov[i].q[0] = onept->q[i];
-        iso->isodo[i] = fixed;
-      }
-    else if(onept->nq > 0)
-      free(onept->q);
-  case ask:
-    if(onept->nq != nmb){
-      onept->q = (PREC_ATM *)calloc(nmb,sizeof(PREC_ATM));
-      for(i=0; i<nmb; i++){
-        st_at.isov[i].q[0] = onept->q[i] = 
-                         askforposd("%s abundance for isotope %s: ",
-                                    st_at.mass?"Mass":"Number", iso->isof[i].n);
-        if(onept->q[i] >= 1){
-          transitprint(1, verblevel, "Abundance given is greater than 1, "
-                                     "this isotope will be ignored.\n");
-          iso->isodo[i] = ignore;
-        }
-        else
-          iso->isodo[i] = fixed;
-      }
-    }
-    /* Calculate the mean molecular mass and check that proportional
-       abundances add to ~1.0                                      */
-    if((sumq=checkaddmm(st_at.mm, 0, st_at.isov, iso->isof, nmb, st_at.mass,
-                        iso->isodo)) < allowq)
-      transiterror(TERR_WARNING, "Abundances don't add up to 1: %.9g under "
-                                 "one point conditions.\n", sumq);
-    /* Calculate densities: */
-    for(i=0; i<nmb; i++)
-      st_at.isov[i].d[0] = stateeqnford(st_at.mass,  st_at.isov[i].q[0],
-                                        st_at.mm[0], iso->isof[i].m,
-                                        st_at.atm.p[0]*st_at.atm.pfct,
-                                        st_at.atm.t[0]*st_at.atm.tfct);
-    break;
-  case file:
-    /* All the extra isotopes are going to have density from file (cannot
-       be ignored or fixed). FALSE, they can be FACTOR!
-          for(i=iso->n_i; i<iso->n_e; i++)
-            iso->isodo[i] = atmfile;                                      */
-    nrad = readatmfile(fp, tr, &st_at, rads, nrad);
-    transitprint(1, verblevel, " Done.\n\n");
-    fclose(fp);
-    break;
-  default:
-    break;
-  }
-
-  //transitprint(1, verblevel, "FLAG: getatm 20.\n");
+  nrad = readatmfile(fp, tr, &at, rads, nrad, f_remainder);
+  transitprint(1, verblevel, "Done.\n\n");
+  fclose(fp);
 
   /* Set required values in 'rads' structure: */
   rads->i = rads->v[0];
@@ -296,28 +211,20 @@ getatm(struct transit *tr){
   rads->o = 1;
   rads->d = 0;
 
-  /* If one point is being used, then let user know values: */
-  if(nrad==1)
-    telldefaults(iso, &st_at);
-
-  transitASSERT(iso->n_e < iso->n_i,
-                "Number of isotopes after extension (%i) is smaller than "
-                "number of isotopes before (%i).\n", iso->n_e, iso->n_i);
-
   /* 'tauiso' is the isotope index which tau() will calculate afterwards.
       Check that it is between boundaries. */
-  tr->tauiso = 0;
-  if(th->tauiso >= 0  &&  th->tauiso < iso->n_i){
-    if(iso->isodo[th->tauiso]==ignore && tr->ds.ex->periso){
-      transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-                   "Selected isotope to compute tau (#%i: %s) was actually "
-                   "ignored according to the atmospheric info\n",
-                   th->tauiso, tr->ds.iso->isof[th->tauiso]);
-      return -5;
-    }
-    else
-      tr->tauiso = th->tauiso;
-  }
+  //tr->tauiso = 0;
+  //if(th->tauiso >= 0  &&  th->tauiso < iso->n_i){
+  //  if(iso->isodo[th->tauiso] == ignore  &&  tr->ds.ex->periso){
+  //    transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+  //                 "Selected isotope to compute tau (#%i: %s) was actually "
+  //                 "ignored according to the atmospheric info\n",
+  //                 th->tauiso, tr->ds.iso->isof[th->tauiso]);
+  //    return -5;
+  //  }
+  //  else
+  //    tr->tauiso = th->tauiso;
+  //}
 
   /* Return succes and set progress indicator */
   tr->pi |= TRPI_GETATM;
@@ -333,15 +240,14 @@ getatm(struct transit *tr){
 double
 checkaddmm(double *mm,          /* Mean molecular mass stored      */
            PREC_NREC r,         /* Radius position                 */
-           prop_isov *isov,     /* Variable isotope info           */
-           prop_isof *isof,     /* Fixed isotope info              */
-           int n,               /* Number of isotopes in atmfile   */
-           _Bool mass,          /* Mass abundances?                */
-           enum isodo *isodo){  /* Whether to ignore isotopes      */
+           prop_mol *molec,     /* Molecule info                   */
+           struct molecules *mol, /* Molecules */
+           int n,               /* Number of molecules             */
+           _Bool mass){          /* Mass abundances?                */
   double sumq;  /* Fractional abundance sum */
   int i;        /* for index                */
 
-  if(r >= isov[0].n)
+  if(r >= molec[0].n)
     transiterror(TERR_CRITICAL,
                  "In file %s (line %li) a radius beyond the allocated "
                  "has been requested.", __FILE__, __LINE__);
@@ -349,13 +255,11 @@ checkaddmm(double *mm,          /* Mean molecular mass stored      */
   /* Compute the mean molecular mass: */
   sumq = *mm = 0;
   for(i=0; i<n; i++){
-    if(isodo[i] != ignore){
-      if(mass)
-        *mm += (isov[i].q[r])/(isof[i].m);
-      else
-        *mm += (isov[i].q[r])*(isof[i].m);
-      sumq += isov[i].q[r];
-    }
+    if(mass)
+      *mm += (molec[i].q[r])/(mol->mass[i]);
+    else
+      *mm += (molec[i].q[r])*(mol->mass[i]);
+    sumq += molec[i].q[r];
   }
   if(mass)
     *mm = 1.0/(*mm);
@@ -383,10 +287,10 @@ telldefaults(struct isotopes *iso,
                " Mean molecular mass: %g AMU\n", 
                at->atm.t[0]*at->atm.tfct, at->atm.p[0]*at->atm.pfct, at->mm[0]);
   /* Densities for all isotopes: */
-  for(i=0; i<iso->n_e; i++)
-    if(iso->isodo[i] != ignore)
+  for(i=0; i<iso->n_i; i++)
       transitprint(1, verblevel, " %-8s: density %8g g/cm3\n", 
-                   iso->isof[i].n, at->isov[i].d[0]);
+                                   iso->isof[i].n,
+                                   at->molec[iso->imol[i]].d[0]);
 }
 
 
@@ -442,19 +346,12 @@ freemem_atmosphere(struct atm_data *at,
                    long *pi){
   /* Free structures:                             */
   free_samp(&at->rads);
-  for(int i=0; i<at->n_nonignored; i++)
-    free_isov(at->isov+i);
+  for(int i=0; i<at->n_aiso; i++)
+    free_mol(at->molec+i);
   free_atm(&at->atm);
-  free(at->isoprop);
 
   /* Free arrays:                                 */
-  free(at->isov);
   free(at->mm);
-  free(at->n[0]);
-  free(at->n);
-  free(at->m);
-  free(at->isoeq);
-  free(at->isodo);
   free(at->info);
 
   /* Clear progress indicator and return success: */
