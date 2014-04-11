@@ -1,3 +1,0 @@
-0	lelong	0xabb3b6ff	TLI (Transit Line Information) data file in little endian order
-0	belong	0xabb3b6ff	TLI (Transit Line Information) data file in big endian order
-0	string/c	#TLI-ASCII	TLI(Transit Line Information) text file in ASCII format
