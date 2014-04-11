@@ -19,88 +19,100 @@
  * 02111-1307, USA.
  */
 
+
+/* List of functions defined:
+int idxrefrac(struct transit *tr)
+   Calculates the index of refraction.  Currently, it sets an index of
+   refraction of 1.0 at all levels (no light bending).
+
+int freemem_idexrefrac(struct idxref *ir, long *pi)
+   Free index of refraction array
+
+int restidxref(FILE *in, PREC_NREC nrad, struct idxref *ir)
+   Restore hints structure, the structure needs to have been
+   allocated before.
+
+void saveidxref(FILE *out, PREC_NREC nrad, struct idxref *ir)
+   Write index of refraction values to file pointed by out.
+*/
+
+
 #include <transit.h>
 
 /* \fcnfh
-   Calculates the index of refraction. Right now it only gives 1 to all
-   levels.
+   Calculates the index of refraction.  Currently, it sets an index of
+   refraction of 1.0 at all levels (no light bending).
 
-   @returns 0 on success
- */
+   Return: 0 on success                                              */
 int
-idxrefrac(struct transit *tr)
-{
+idxrefrac(struct transit *tr){
   static struct idxref st_idx;
-  long r;
+  long r;            /* Radius index */
+  PREC_ATM rho;      /* Density      */
+  PREC_ATM nustp=0;  /* FINDME: Explain my name */
+  /* TD: Allow for ray bending. Tau2 has to be enabled as well */
 
-  transitcheckcalled(tr->pi,"idxrefrac",1,
-		     "makeradsample",TRPI_MAKERAD
-		     );
+  /* Check radius array has been already sampled: */
+  transitcheckcalled(tr->pi, "idxrefrac", 1, "makeradsample", TRPI_MAKERAD);
 
-  tr->ds.ir = &st_idx;
+  /* Get struct objects: */
+  tr->ds.ir     = &st_idx;
   prop_atm *atm = &tr->atm;
 
-  PREC_ATM nustp = 0; 		/* TD: Allow for ray bending. Tau2 has
-				   to be enabled as well */
-  PREC_ATM rho;
+  /* Allocate space and initialize: */
+  st_idx.n = (PREC_RES *)calloc(tr->rads.n, sizeof(PREC_RES));
 
-  //allocate space and initialize
-  st_idx.n=(PREC_RES *)calloc(tr->rads.n,sizeof(PREC_RES));
-
-  for(r=0;r<tr->rads.n;r++){
+  /* Calculate density at each radius: */
+  for(r=0; r<tr->rads.n; r++){
     rho = stateeqnford(1, 1.0, atm->mm[r], 0, atm->p[r], atm->t[r]);
     st_idx.n[r] = 1 + rho*nustp/(LO*AMU*atm->mm[r]);
   }
 
-  //set progress indicator and return success
-  tr->pi|=TRPI_IDXREFRAC;
+  /* Set progress indicator and return success: */
+  tr->pi |= TRPI_IDXREFRAC;
   return 0;
 }
 
 
 /* \fcnfh
-   Fees memory for index of refraction structure
+   Free index of refraction array
 
-   @returns 0 on success;
- */
+   Return: 0 on success                             */
 int
-freemem_idexrefrac(struct idxref *ir,
-		   long *pi)
-{
-  //free arrays
+freemem_idexrefrac(struct idxref *ir, /* Index of refraction structure */
+                   long *pi){
+  /* Free arrays: */
   free(ir->n);
 
-  //clear progress indicator and return success
-  *pi&=~(TRPI_IDXREFRAC|TRPI_TAU);
+  /* Update progress indicator and return: */
+  *pi &= ~(TRPI_IDXREFRAC|TRPI_TAU);
   return 0;
 }
 
 
 /* \fcnfh
-   Restore hints structure, the structure needs to have been allocated
-   before
+   Restore hints structure, the structure needs to have been
+   allocated before
 
-   @returns 0 on success
-            -1 if not all the expected information is read
-	    -2 if info read is wrong
-	    -3 if cannot allocate memory
-	    1 if information read was suspicious
-*/
+   Return: 0 on success,
+          -1 if not all the expected information is read
+          -2 if info read is wrong
+          -3 if cannot allocate memory
+           1 if information read was suspicious                 */
 int
 restidxref(FILE *in,
-	   PREC_NREC nrad,
-	   struct idxref *ir)
-{
+           PREC_NREC nrad,
+           struct idxref *ir){
 
   if(nrad<0)
     return -2;
   if(nrad>1000000)
     return 1;
-  if((ir->n=(PREC_RES *)calloc(nrad,sizeof(PREC_RES)))==NULL)
+  if((ir->n=(PREC_RES *)calloc(nrad, sizeof(PREC_RES)))==NULL)
     return -3;
   if(nrad==0)
     return 0;
-  if(fread(ir->n,sizeof(PREC_RES),nrad,in)!=nrad)
+  if(fread(ir->n, sizeof(PREC_RES), nrad, in) != nrad)
     return -1;
 
   return 0;
@@ -108,13 +120,11 @@ restidxref(FILE *in,
 
 
 /* \fcnfh
-   Saves index of refraction structure
-*/
+   Write index of refraction values to file 'out'  */
 void
 saveidxref(FILE *out,
-	   PREC_NREC nrad,
-	   struct idxref *ir)
-{
+           PREC_NREC nrad,
+           struct idxref *ir){
   if(nrad>0)
-    fwrite(ir->n,sizeof(PREC_RES),nrad,out);
+    fwrite(ir->n, sizeof(PREC_RES), nrad, out);
 }

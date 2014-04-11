@@ -1,0 +1,135 @@
+# List of Elements and Atomic Weights:
+# Columns description:
+#  C1: Atomic Number 
+#  C2: Element Name
+#  C3: Element's Symbol
+#  C4: Atomic Weight (in unified atomic mass units, u).  In parenthesis the uncertainty of the last significant digit.
+  1  hydrogen      H     1.00794(7)  
+  2  helium        He    4.002602(2)  
+  3  lithium       Li    6.941(2) 
+  4  beryllium     Be    9.012182(3)  
+  5  boron         B    10.811(7)  
+  6  carbon        C    12.0107(8)  
+  7  nitrogen      N    14.0067(2)  
+  8  oxygen        O    15.9994(3)  
+  9  fluorine      F    18.9984032(5)  
+ 10  neon          Ne   20.1797(6)  
+ 11  sodium        Na   22.98976928(2)  
+ 12  magnesium     Mg   24.3050(6)  
+ 13  aluminum      Al   26.9815386(8)  
+ 14  silicon       Si   28.0855(3)  
+ 15  phosphorus    P    30.973762(2)  
+ 16  sulfur        S    32.065(5)  
+ 17  chlorine      Cl   35.453(2)  
+ 18  argon         Ar   39.948(1)  
+ 19  potassium     K    39.0983(1)       
+ 20  calcium       Ca   40.078(4)      
+ 21  scandium      Sc   44.955912(6)      
+ 22  titanium      Ti   47.867(1)      
+ 23  vanadium      V    50.9415(1)      
+ 24  chromium      Cr   51.9961(6)      
+ 25  manganese     Mn   54.938045(5)      
+ 26  iron          Fe   55.845(2)      
+ 27  cobalt        Co   58.933195(5)      
+ 28  nickel        Ni   58.6934(4)      
+ 29  copper        Cu   63.546(3)      
+ 30  zinc          Zn   65.38(2)      
+ 31  gallium       Ga   69.723(1)      
+ 32  germanium     Ge   72.64(1)      
+ 33  arsenic       As   74.92160(2)      
+ 34  selenium      Se   78.96(3)      
+ 35  bromine       Br   79.904(1)      
+ 36  krypton       Kr   83.798(2)      
+ 37  rubidium      Rb   85.4678(3)      
+ 38  strontium     Sr   87.62(1)      
+ 39  yttrium       Y    88.90585(2)      
+ 40  zirconium     Zr   91.224(2)      
+ 41  niobium       Nb   92.90638(2)      
+ 42  molybdenum    Mo   95.96(2)      
+ 43  technetium    Tc    0.0(0)
+ 44  ruthenium     Ru  101.07(2)      
+ 45  rhodium       Rh  102.90550(2)      
+ 46  palladium     Pd  106.42(1)      
+ 47  silver        Ag  107.8682(2)      
+ 48  cadmium       Cd  112.411(8)      
+ 49  indium        In  114.818(3)      
+ 50  tin           Sn  118.710(7)      
+ 51  antimony      Sb  121.760(1)      
+ 52  tellurium     Te  127.60(3)      
+ 53  iodine        I   126.90447(3)      
+ 54  xenon         Xe  131.293(6)      
+ 55  cesium        Cs  132.9054519(2)    
+ 56  barium        Ba  137.327(7)      
+ 57  lanthanum     La  138.90547(7)      
+ 58  cerium        Ce  140.116(1)      
+ 59  praseodymium  Pr  140.90765(2)      
+ 60  neodymium     Nd  144.242(3)        
+ 61  promethium    Pm    0.0(0)
+ 62  samarium      Sm  150.36(2)      
+ 63  europium      Eu  151.964(1)      
+ 64  gadolinium    Gd  157.25(3)      
+ 65  terbium       Tb  158.92535(2)      
+ 66  dysprosium    Dy  162.500(1)      
+ 67  holmium       Ho  164.93032(2)    
+ 68  erbium        Er  167.259(3)
+ 69  thulium       Tm  168.93421(2)
+ 70  ytterbium     Yb  173.054(5)
+ 71  lutetium      Lu  174.9668(1)
+ 72  hafnium       Hf  178.49(2) 
+ 73  tantalum      Ta  180.94788(2)
+ 74  tungsten      W   183.84(1) 
+ 75  rhenium       Re  186.207(1) 
+ 76  osmium        Os  190.23(3)
+ 77  iridium       Ir  192.217(3) 
+ 78  platinum      Pt  195.084(9) 
+ 79  gold          Au  196.966569(4)
+ 80  mercury       Hg  200.59(2) 
+ 81  thallium      Tl  204.3833(2)  
+ 82  lead          Pb  207.2(1) 
+ 83  bismuth       Bi  208.98040(1)
+ 84  polonium      Po    0.0(0)
+ 85  astatine      At    0.0(0)
+ 86  radon         Rn    0.0(0)
+ 87  francium      Fr    0.0(0)
+ 88  radium        Ra    0.0(0)
+ 89  actinium      Ac    0.0(0)
+ 90  thorium       Th  232.03806(2) 
+ 91  protactinium  Pa  231.03588(2)
+ 92  uranium       U   238.02891(3)
+
+
+# Molecular aliases:
+IonMolHyd  H2
+IonHyd     H
+
+
+# Molecular radii:
+# Sources:
+# 01  http://chem.chem.rochester.edu/~nvd/molecularsieves.html
+# 02  Mateucci et al. (2006)
+# 03  http://www.webelements.com/compounds/ (from density and mass calculation)
+# 04  Wolfram Alpha / Wikipedia
+# Molecule  Diameter  Source  Name
+H2O         3.2       01      Water           
+CH4         4.0       01      Methane
+NH3         3.6       01      Amonia
+CO          2.8       01      Carbon Monoxide
+CO2         2.8       01      Carbon Dioxide  
+H2          2.89      02      Molecular Helium
+O2          3.46      02      Molecular Oxygen
+N2          3.64      02      Molecular Nitrogen
+TiO         3.45      03      Titanium Monoxide
+VO          3.32      03      Vanadium Monoxide
+Na          3.72      04      Sodium
+K           4.54      04      Potassium
+H           2.4       01      Hydrogen
+He          2.0       01      Helium
+
+
+# Isotopic ratios:
+# For Partridge & Schwenke (1997):
+H2O    1H1H16O    0.997000
+H2O    1H1H17O    0.000508
+H2O    1H1H18O    0.000508
+H2O    1H2H16O    0.001984
+

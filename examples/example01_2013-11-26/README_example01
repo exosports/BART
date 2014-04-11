@@ -1,0 +1,20 @@
+This is the example run number 01:
+It runs a transit for a basic configuration (config_example01.cfg) to
+calculate the spectrum between wavelengths 2.5 and 3.5 microns.
+
+The input files required for this example are:
+- /home/patricio/ast/esp01/bart/control/BART/inputs/atmosph.dat
+- /home/patricio/ast/esp01/bart/control/BART/inputs/h2h2.dat
+- /home/patricio/ast/esp01/bart/control/BART/run/lineread.2-4um.tli
+
+Do not override the files in this folder!
+To re-run this example put the config_example01.cfg file in the run/
+directory and executr from the bash:
+$ ../transit/transit -p config_example01.cfg > screen_example01.txt 2>&1
+
+The outups from the example run are these 4 files:
+- screen_example01.txt with the screen output of the run.
+- output_example01.dat with the resulting modulation spectrum.
+- samples_example01.dat with the sampling arrays info.
+- toomuch_example01.dat with the radius where the optical depth
+  exceeded toomuch.

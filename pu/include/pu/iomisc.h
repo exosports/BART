@@ -70,6 +70,9 @@ extern long countfields(char *l, char sep);
 extern char fgetupto_err(char *line, int max, FILE *fp, void (*errfcn)(int,char *, int), char *name, long curr);
 extern char fgetupto(char *line, int max, FILE *fp);
 
+extern void getname(char *line, char *name);
+extern int findstring(char* string, char **list, int size);
+extern char *nextfield(char *lp);
 #undef P_
 
 #endif /* _IOMISC_H */

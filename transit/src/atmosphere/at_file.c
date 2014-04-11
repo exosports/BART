@@ -19,825 +19,663 @@
  * 02111-1307, USA.
  */
 
-#include "at_common.c"
+//#include "at_common.c"
+#include <readatm.h>
 
 #define ROUNDOFF 1e7
+#define ROUNDTHRESH 1e-5
 
 static double zerorad=0;
 
 char *atmfilename;
 _Bool *isolineinatm;
-static struct atm_isoprop *isoprop;
 
+/* FINDME, Comment me: */
 struct fonly {
   char n[maxeisoname];
   PREC_ATM q;
 } *fonly;
+
 static int nfonly=0;
 
 
-
 /* \fcnfh
-   Add all the abundance from different isotopes except those that are
-   going to split the remainder.
+   Store info about the atmopshere file */
+void
+storename(struct atm_data *at,
+          char *line){
+  /* Get the length of the line char array: */
+  int len;
+  while(*line==' ' || *line=='\t')
+    line++;
+  len = strlen(line);
 
-   @returns total abundance that is going to be always between 0 and 1
-                  inclusive
-*/
-static inline double
-addq(prop_isov *isov,		/* Variable isotope info (abundance
-				   among other) */
-     enum isodo *isodo,		/* Just add those that are ignored */
-     _Bool *other,		/* Don't add those that are going to
-				   take care of the remainder to unity
-				*/ 
-     int n,			/* Number of isotopes */
-     PREC_NREC r)		/* Radius at which to compute everything
-				 */
-{
-  double res=0;
-
-  while(--n)
-    if(isodo[n]!=ignore && !other[n])
-      res+=isov[n].q[r];
-  if(*isodo!=ignore && !*other)
-    res+=isov->q[r];
-  
-  if(res>1.001||res<0)
-    transiterror(TERR_SERIOUS,
-		 "Without processing 'other' molecules, abundance\n"
-		 "addition(%g) is either bigger than 1 or negative!\n"
-		 ,res);
-
-  return res;
+  /* Allocate and store info in atm_data.info:            */
+  if(!at->info){ /* Only if it hasn't been stored before: */
+    at->info = calloc(len+1, sizeof(char));
+    strcpy(at->info, line);
+  }
 }
 
 
 /* \fcnfh
-   Finds the abundance of the molecule called 'iso' among the arrays
-   given by 'isov' and 'isof' for the radius at level 'r'
+   Find the isotope in 'isof'  with name 'iso' and get its
+   abundance at radius given by index 'r'
 
-   @returns abundance of reference level
-*/
+   Return: abundance at requested radius                 */
 static inline double
-findfactq(char *iso, 		/* reference isotope looked for */
-	  prop_isof *isof, 	/* fixed isotope info (name among
-				   others) */
-	  prop_isov *isov, 	/* variable isotope info like abundance
-				 */
-	  int n,		/* Number of isotopes */
-	  PREC_NREC r)		/* Radius index from which get the
-				   abundance */
-{
+findfactq(char *iso,       /* Name of isotope searched   */
+          prop_isof *isof, /* Fixed isotope info         */
+          prop_isov *isov, /* Variable isotope info      */
+          int n,           /* Number of isotopes         */
+          PREC_NREC r){    /* Radius index               */
 
+  /* Search molecule: */
   while (--n)
-    if(strcasecmp(iso,isof[n].n)==0)
-      return isov[n].q[r];
-  if(strcasecmp(iso,isof->n)==0)
-    return isov->q[r];
+    if(strcasecmp(iso, isof[n].n)==0)
+      //return isov[n].q[r];
+      return 0;
+  /* n == 1 case:     */
+  if(strcasecmp(iso, isof->n)==0)
+    //return isov->q[r];
+    return 0;
 
-  for(n=0 ; n<nfonly ; n++)
-    if(strcasecmp(iso,fonly[n].n)==0)
+  /* If it wasn't in isof, then search in fonly: */
+  for(n=0; n<nfonly; n++)
+    if(strcasecmp(iso, fonly[n].n)==0)
       return fonly[n].q;
 
   transiterror(TERR_SERIOUS,
-	       "Isotope you want to reference(%s) was not found among\n"
-	       "those whose abundance was given.\n"
-	       ,iso);
-
+               "Isotope you want to reference(%s) was not found among "
+               "those whose abundance was given.\n", iso);
   return -1;
 }
 
 
 /* \fcnfh
-   Check that val is positive
-*/
+   Add the (fractional) abundance from all isotopes except for the
+  'other'-factor isotopes
+
+   Return: total abundance                                               */
+static inline double
+addq(prop_isov *isov,   /* Variable isotope info (abundance among other) */
+     enum isodo *isodo, /* Just add those that are ignored               */
+     _Bool *other,      /* Don't add those that are going to take care
+                           of the remainder to unity                     */ 
+     int n,             /* Number of isotopes                            */
+     PREC_NREC r){      /* Radius at which to compute everything         */
+  double res = 0;  /* Sum of abundances */
+
+  while(--n)
+    if(!other[n])
+      //res += isov[n].q[r];
+      res += 0;
+  if(!*other)
+    //res += isov->q[r];
+    res += 0;
+
+  if(res>1.001 || res<0)
+    transiterror(TERR_SERIOUS,
+                 "Without processing 'other' molecules, abundance "
+                 "addition(%g) is either bigger than 1 or negative!\n", res);
+  return res;
+}
+
+
+/* \fcnfh
+   Print error message when a line of 'file' is longer than 'max' characters */
+static void
+atmerr(int max,     /* Maximum length of an accepted line */
+       char *file,  /* File from which we were reading     */
+       int line){   /* Line being read                     */
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+               "Line %i of file '%s' has more than %i characters, "
+               "that is not allowed\n", file, max);
+  exit(EXIT_FAILURE);
+}
+
+
+/* \fcnfh
+   Print error message when a field with transition info is invalid */
+static void
+invalidfield(char *line,   /* Contents of the line */
+             int nmb,      /* File number          */
+             int fld,      /* Field with the error */
+             char *fldn){  /* Name of the field    */
+  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
+               "Line %i of file '%s': Field %i (%s) does not have a valid "
+               "value:\n%s.\n", nmb, atmfilename, fld, fldn, line);
+  exit(EXIT_FAILURE);
+}
+
+
+/* \fcnfh
+   Check that val is positive. Throw error message if not. */
 static inline void 
-checkposvalue(PREC_RES val,	/* value to check */
-	      int field,	/* field where it was read */
-	      long line)	/* line from which it was read */
-{
+checkposvalue(PREC_RES val, /* Value to check              */
+              int field,    /* Field where it was read     */
+              long line){   /* Line from which it was read */
+
   if(val<0)
     transiterror(TERR_SERIOUS,
-		 "While reading the %ith field in line %li of atmosphere\n"
-		 "file %s, a negative value was found (%g)\n"
-		 ,field,line-1,atmfilename,val);
+                 "While reading the %i-th field in line %li of atmosphere "
+                 "file %s, a negative value was found (%g)\n", field, 
+                 line-1, atmfilename, val);
 }
 
 
 /* \fcnfh
-   Ask what to do with the isotopes that don't have a match in the just
-   read atmosphere file
+    Get keyword variables from atmosphere file (mass/number abundance bool;
+    zero-radius offset; radius, temperature, and pressure units factor;
+    atmfile name/info; list isotopes; list of proportional-abundance isotopes).
+    Store molecules and proportional isotopes in atm_data struct. 
+    Determine which linedb isotope corresponds to such atm_data isotope.
+    Solve non-matched linedb isotope cases.
+    Put all non-ignore isotopes in transit.ds.iso structure.
 
-   return number of extra isotopes
-*/
-static int
-checknonmatch(struct transit *tr, /* info about existent isotopes */
-	      struct atm_data *at, /* info about just read isotopes */
-	      enum isodo *isodo) /* what the user will want with each
-				    isotope */ 
-{
-  int i,j,rn,ison=at->n_aiso;
-  struct isotopes *iso=tr->ds.iso;
-
-  //for each of the non-matched isotopes, ask if they want to be
-  //matched, ignored or given a fixed value.
-  for(i=0;i<iso->n_i;i++){
-    if(isodo[i]==unclear){
-      //If want to match then ask with what, if ignored or fixed it will
-      //be dealt with later
-      isodo[i]=askforposl("\nIsotope %s is not in atmosphere file, what do you\n"
-			  "want to do? (1:match to some isotope, 2:ignore"
-			  " this\nisotope, 3:give a fixed abundance value) "
-			  ,iso->isof[i].n);
-      if(isodo[i]>3){
-	fprintf(stderr,"Invalid value, Try again!:\n");
-	isodo[i--]=0;
-	continue;
-      }
-      if(isodo[i]==atmfile){
-	while(1){
-	  rn=0;
-	  for(j=0;j<ison;j++)
-	    if(at->isoeq[j]==-1&&at->isodo[j]!=ignore){
-	      rn=1;
-	      fprintf(stderr,"  %2i: %s (%gAMU)\n", j+1,at->n[j],at->m[j]);
-	    }
-	  if(!rn){
-	    fprintf(stderr,
-		    "Sorry but there are no isotopes to match with, so try\n"
-		    "another option\n");
-	    isodo[i--]=0;
-	    continue;
-	  }
-	  j=askforposd("Select a isotope number from the above list to\n"
-		       "match %s with: ",iso->isof[i].n);
-	  if(at->isoeq[j-1]==-1){
-	    at->isoeq[j-1]=i;
-	    break;
-	  }
-	  else
-	    fprintf(stderr,"Invalid value, Try again\n");
-	}
-      }
-    }
-  }
-
-  //Count how many isotopes are not in the linefile nor has been chosen
-  //to be ignored
-  rn=0;
-  for(j=0 ; j<ison ; j++)
-    if( ( at->isoeq[j]==-1 && at->isodo[j]!=ignore ) || 
-	( at->isoeq[j]!=-1 && at->isodo[j]==factor && 
-	  isoprop[at->isoeq[j]].eq==-1 ) )
-      rn++;
-
-  return rn;
-}
-
-
-
-/* \fcnfh
-   This function is called if a line of 'file' was longer than
-   'max' characters 
-*/
-static void 
-atmerr(int max,			/* Maxiumum length of an accepted line
-				 */ 
-       char *file,		/* File from which we were reading */
-       int line)		/* Line who was being read */
-{
-  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-	       "Line %i of file '%s' has more than %i characters,\n"
-	       "that is not allowed\n"
-	       ,file,max);
-  exit(EXIT_FAILURE);
-}
-
-
-/* \fcnfh
-   print out an error, it is called by readdatarng if one of the field
-   with transition info is invalid
-
-*/
-static void
-invalidfield(char *line,	/* Contents of the line */
-	     int nmb,		/* File number */
-	     int fld,		/* field with the error */
-	     char *fldn)	/* Name of the field */
-{
-  transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-	       "Line %i of file '%s': Field %i (%s) has\n"
-	       " not a valid value:\n%s\n"
-	       ,nmb,atmfilename,fld,fldn,line);
-  exit(EXIT_FAILURE);
-}
-
-
-/* \fcnfh
-   Check whether isotope 'name' found in atmosphere file do
-   correspond to an isotope in the lineinfofile for which
-   extinction is going to be calculated
-*/
-static void
-isisoline(char *name,		/* Isotope's name */
-	  PREC_ATM mass,	/* Isotope's mass */
-	  int *isoeq,		/* Isotope's lineinfo position to be stored */
-	  enum isodo atisodo,	/* Action for current isotope */
-	  prop_isof *isof,	/* Info from lineinfo file */
-	  enum isodo *isodo,	/* Action to be taken storage */
-	  PREC_NREC nliso)	/* Number of isotopes in the lineinfo */
-{
-  PREC_NREC i;
-
-  //Note that here, even though the isotope might be ignored, it will
-  //stilll have an equivalent lineiso associated if one is found.
-  //\refline{isodbassoc}
-  for(i=0;i<nliso;i++){
-    if(strcasecmp(name,isof[i].n)==0){
-      *isoeq=i;
-      if(isolineinatm[i])
-	transiterror(TERR_SERIOUS,
-		     "Isotope %s has been defined more than once in the\n"
-		     "atmosphere file.\n"
-		     ,name);
-      isolineinatm[i]=1;
-      if(isodo[i]!=ignore)
-	isodo[i]=atisodo;
-      if(isodo[i]==ignore)
-	transitprint(2,verblevel,
-		     "Ignoring isotope %s (%g AMU)\n"
-		     ,isof[i].n,isof[i].m);
-      else if(isof[i].m!=mass&&mass!=0)
-	transiterror(TERR_WARNING,
-		     "Mass of isotope %s, is not the same\n"
-		     "in the atmosphere file %s(%g) than in\n"
-		     "the transition info file(%g)\n"
-		     ,name,atmfilename,mass,
-		     isof[i].m);
-      break;
-    }
-  }
-  if(*isoeq==-1&&atisodo==ignore)
-    nfonly++;
-}
-
-
-/* \fcnfh
-   get number of isotopes from file and set index 
-
-   @returns number of lines read
-*/
+    Return: Number of lines read                                     */
 int
-getmnfromfile(FILE *fp,
-	      struct atm_data *at,
-	      struct transit *tr,
-	      int nmb)
-{
-  char line[maxline],*lp;
-  int ison=0,i;
-  struct isotopes *iso=tr->ds.iso;
-  enum isodo *isodo=iso->isodo;
+getmnfromfile(FILE *fp,                /* Pointer to atmospheric file    */
+              struct atm_data *at,     /* atmosphere structure           */
+              struct transit *tr,      /* transit structure              */
+              PREC_ZREC *f_remainder){ /* Remainder molecules' factor    */
+  struct molecules *mol=tr->ds.mol;
+  char line[maxline], *lp;
+  int nimol=0, /* Number of molecules with abundance profile */
+      nmol=0,  /* Total number of molecules                  */
+      i;       /* Auxiliary for-loop index                   */
+  double cumulother = 0; /* Cumulative remainder-molecules' factor */
+  int ipi = 0;    /* Number of remainder molecules   */
 
-  //Set variable to handle proportional to isotopes
-  int ipi=0,ipa=at->ipa=4;
-  isolineinatm=(_Bool *)calloc(iso->n_i,sizeof(_Bool));
-  isoprop=(struct atm_isoprop *)calloc(ipa,sizeof(struct atm_isoprop));
+  /* Is the isotope defined in the atm file?: */
+  //isoprop = (struct atm_isoprop *)calloc(ipa, sizeof(struct atm_isoprop));
 
-  at->begline=0;
-  enum isodo atisodo;
-  at->isodo = (enum isodo *)calloc(nmb,sizeof(enum isodo));
-  at->isoeq = (int *)       calloc(nmb,sizeof(int));
-  at->m     = (PREC_ZREC *) calloc(nmb,sizeof(PREC_ZREC));
-  at->n     = (char **)     calloc(nmb,sizeof(char *));
-  at->n[0]  = (char *)      calloc(nmb*maxeisoname,sizeof(char));
-  at->isoeq[0]=-1;
-  for(i=1;i<nmb;i++){
-    at->n[i]=at->n[0]+i*maxeisoname;
-    at->isoeq[i]=-1;
-  }
+  at->begline = 0; /* Line where the info begins      */
 
-  //while t,p data doesn't start, check for the various modifiers
+  /* Read and store the keyword atmospheric variables: */ 
   while(1){
-    switch(fgetupto_err(line,maxline,fp,&atmerr,atmfilename,
-			at->begline++)){
-    case '\n':			//Ignore comments and
-    case '#':			//  blank lines
+    switch(fgetupto_err(line, maxline, fp, &atmerr, atmfilename,
+                        at->begline++)){
+    /* Ignore comments and blank lines: */
+    case '\n':
+    case '#':
       continue;
-
-    case 0:			//Error if EOF
+    case 0:     /* Throw error if EOF   */
       transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-		   "readatminfo:: EOF unexpectedly found at line %i\n"
-		   "of file %s while no t,p data points have been read\n"
-		   ,at->begline,atmfilename);
+                   "readatm :: EOF unexpectedly found at line %i "
+                   "of file %s while no t,p data points have been read.\n",
+                   at->begline, atmfilename);
       exit(EXIT_FAILURE);
       continue;
 
-    case 'q':			//Whether is mass or number abundance
-      lp=line+1;
-      while(*lp++==' ');
+    /* Determine whether abundance is by mass or number:     */
+    case 'q':  
+      lp = line + 1;
+      while(*lp++ == ' '); /* Skip blank spaces              */
       lp--;
       switch(*lp|0x20){
       case 'n':
-	at->mass=0;
-	break;
+        at->mass = 0;  /* Number abundance (mixing ratio)    */
+        break;
       case 'm':
-	at->mass=1;
-	break;
+        at->mass = 1;  /* Mass abundance (mass mixing ratio) */
+        break;
       default:
-	transiterror(TERR_SERIOUS,
-		     "'q' option in the atmosphere file can only be followed\n"
-		     "by 'm' (for abundances by mass) or 'n' (for abundances by\n"
-		     "number). '%s' is invalid.\n"
-		     ,line);
-	break;
+        transiterror(TERR_SERIOUS,
+                     "'q' option in the atmosphere file can only be followed "
+                     "by 'm' (for abundances by mass) or 'n' (for abundances "
+                     "by number). '%s' is invalid.\n", line);
+        break;
       }
       continue;
 
-    case 'z':			//Zero radius value
-      zerorad=atof(line+1);
+    /* Zero radius value: */
+    case 'z':  
+      zerorad = atof(line+1);
       continue;
 
-    case 'f':			//An isotope is to be taken as
-				//proportional to other.
-      lp=line+1;
-      while(*lp==' '||*lp=='\t') lp++;
-
-      if(ipi==ipa)
-	isoprop=(struct atm_isoprop *)realloc(isoprop,(ipa<<=1)*
-					      sizeof(struct atm_isoprop));
-      isoprop[ipi].m=getds(lp,0,isoprop[ipi].n,maxeisoname-1);
-      //skip over recently read field, and go to next field.
-      lp=nextfield(lp);
-      //skip an optional equal '=' sign
-      if(*lp=='=' && lp[1]==' ')
-	lp=nextfield(lp);
-      //get factor, which has to be between 0 and 1
-      isoprop[ipi].f=strtod(lp,NULL);
-      if(isoprop[ipi].f<0 )
-	transiterror(TERR_CRITICAL,
-		     "Abundance ratio has to be positive in atmosphere\n"
-		     "file '%s' in line: %s"
-		     ,atmfilename,line);
-      lp=nextfield(lp);
-      //get name of reference and increase index
-      i=0;
-      while(*lp)
-	isoprop[ipi].t[i++]=*lp++;
-      isoprop[ipi].t[i]='\0';
-
-      //now check if that isotope is one of the given in the lineinfo
-      //file 
-      isoprop[ipi].eq=-1;
-      isisoline(isoprop[ipi].n,isoprop[ipi].m,&isoprop[ipi].eq,factor,
-		iso->isof,isodo,iso->n_i);
-
-      //advance index and go for the next line
-      ipi++;
-      continue;
-
-    case 'u':			//Change factorization of radius, temp,
-				//or press
+    /* Radius, temperature, or pressure units factor: */
+    case 'u':
       switch(line[1]){
       case 'r':
-	at->rads.fct=atof(line+2);
-	break;
+        at->rads.fct = atof(line+2);
+        break;
       case 'p':
-	at->atm.pfct=atof(line+2);
-	break;
+        at->atm.pfct = atof(line+2);
+        break;
       case 't':
-	at->atm.tfct=atof(line+2);
-	break;
+        at->atm.tfct = atof(line+2);
+        break;
       default:
-	transiterror(TERR_SERIOUS,
-		     "Invalid unit factor indication in atmosphere file\n");
-	exit(EXIT_FAILURE);
+        transiterror(TERR_SERIOUS, "Invalid unit factor indication in "
+                                   "atmosphere file.\n");
+        exit(EXIT_FAILURE);
       }
       continue;
 
-    case 'n':			//Name or identifier for file data
-      storename(at,line+1);
+    case 'n':  /* Name or identifier for file data */
+      storename(at, line+1);
       continue;
 
-    case 'i':			//Isotope information
-      lp=line+1;
-      while(*lp==' '||*lp=='\t') lp++;
-      //'i' has to come before 'f'
-      if(ipi)
-	transiterror(TERR_CRITICAL,
-		     "In line '%s'.\n"
-		     " 'f' lines have to come after all the 'i' lines in\n"
-		     " atmosphere file '%s'"
-		     ,line,atmfilename);
+    case 'i':  /* Molecule names with an abundance profile: */
+      /* Count the number of wrds (molecules) in line:      */
+      nimol = countfields(line+1, ' ');
+      transitprint(15, verblevel, "The number of molecules is %d.\n", nimol);
 
-      //for each field
-      while(*lp){
-	atisodo=atmfile;
-	//Allocate if necessary
-	if(ison==nmb){
-	  nmb<<=1;
-	  at->isodo = (enum isodo *)realloc(at->isodo,nmb*sizeof(enum isodo));
-	  at->isoeq = (int *)       realloc(at->isoeq,nmb*sizeof(int));
-	  at->m     = (PREC_ZREC *) realloc(at->m,    nmb*sizeof(PREC_ZREC));
-	  at->n     = (char **)     realloc(at->n,    nmb*sizeof(char *));
-	  at->n[0]  = (char *)      realloc(at->n[0], nmb*maxeisoname*sizeof(char));
-	  for(i=1;i<nmb;i++)
-	    at->n[i]=at->n[0]+i*maxeisoname;
-	  for(i=nmb/2;i<nmb;i++)
-	    at->isoeq[i]=-1;
-	}
+      /* Allocate Molecules names:                          */
+      mol->name    = (char **)calloc(nimol,             sizeof(char *));
+      mol->name[0] = (char  *)calloc(nimol*maxeisoname, sizeof(char));
+      for(i=1; i<nimol; i++)
+        mol->name[i] = mol->name[0] + i*maxeisoname;
 
-	//get mass and name, checking that is correct. First see if this
-	//isotope wants to be ignored.
-	if(*lp=='!'){
-	  lp++;
-	  atisodo=ignore;
-	}
-	at->m[ison]=getds(lp,0,at->n[ison],maxeisoname-1);
-	if(at->m[ison]<0||at->n[ison]=='\0'){
-	  transiterror(TERR_SERIOUS,
-		       "Invalid field in file %s, line %i while reading isotope"
-		       " info at:\n%s\n"
-		       ,atmfilename,at->begline,lp);
-	}
-
-	//now check if that isotope is one of the given in the lineinfo
-	//file
-	isisoline(at->n[ison],at->m[ison],at->isoeq+ison,atisodo,
-		  iso->isof,isodo,iso->n_i);
-	at->isodo[ison++]=atisodo;
-
-	//skip over recently read field, and go to next field.
-	while(*lp!=' '&&*lp!='\0') lp++;
-	while(*lp==' '||*lp=='\t') lp++;
+      transitprint(1, verblevel, "Molecules with abundance profile:\n  ");
+      lp = line;
+      lp = nextfield(lp); /* Skip keyword                   */
+      /* Read and store names:                              */
+      for (i=0; i<nimol; i++){
+        getname(lp, mol->name[i]);
+        lp = nextfield(lp);
+        transitprint(1, verblevel, "%s, ", mol->name[i]);
       }
+      transitprint(1, verblevel, "\b\b.\n");
       continue;
 
-    default:			//T,P seems to be starting
+    /* Molecules with abundance proportional to the remainder: */
+    case 'f':
+      lp = line;
+      lp = nextfield(lp); /* Skip keyword                      */
+
+      /* Current total number of molecules:                    */
+      nmol = ++ipi + nimol;
+      /* Re-allocate to add the new molecule:                  */
+      mol->name    = (char **)realloc(mol->name, nmol*sizeof(char *));
+      mol->name[0] = (char  *)realloc(mol->name[0],
+                                                 nmol*maxeisoname*sizeof(char));
+      for (i=1; i<nmol; i++)
+        mol->name[i] = mol->name[0] + i*maxeisoname;
+
+      /* Re-allocate remainder factors:                        */
+      f_remainder = (PREC_ZREC *)realloc(f_remainder, ipi*sizeof(PREC_ZREC));
+
+      /* Read and store the molecule's name:                   */
+      getname(lp, mol->name[nmol-1]);
+
+      lp = nextfield(lp);   /* Move pointer to next field      */
+      if(*lp == '=')        /* Skip an optional equal '=' sign */
+        lp++;
+
+      /* Read and store factor:                                */
+      f_remainder[ipi-1] = strtod(lp, NULL);
+      transitprint(30, verblevel, "%s remainder factor: %.3f\n",
+                                  mol->name[nmol-1], f_remainder[ipi-1]);
+      if(f_remainder[ipi-1] < 0)
+        transiterror(TERR_CRITICAL,
+                     "Abundance ratio has to be positive in atmosphere "
+                     "file '%s' in line: '%s'.\n", atmfilename, line);
+      continue;
+
+    /* End of keyword variables: */
+    default:   
       break;
     }
     break;
   }
+  transitprint(1, verblevel, "Molecules with abundance proportional to "
+                             "remainder:\n  ");
+  for(i=nimol; i<nmol; i++)
+    transitprint(1, verblevel, "%s, ", mol->name[i]);
+  transitprint(1, verblevel, "\b\b.\n");
 
-  transitprint(3,verblevel,
-	       "Read all keywords in atmosphere file without problems\n");
+  transitprint(3, verblevel, "Read all keywords in atmosphere file without "
+                             "problems.\n");
 
-  //Check if there was at least an isotope identification and allocate new
-  //arrays
-  if(!ison)
-    transiterror(TERR_SERIOUS,
-		 "No isotopes were found in atmosphere file, make sure to\n"
-		 "specify them in a line starting with the letter 'i'.\n"
-		 "First non-comment line read:\n%s\n"
-		 ,line);
-  at->begpos=ftell(fp)-strlen(line)-1;
+  /* Set total number of molecules in atmosphere: */
+  mol->nmol = at->n_aiso = nmol;
 
-  //shorten extra length of arrays
-  fonly=(struct fonly *)calloc(nfonly,sizeof(struct fonly));
-  at->ipa=ipa=ipi;
-  isoprop=(struct atm_isoprop *)realloc(isoprop,ipa*
-					sizeof(struct atm_isoprop));
+  /* Check that there was at least one isotope defined and re-allocate 
+     array sizes to their final size:                                */
+  if(!nimol)
+    transiterror(TERR_SERIOUS, "No isotopes were found in atmosphere file, "
+                               "make sure to specify them in a line starting "
+                               "with the letter 'i'. First non-comment line "
+                               "read:\n%s\n", line);
 
-  //Makes at arrays bigger, so that they can hold the factorized values.
-  nmb       = at->n_aiso = ison + ipa;
-  at->isodo = (enum isodo *)realloc(at->isodo,nmb*sizeof(enum isodo)      );
-  at->isoeq = (int *)       realloc(at->isoeq,nmb*sizeof(int)             );
-  at->m     = (PREC_ZREC *) realloc(at->m,    nmb*sizeof(PREC_ZREC)       );
-  at->n     = (char **)     realloc(at->n,    nmb*sizeof(char *)          );
-  at->n[0]  = (char *)      realloc(at->n[0], nmb*maxeisoname*sizeof(char));
-  for(i=1;i<nmb;i++)
-    at->n[i] = at->n[0] + i * maxeisoname;
+  /* Set position of beginning of data: */
+  at->begpos = ftell(fp) - strlen(line) - 1;
 
-  //initialize values for the factorized elements
-  for(i=ison;i<nmb;i++){
-    strncpy(at->n[i],isoprop[i-ison].n,maxeisoname-1);
-    at->n[i][maxeisoname-1] = '\0';
-    at->isoeq[i]            = i-ison;
-    at->m[i]                = isoprop[i-ison].m;
-    at->isodo[i]            = factor;
-  }
+  /* Calculate cumulative fraction of remainder molecules: */
+  for(i=0;  i < nmol-nimol;  i++)
+    cumulother += f_remainder[i];
 
-  //Resolve what to do with those isotopes that appear in the transition
-  //database, but not in the atmosphere file.
-  at->n_niso = checknonmatch(tr,at,isodo);
+  transitprint(30, verblevel, "Cumulative remainder fraction: %.4f.\n",
+                               cumulother);
+  /* Check that cumulother sums to 1.0 (within allowed errors):  */
+  if(nmol>nimol  &&  abs(1.0 - cumulother) > ROUNDTHRESH)
+    transiterror(TERR_SERIOUS, "Sum of remainder-molecules fractional "
+           "abundance (%g) must add to 1.0 +/- %g.\n", cumulother, ROUNDTHRESH);
 
-  //Set full isotope info in the transit structure
-  nmb = iso->n_i + at->n_niso;
-  iso->isodo   = (enum isodo *)realloc(iso->isodo,
-				       nmb*sizeof(enum isodo));
-  iso->isof    = (prop_isof *)realloc(iso->isof,
-				      nmb*sizeof(prop_isof));
-  iso->isof[iso->n_i].n = (char *)realloc(iso->isof[iso->n_i].n,
-					  (nmb-iso->n_i)*maxeisoname*
-					  sizeof(char));
-  for(i=1;i<nmb-iso->n_i;i++)
-    iso->isof[iso->n_i+i].n = iso->isof[iso->n_i].n + i * maxeisoname;
-
-
-
-  //Look for isotopes who have not been associated and see whether they
-  //are supposed to be ignored. 
-  nmb = iso->n_i;
-  ipi = 0;
-  int lineignore=0;
-  for(i=0 ; i<ison+ipa ; i++)
-    //If the isotope is not associated to the linedb isotopes, then
-    //associate it. Note that isotopes in linedb that are ignored will
-    //be associated (see comments for Line \label{isodbassoc}). Hence
-    //they won't be detected in this IF. Factor isotopes will also be
-    //associated, and will be handled below
-    if(at->isoeq[i] == -1){
-      //If they are not going to be ignored then associate them with the
-      //following index available of post linedb isotopes.
-      if(at->isodo[i] != ignore){
-	at->isoeq[i]     = nmb;
-	iso->isodo[nmb]  = at->isodo[i];
-	iso->isof[nmb].m = at->m[i];
-	strcpy(iso->isof[nmb++].n, at->n[i]);
-      }
-      //otherwise, they might only be used as a reference to factor.
-      else{
-	at->isoeq[i] = ipi;
-      	strcpy(fonly[ipi++].n, at->n[i]);
-      }
-    }
-  //Just count the number of ignored isotopes that belonged to the line
-  //isotopes.
-    else if(at->isodo[i] == ignore)
-      lineignore++;
-  //If there is factor isotopes
-    else if(at->isodo[i] == factor && isoprop[at->isoeq[i]].eq == -1){
-      if(at->isodo[i]==ignore)
-	transiterror(TERR_CRITICAL,
-		    "Trying to ignore an factor isotope, that is not\n"
-		     "posible.\n");
-      isoprop[at->isoeq[i]].eq = nmb;
-      iso->isodo[nmb]          = at->isodo[i];
-      iso->isof[nmb].m         = at->m[i];
-      strcpy(iso->isof[nmb++].n, at->n[i]);
-    }
-
-  //Reduce the array to get rid of nonline-ignored isotopes. (isov has
-  //not even been allocated yet)
-  iso->n_e = nmb;
-  iso->isodo   = (enum isodo *)realloc(iso->isodo,
-				       nmb*sizeof(enum isodo));
-  iso->isof    = (prop_isof *)realloc(iso->isof,
-				      nmb*sizeof(prop_isof));
-  iso->isof[iso->n_i].n = (char *)realloc(iso->isof[iso->n_i].n,
-					  nmb*maxeisoname*sizeof(char));
-  for(i=1;i<nmb-iso->n_i;i++)
-    iso->isof[iso->n_i+i].n = iso->isof[iso->n_i].n + i * maxeisoname;
-
-
-  //Check that everything makes sense
-  double cumulother=0;
-  for(i=0 ; i<at->n_aiso ; i++)
-    if(at->isodo[i]==factor){
-      int feq=at->isoeq[i];
-      if(strcasecmp(isoprop[feq].n,"other")==0)
-	cumulother+=isoprop[feq].f;
-    }
-  //It doesn't make sense for cumulother to be anything different from
-  //unity (except round-off error): you want to associate the
-  //remainder of the atmosphere to some isotopic properties. 
-  if( cumulother!=0 && (int)(cumulother*ROUNDOFF+0.5)!=(int)(ROUNDOFF+0.5) )
-    transiterror(TERR_SERIOUS,
-		 "If you are specifying isotopes proportional to 'other'\n"
-		 "you have to complete unity (%g). It doesn't make sense\n"
-		 "otherwise\n"
-		 ,cumulother);
-
-  transitASSERT(nmb+nfonly!=ison+ipa,
-		"Oooops, number of ignored-nonline elements (%i), plus the\n"
-		"number of ignored-line elements(%i), plus the number of\n"
-		"nonignored (%i), doesn't match the number of elements\n"
-		"found in fields 'i'(%i) and 'f'(%i) of the atmosphere\n"
-		"file '%s'\n"
-		,nfonly,lineignore,nmb-lineignore,ison,ipa,atmfilename);
-
-  transitASSERT(nmb!=iso->n_e,
-		"Uyuyuyuyu! Problem in file %s, line %i,\n"
-		"assertion failed: %i != %i!!\n"
-		,__FILE__,__LINE__,nmb,iso->n_e);
-
-  //free unused array, store factor info in at structure and return line
-  //where T,P start
-  free(isolineinatm);
-  at->isoprop=isoprop;
+  /* Resolve what to do with those isotopes that appear in the
+     line transition database, but not in the atmosphere file. Get
+     the number of non-ignored isotopes in atm_data without linelist: */
+  //at->n_niso = checknonmatch(tr, at, isodo);
+  /* FINDME: This will be a task in readline (if actually needed). */
 
   return at->begline;
 }
 
 
 /* \fcnfh
-   Read abundances and pressure for each isotope and radius
+    Read radius, pressure, temperature, and abundances and store it into
+    at_data of transit.  Calculate mean molecular mass and densities.
 
-   @returns number of radius point
-*/
+    Detailed:
+    Read and store radius, pressure, and temperature from file.
+    Read abundances for each (non other-factor) isotope.
+    Sum fractional abundances. Calculate ramaining (other-factor) abundances.
+    Calculate mean molecular mass per radius.
+    Calculate densities per isotope at each radius.
+
+    Returns: number of sample radius                                         */
 int
-readatmfile(FILE *fp,		/* File */
-	    struct transit *tr, /* transit info */
-	    struct atm_data *at, /* atmosphere info */
-	    prop_samp *rads,	/* radius sampling */
-	    int nrad)		/* number of allocated radii, note that
-				   is not returned updated */
-{
-  //find abundance related quantities for each radius
-  int lines=at->begline;
-  PREC_NREC r=0;
-  PREC_RES tmp;
-  char rc;
-  float allowq=1-tr->allowrq;
-  double sumq;
-  char line[maxline],*lp,*lp2;
-  prop_isov *isov=at->isov;
-  int *isoeq=at->isoeq;
-  struct isotopes *iso=tr->ds.iso;
-  enum isodo *isodo=at->isodo;
-  int i,neiso=iso->n_e;
+readatmfile(FILE *fp,                /* Atmospheric file               */
+            struct transit *tr,      /* transit struct                 */
+            struct atm_data *at,     /* Atmosphere struct              */
+            prop_samp *rads,         /* Radius sampling                */
+            int nrad,                /* Size of allocated radius array */
+            PREC_ZREC *f_remainder){ /* Remainder molecules' factor    */
 
-  fseek(fp,at->begpos,SEEK_SET);
+  transitprint(1, verblevel, "Start reading abundances.\n");
+  /* Find abundance related quantities for each radius */
+  int lines = at->begline;
+  PREC_NREC r = 0; /* Radius index (number of radii being read) */
+  char rc;         /* File reading output */
+  float allowq = 1 - tr->allowrq;
+  int nabundances;  /* Number of abundances in list */
+  double sumq;      /* Sum of abundances per line   */
+  char line[maxline], *lp, *lp2;
+  prop_mol *molec = at->molec;
+  struct molecules *mol = tr->ds.mol;
+  int i, j;            /* Auxiliary for-loop indices */
+  /* Variables to be used by factor (except ieq which is general): */
+
+  /* Count the number of abundances in each line:                      */
+  fseek(fp, at->begpos, SEEK_SET); /* Go to position where data begins */
+  /* Skip comments:                    */
+  while((rc=fgetupto_err(lp=line, maxline, fp, &atmerr, atmfilename, lines++))
+        =='#' || rc=='\n');
+  /* Count values per line:            */
+  nabundances = countfields(lp, ' ') - 3; /* Subtract rad, p, and T columns */
+ 
+  fseek(fp, at->begpos, SEEK_SET); /* Go to position where data begins */
   while(1){
-    //reallocate if necessary
+    /* Reallocate if necessary: */
     if(r==nrad){
-      nrad<<=1;
-      rads->v=(PREC_ATM *)realloc(rads->v,nrad*sizeof(PREC_ATM));
-      at->atm.t= (PREC_ATM *)realloc(at->atm.t,nrad*sizeof(PREC_ATM));
-      at->atm.p= (PREC_ATM *)realloc(at->atm.p,nrad*sizeof(PREC_ATM));
-      at->mm=(double *)realloc(at->mm,nrad*sizeof(double));
-      for(i=0;i<neiso;i++){
-	isov[i].d=(PREC_ATM *)realloc(isov[i].d,
-				      nrad*sizeof(PREC_ATM));
-	isov[i].q=(PREC_ATM *)realloc(isov[i].q,
-				      nrad*sizeof(PREC_ATM));
-	isov[i].n=nrad;
+      nrad <<= 1;
+      rads->v     = (PREC_ATM *)realloc(rads->v,   nrad*sizeof(PREC_ATM));
+      at->atm.t   = (PREC_ATM *)realloc(at->atm.t, nrad*sizeof(PREC_ATM));
+      at->atm.p   = (PREC_ATM *)realloc(at->atm.p, nrad*sizeof(PREC_ATM));
+      at->mm      = (double   *)realloc(at->mm,    nrad*sizeof(double));
+      for(i=0; i<at->n_aiso; i++){
+        molec[i].d = (PREC_ATM *)realloc(molec[i].d, nrad*sizeof(PREC_ATM));
+        molec[i].q = (PREC_ATM *)realloc(molec[i].q, nrad*sizeof(PREC_ATM));
+        molec[i].n = nrad;
       }
     }
 
-    //Skip comments and read next line
-    while((rc=fgetupto_err(lp=line,maxline,fp,&atmerr,atmfilename,lines++))
-	  =='#'||rc=='\n');
-    //if it is end of file, stop loop
+    /* Skip comments and read next line: */
+    while((rc=fgetupto_err(lp=line, maxline, fp, &atmerr, atmfilename, lines++))
+          =='#' || rc=='\n');
+    /* If it is end of file, stop loop: */
     if(!rc)
       break;
 
-    tmp=rads->v[r]=strtod(lp,&lp2)+zerorad;
-    checkposvalue(tmp,1,lines);
+    /* Read and store radius, pressure, and temperature from file: */
+    rads->v[r] = strtod(lp, &lp2) + zerorad; /* Radius       */
+    checkposvalue(rads->v[r], 1, lines);       /* Check value is positive */
     if(lp==lp2) 
       invalidfield(line, lines, 1, "radius");
-    tmp=at->atm.p[r]=strtod(lp2,&lp);
-    checkposvalue(tmp,2,lines);
+    at->atm.p[r] = strtod(lp2, &lp);         /* Pressure     */
+    checkposvalue(at->atm.p[r], 2, lines); 
     if(lp==lp2)
       invalidfield(line, lines, 2, "pressure");
-    tmp=at->atm.t[r]=strtod(lp,&lp2);
-    checkposvalue(tmp,3,lines);
+    at->atm.t[r] = strtod(lp, &lp2);         /* Temperature  */
+    checkposvalue(at->atm.t[r], 3, lines);
     if(lp==lp2)
       invalidfield(line, lines, 3, "temperature");
 
-    //variables to be used by factor (except ieq which is general)
-    int ieq, feq;
-    double ref;
-    _Bool otherfct[neiso];
-    memset(otherfct,0,sizeof(otherfct));
-
-    //now read abundances for every isotope, but don't process
-    //factorized elements. Because they might be proportional to a fixed
-    //element which is set below.
-    for(i=0;i<at->n_aiso;i++){
-      ieq=isoeq[i];
-      switch(isodo[i]){
-      case fixed:
-	if(!r){
-	  isov[ieq].q[0]=askforposd(" %s abundance for isotope %s: "
-				    ,at->mass?"Mass":"Number"
-				    ,iso->isof[ieq].n);
-	  if(isov[ieq].q[0]>=1){
-	    fprintf(stderr," Abundance for any single isotope has to be"
-		    " less than one\n Try Again!\n");
-	    i--;
-	  }
-	}
-	else
-	  isov[ieq].q[r]=isov[ieq].q[0];
-	break;
-      case factor:
-	//don't process yet those that will use whatever abundance is left
-	//to complete unity
-	feq=ieq;
-	ieq=isoprop[feq].eq;
-	if(strcasecmp(isoprop[feq].t,"other")==0){
-	  otherfct[ieq]=1;
-	  continue;
-	}
-	//find the reference value
-	ref=findfactq(isoprop[feq].t,iso->isof,isov,neiso,r);
-	isov[ieq].q[r]=isoprop[feq].f*ref;
-	break;
-      default:
-	transiterror(TERR_CRITICAL,
-		     "Trying to read isotope in readatmfile() which is\n"
-		     "not 'fixed', 'atmfile', 'ignored', nor 'factor'.\n"
-		     );
-	exit(EXIT_FAILURE);
-	break;
-      case atmfile:
-      case ignore:
-	transitASSERT(ieq<0 || 
-		      (isodo[i]==ignore&&ieq>=nfonly) || 
-		      (isodo[i]!=ignore&&ieq>=iso->n_e),
-		      "Assertion failed in file %s, line %i: %i!=[0,%i].\n"
-		      " Fonly: %i\n"
-		      ,__FILE__, __LINE__, isoeq[i], 
-		      isodo[i]==ignore?nfonly:iso->n_e-1, isodo[i]==ignore);
-	//Read the abundance of the new element. There are two ways:      
-	//If processing one of the factor only elements
-	if(isodo[i]==ignore)
-	  tmp=fonly[ieq].q=strtod(lp2,&lp);
-	//otherwise if this element is going to be considered
-	else
-	  tmp=isov[ieq].q[r]=strtod(lp2,&lp);
-	checkposvalue(tmp, i+4, lines);
-
-	if(lp==lp2)
-	  invalidfield(line, lines, 4+i, "isotope abundance");
-	lp2=lp;
-	break;
-      }
+    /* Read abundances for each isotope.  Keep reading-in values
+       while there are numbers in line:                            */
+    for(i=0, sumq=0; i<nabundances; i++){
+      lp = lp2;
+      /* Read the abundance of the isotope:                        */
+      molec[i].q[r] = strtod(lp, &lp2);
+      if (r==0)
+        transitprint(30, verblevel, "density[%d, %li]: %.9f.\n",
+                                    i, r, molec[i].q[r]);
+      sumq += molec[i].q[r]; /* Add the abundances */
+      checkposvalue(molec[i].q[r], i+4, lines); /* Check that tmp is positive */
+      if(lp==lp2)
+        invalidfield(line, lines, 4+i, "isotope abundance");
     }
 
+    /* Remainder of the sum of abundances:     */
+    /* Set abundance of remainder molecules:   */
+    for(j=0; i < at->n_aiso; i++, j++)
+      molec[i].q[r] = f_remainder[j]*(1-sumq);
 
-    //process factorized elements that will take care of the rest of the
-    //atmosphere
-    ref=1-addq(isov,iso->isodo,otherfct,neiso,r);
-    for(i=0;i<at->n_aiso;i++)
-      if(isodo[i]==factor){
-	feq=isoeq[i];
-	ieq=isoprop[feq].eq;
-	if(otherfct[ieq])
-	  isov[ieq].q[r]=isoprop[feq].f*ref;
-      }
-
-    //calculate mean molecular mass and check whether abundances add up
-    //correctly, up to round off error of course
-    sumq=checkaddmm(at->mm+r,r,isov,iso->isof,neiso,at->mass,iso->isodo);
+    transitASSERT(i!=at->n_aiso, "The line %s of file %s contains %d abundance "
+                                 "values, when there were %d expected.\n",
+                                 __LINE__, __FILE__, i, at->n_aiso);
+    
+    /* Calculate mean molecular mass and check whether abundances add up
+       to one (within roundoff error): */
+    sumq = checkaddmm(at->mm+r, r, molec, mol, at->n_aiso, at->mass);
     if((int)(sumq*ROUNDOFF+0.5)<(int)(allowq*ROUNDOFF+0.5))
       transiterror(TERR_WARNING,
-		   "In radius %g(%i: %g in file), abundances\n"
-		   "don't add up to 1: %.9g\n"
-		   ,at->rads.v[r],r,at->rads.v[r]-zerorad,sumq);
+                   "In radius %g (%i: %g in file), abundances "
+                   "don't add up to 1: %.9g\n",
+                   at->rads.v[r], r, at->rads.v[r]-zerorad, sumq);
 
-
-    //Calculate densities
-    for(i=0;i<neiso;i++)
-      isov[i].d[r]=stateeqnford(at->mass,
-				isov[i].q[r],
-				at->mm[r],
-				iso->isof[i].m,
-				at->atm.p[r]*at->atm.pfct,
-				at->atm.t[r]*at->atm.tfct);
+    /* Calculate densities using ideal gas law: */
+    if (r==0){
+      transitprint(30, verblevel, "Abund: %.9f, mmm: %.3f, mass: %.3f, "
+                                "p: %.3f, T: %.3f.\n", molec[2].q[r], at->mm[r],
+                                   mol->mass[2], at->atm.p[r]*at->atm.pfct,
+                                   at->atm.t[r]*at->atm.tfct);
+    }
+    for(i=0; i<at->n_aiso; i++)
+      molec[i].d[r] = stateeqnford(at->mass, molec[i].q[r], at->mm[r],
+                                   mol->mass[i], at->atm.p[r]*at->atm.pfct,
+                                   at->atm.t[r]*at->atm.tfct);
+    transitprint(30, verblevel, "dens[%2li]: %.14f,   ", r, molec[2].d[r]);
     r++;
   }
 
-  //reduce array to the right number of radii
-  rads->n=nrad=r;
-  rads->v=(PREC_ATM *)realloc(rads->v,nrad*sizeof(PREC_ATM));
-  at->atm.t= (PREC_ATM *)realloc(at->atm.t,nrad*sizeof(PREC_ATM));
-  at->atm.p= (PREC_ATM *)realloc(at->atm.p,nrad*sizeof(PREC_ATM));
-  at->mm=(double *)realloc(at->mm,nrad*sizeof(double));
-  for(i=0;i<neiso;i++){
-    isov[i].d=(PREC_ATM *)realloc(isov[i].d,
-				  nrad*sizeof(PREC_ATM));
-    isov[i].q=(PREC_ATM *)realloc(isov[i].q,
-				  nrad*sizeof(PREC_ATM));
-    isov[i].n=nrad;
+  /* Re-allocate arrays to final size (nrad):  */
+  rads->n = nrad = r;
+  rads->v   = (PREC_ATM *)realloc(rads->v,   nrad*sizeof(PREC_ATM));
+  at->atm.t = (PREC_ATM *)realloc(at->atm.t, nrad*sizeof(PREC_ATM));
+  at->atm.p = (PREC_ATM *)realloc(at->atm.p, nrad*sizeof(PREC_ATM));
+  at->mm    = (double   *)realloc(at->mm,    nrad*sizeof(double));
+  for(i=0; i<at->n_aiso; i++){
+    molec[i].d = (PREC_ATM *)realloc(molec[i].d, nrad*sizeof(PREC_ATM));
+    molec[i].q = (PREC_ATM *)realloc(molec[i].q, nrad*sizeof(PREC_ATM));
+    molec[i].n = nrad;
   }
 
-  //free arrays that were used only to get the factorizing elements
+  /* Free arrays that were used only to get the factorizing elements: */
   free(fonly);
-
+  nfonly = 0;
 
   return nrad;
 }
 
 
-/* \fcnfh
-   Stores info about the atmopshere file
-*/
-void
-storename(struct atm_data *at,
-	  char *line)
-{
-  while(*line==' '||*line=='\t') line++;
+void getmass(struct atm_data *at, struct molecules *mol){
+  int nmol = at->n_aiso;
+  /* FINDME: De-hardcode filename, put it in tr.ds.at: */
+  char *filename = "../inputs/molecules.dat";
+  FILE *elist;
 
-  int len=strlen(line);
+  /* Atomic masses, names, alias names, alias molecules, and sizes: */
+  double *amass,    /* Atomic masses form list          */
+         *radius;   /* Molecular radii from list        */
+  char **aname,     /* Atomic symbol names              */
+       **rname,     /* Molecules names for listed radii */
+       **alias,     /* Alias of names given in atmfile  */
+       **amol,      /* Corresponding molecule for alias */
+       **elements;  /* Elements in a molecule           */
+  int natoms = 92,  /* Number of listed atoms           */
+      nalias =  2,  /* Number of listed alias names     */
+      nradii = 14,  /* Number of listed radii           */
+      namelen = 3,  /* Atomic symbol name length        */
+      maxlinelen = 501,
+      molnamelen,   /* Length of a molecule name        */
+      elen,         /* Element name length              */
+      iatom,        /* Atom's index from list           */
+      ielement,     /* Element counter in a molecule    */
+      i, j;         /* Auxiliary for-loop index         */
+  int *nelements;   /* Number of elements in a molecule */
 
-  //only store name if it has not been stored before
-  if(!at->info){
-    at->info=calloc(len+1,sizeof(char));
-    strcpy(at->info,line);
+  char line[maxlinelen], *lp,
+       molecule[MAXNAMELEN]; /* Current molecule's name */
+
+  /* Alias names, and corresponding molecules: */
+  amass    = (double *)calloc(natoms,         sizeof(double));
+  aname    = (char  **)calloc(natoms,         sizeof(char *));
+  aname[0] = (char   *)calloc(natoms*namelen, sizeof(char));
+  for (i=1; i<natoms; i++)
+    aname[i] = aname[0] + i*namelen;
+
+  /* Open Molecules file: */
+  if((elist=verbfileopen(filename, "Molecular info ")) == NULL)
+    exit(EXIT_FAILURE);
+
+  do{  /* Read lines, skipping comments and blank lines: */
+    lp = fgets(line, maxlinelen, elist);
+  }while (lp[0] == '\0' || lp[0] == '\n' || lp[0] == '#');
+
+  /* Fill atoms and mass array with info from element list: */
+  for (i=0; i<natoms; i++){
+    lp += 19; /* The element's symbol starts at the 19th character */
+    getname(lp, aname[i]);
+    lp = nextfield(lp);
+    amass[i] = strtod(lp, NULL);
+    lp = fgets(line, maxlinelen, elist);
+  }
+
+  /* Allocate alias names and corresponding molecules: */
+  alias    = (char  **)calloc(nalias, sizeof(char *));
+  amol     = (char  **)calloc(nalias, sizeof(char *));
+  alias[0] = (char   *)calloc(nalias*MAXNAMELEN, sizeof(char));
+  amol[0]  = (char   *)calloc(nalias*MAXNAMELEN, sizeof(char));
+  for (i=1; i<nalias; i++){
+    alias[i] = alias[0] + i*MAXNAMELEN;
+    amol[i]  = amol[0]  + i*MAXNAMELEN;
+  }
+
+  /* Continue reading the file to get the alias names: */
+  do{  /* Skip blank and comment lines: */
+    lp = fgets(line, maxlinelen, elist);
+  }while (lp[0] == '\0' || lp[0] == '\n' || lp[0] == '#');
+
+  /* Get aliases from file:         */
+  for (i=0; i<nalias; i++){
+    /* Get alias and molecule name: */
+    getname(lp, alias[i]);
+    lp = nextfield(lp);
+    getname(lp, amol[i]);
+    lp = fgets(line, maxlinelen, elist);
+  }
+
+  /* Allocate names and radii:         */
+  radius   = (double *)calloc(nradii,            sizeof(double));
+  rname    = (char  **)calloc(nradii,            sizeof(char *));
+  rname[0] = (char   *)calloc(nradii*MAXNAMELEN, sizeof(char));
+  for (i=1; i<nradii; i++)
+    rname[i] = rname[0] + i*MAXNAMELEN;
+
+  /* Go to next block                  */
+  do{
+    lp = fgets(line, maxlinelen, elist);
+  }while (lp[0] == '\0' || lp[0] == '\n' || lp[0] == '#');
+
+  /* Get radii from file:              */
+  for (i=0; i<nradii; i++){
+    /* Get molecules' name and radius: */
+    getname(lp, rname[i]);
+    lp = nextfield(lp);
+    radius[i] = strtod(lp, NULL)/2.0;
+    lp = fgets(line, maxlinelen, elist);
+  }
+
+  /* Allocate max number of molecules and max len of molecule name: */
+  nelements   = (int   *)calloc(MAXNAMELEN, sizeof(int));
+  elements    = (char **)calloc(MAXNAMELEN, sizeof(char *));
+  elements[0] = (char  *)calloc((MAXNAMELEN+1)*MAXNAMELEN, sizeof(char));
+  for (j=0; j<MAXNAMELEN; j++)
+    elements[j] = elements[0] + j*(MAXNAMELEN+1);
+
+  /* For each molecule: */
+  for (i=0; i<nmol; i++){
+    /* Check if molecule name is an alias: */
+    if ((j=findstring(mol->name[i], alias, nalias)) >= 0)
+      strcpy(molecule, amol[j]);
+    else
+      strcpy(molecule, mol->name[i]);
+
+    /* Allocate elements in a molecule: */
+    molnamelen  = (int)strlen(molecule);
+
+    /* Break down molecule into its elements: */
+    elen     = 0;  /* Element name length            */
+    ielement = 0;  /* Elements in a molecule counter */
+    for (j=0; j<molnamelen; j++){
+      if (isalpha(molecule[j])){
+        if (isupper(molecule[j])){  /* Uppercase letter: */
+          if (elen > 0){
+            /* End last element, advance j, store new letter */
+            if (elen <= 2){ /* If name is longer, it's an alias name */
+              elen = 0;
+              ielement++;  /* Count 1 more element */
+              nelements[ielement] = 1;
+            }
+            elements[ielement][elen++] = molecule[j];
+          }
+          else{ /* New Atom (elen==0) */
+            elements[ielement][elen++] = molecule[j];
+            nelements[ielement] = 1;
+          }
+        }
+        else{ /* Lowercase: */
+          elements[ielement][elen++] = molecule[j];
+        }
+      }
+      else{  /* A numeric value: */
+        nelements[ielement] = (int)strtol(&molecule[j], NULL, 10);
+        elements[ielement][elen] = '\0';
+        j += (int)log10((double)nelements[ielement++]);
+        elen = 0;
+      }
+    }
+    if (elen != 0)
+     ielement++;
+
+    /* Calculate molecule's mass: */
+    for (j=0; j<ielement; j++){
+      /* Find index of atom in list: */
+      iatom = findstring(elements[j], aname, natoms);
+      transitprint(30, verblevel, "Found %d %2s[%2d] atom(s) with mass "
+                 "%9.6f u.\n", nelements[j], aname[iatom], iatom, amass[iatom]);
+      /* Get mass and multiply by the number of atoms in molecule: */
+      mol->mass[i] += amass[iatom] * nelements[j];
+    }
+
+    /* Set the radius: */
+    j = findstring(molecule, rname, nradii);
+    mol->radius[i] = radius[j] * ANGSTROM;
+    transitprint(30, verblevel, "Molecule '%s' has radius %4.2f A and mass "
+                      "%4.2f u.\n", mol->name[i], mol->radius[i]/ANGSTROM,
+                       mol->mass[i]);
   }
 }
-
-
-
