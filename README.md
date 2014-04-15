@@ -7,9 +7,9 @@ This code was orginially written by Patricio Rojo in his PhD thesis with Joseph 
 
 The new version of transit is being developed by:
 
-Joseph Harrington  
-Jasmina Blecic  
-Patricio Cubillos  
+Joseph Harrington
+Jasmina Blecic
+Patricio Cubillos
 Andrew Foster  
 Madison Stemm
 
