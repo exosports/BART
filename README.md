@@ -11,6 +11,7 @@ Joseph Harrington
 Jasmina Blecic  
 Patricio Cubillos  
 Andrew Foster  
+Madison Stemm
 
 With support from:
 
