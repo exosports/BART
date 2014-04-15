@@ -28,9 +28,14 @@
 # include <gsl/gsl_version.h>
 #endif /* _USE_GSL */
 
-/* Array of ray solutions:  */
+/* Transit ray solution:            */
 const static transit_ray_solution *raysols[] = {&slantpath, NULL};
 /* slantpath defined in slantpath.c */
+
+/* Eclipse ray solution:            */
+const static eclipse_ray_solution *eclipsesols[] = {&eclipsepath, NULL};
+/* eclipsepath defined in eclipse.c */
+
 
 #ifndef EXTRACFGFILES
 #  define PREPEXTRACFGFILES ""
@@ -108,6 +113,7 @@ processparameters(int argc,            /* Number of command-line args  */
     CLA_CIAFILE,
     CLA_SAVEEXT,
     CLA_STARRAD,
+    CLA_SOLUTION_TYPE,
   };
 
   /* Generate the command-line option parser: */
@@ -324,7 +330,8 @@ processparameters(int argc,            /* Number of command-line args  */
     {"transparent", CLA_TRANSPARENT, no_argument,       NULL,    NULL,
      "If selected, the planet will have a maximum optical depth given by "
      "toomuch, it will never be totally opaque."},
-
+    {"solution-type", CLA_SOLUTION_TYPE, required_argument, "eclipse",
+     NULL, "Ray solution type (eclipse or transit)."},
     {NULL, 0, 0, NULL, NULL, NULL}
   };
 
@@ -744,6 +751,11 @@ processparameters(int argc,            /* Number of command-line args  */
     case CLA_CLOUDE:    /* Maximum cloud opacity                  */
       hints->cl.maxe = atof(optarg);
       break;
+    case CLA_SOLUTION_TYPE:     /* Ray-solution type              */
+      hints->path = eclipse;
+      if(strncasecmp(optarg,"transit",7)==0)
+        hints->path = transit;
+      break;
     }
   }
   procopt_free();
@@ -754,7 +766,7 @@ processparameters(int argc,            /* Number of command-line args  */
 
 /* \fcnfh
     Initialize transit ray solution sol. and determine if any of
-     sol-> name matche  hname.
+     sol-> name match  hname.
     Return: 0 on success,
            -1 if no matching name was available                  */
 int
@@ -770,6 +782,29 @@ acceptsoltype(transit_ray_solution **sol,
     if(strncasecmp(hname, (*sol)->name, len)==0)
       return 0;
     sol++;
+  }
+
+  return -1;
+}
+
+
+/* \fcnfh
+    Initialize eclipse ray solution solution and determine
+    if any of ecl-> name match hname.
+    Return: 0 on success,
+           -1 if no matching name was available                  */
+int
+accepteclipsetype(eclipse_ray_solution **ecl,
+                  char *hname){
+  *ecl = (eclipse_ray_solution *)eclipsesols[0];
+  int len;
+
+  len=strlen(hname);
+
+  while(*ecl){
+    if(strncasecmp(hname,(*ecl)->name,len)==0)
+      return 0;
+    ecl++;
   }
 
   return -1;
@@ -798,16 +833,24 @@ acceptgenhints(struct transit *tr){
   tr->f_toomuch   = th->f_toomuch;
   tr->f_outsample = th->f_outsample;
 
-  /* Initialize tr->sol, accept hinted ray-solution
-     if it's name exists in sol:                   */
-  if(acceptsoltype(&tr->sol, th->solname) != 0){
-    transit_ray_solution **sol = (transit_ray_solution **)raysols;
+  /* Initialize solution-type, accept hinted ray-solution
+     if it's name exists:                          */
+  int noSolName = acceptsoltype(&tr->sol,th->solname)!=0;
+  int noEclName = accepteclipsetype(&tr->ecl,th->solname)!=0;
+  if(noSolName && noEclName){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-                 "Solution kind '%s' is invalid!. Currently Accepted are:\n",
-                 th->solname);
+                 "Solution kind '%s' is invalid!\n"
+                 "Currently Accepted are:\n", th->solname);
+
+    transit_ray_solution **sol=(transit_ray_solution **)raysols;
     while(*sol)
       transiterror(TERR_SERIOUS|TERR_NOPREAMBLE|TERR_ALLOWCONT,
-                   " %s\n", (*sol++)->name);
+                   " %s\n",(*sol++)->name);
+
+    eclipse_ray_solution **ecl=(eclipse_ray_solution **)eclipsesols;
+    while(*ecl)
+      transiterror(TERR_SERIOUS|TERR_NOPREAMBLE|TERR_ALLOWCONT,
+                   " %s\n",(*ecl++)->name);
     exit(EXIT_FAILURE);
   }
 

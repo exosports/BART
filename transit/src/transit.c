@@ -45,7 +45,6 @@ int main(int argc,      /* Number of variables */
 
   /* Accept all general hints:                   */
   fw(acceptgenhints, !=0, &transit);
-
   /* Presentation:                               */
   printintro();
 
@@ -120,17 +119,35 @@ int main(int argc,      /* Number of variables */
     fw(extwn, !=0, &transit);
     t0 = timecheck(verblevel, itr, 10, "extwn", tv, t0);
  
-    /* Calculate optical depth:              */
-    fw(tau, !=0, &transit);
-    t0 = timecheck(verblevel, itr, 11, "tau", tv, t0);
-
     sprintf(str_iter, "%li", itr);
     strncpy(fout+dot_pos, str_iter, 1);
     strcpy(transit.f_out, fout);
 
-    /* Calculate eclipse modulation:         */
-    fw(modulation, !=0, &transit);
-    t0 = timecheck(verblevel, itr, 12, "modulation", tv, t0);
+    /* Ray solutions choice:                  */
+    RaySol path=transit.ds.th->path;
+
+    /* Calculates optical depth for eclipse   */
+    if(path == eclipse){
+      transitprint(1,verblevel, "\nCalculating eclipse.\n");
+      fw(tau_eclipse, !=0, &transit);
+      t0 = timecheck(verblevel, itr, 11, "tau eclipse", tv, t0);
+
+    /* Calculates eclipse intensity:          */
+    /* In cgs units erg/s/sr/cm               */
+      fw(emergent_intens, !=0, &transit);
+      t0 = timecheck(verblevel, itr, 12, "eclipse flux", tv, t0);
+    }
+
+    /* Calculates optical depth for transit   */
+    else{
+      transitprint(1,verblevel, "\nCalculating transit.\n");
+      fw(tau, !=0, &transit);
+      t0 = timecheck(verblevel, itr, 11, "tau", tv, t0);
+
+     /* Calculates transit modulation:         */
+      fw(modulation, !=0, &transit);
+      t0 = timecheck(verblevel, itr, 12, "modulation", tv, t0);
+   }
  
     free(transit.save.ext);
     freemem_cia      (transit.ds.cia, &transit.pi);

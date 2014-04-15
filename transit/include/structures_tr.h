@@ -27,6 +27,9 @@
 struct transit;
 struct geometry;
 
+/* Type of ray solution, eclipse or transit */
+typedef enum {transit, eclipse}  RaySol;
+
 /* Structure definitions */
 typedef struct {    /* Sampling struct        */
   PREC_NREC n;      /* Number of elements     */
@@ -103,6 +106,24 @@ typedef struct {         /* Ray solution properties:              */
   const int nobs;        /* Number of levels of details as it can
                             be handled by obsperwn                */
 } transit_ray_solution;
+
+
+typedef struct {             /* Ray solution properties:                 */
+  const char *name;          /* Ray solution name                        */
+  const char *file;          /* Ray solution filename (FINDME)           */
+  PREC_RES (*tauEclipse)     /* Optical depth for eclipse per wavenumber */
+       (PREC_RES *rad,       /*  Radius array                            */
+        PREC_RES *ex,        /*  Extinction[rad]                         */
+        long nrad);          /* Number of radii elements                 */
+  PREC_RES (*eclIntenWn)     /* Integrated optical depth:                */
+        (struct transit *tr, /* Main structure                           */
+        PREC_RES *tau,       /*  Optical depth                           */
+        PREC_RES w,          /* Current wavenumber value                 */
+        long last,           /*  Index where tau exceeded toomuch        */
+        PREC_RES toomuch,    /*  Cutoff optical depth to calculate       */
+        prop_samp *rad);     /*  Impact parameter                        */
+} eclipse_ray_solution;
+
 
 
 struct atm_isoprop{    /* Proportional-abundance isotopic parameters: */
@@ -309,6 +330,7 @@ struct transithint{
   PREC_NREC ot;         /* Radius index at which to print output from tau    */
   prop_samp rads, wavs, wns; /* Sampling properties of radius, wavelength
                                 and wavenumber                               */
+  RaySol  path;         /* Eclipse or transit ray solution.                  */
   prop_samp ips;        /* Impact parameter sampling, at what radius
                            sampling does the user wants ray optical depth to
                            be calculated                                     */
@@ -387,7 +409,8 @@ struct transit{
   long fl;          /* flags                                                 */
   long pi;          /* progress indicator                                    */
 
-  transit_ray_solution *sol; /* Solution type                                */
+  transit_ray_solution *sol; /* Transit solution type                        */
+  eclipse_ray_solution *ecl; /* Eclipse solution type                        */
   PREC_RES *outpret; /* Output dependent on wavelength only as it travels
                         to Earth before telescope                            */
 

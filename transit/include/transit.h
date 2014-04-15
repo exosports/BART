@@ -135,6 +135,7 @@ enum isodo {unclear=0, atmfile, ignore, fixed, factor};
 
 extern const transit_ray_solution slantpath;
 
+extern const eclipse_ray_solution eclipsepath;
 
 /***** Prototypes *****/
 #include <proto_transit.h>
@@ -149,5 +150,6 @@ extern const transit_ray_solution slantpath;
 #include <proto_geometry.h>
 #include <proto_observable.h>
 #include <proto_cia.h>
+#include <proto_eclipse.h>
 
 #endif /* _TRANSIT_H */
