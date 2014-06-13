@@ -128,27 +128,51 @@ int main(int argc,      /* Number of variables */
 
     /* Calculates optical depth for eclipse   */
     if(path == eclipse){
-      transitprint(1,verblevel, "\nCalculating eclipse.\n");
-      fw(tau_eclipse, !=0, &transit);
-      t0 = timecheck(verblevel, itr, 11, "tau eclipse", tv, t0);
+      transitprint(1,verblevel, "\nCalculating eclipse.\n\n");
 
-    /* Calculates eclipse intensity:          */
-    /* In cgs units erg/s/sr/cm               */
-      fw(emergent_intens, !=0, &transit);
-      t0 = timecheck(verblevel, itr, 12, "eclipse flux", tv, t0);
+      /* Angle number                        */
+      struct transithint *th = transit.ds.th;
+      long int an = th->ann;
+
+      /* Sets intensity grid:                */
+      fw(intens_grid, !=0, &transit);
+      for(int i = 0; i < an; i++){
+        /* Fills out angle index             */
+        transit.angleIndex = i;
+
+        fw(tau_eclipse, !=0, &transit);
+        t0 = timecheck(verblevel, itr, 11, "tau eclipse", tv, t0);
+  
+        /* Calculates eclipse intensity:          */
+        /* In cgs units erg/s/sr/cm               */
+        fw(emergent_intens, !=0, &transit);
+        t0 = timecheck(verblevel, itr, 12, "emergent intensity", tv, t0);
+      }
+
+    /* Calculates flux  erg/s/cm               */
+    fw(flux, !=0, &transit);
+    t0 = timecheck(verblevel, itr, 13, "flux", tv, t0);
+
+    /* Free no longer needed memory JB added   */
+    freemem_intensityGrid(transit.ds.intens, &transit.pi);
     }
 
-    /* Calculates optical depth for transit   */
+    /* Calculate optical depth for transit:    */
     else{
       transitprint(1,verblevel, "\nCalculating transit.\n");
       fw(tau, !=0, &transit);
-      t0 = timecheck(verblevel, itr, 11, "tau", tv, t0);
+      t0 = timecheck(verblevel, itr, 11, "tau", tv, t0); 
 
      /* Calculates transit modulation:         */
       fw(modulation, !=0, &transit);
       t0 = timecheck(verblevel, itr, 12, "modulation", tv, t0);
    }
  
+    /* Free no longer needed memory            */
+    freemem_idexrefrac(transit.ds.ir,        &transit.pi);
+    freemem_extinction(transit.ds.ex,        &transit.pi);
+    freemem_tau(transit.ds.tau,              &transit.pi);
+
     free(transit.save.ext);
     freemem_cia      (transit.ds.cia, &transit.pi);
     freemem_outputray(transit.ds.out, &transit.pi);

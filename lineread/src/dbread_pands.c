@@ -476,12 +476,21 @@ db_info(struct linedb **lineinfo, /* Output linedb with lines info */
 
   do{
     /* Read a record:  */
+    fprintf(stderr, "\nPOSITION %ld\n", ftell(fp));
     sfread(&(record.iwl),    4, 1, fp);
+    fprintf(stderr, "THIS IS  A WAVELENGTH: %d,  ", record.iwl);
     reversebytes(&(record.iwl),    4);
+    fprintf(stderr, "%d\n", record.iwl);
+
     sfread(&(record.ielow),  2, 1, fp);
+    fprintf(stderr, "THIS IS  IELOW:        %hu,  ", record.ielow);
     reversebytes(&(record.ielow),  2);
+    fprintf(stderr, "%hu\n", record.ielow);
+
     sfread(&(record.igflog), 2, 1, fp);
+    fprintf(stderr, "THIS IS  IGFLOG:       %hu,  ", record.igflog);
     reversebytes(&(record.igflog), 2);
+    fprintf(stderr, "%hu\n", record.igflog);
 
     /* Store info (convert to correct values first):                        */
     line->wl = exp(record.iwl*ratiolog) * pands_fct/tli_fct;

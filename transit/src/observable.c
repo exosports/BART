@@ -93,11 +93,6 @@ modulation(struct transit *tr){ /* Main structure */
   }
   transitprint(1, verblevel, "\nDone.\n");
 
-  /* Free no longer needed memory: */
-  freemem_idexrefrac(tr->ds.ir, &tr->pi);
-  freemem_extinction(tr->ds.ex, &tr->pi);
-  freemem_tau(tr->ds.tau,       &tr->pi);
-
   /* Set progress indicator, and print output: */
   tr->pi |= TRPI_MODULATION;
   printmod(tr);  

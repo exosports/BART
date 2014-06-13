@@ -16,5 +16,6 @@ extern void freemem_hints P_((struct transithint *h));
 extern void freemem_cloud P_((struct extcloud *c));
 extern void freemem_detailout P_((struct detailout *d));
 extern void freemem_detailfld P_((struct detailfld *f));
+extern int parseAngles P_((struct transithint *hints, char *angles));
 
 #undef P_

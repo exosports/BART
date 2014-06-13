@@ -31,14 +31,14 @@ struct geometry;
 typedef enum {transit, eclipse}  RaySol;
 
 /* Structure definitions */
-typedef struct {    /* Sampling struct        */
-  PREC_NREC n;      /* Number of elements     */
-  PREC_RES d;       /* Spacing                */
-  PREC_RES i;       /* Initial value          */
-  PREC_RES f;       /* Final value            */
-  int o;            /* Oversampling           */
-  PREC_RES *v;      /* Values of the sampling */
-  double fct;       /* v units factor to cgs  */
+typedef struct {    /* Sampling struct                 */
+  PREC_NREC n;      /* Number of elements              */
+  PREC_RES d;       /* Spacing                         */
+  PREC_RES i;       /* Initial value                   */
+  PREC_RES f;       /* Final value                     */
+  int o;            /* Oversampling                    */
+  PREC_RES *v;      /* Values of the sampling          */
+  double fct;       /* v units factor to cgs           */
 } prop_samp;
 
 
@@ -108,20 +108,22 @@ typedef struct {         /* Ray solution properties:              */
 } transit_ray_solution;
 
 
-typedef struct {             /* Ray solution properties:                 */
-  const char *name;          /* Ray solution name                        */
-  const char *file;          /* Ray solution filename (FINDME)           */
-  PREC_RES (*tauEclipse)     /* Optical depth for eclipse per wavenumber */
-       (PREC_RES *rad,       /*  Radius array                            */
-        PREC_RES *ex,        /*  Extinction[rad]                         */
-        long nrad);          /* Number of radii elements                 */
-  PREC_RES (*eclIntenWn)     /* Integrated optical depth:                */
-        (struct transit *tr, /* Main structure                           */
-        PREC_RES *tau,       /*  Optical depth                           */
-        PREC_RES w,          /* Current wavenumber value                 */
-        long last,           /*  Index where tau exceeded toomuch        */
-        PREC_RES toomuch,    /*  Cutoff optical depth to calculate       */
-        prop_samp *rad);     /*  Impact parameter                        */
+
+typedef struct {              /* Ray solution properties:                 */
+  const char *name;           /* Ray solution name                        */
+  const char *file;           /* Ray solution filename (FINDME)           */
+  PREC_RES (*tauEclipse)      /* Optical depth for eclipse per wavenumber */
+       (PREC_RES *rad,        /* Radius array                             */
+        PREC_RES *ex,         /* Extinction[rad]                          */
+        PREC_RES angle,       /* Ray grid                                 */
+        long nrad);           /* Number of radii elements                 */
+  PREC_RES (*eclIntenWn)      /* Integrated optical depth:                */
+        (struct transit *tr,  /* Main structure                           */
+        PREC_RES *tau,        /* Optical depth                            */
+        PREC_RES w,           /* Current wavenumber value                 */
+        long last,            /* Index where tau exceeded toomuch         */
+        PREC_RES toomuch,     /* Cutoff optical depth to calculate        */
+        prop_samp *rad);      /* Impact parameter                         */
 } eclipse_ray_solution;
 
 
@@ -229,6 +231,11 @@ struct optdepth{
                        calculated: the extinction is assumed to be zero.  */
 };
 
+struct grid{
+  PREC_RES **a;      /* Intensity grid, 2D, [an][wnn]                      */
+};
+
+
 
 struct geometry{
   float smaxis;       /* Semimajor axis                                    */
@@ -331,6 +338,8 @@ struct transithint{
   prop_samp rads, wavs, wns; /* Sampling properties of radius, wavelength
                                 and wavenumber                               */
   RaySol  path;         /* Eclipse or transit ray solution.                  */
+  long int ann;         /* Number of angles                                  */
+  PREC_RES angles[10];  /* Angles                                            */
   prop_samp ips;        /* Impact parameter sampling, at what radius
                            sampling does the user wants ray optical depth to
                            be calculated                                     */
@@ -383,7 +392,7 @@ struct transit{
        *f_out,       /* Output (main) filename   */
        *f_toomuch,   /* Output toomuch filename  */
        *f_outsample; /* Output sample filename   */
-  PREC_NREC ot;     /* Radius index at which to print output from tau        */
+  PREC_NREC ot;      /* Radius index at which to print output from tau       */
 
   FILE *fp_atm, *fp_out, *fp_line; /* Pointers to files                      */
   float allowrq;    /* How much less than one is accepted, so that no warning
@@ -394,6 +403,8 @@ struct transit{
                        have to look for transitions                          */
   PREC_RES wnmi;    /* Amount of cm-1 not trusted at the beginning           */
   PREC_RES wnmf;    /* Amount of cm-1 not trusted at the end                 */
+  long int angleIndex; /* Index of the current angle                         */
+  PREC_RES *Flux;   /* Flux for eclipse                                      */
   prop_samp rads, wavs, wns; /* Sampling properties of radius, wavelength
                                 and wavenumber                               */
   prop_samp ips;    /* Impact parameter sampling, at what radius sampling does
@@ -422,6 +433,7 @@ struct transit{
     struct lineinfo    *li;
     struct atm_data    *at;
     struct extinction  *ex;
+    struct grid        *intens;
     struct optdepth    *tau;
     struct idxref      *ir;
     struct geometry    *sg;

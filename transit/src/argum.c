@@ -114,6 +114,7 @@ processparameters(int argc,            /* Number of command-line args  */
     CLA_SAVEEXT,
     CLA_STARRAD,
     CLA_SOLUTION_TYPE,
+    CLA_INTENS_GRID,
   };
 
   /* Generate the command-line option parser: */
@@ -332,6 +333,8 @@ processparameters(int argc,            /* Number of command-line args  */
      "toomuch, it will never be totally opaque."},
     {"solution-type", CLA_SOLUTION_TYPE, required_argument, "eclipse",
      NULL, "Ray solution type (eclipse or transit)."},
+    {"ray-grid",      CLA_INTENS_GRID, required_argument, "0, 20, 40, 60, 80",
+     NULL, "Intensity grid"},
     {NULL, 0, 0, NULL, NULL, NULL}
   };
 
@@ -756,9 +759,63 @@ processparameters(int argc,            /* Number of command-line args  */
       if(strncasecmp(optarg,"transit",7)==0)
         hints->path = transit;
       break;
+    case CLA_INTENS_GRID:      /* Intensity grid                  */
+      parseAngles(hints, optarg);
+      break;
     }
   }
   procopt_free();
+
+  return 0;
+}
+
+/* FINDME: Move to pu */
+/* \fcnfh
+   Parser for angle parameter from configuration file
+   Reads the angles and write them in the transithint variable
+   Returns: zero on success                                      */
+
+int
+parseAngles(struct transithint *hints, char *slant){
+  /* Declares a copy variable of the text from the
+     configuration file so we can work on a copy                */
+  char angles_copy[100];
+
+  /* Defines a delimiter */
+  const char s[2] = ",";
+
+  /* Takes characters (tokens) between delimiters               */
+  char *token;
+
+  /* Declares floating variable for strings                     */
+  double theta;
+
+  /* Declares variable for number of angles                     */
+  long int angNum = 0;
+
+  /* Declares result of the conversion from string to floats    */
+  int res;
+
+  /* Makes a copy of angles read from cfg file                  */
+  strcpy(angles_copy, slant);
+
+  /* Gets first token                                           */
+  token = strtok(angles_copy, s);
+
+  /* Walks through other tokens                                 */
+  while(token != NULL){
+    /* Converts strings to floats                              */
+    res = sscanf(token, "%lf", &theta);
+
+    if(res==1){
+      /* Fills out hints variable angles                       */
+      hints->angles[angNum] = theta;
+      angNum++;
+    }
+    token = strtok(NULL, s);
+  }
+  /* Fill out hints variable ann                                */
+  hints->ann = angNum;
 
   return 0;
 }
@@ -799,7 +856,7 @@ accepteclipsetype(eclipse_ray_solution **ecl,
   *ecl = (eclipse_ray_solution *)eclipsesols[0];
   int len;
 
-  len=strlen(hname);
+  len = strlen(hname);
 
   while(*ecl){
     if(strncasecmp(hname,(*ecl)->name,len)==0)
@@ -835,22 +892,22 @@ acceptgenhints(struct transit *tr){
 
   /* Initialize solution-type, accept hinted ray-solution
      if it's name exists:                          */
-  int noSolName = acceptsoltype(&tr->sol,th->solname)!=0;
-  int noEclName = accepteclipsetype(&tr->ecl,th->solname)!=0;
+  int noSolName = acceptsoltype(&tr->sol,     th->solname) != 0;
+  int noEclName = accepteclipsetype(&tr->ecl, th->solname) != 0;
   if(noSolName && noEclName){
     transiterror(TERR_SERIOUS|TERR_ALLOWCONT,
-                 "Solution kind '%s' is invalid!\n"
+                 "Solution kind '%s' is invalid.\n"
                  "Currently Accepted are:\n", th->solname);
 
     transit_ray_solution **sol=(transit_ray_solution **)raysols;
     while(*sol)
       transiterror(TERR_SERIOUS|TERR_NOPREAMBLE|TERR_ALLOWCONT,
-                   " %s\n",(*sol++)->name);
+                   " %s\n", (*sol++)->name);
 
     eclipse_ray_solution **ecl=(eclipse_ray_solution **)eclipsesols;
     while(*ecl)
       transiterror(TERR_SERIOUS|TERR_NOPREAMBLE|TERR_ALLOWCONT,
-                   " %s\n",(*ecl++)->name);
+                   " %s\n", (*ecl++)->name);
     exit(EXIT_FAILURE);
   }
 
