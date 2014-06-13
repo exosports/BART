@@ -477,7 +477,7 @@ readatmfile(FILE *fp,                /* Atmospheric file               */
                    at->rads.v[r], r, at->rads.v[r]-zerorad, sumq);
 
     /* Calculate densities using ideal gas law: */
-    if (r==0){
+    if (r>=0){
       transitprint(30, verblevel, "Abund: %.9f, mmm: %.3f, mass: %.3f, "
                                 "p: %.3f, T: %.3f.\n", molec[2].q[r], at->mm[r],
                                    mol->mass[2], at->atm.p[r]*at->atm.pfct,

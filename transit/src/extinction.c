@@ -180,14 +180,19 @@ extradius(PREC_NREC r,      /* Radius index                          */
                                   csdiameter*csdiameter, iso->isov[i].c[r]/PI);
       alphal[i] += mol->molec[j].d[r]/mol->mass[j] * csdiameter * csdiameter *
                    sqrt(1/mass[i] + 1/mol->mass[j]);
+      if (i==0)
+        transitprint(20, verblevel, "AlphaL[%d] = %.3e\n", j,
+                    mol->molec[j].d[r]/mol->mass[j] * csdiameter * csdiameter *
+                    sqrt(1/mass[i] + 1/mol->mass[j]));
     }
     alphal[i] *= propto_alor;
 
     /* Calculate Doppler width divided by central wavenumber: */
     alphad[i] = propto_adop/sqrt(mass[i]);
 
-    transitprint(30, verblevel, "Lorentz: %.9f, Doppler: %.9f broadening.\n",
-                               alphal[i], alphad[i]);
+    if(i == 0)
+      transitprint(20, verblevel, "Lorentz: %.9f, Doppler: %.9f broadening "
+              "(T=%d).\n", alphal[i], alphad[i]*wn[0], (int)temp);
     /* Get a new profile: 'profile[i]' has dimensions ex->vf x (2*nwnh[i]+1).
        The latter is calculated by newprofile, though: */
     if((nwnh[i] = newprofile(profile[i], fbinvoigt, dwn,

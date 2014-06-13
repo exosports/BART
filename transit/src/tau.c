@@ -183,7 +183,7 @@ tau(struct transit *tr){
           if(!comp[--lastr]){
             /* Compute a new extinction at given radius printing error if
                something happen: */
-            transitprint(2, verblevel, "Radius %i: %.9g cm ... ",
+            transitprint(2, verblevel, "Radius %i: %.9g cm ... \n",
                                        lastr+1, r[lastr]);
             if((rn=computeextradius(lastr, temp[lastr]*tfct, ex))!=0)
               transiterror(TERR_CRITICAL,
