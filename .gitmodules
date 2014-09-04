@@ -1,21 +1,12 @@
-[submodule "modules/commloop"]
-	path = modules/commloop
-	url = https://github.com/astromaddie/commloop
-[submodule "modules/demc"]
-	path = modules/demc
-	url = https://github.com/pcubillos/demc
-[submodule "modules/inputconv"]
-	path = modules/inputconv
-	url = https://github.com/dzesmin/Input-Converter
-[submodule "modules/outputconv"]
-	path = modules/outputconv
-	url = https://github.com/pcubillos/output-converter
 [submodule "tea"]
 	path = tea
 	url = https://github.com/dzesmin/TEA
-[submodule "modules/transit"]
-	path = modules/transit
-	url = https://github.com/pcubillos/transit
-[submodule "modules/tea"]
-	path = modules/tea
+[submodule "modules/modules/MCcubed"]
+	path = modules/modules/MCcubed
+	url = https://github.com/pcubillos/MCcubed
+[submodule "modules/modules/TEA"]
+	path = modules/modules/TEA
 	url = https://github.com/dzesmin/TEA
+[submodule "modules/modules/transit"]
+	path = modules/modules/transit
+	url = https://github.com/pcubillos/transit
