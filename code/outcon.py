@@ -9,8 +9,7 @@ OCdir = os.path.dirname(os.path.realpath(__file__))
 
 import wine   as w
 import reader as rd
-sys.path.append(OCdir + "/../modules/mccubed/")
-import cutils  as cu
+sys.path.append(OCdir + "/../modules/MCcubed/src/")
 import mcutils as mu
 
 
@@ -42,7 +41,7 @@ def main(comm):
   if cfile:
     config = ConfigParser.SafeConfigParser()
     config.read([cfile])
-    defaults = dict(config.items("BART"))
+    defaults = dict(config.items("MCMC"))
   else:
     defaults = {}
 
@@ -53,7 +52,7 @@ def main(comm):
   group = parser.add_argument_group("Output Converter Options")
   group.add_argument(     "--filter",                 action="store",
                      help="Waveband filter name [default: %(default)s]",
-                     dest="filter",   type=cu.parray, default=None)
+                     dest="filter",   type=mu.parray, default=None)
   group.add_argument("--tep_name",         action="store",
                      help="Transiting Exo-Planet file [default: %(default)s]",
                      dest="tep_name", type=str,       default=None)
@@ -101,18 +100,18 @@ def main(comm):
 
   # Send the number of filters:
   nfilters = len(ffile)
-  cu.comm_gather(comm, np.array([nfilters], dtype='i'), MPI.INT)
+  mu.comm_gather(comm, np.array([nfilters], dtype='i'), MPI.INT)
   mu.msg(verb,"OCON FLAG 55: Start")
 
   # Get the number of iterations and wavenumbers:
   array1 = np.zeros(2, dtype='i')
-  cu.comm_bcast(comm, array1)
+  mu.comm_bcast(comm, array1)
   nspec, niter = array1
   mu.msg(verb, "OCON FLAG 65: nspec={:d}, niter={:d}".format(nspec, niter))
 
   # Get the wavenumber array:
   specwn = np.zeros(nspec, dtype="d")
-  cu.comm_scatter(comm, specwn)
+  mu.comm_scatter(comm, specwn)
   mu.msg(verb, "OCON FLAG 65.5: wn=[{:.2f}, {:.2f}, ..., {:.2f}]".format(
               specwn[0], specwn[1], specwn[-1]))
 
@@ -127,7 +126,7 @@ def main(comm):
     # Read filter:
     filtwaven, filttransm = w.readfilter(ffile[i])
     # Check that filter boundaries lie within the spectrum wn range:
-    if filtwaven[0] < specwn[0] or filtwaven[-1] < specwn[-1]:
+    if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
       mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not cover "
             "the filter[{:d}] wavenumber range ({:.2f} - {:.2f} cm-1).".format(
             specwn[0], specwn[-1], i, filtwaven[0], filtwaven[-1]))
@@ -148,7 +147,7 @@ def main(comm):
   mu.msg(verb, "OCON FLAG 70: enter loop")
   while niter >= 0:
     # Receive planet spectrum:
-    cu.comm_scatter(comm, array3)
+    mu.comm_scatter(comm, array3)
     mu.msg(verb, "OCON FLAG 72: receive spectum")
 
     # Calculate the band-integrated intensity per filter:
@@ -158,13 +157,13 @@ def main(comm):
     #print("gather send: " + str(array4))
 
     # Gather (send) the band-integrated fluxes:
-    cu.comm_gather(comm, array4, MPI.DOUBLE)
+    mu.comm_gather(comm, array4, MPI.DOUBLE)
     niter -= 1
 
   # Close communications and disconnect:
   if rank == 0:
     mu.msg(verb, "OCON FLAG 99: OutputCon is out.")
-  cu.exit(comm)
+  mu.exit(comm)
 
 
 if __name__ == "__main__":

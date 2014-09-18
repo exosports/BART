@@ -469,6 +469,7 @@ def reformat(atmfile):
   lines.insert(imol-2, "\n#Values units:\nur 1e5\n")
 
   # Save file with the updated lines:
-  f = open(atmfile + "_m", 'w')
+  f = open(atmfile, 'w')
+  #f = open(atmfile + "_m", 'w')
   f.writelines(lines)
   f.close()

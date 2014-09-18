@@ -3,8 +3,7 @@ import numpy as np
 from mpi4py import MPI
 
 BARTdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(BARTdir + "/../modules/mccubed")
-import cutils as cu
+sys.path.append(BARTdir + "/../modules/MCcubed/src/")
 import mcutils as mu
 
 def init(incomm, transitcomm, outcomm, nparams, niter, verb=0):
@@ -34,16 +33,16 @@ def init(incomm, transitcomm, outcomm, nparams, niter, verb=0):
   # Get the output-array sizes:
   arrsize = np.zeros(2, dtype="i")
   # Get the number of layers from incomm:
-  cu.comm_gather(incomm,      arrsize)
+  mu.comm_gather(incomm,      arrsize)
   nlayers  = arrsize[0]
   nspecies = arrsize[1]
 
   # Get the number of spectral samples from transit:
   arrsize = np.zeros(1, dtype="i")
-  cu.comm_gather(transitcomm, arrsize)
+  mu.comm_gather(transitcomm, arrsize)
   nwave   = arrsize[0]
   # Get the number of data points from outcomm:
-  cu.comm_gather(outcomm,     arrsize)
+  mu.comm_gather(outcomm,     arrsize)
   nbands  = arrsize[0]
 
   # Transits receives the temperature and abundance profiles:
@@ -51,16 +50,16 @@ def init(incomm, transitcomm, outcomm, nparams, niter, verb=0):
 
   mu.msg(verb, "BART FLAG 50:")
   # Send the input-array sizes to incomm, transit, and outcomm:
-  cu.comm_bcast(incomm,      np.array([          niter], dtype="i"), MPI.INT)
-  cu.comm_bcast(transitcomm, np.array([nprofile, niter], dtype="i"), MPI.INT)
-  cu.comm_bcast(outcomm,     np.array([nwave,    niter], dtype="i"), MPI.INT)
+  mu.comm_bcast(incomm,      np.array([          niter], dtype="i"), MPI.INT)
+  mu.comm_bcast(transitcomm, np.array([nprofile, niter], dtype="i"), MPI.INT)
+  mu.comm_bcast(outcomm,     np.array([nwave,    niter], dtype="i"), MPI.INT)
 
   mu.msg(verb, "BART FLAG 55:")
   # Get wavenumber array from transit and sent to outcomm:
   specwn = np.zeros(nwave, dtype="d")
-  cu.comm_gather(transitcomm, specwn)
+  mu.comm_gather(transitcomm, specwn)
   mu.msg(verb, "BART FLAG 57:")
-  cu.comm_scatter(outcomm,    specwn, MPI.DOUBLE)
+  mu.comm_scatter(outcomm,    specwn, MPI.DOUBLE)
 
   # Allocate arrays received form each communicator:
   profiles = np.empty(nprofile, np.double)
@@ -103,24 +102,24 @@ def bart(params, incomm, transitcomm, outcomm, profiles, spectrum, bandflux,
   mu.msg(verb, "BART FLAG 73: Start iteration")
   # Scatter (send) free parameter to IC:
   mu.msg(verb, "BART FLAG 74: free pars: {}".format(params))
-  cu.comm_scatter(incomm, params, MPI.DOUBLE)
+  mu.comm_scatter(incomm, params, MPI.DOUBLE)
   # Gather (receive) the profiles:
   mu.msg(verb, "BART FLAG 76: Tprofile size: %d"%len(profiles))
-  cu.comm_gather(incomm, profiles)
+  mu.comm_gather(incomm, profiles)
 
   mu.msg(verb, "BART FLAG 77: profiles={}".format(profiles[0:10]))
   mu.msg(verb, "BART FLAG 78: intransit size: {:d}.".format(len(profiles)))
   # Scatter (send) Tprofile and abundance factors to transit:
-  cu.comm_scatter(transitcomm, profiles, MPI.DOUBLE)
+  mu.comm_scatter(transitcomm, profiles, MPI.DOUBLE)
   mu.msg(verb, "BART FLAG 79: sent data to transit!")
   # Gather (receive) spectrum from transit:
-  cu.comm_gather(transitcomm, spectrum)
+  mu.comm_gather(transitcomm, spectrum)
 
   mu.msg(verb, "BART FLAG 80: Send spectrum to OC.")
   # Scatter (send) spectrum to output converter:
-  cu.comm_scatter(outcomm, spectrum, MPI.DOUBLE)
+  mu.comm_scatter(outcomm, spectrum, MPI.DOUBLE)
   # Gather (receive) band-integrated flux:
-  cu.comm_gather(outcomm, bandflux)
+  mu.comm_gather(outcomm, bandflux)
 
   mu.msg(verb, "BART FLAG 85: OC out: %.6e, %.6e"%(bandflux[0], bandflux[1]))
   return bandflux
@@ -141,7 +140,7 @@ def main():
   2014-08-19  patricio  Added documentation.
   """
   return ["incon.py",
-          BARTdir + "/../transit/MPItransit",
+          BARTdir + "/../modules/transit/MPItransit",
           "outcon.py"], bart
 
 if __name__ == "__main__":

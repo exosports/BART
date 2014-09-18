@@ -3,7 +3,7 @@ import argparse, ConfigParser
 import numpy as np
 
 filedir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(filedir + "/../modules/mccubed/")
+sys.path.append(filedir + "/../modules/MCcubed/src/")
 import mcutils as mu
 
 
@@ -35,7 +35,7 @@ def makecfg(cfg, directory, atmfile):
                 "opacityfile",
                 "toomuch", "tauiso", "outtau", "taulevel", "modlevel",
                 "starrad", "transparent",
-                "solutiontype", "raygrid",
+                "solution-type", "raygrid",
                 "cloudrad", "cloudfct", "cloudext",
                 "verb",
                 "outtoomuch", "outsample", "output",
@@ -46,7 +46,7 @@ def makecfg(cfg, directory, atmfile):
   # Get all BART arguments in a dict:
   config = ConfigParser.SafeConfigParser()
   config.read([cfg])
-  defaults = dict(config.items("BART"))
+  defaults = dict(config.items("MCMC"))
 
   # Key names of the arguments in the BART configuration file:
   cfg_args = defaults.keys()

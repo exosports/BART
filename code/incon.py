@@ -9,8 +9,7 @@ ICdir = os.path.dirname(os.path.realpath(__file__))
 
 import makeatm as mat
 import PT as pt
-sys.path.append(ICdir + "/../modules/mccubed/")
-import cutils  as cu
+sys.path.append(ICdir + "/../modules/MCcubed/src/")
 import mcutils as mu
 
 
@@ -38,7 +37,7 @@ def main(comm):
   if cfile:
     config = ConfigParser.SafeConfigParser()
     config.read([cfile])
-    defaults = dict(config.items("BART"))
+    defaults = dict(config.items("MCMC"))
   else:
     defaults = {}
   # Now, parser for the Input-Converter arguments:
@@ -59,10 +58,10 @@ def main(comm):
   group = parser.add_argument_group("MCMC Options")
   group.add_argument("-f", "--params",         action="store",
                      help="Model fitting parameter [default: %(default)s]",
-                     dest="params", type=cu.parray,   default=None)
+                     dest="params", type=mu.parray,   default=None)
   group.add_argument("-m", "--molfit",         action="store",
                      help="Molecule fit [default: %(default)s]",
-                     dest="molfit", type=cu.parray,   default=None)
+                     dest="molfit", type=mu.parray,   default=None)
 
   # Set the defaults from the configuration file:
   parser.set_defaults(**defaults)
@@ -95,12 +94,12 @@ def main(comm):
   mu.msg(verb, "There are {:d} layers and {:d} species.".format(nlayers,
                                                                 nspecies))
   # Send nlayers + nspecies to master:
-  cu.comm_gather(comm, np.array([nlayers, nspecies], dtype='i'), MPI.INT)
+  mu.comm_gather(comm, np.array([nlayers, nspecies], dtype='i'), MPI.INT)
   mu.msg(verb, "ICON FLAG 55")
 
   # Get the number of PT params and iterations:
   array1 = np.zeros(1, dtype='i')
-  cu.comm_bcast(comm, array1)
+  mu.comm_bcast(comm, array1)
   niter = array1
   mu.msg(verb, "ICON FLAG 60: nPT=%d,  niter=%d"%(nPT, niter))
 
@@ -128,7 +127,7 @@ def main(comm):
   mu.msg(verb, "ICON FLAG 70: Enter main loop")
   while niter >= 0:
     # Receive parameters from master:
-    cu.comm_scatter(comm, freepars)
+    mu.comm_scatter(comm, freepars)
     mu.msg(verb, "ICON FLAG 72: incon pars: {}".format(freepars))
 
     # Get temperature profile and check for non-physical outputs:
@@ -145,13 +144,13 @@ def main(comm):
     
     mu.msg(verb, "ICON FLAG 76: profiles size: {:d}".format(len(profiles)))
     # Gather (send) the temperature and abundance profile:
-    cu.comm_gather(comm, profiles, MPI.DOUBLE)
+    mu.comm_gather(comm, profiles, MPI.DOUBLE)
     niter -= 1
 
   # Close communications and disconnect:
   if rank == 0:
     mu.msg(verb, "ICON FLAG 99: Input Con is out")
-  cu.exit(comm)
+  mu.exit(comm)
 
 if __name__ == "__main__":
   comm = MPI.Comm.Get_parent()
