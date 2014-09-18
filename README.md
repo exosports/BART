@@ -55,14 +55,11 @@ wreck anything.
 
 Apparently GIThub's Markdown doesn't support tables yet...
 
-|------------------|--------|-------|--------|----|----------------|  
-|Component		    |Code	 |Doc	   |Package	|Git |Centralgit(here)|  
-|------------------|--------|-------|--------|----|----------------|  
-|comm loop		    |dev	    |-      |-	      |y	  |-               |  
-|DEMC 		       |done	 |-      |-	      |-	  |-               |  
-|TEA			       |done    |dev	   |-	      |y	  |-               |  
-|input converter   |ready   |incode	|-	      |-	  |-               |  
-|transit		       |dev	    |thesis	|-	      |y2  |outdated        |  
-|lineread	       |dev	    |-      |-	      |y	  |outdated        |  
-|output converter  |ready	 |incode	|-	      |-	  |-               |  
-|------------------|--------|-------|--------|----|----------------|  
+
+| Component     | Code          | Doc           | Package | Git | Centralgit(here) |
+| ------------- | --------------| ------------  |---------|-----| -----------------|
+| comm loop     | done (?)      |               |         | yes |                  |
+| MC-cubed      | done          | To be revised |         | yes |                  |
+| TEA           | dev           | On revision   |         | yes |                  |
+| transit       | dev           |               |         | yes |                  |
+| BART          | dev           |               |         | dev |                  |
