@@ -121,7 +121,7 @@ def bart(params, incomm, transitcomm, outcomm, profiles, spectrum, bandflux,
   # Gather (receive) band-integrated flux:
   mu.comm_gather(outcomm, bandflux)
 
-  mu.msg(verb, "BART FLAG 85: OC out: %.6e, %.6e"%(bandflux[0], bandflux[1]))
+  mu.msg(verb, "BART FLAG 85: OC out: {:.6e}".format(bandflux[0]))
   return bandflux
 
 
