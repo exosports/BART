@@ -140,7 +140,7 @@ def main():
   2014-08-19  patricio  Added documentation.
   """
   return ["incon.py",
-          BARTdir + "/../modules/transit/MPItransit",
+          BARTdir + "/../modules/transit/transit/MPItransit",
           "outcon.py"], bart
 
 if __name__ == "__main__":

@@ -33,6 +33,7 @@ def makecfg(cfg, directory, atmfile):
                 "tlow",    "thigh",    "tempdelt",
                 "finebin", "nwidth", "blowex", "minelow",
                 "opacityfile",
+                "molfile",
                 "toomuch", "tauiso", "outtau", "taulevel", "modlevel",
                 "starrad", "transparent",
                 "solution-type", "raygrid",
