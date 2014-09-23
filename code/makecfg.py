@@ -37,6 +37,7 @@ def makecfg(cfg, directory, atmfile):
                 "toomuch", "tauiso", "outtau", "taulevel", "modlevel",
                 "starrad", "transparent",
                 "solution-type", "raygrid",
+                "gsurf", "refpress", "refradius",
                 "cloudrad", "cloudfct", "cloudext",
                 "verb",
                 "outtoomuch", "outsample", "output",
