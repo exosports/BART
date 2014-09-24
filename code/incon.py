@@ -22,6 +22,7 @@ def main(comm):
   2014-04-13  patricio  Adapted for BART project.
                         Patricio Cubillos, UCF.  pcubillos@fulbrightmail.org
   2014-04-24  patricio  
+  2014-09-23  Jasmina   Updated readatm() return.
   """
   # Initialize parser to process a configuration file:
   cparser = argparse.ArgumentParser(description=__doc__, add_help=False,
@@ -88,7 +89,7 @@ def main(comm):
 
   mu.msg(verb, "ICON FLAG 50")
   # Read atmospheric file to get data arrays:
-  species, pressure, abundances = mat.readatm(atmfile)
+  species, pressure, temp, abundances = mat.readatm(atmfile)
   nlayers  = len(pressure)
   nspecies = len(species)
   mu.msg(verb, "There are {:d} layers and {:d} species.".format(nlayers,

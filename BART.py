@@ -37,10 +37,12 @@ def main():
   ---------------------
   2014-07-25  Jasmina   Initial version.
   2014-08-15  Patricio  put code into main() function.
-  2014-08-18  patricio  Merged with MC3 module.  Added flag to sort
+  2014-08-18  Patricio  Merged with MC3 module.  Added flag to sort
                         read/execute steps.
+  2014-09-20  Jasmina   Made call to makeRadius() function. Added progress
+                        statements.
   """
-  mu.msg(1, "This is BART!")
+  mu.msg(1, "\nThis is BART!")
   mu.msg(1, "\nInitialization:")
 
   # Parse the config file from the command line:
@@ -169,8 +171,9 @@ def main():
   if runMCMC < 4:  # Pre-atmospheric file
     # Calculate the temperature profile:
     temp = ipt.initialPT(date_dir, tep_name, press_file, a1, a2, p1, p3, T3_fac)
-    # Wait for user to continue:
-    raw_input("\nPress enter to continue, or quit and choose other initial "
+    # Choose a pressure-temperature profile
+    mu.msg(1, "\nChoose temperature and pressure profile:", 2)
+    raw_input("  Press enter to continue, or quit and choose other initial "
               "PT parameters.")
     preatm_file = date_dir + preatm_file
     mat.make_preatm(tep_name, press_file, abun_file, in_elem, out_spec,
@@ -182,18 +185,22 @@ def main():
     TEAcall = TEAdir + "runatm.py"
     TEAout  = os.path.splitext(atmfile)[0]  # Remove extension
     # Execute TEA:
+    mu.msg(1, "\nExecute TEA:")
     proc = subprocess.Popen([TEAcall, preatm_file, TEAout], cwd=TEAdir)
     proc.communicate()
     shutil.copy2(TEAdir + "results/"+TEAout+"/"+atmfile, date_dir+atmfile)
     atmfile = date_dir + atmfile
+    # Add radius array:
+    mat.makeRadius(in_elem, out_spec, atmfile, abun_file, tep_name)
+    mu.msg(1, "Added radius column to TEA atmospheric file.", 2)
     # Re-format file for use with transit:
     mat.reformat(atmfile)
-    mu.msg(1, "Created new atmospheric file.", 2)
+    mu.msg(1, "Atmospheric file reformatted for Transit.", 2)
 
   # Make transit configuration file:
   mc.makecfg(cfile, date_dir, atmfile)
 
-  #return
+  return
 
   # Run the MCMC:
   mu.msg(1, "\nStart MCMC:")
