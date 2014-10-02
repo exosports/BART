@@ -59,6 +59,10 @@ def main(comm):
   group.add_argument("-k", "--kurucz_file",           action="store",
                      help="Stellar Kurucz file [default: %(default)s]",
                      dest="kurucz",   type=str,       default=None)
+  group.add_argument("--solutiontype",                    action="store",
+                     help="Solution geometry [default: %(default)s]",
+                     dest="solutiontype", type=str,       default="transit",
+                     choices=('transit', 'eclipse'))
   group.add_argument("-q", "--quiet",                 action="store_true",
                      help="Set verbosity level to minimum",
                      dest="quiet")
@@ -72,9 +76,10 @@ def main(comm):
   size  = comm.Get_size()
 
   # Retrieve options and arguments:
-  ffile   = args2.filter    # Filter files
-  kurucz  = args2.kurucz    # Kurucz file
-  tepfile = args2.tep_name  # TEP file
+  ffile    = args2.filter    # Filter files
+  kurucz   = args2.kurucz    # Kurucz file
+  tepfile  = args2.tep_name  # TEP file
+  solution = args2.solutiontype  # Solution type
 
   # Verbosity level:
   if args2.quiet:
@@ -115,6 +120,7 @@ def main(comm):
   mu.msg(verb, "OCON FLAG 65.5: wn=[{:.2f}, {:.2f}, ..., {:.2f}]".format(
               specwn[0], specwn[1], specwn[-1]))
 
+  # FINDME: Separate filter/stellar interpolation?
   # Get stellar model:
   starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, tstar, gstar)
   # Read and resample the filters:
@@ -127,9 +133,10 @@ def main(comm):
     filtwaven, filttransm = w.readfilter(ffile[i])
     # Check that filter boundaries lie within the spectrum wn range:
     if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
-      mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not cover "
-            "the filter[{:d}] wavenumber range ({:.2f} - {:.2f} cm-1).".format(
-            specwn[0], specwn[-1], i, filtwaven[0], filtwaven[-1]))
+      mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
+              "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
+              "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
+                                                        filtwaven[-1]))
 
     # Resample filter and stellar spectrum:
     nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
@@ -152,8 +159,12 @@ def main(comm):
 
     # Calculate the band-integrated intensity per filter:
     for i in np.arange(nfilters):
-      fluxrat = (array3[wnindices[i]]/istarfl[i])*rprs*rprs
-      array4[i] = w.bandintegrate(fluxrat, specwn, nifilter[i], wnindices[i])
+      if   solution == "eclipse":
+        fluxrat = (array3[wnindices[i]]/istarfl[i])*rprs*rprs
+        array4[i] = w.bandintegrate(fluxrat, specwn, nifilter[i], wnindices[i])
+      elif solution == "transit":
+        array4[i] = w.bandintegrate(array3[wnindices[i]], specwn,
+                                    nifilter[i], wnindices[i])
     #print("gather send: " + str(array4))
 
     # Gather (send) the band-integrated fluxes:
@@ -161,8 +172,7 @@ def main(comm):
     niter -= 1
 
   # Close communications and disconnect:
-  if rank == 0:
-    mu.msg(verb, "OCON FLAG 99: OutputCon is out.")
+  mu.msg(verb, "OCON FLAG 99: OutputCon is out.")
   mu.exit(comm)
 
 

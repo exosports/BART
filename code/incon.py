@@ -141,7 +141,10 @@ def main(comm):
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
-      profiles[(m+1)*nlayers:(m+2)*nlayers] = abundances[:,m]*freepars[nPT+i]
+      #profiles[(m+1)*nlayers:(m+2)*nlayers] = abundances[:,m]*freepars[nPT+i]
+      # Use variable as the log10
+      profiles[(m+1)*nlayers:(m+2)*nlayers] = (abundances[:,m] *
+                                               10.0**freepars[nPT+i])
     
     mu.msg(verb, "ICON FLAG 76: profiles size: {:d}".format(len(profiles)))
     # Gather (send) the temperature and abundance profile:
