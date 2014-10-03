@@ -7,12 +7,14 @@ import reader as rd
 plt.ion()
 
 """
-  This code serves as an input generator for BART. It generates parametrized PT
-  profile done in a similar fashion as in Madhusudhan and Seager 2009, but has
-  a capability to be extended for other PT profiles.
+  This code serves as an input generator for BART. It generates
+  parametrized PT profile done in a similar fashion as in Madhusudhan and
+  Seager 2009, http://adsabs.harvard.edu/abs/2009ApJ...707...24M, but has a
+  capability to be extended for other PT profiles.
+  
 
-  Functions:
-  ----------
+  Functions
+  ---------
   read_press_file:
      Read a pressure file and extract a list of pressures.
   planet_Teff:
@@ -31,59 +33,55 @@ plt.ion()
   Jasmina Blecic     UCF  jasmina@physics.ucf.edu
   Patricio Cubillos  UCF  pcubillos@fulbrightmail.org
 
-  Modification History:
-  ---------------------
-  2013-11-17  Jasmina  Initial version.
-  2014-04-05  Jasmina  Added new function planet_Teff, changed free parameter
-                       T0 to T3 and equations and functions accordingly
+  Revisions
+  ---------
+  2013-11-17  Jasmina  Written by.
+  2014-04-05  Jasmina  Added new function planet_Teff, changed free
+                       parameter T0 to T3 and equations and functions
+                       accordingly
   2014-04-17  Jasmina  Added initialPT profile and free parameter generator
   2014-06-25  Jasmina  Instead from atm file the functions now take the
-                       pressure from the pressure file. The module name
-                       changed to PTpressFile.py  
+                       pressure from the pressure file. 
   2014-07-24  Jasmina  Adapted and reordered functions inside the module for
-                       BART use.  Deleted some unnecessary functions, and
-                       changed the module name to PT.py
+                       BART use.
+  2014-08-15  Patricio Cleaned up.
+  2014-09-24  Jasmina  Updated documentation.
 """
 
 
 # extracts a pressure array from an pressure file provided
 def read_press_file(press_file):
-  '''
-  Reads a pressure file. The function takes the column with pressures
-  and converts it to floats.
+     '''
+     Reads a pressure file. The function takes the column with pressures
+     and converts it to floats.
 
-  Parameters
-  ----------
-  press_file: String
-     Name ASCII file that contains a pressure array data.
+     Parameters
+     ----------
+     press_file: String
+        Name ASCII file that contains a pressure array data.
 
-  Returns
-  -------
-  pressure: 1D double ndarray
-     Array of pressures from press_file.
+     Returns
+     -------
+     pressure: 1D float ndarray
+        Array of pressures from press_file.
 
-  Example
-  -------
-  press_file = "pressure_file.txt"
-  p = read_atm_file(press_file)
-
-  Revisions
-  ---------
-  2014-06-19  Jasmina   Original version.
-  2014-08-15  Patricio  Cleaned up.
-  '''
+     Revisions
+     ---------
+     2014-06-19  Jasmina   Written by.
+     2014-08-15  Patricio  Cleaned up.
+     '''
   
-  # Open and read the pressure array file:
-  f = open(press_file, 'r')
-  lines = f.readlines()
-  f.close()
+     # Open and read the pressure array file
+     f = open(press_file, 'r')
+     lines = f.readlines()
+     f.close()
 
-  # Store the values in pressure array:
-  pressure = np.zeros(len(lines)-1, np.double)
-  for i in np.arange(1, len(lines)):
-    pressure[i-1] = lines[i].split()[1]
+     # Store the values in pressure array
+     pressure = np.zeros(len(lines)-1, np.double)
+     for i in np.arange(1, len(lines)):
+          pressure[i-1] = lines[i].split()[1]
 
-  return pressure
+     return pressure
 
 
 # reads the tep file and calculates planet's effective temperature
@@ -97,48 +95,46 @@ def planet_Teff(tepfile):
 
      Parameters
      ----------
-     tepfile: tep file, ASCII file
+     tepfile: string
+           Name of the tep ASCII file.
  
      Returns
      -------
-     Teff: float 
-
-     Example
-     -------
-     tepfile = "WASP-43b.tep"
-     planet_Teff(tepfile)
+     Teff: float
+           Effective temperature of the planet. 
 
      Revisions
      ---------
-     2014-04-05 0.1  Jasmina Blecic, jasmina@physics.ucf.edu   Original version
+     2014-04-05   Jasmina    Written by.
+     2014-08-15   Patricio   Added source for the radius of the sun.
      '''
 
-     # opens tepfile to read and get data
+     # Opens tepfile to read and get data
      tep = rd.File(tepfile)
 
-     # get stellar temperature in K
+     # Get stellar temperature in K
      stellarT = tep.getvalue('Ts')
      Tstar    = np.float(stellarT[0])
 
-     # get stellar radius in units of Rsun
+     # Get stellar radius in units of Rsun
      stellarR = tep.getvalue('Rs')
      Rstar    = np.float(stellarR[0])
 
-     # get semimajor axis in AU
+     # Get semimajor axis in AU
      semimajor = tep.getvalue('a')
      a         = np.float(semimajor[0])
 
      # Sun radius in meters:
      # Source: http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
-     Rsun = 696000000.0
+     Rsun = 696000000.0   # m
 
      # Radius fo the star and semimajor axis in m
      Rstar = Rstar * Rsun # m
      a     = a * sc.au    # m
 
-     # effective temperature of the planet 
+     # Effective temperature of the planet 
      # Teff^4 = Teff*^4 * f * (Rstar/a)^2 * (1-A)
-     # zero albedo, no energy redistribution to the night side A=0, f=1/2 
+     # Zero albedo, no energy redistribution to the night side A=0, f=1/2 
      Teff = Tstar * (Rstar/a)**0.5 * (1./2.)**0.25
 
      return Teff
@@ -157,12 +153,21 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
      Parameters
      ----------
      p:  1D array of floats
-     a1: float
-     a2: float
-     p1: float
-     p2: float
-     p3: float
+         Pressure array needs to be equally spaced in log space from bottom to top 
+         of the atmosphere.
+     a1: Float
+         Model exponential factor in Layer 1, empirically determined to be within
+         range (0.2, 0.6).
+     a2: Float
+         Model exponential factor in Layer 2, empirically determined to be within
+         range (0.04, 0.5) 
+     p1: Float
+     p2: Float
+         Pressure boundary betwwn Layer 1 and 1 (in bars).
+     p3: Float
+         Pressure boundary between Layers 2 and 3 (in bars).
      T3: float
+         Temperature in the Layer 3.
       
      Returns
      -------
@@ -194,24 +199,12 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
 
      Notes
      -----
-     layer : there are 3 major layers in the atmosphere (see Madhusudhan and 
-             Seager 2009)
-     level : division of the atmosphere from the bottom to top on equally
-             spaced parts in log space
-     p : array needs to be equally spaced in log space from bottom to top 
-         of the atmosphere
-     a1: exponential factor, 
-         empirically determined to be within range (0.2, 0.6)
-     a2: exponential factor, 
-         empirically determined to be within range (0.04, 0.5)  
-     b1: exponential factor, empirically determined to be 0.5
-     b2: exponential factor, empirically determined to be 0.5
+     See model details in Madhusudhan & Seager (2009):
+     http://adsabs.harvard.edu/abs/2009ApJ...707...24M
  
-
-     Example:
-    
+     Example
+     -------    
      # array of pressures, equally spaced in log space 
-
      p = np.array([  1.00000000e-05,   1.17680000e-05,   1.38480000e-05,
                      1.62970000e-05,   1.91790000e-05,   2.25700000e-05,
                      2.65600000e-05,   3.12570000e-05,   3.67830000e-05,
@@ -247,7 +240,6 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
                      6.13590000e+01,   7.22080000e+01,   8.49750000e+01,
                      1.00000000e+02])
 
-     
      # random values imitate DEMC
      a1 = np.random.uniform(0.2  , 0.6 )
      a2 = np.random.uniform(0.04 , 0.5 )
@@ -296,48 +288,49 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
 
      Revisions
      ---------
-     2013-11-14 0.1  Jasmina Blecic, jasmina@physics.ucf.edu   Original version
-     2014-04-05 0.2  Jasmina Blecic, jasmina@physics.ucf.edu   Revision
+     2013-11-14  Jasmina Blecic, jasmina@physics.ucf.edu   Written by.
+     2014-04-05  Jasmina Blecic, jasmina@physics.ucf.edu   Revision
                      added T3 as free parameter instead of T0
                      changed boundary condition equations accordingly
+     2014-09-24  Jasmina  Updated documentation.
      '''
 
-     # the following set of equations derived using Equation 2
+     # The following set of equations derived using Equation 2
      # Madhusudhan and Seager 2009
 
      # Set top of the atmosphere to p0 to have easy understandable equations:
      p0 = np.amin(p)
      print(p0)
 
-     # temperature at point 2
-     # calculated from boundary condition between layer 2 and 3
+     # Temperature at point 2
+     # Calculated from boundary condition between layer 2 and 3
      T2 = T3 - (np.log(p3/p2) / a2)**2
 
-     # temperature at the top of the atmosphere
-     # calculated from boundary condition between layer 1 and 2
+     # Temperature at the top of the atmosphere
+     # Calculated from boundary condition between layer 1 and 2
      T0 = T2 + (np.log(p1/p2) / -a2)**2 - (np.log(p1/p0) / a1)**2 
 
-     # temperature at point 1
+     # Temperature at point 1
      T1 = T0 + (np.log(p1/p0) / a1)**2
 
-     # error message when temperatures ar point 1, 2 or 3 are < 0
+     # Error message when temperatures ar point 1, 2 or 3 are < 0
      if T0<0 or T1<0 or T2<0 or T3<0:
           print 'T0, T1, T2 and T3 temperatures are: ', T0, T1, T2, T3
           raise ValueError('Input parameters give non-physical profile. Try again.')
 
-     # defining arrays of pressures for every part of the PT profile
+     # Defining arrays of pressures for every part of the PT profile
      p_l1     = p[(np.where((p >= min(p)) & (p < p1)))]
      p_l2_pos = p[(np.where((p >= p1)  & (p < p2)))]
      p_l2_neg = p[(np.where((p >= p2)  & (p < p3)))]
      p_l3     = p[(np.where((p >= p3)  & (p <= max(p))))]
 
-     # sanity check for total number of levels
+     # Sanity check for total number of levels
      check = len(p_l1) + len(p_l2_pos) + len(p_l2_neg) + len(p_l3)
      print  'Total number of levels in p: ', len(p)
      print  '\nLevels per levels in inversion case (l1, l2_pos, l2_neg, l3) are respectively: ', len(p_l1), len(p_l2_pos), len(p_l2_neg), len(p_l3)
      print  'Checking total number of levels in inversion case: ', check
 
-     # the following set of equations derived using Equation 2
+     # The following set of equations derived using Equation 2
      # Madhusudhan and Seager 2009
 
      # Layer 1 temperatures
@@ -352,13 +345,13 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
      # Layer 3 temperatures
      T_l3     = np.linspace(T3, T3, len(p_l3))
       
-     # concatenating all temperature arrays
+     # Concatenating all temperature arrays
      T_conc = np.concatenate((T_l1, T_l2_pos, T_l2_neg, T_l3))
 
      # PT profile
      PT_Inver = (T_l1, p_l1, T_l2_pos, p_l2_pos, T_l2_neg, p_l2_neg, T_l3, p_l3, T_conc, T0, T1, T2, T3)
 
-     # smoothing with Gaussian_filter1d
+     # Smoothing with Gaussian_filter1d
      sigma = 4
      T_smooth = gaussian_filter1d(T_conc, sigma, mode='nearest')
     
@@ -367,28 +360,38 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
 
 # generated PT profile for non-inverted atmopshere
 def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
-  '''
-  Calculates PT profile for non-inversion case based on Equation (2) from
-  Madhusudhan & Seager 2009.
-  It takes a pressure array (e.g., extracted from a pressure file), and 5
-  free parameters for non-inversion case and generates non-inverted PT  
-  profile. The profile is then smoothed using 1D Gaussian filter. The
-  pressure array needs to be equally spaced in log space.
+     '''
+     Calculates PT profile for non-inversion case based on Equation (2) from
+     Madhusudhan & Seager 2009.
+     It takes a pressure array (e.g., extracted from a pressure file), and 5
+     free parameters for non-inversion case and generates non-inverted PT  
+     profile. The profile is then smoothed using 1D Gaussian filter. The
+     pressure array needs to be equally spaced in log space.
 
-  Parameters
-  ----------
-  p:  1D array of floats
-  a1: float
-  a2: float
-  p1: float
-  p3: float
-  T3: float
-  verb: Boolean
-    If True, print some info to screen.
+     Parameters
+     ----------
+     p:  1D array of floats
+         Pressure array needs to be equally spaced in log space from bottom to top 
+         of the atmosphere.
+     a1: Float
+         Model exponential factor in Layer 1, empirically determined to be within
+         range (0.2, 0.6).
+     a2: Float
+         Model exponential factor in Layer 2, empirically determined to be within
+         range (0.04, 0.5) 
+     p1: Float
+     p2: Float
+         Pressure boundary betwwn Layer 1 and 1 (in bars).
+     p3: Float
+         Pressure boundary between Layers 2 and 3 (in bars).
+     T3: float
+         Temperature in the Layer 3.
+     verb: Boolean
+         If True, print some info to screen.
    
-  Returns
-  -------
-  PT_NoInver:  tupple of arrays that includes:
+     Returns
+     -------
+     PT_NoInver:  tupple of arrays that includes:
            - temperature and pressure arrays of every layer of the atmosphere 
              (PT profile)
            - concatenated array of temperatures, 
@@ -403,32 +406,19 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
        p_l3:     1D array of floats, pressures for layer 3 (isothermal part)     
        T1:       float, temperature at point 1  
        T3:       float, temperature at point 3  
-  T_smooth:  1D array of floats, Gaussian smoothed temperatures, 
+     T_smooth:  1D array of floats, Gaussian smoothed temperatures, 
              no kinks on layer boundaries 
 
-  Notes
-  -----
-  The code uses just one equation for layer 2, assuming that decrease 
-  in temperature in layer 2 is the same from point 3 to point 2 
-  as is from point 2 to point 1.
+     Notes
+     -----
+     The code uses just one equation for layer 2, assuming that decrease 
+     in temperature in layer 2 is the same from point 3 to point 2 
+     as is from point 2 to point 1.
 
-  layer : there are 3 major layers in the atmosphere (see Madhusudhan and 
-          Seager 2009)
-  level : division of the atmosphere from the bottom to top on equally
-          spaced parts in log space
-  p : array needs to be equally spaced in log space from bottom to top 
-      of the atmosphere
-  a1: exponential factor, 
-      empirically determined to be within range (0.2, 0.6)
-  a2: exponential factor, 
-      empirically determined to be within range (0.04, 0.5)  
-  b1: exponential factor, empirically determined to be 0.5
-  b2: exponential factor, empirically determined to be 0.5
-
-  Example:
-  # array of pressures, equally spaced in log space 
-
-  p = np.array([  1.00000000e-05,   1.17680000e-05,   1.38480000e-05,
+     Example
+     -------
+     # array of pressures, equally spaced in log space 
+     p = np.array([  1.00000000e-05,   1.17680000e-05,   1.38480000e-05,
                   1.62970000e-05,   1.91790000e-05,   2.25700000e-05,
                   2.65600000e-05,   3.12570000e-05,   3.67830000e-05,
                   4.32870000e-05,   5.09410000e-05,   5.99400000e-05,
@@ -463,150 +453,148 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
                   6.13590000e+01,   7.22080000e+01,   8.49750000e+01,
                   1.00000000e+02])
 
+     # random values imitate DEMC
+     a1 = np.random.uniform(0.2  , 0.6 )
+     a2 = np.random.uniform(0.04 , 0.5 )
+     p3 = np.random.uniform(0.5  , 10  )
+     p1 = np.random.uniform(0.001, 0.01)
+     T3 = np.random.uniform(1500 , 1700)
 
-  # random values imitate DEMC
-  a1 = np.random.uniform(0.2  , 0.6 )
-  a2 = np.random.uniform(0.04 , 0.5 )
-  p3 = np.random.uniform(0.5  , 10  )
-  p1 = np.random.uniform(0.001, 0.01)
-  T3 = np.random.uniform(1500 , 1700)
+     # generates raw and smoothed PT profile
+     PT_NoInv, T_smooth = PT_NoInversion(p, a1, a2, p1, p3, T3)
 
-  # generates raw and smoothed PT profile
-  PT_NoInv, T_smooth = PT_NoInversion(p, a1, a2, p1, p3, T3)
+     # returns full temperature array and temperatures at every point
+     T, T0, T1, T3 = PT_NoInv[6], PT_NoInv[7], PT_NoInv[8], PT_NoInv[9]
 
-  # returns full temperature array and temperatures at every point
-  T, T0, T1, T3 = PT_NoInv[6], PT_NoInv[7], PT_NoInv[8], PT_NoInv[9]
+     # sets plots in the middle 
+     minT= T0*0.75
+     maxT= max(T1, T3)*1.25
 
-  # sets plots in the middle 
-  minT= T0*0.75
-  maxT= max(T1, T3)*1.25
+     # plots raw PT profile with equally spaced points in log space
+     plt.figure(3)
+     plt.clf()
+     plt.semilogy(PT_NoInv[0], PT_NoInv[1], '.', color = 'r'     )
+     plt.semilogy(PT_NoInv[2], PT_NoInv[3], '.', color = 'b'     )
+     plt.semilogy(PT_NoInv[4], PT_NoInv[5], '.', color = 'orange')
+     plt.title('No Thermal Inversion Raw', fontsize=14)
+     plt.xlabel('T [K]'                  , fontsize=14)
+     plt.ylabel('logP [bar]'             , fontsize=14)
+     plt.xlim(minT  , maxT)
+     plt.ylim(max(p), min(p))
+     #plt.savefig('NoThermInverRaw.png', format='png')
+     #plt.savefig('NoThermInverRaw.ps' , format='ps' )
 
+     # plots smoothed PT profile
+     plt.figure(4)
+     plt.clf()
+     plt.semilogy(T       , p, color = 'r')
+     plt.semilogy(T_smooth, p, color = 'k')
+     plt.title('No Thermal Inversion Smoothed', fontsize=14)
+     plt.xlabel('T [K]'                       , fontsize=14)
+     plt.ylabel('logP [bar]'                  , fontsize=14)
+     plt.xlim(minT  , maxT)
+     plt.ylim(max(p), min(p))
+     #plt.savefig('NoThermInverSmoothed.png', format='png')
+     #plt.savefig('NoThermInverSmoothed.ps' , format='ps' )
 
-  # plots raw PT profile with equally spaced points in log space
-  plt.figure(3)
-  plt.clf()
-  plt.semilogy(PT_NoInv[0], PT_NoInv[1], '.', color = 'r'     )
-  plt.semilogy(PT_NoInv[2], PT_NoInv[3], '.', color = 'b'     )
-  plt.semilogy(PT_NoInv[4], PT_NoInv[5], '.', color = 'orange')
-  plt.title('No Thermal Inversion Raw', fontsize=14)
-  plt.xlabel('T [K]'                  , fontsize=14)
-  plt.ylabel('logP [bar]'             , fontsize=14)
-  plt.xlim(minT  , maxT)
-  plt.ylim(max(p), min(p))
-  #plt.savefig('NoThermInverRaw.png', format='png')
-  #plt.savefig('NoThermInverRaw.ps' , format='ps' )
+     Revisions
+     ---------
+     2013-11-16  Jasmina   Written by.
+     2014-04-05  Jasmina   Added T3 as free parameter instead of T0
+                           Changed boundary condition equations accordingly
+     2014-08-15  Patricio  Cleaned-up the code. Added verb argument.
+     2014-09-24  Jasmina   Updated documentation.
+     '''
 
+     # The following set of equations derived using Equation 2
+     # Madhusudhan and Seager 2009
 
-  # plots smoothed PT profile
-  plt.figure(4)
-  plt.clf()
-  plt.semilogy(T       , p, color = 'r')
-  plt.semilogy(T_smooth, p, color = 'k')
-  plt.title('No Thermal Inversion Smoothed', fontsize=14)
-  plt.xlabel('T [K]'                       , fontsize=14)
-  plt.ylabel('logP [bar]'                  , fontsize=14)
-  plt.xlim(minT  , maxT)
-  plt.ylim(max(p), min(p))
-  #plt.savefig('NoThermInverSmoothed.png', format='png')
-  #plt.savefig('NoThermInverSmoothed.ps' , format='ps' )
+     # Set p0 (top of the atmosphere):
+     p0 = np.amin(p)
 
+     # Calculate temperature at layer boundaries:
+     T1 = T3 - (np.log(p3/p1) / a2)**2.0
+     T0 = T1 - (np.log(p1/p0) / a1)**2.0
 
-  Revisions
-  ---------
-  2013-11-16  Jasmina   Initial version
-  2014-04-05  Jasmina   Added T3 as free parameter instead of T0
-                        Changed boundary condition equations accordingly
-  2014-08-15  Patricio  Cleaned-up the code. Added verb argument.
-  '''
-
-  # the following set of equations derived using Equation 2
-  # Madhusudhan and Seager 2009
-
-  # Set p0 (top of the atmosphere):
-  p0 = np.amin(p)
-
-  # Calculate temperature at layer boundaries:
-  T1 = T3 - (np.log(p3/p1) / a2)**2.0
-  T0 = T1 - (np.log(p1/p0) / a1)**2.0
-
-  # Error message for negative Temperatures:
-  if T0 < 0 or T1 < 0 or T3 < 0:
-       raise ValueError("Input parameters give non-physical profile:\n"
+     # Error message for negative Temperatures:
+     if T0 < 0 or T1 < 0 or T3 < 0:
+          raise ValueError("Input parameters give non-physical profile:\n"
                      "  T0={:.1f},  T1={:.1f},  T3={:.1f}".format(T0, T1, T3))
 
-  # Defining arrays for every part of the PT profile:
-  p_l1     = p[np.where((p >= p0) & (p < p1))]
-  p_l2_neg = p[np.where((p >= p1) & (p < p3))]
-  p_l3     = p[np.where((p >= p3) & (p <= np.amax(p)))]
+     # Defining arrays for every part of the PT profile:
+     p_l1     = p[np.where((p >= p0) & (p < p1))]
+     p_l2_neg = p[np.where((p >= p1) & (p < p3))]
+     p_l3     = p[np.where((p >= p3) & (p <= np.amax(p)))]
 
-  # sanity check for total number of levels:
-  check = len(p_l1) + len(p_l2_neg) + len(p_l3)
-  if verb:
-    print('Total number of layers: {:d}'.format(len(p)))
-    print('Number of levels per Layer: Nl1={:d},  Nl2={:d}, Nl3={:d}'.format(
-          len(p_l1), len(p_l2_neg), len(p_l3)))
-    print('Sum of levels per layer: {:d}'.format(check))
+     # sanity check for total number of levels:
+     check = len(p_l1) + len(p_l2_neg) + len(p_l3)
+     if verb:
+         print('Total number of layers: {:d}'.format(len(p)))
+         print('Number of levels per Layer: Nl1={:d},  Nl2={:d}, Nl3={:d}'.format(
+             len(p_l1), len(p_l2_neg), len(p_l3)))
+         print('Sum of levels per layer: {:d}'.format(check))
 
-  # Layer 1 temperatures 
-  T_l1 = (np.log(p_l1/p0) / a1)**2 + T0
+     # Layer 1 temperatures 
+     T_l1 = (np.log(p_l1/p0) / a1)**2 + T0
 
-  # Layer 2 temperatures decreasing part
-  T_l2_neg = (np.log(p_l2_neg/p1) / a2)**2 + T1
+     # Layer 2 temperatures decreasing part
+     T_l2_neg = (np.log(p_l2_neg/p1) / a2)**2 + T1
 
-  # Layer 3 temperatures
-  T_l3 = np.linspace(T3, T3, len(p_l3))
+     # Layer 3 temperatures
+     T_l3 = np.linspace(T3, T3, len(p_l3))
 
-  # Concatenate all temperature arrays:
-  T_conc = np.concatenate((T_l1, T_l2_neg, T_l3))
+     # Concatenate all temperature arrays:
+     T_conc = np.concatenate((T_l1, T_l2_neg, T_l3))
 
-  # PT profile info:
-  PT_NoInver = (T_l1, p_l1, T_l2_neg, p_l2_neg, T_l3, p_l3, T_conc, T0, T1, T3)
+     # PT profile info:
+     PT_NoInver = (T_l1, p_l1, T_l2_neg, p_l2_neg, T_l3, p_l3, T_conc, T0, T1, T3)
 
-  # Smoothed PT profile:
-  sigma = 4
-  T_smooth = gaussian_filter1d(T_conc, sigma, mode='nearest')
+     # Smoothed PT profile:
+     sigma = 4
+     T_smooth = gaussian_filter1d(T_conc, sigma, mode='nearest')
 
-  return PT_NoInver, T_smooth
+     return PT_NoInver, T_smooth
 
 
 # generates PT profile
 def PT_generator(p, free_params, inversion):
-  '''
-  Wrapper to generate an inverted or non-inverted temperature array.
+     '''
+     Wrapper to generate an inverted or non-inverted temperature and pressure
+     profile.
 
-  Parameters:
-  -----------
-  p: 1D float ndarray
-     Atmospheric pressure profile (in bar).
-  free_params: 1D array of floats
-     Set of 6 PT parameters (a1, a2, p1, p2, p3, T3) as
-     in Madhusudhan & Seager (2009).
-  inversion: Bool
-     Boolean that determines inversion (True) or non-inversion (False)
-     temperature profile case.
+     Parameters:
+     -----------
+     p: 1D float ndarray
+        Atmospheric pressure profile (in bar).
+     free_params: 1D array of floats
+        Set of 6 PT parameters (a1, a2, p1, p2, p3, T3) as
+        in Madhusudhan & Seager (2009).
+     inversion: Bool
+        Boolean that determines inversion (True) or non-inversion (False)
+        temperature profile case.
    
-  Returns
-  -------
-  T_smooth: 1D floats array
-     Temperature array in Kelvin degrees.
+     Returns
+     -------
+     T_smooth: 1D floats array
+        Temperature array (in K).
 
-  Modification History:
-  ---------------------
-  2013-11-23  Jasmina   Initial version
-  2014-04-05  Jasmina   Set T3 as free parameter instead of T0.
-  2014-04-11  Patricio  Modified to work with the BART code.
-  '''
+     Modification History:
+     ---------------------
+     2013-11-23  Jasmina   Written by.
+     2014-04-05  Jasmina   Set T3 as free parameter instead of T0.
+     2014-04-11  Patricio  Modified to work with the BART code.
+     '''
 
-  # Unpack parameters:
-  a1, a2, p1, p2, p3, T3 = free_params
+    # Unpack parameters:
+     a1, a2, p1, p2, p3, T3 = free_params
 
-  # Call PTatmfile.py module:
-  if inversion:  # Inverted PT profile:
-    PT, T_smooth = PT_Inversion(  p, a1, a2, p1, p2, p3, T3)
-  else:        # Non-inverted PT profile:
-    PT, T_smooth = PT_NoInversion(p, a1, a2, p1,     p3, T3)
+     # Call PTatmfile.py module:
+     if inversion:  # Inverted PT profile:
+          PT, T_smooth = PT_Inversion(  p, a1, a2, p1, p2, p3, T3)
+     else:        # Non-inverted PT profile:
+          PT, T_smooth = PT_NoInversion(p, a1, a2, p1,     p3, T3)
 
-  return T_smooth
+     return T_smooth
 
 
 # plots PT profiles
@@ -614,58 +602,45 @@ def plot_PT(p, PT, T_smooth, MadhuPT):
      '''
      This function plots two figures:
      1.
-     Madhu's PT profile for inversion or non-inversion case
-     based on the string in sys.argument(4). It uses returned arrays from
-     the PT generator,  so it can plot part by part PT curves.
+     Madhu's PT profile for inversion or non-inversion case. It uses returned arrays
+     from the PT generator, to plot the PT curves part by part.
      2. 
      Smoothed PT profile without kinks on layer transitions.
 
      Parameters
      ----------
-     p           : 1D array of floats 
-     PT          : tuple of 1D arrays of floats
-     T_smooth    : 1D array of floats
-     MadhuPT     : string
+     p: 1D array of floats 
+         Pressure in the atmosphere.
+     PT: tuple of 1D arrays of floats
+         Tuple containing temperatures and pressures for every layer in
+         the atmosphere.
+     T_smooth: 1D array of floats
+         Temperatures smoothed with Gaussian.
+     MadhuPT: string
+         Defines inversion or non-inversion case.
       
      Returns
      -------
      None
 
-     Notes
-     -----
-     p             : pressure in the atmosphere 
-     PT            : tuple of temperatures and pressures for every layer in 
-                     the atmosphere
-     T_smooth      : temperatures smoothed with Gaussian for inversion case
-     MadhuPT       : string that defines inversion or non-inversion case
-
-     Inversion case:
-          PT_Inv  = (T_conc, T_l1, p_l1, T_l2_pos, p_l2_pos, T_l2_neg, 
-                          p_l2_neg,T_l3, p_l3, T1, T2, T3)
-      
-     Non-inversion case:
-          PT_NoInv = (T_conc, T_l1, p_l1, T_l2_neg, p_l2_neg, T_l3, p_l3,
-                          T1, T3)
-
      Revisions
      ---------
-     2013-11-20 0.1  Jasmina Blecic, jasmina@physics.ucf.edu   Original version
-     2014-04-05 0.2  Jasmina Blecic, jasmina@physics.ucf.edu   Revision
-                     excluded free_params as argument
-                     added T0 to be read from the PT generator
-     2014-07-24 0.3  Jasmina Blecic, jasmina@physics.ucf.edu   Revision
-                     integrated general plotting function inside
+     2013-11-20 Jasmina   Written by.
+     2014-04-05 Jasmina   Excluded free_params as arguments. Added T0 to be read by 
+                          PT generator.
+     2014-07-24 Jasmina   Integrated general plotting function.
+     2014-09-24 Jasmina   Updated documentation.
      ''' 
     
      if MadhuPT == 'MadhuPT_Inv':
-          # takes temperatures from PT generator
+          # Takes temperatures from PT generator
           T, T0, T1, T2, T3 = PT[8], PT[9], PT[10], PT[11], PT[12]
 
-          # sets plots in the middle 
+          # Sets plots in the middle 
           minT= min(T0, T2)*0.75
           maxT= max(T1, T3)*1.25
 
-          # plots raw PT profile
+          # Plots raw PT profile
           plt.figure(1)
           plt.clf()
           plt.semilogy(PT[0], PT[1], '.', color = 'r'     )
@@ -680,7 +655,7 @@ def plot_PT(p, PT, T_smooth, MadhuPT):
           #plt.savefig('ThermInverRaw.png', format='png')
           #plt.savefig('ThermInverRaw.ps' , format='ps' )
 
-          # plots Gaussian smoothing
+          # Plots Gaussian smoothing
           plt.figure(2)
           plt.clf()
           plt.semilogy(T_smooth, p, '-', color = 'b', linewidth=1)
@@ -690,19 +665,20 @@ def plot_PT(p, PT, T_smooth, MadhuPT):
           plt.xlim(minT  , maxT)
           plt.ylim(max(p), min(p))
 
-          # overplots with the raw PT
+          # Overplots with the raw PT
           plt.semilogy(T, p, color = 'r')
 
           return
 
      elif MadhuPT == 'MadhuPT_NoInv':  
-          # takes temperatures from PT generator
+          # Takes temperatures from PT generator
           T, T0, T1, T3 = PT[6], PT[7], PT[8], PT[9]
 
-          # sets plots in the middle 
+          # Sets plots in the middle 
           minT= T0*0.75
           maxT= max(T1, T3)*1.25
 
+          # Plots raw PT profile
           plt.figure(3)
           plt.clf()
           plt.semilogy(PT[0], PT[1], '.', color = 'r'     )
@@ -716,7 +692,7 @@ def plot_PT(p, PT, T_smooth, MadhuPT):
           #plt.savefig('NoThermInverRaw.png', format='png')
           #plt.savefig('NoThermInverRaw.ps' , format='ps' )
 
-          # plots Gaussian smoothing
+          # Plots Gaussian smoothing
           plt.figure(4)
           plt.clf()
           plt.semilogy(T_smooth, p, '-', color = 'b', linewidth=1)
@@ -726,7 +702,7 @@ def plot_PT(p, PT, T_smooth, MadhuPT):
           plt.xlim(minT  , maxT)
           plt.ylim(max(p), min(p))
 
-          # overplots with the raw PT
+          # Overplots with the raw PT
           plt.semilogy(T, p, color = 'r')
 
           return

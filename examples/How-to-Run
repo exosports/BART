@@ -1,13 +1,14 @@
 
-make run01 directory
-take BART.cfg and config_transit.cfg files from Examples directory
-edit them with correct information and put them in run01 directory
-(currently BART.py cannot distinguish two config file with the same extension, so rename config_transit.cfg to config_transit.txt)
-cd to run01 directory
-run BART with ../BART.py
+- make run01 directory
+- take BART.cfg and config_transit.cfg files from Examples directory
+- edit them with correct information and put them in run01 directory
+  (currently BART.py cannot distinguish two config file with the same extension, so rename config_transit.cfg to config_transit.txt)
+- go to the modules/TEA
+  open TEA.cfg file and edit the file with correct information
+- cd to run01 directory
+  run BART with ../BART.py
 
-to execute just the Initial part in BART.py put return
-after:
+-to execute just the Initial part in BART.py put return after:
 
   # Make transit configuration file:
   mc.makecfg(cfile, date_dir, atmfile)
