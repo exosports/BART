@@ -276,7 +276,7 @@ def radpress(tepfile, temp, mu, pres):
     rad = rad[::-1]
 
     # Subtract radius array from the referenced surface radius
-    rad = rad - Rp
+    rad = rad #- Rp
 
     return rad
 
@@ -592,8 +592,8 @@ def makeRadius(in_elem, out_spec, atmfile, abun_file, tepfile):
     g, Rp = get_g(tepfile)
 
     # Write planet name and surface radius
-    fout.write('#' + tepname[:-4] +'\n')
-    fout.write('Rp ' + str(Rp) + '\n\n')
+    fout.write('#' + tepname[:-4] +'\n\n')
+    #fout.write('Rp ' + str(Rp) + '\n\n')
 
     # Write species names
     fout.write('#SPECIES\n' + out_spec + '\n\n')
@@ -617,7 +617,8 @@ def makeRadius(in_elem, out_spec, atmfile, abun_file, tepfile):
     nspec = len(molecules)
 
     # Make a list of labels
-    label = ['#Radius-Rp'.ljust(11)] + ['Pressure'.ljust(11)] + ['Temp'.ljust(8)]
+    label = ['#Radius'.ljust(11)] + ['Pressure'.ljust(11)] + ['Temp'.ljust(8)]
+    #label = ['#Radius-Rp'.ljust(11)] + ['Pressure'.ljust(11)] + ['Temp'.ljust(8)]
     for i in np.arange(nspec):
          label = label + [molecules[i].ljust(11)]
     label = ''.join(label)
@@ -772,10 +773,10 @@ def readatm(atmfile):
     ---------
     2013-11-17  Jasmina   Written by.
     2014-09-05  Patricio  Modified from getpressure.
-    2014-09-12  Jasmina   Added new markers, excluded radii, returned temperature
-                          added documentation. 
-    2014-10-02  Jasmina   Added option to read atmfile with or without radius array
-                          in it.
+    2014-09-12  Jasmina   Added new markers, excluded radii, returned
+                          temperature, added documentation. 
+    2014-10-02  Jasmina   Added option to read atmfile with or without
+                          radius array in it.
     """
 
     # Open the atmospheric file and read

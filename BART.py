@@ -116,13 +116,18 @@ def main():
   dirfmt = loc_dir + "%4d-%02d-%02d_%02d:%02d:%02d"
   date_dir = dirfmt % time.localtime()[0:6]
   # FINDME: Temporary hack:
-  date_dir = os.getcwd() + "/test/"
+  date_dir = os.path.normpath(loc_dir)
+  if not os.path.isabs(date_dir):
+    date_dir = os.getcwd() + "/" + date_dir + "/"
   mu.msg(1, "Output folder: '{:s}'".format(date_dir), 2)
   try:
     os.mkdir(date_dir)
-  except:
-    pass
-
+  except OSError, e:
+    if e.errno == 17: # FINDME: Allow overwritting while we debug
+      pass
+    else:
+      mu.error("Cannot create folder '{:s}'. {:s}.".format(date_dir,
+                                                     os.strerror(e.errno)))
 
   # Copy files to date dir:
   shutil.copy2(cfile, date_dir)     # Configuration file
@@ -199,8 +204,6 @@ def main():
 
   # Make transit configuration file:
   mc.makecfg(cfile, date_dir, atmfile)
-
-  return
 
   # Run the MCMC:
   mu.msg(1, "\nStart MCMC:")

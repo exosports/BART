@@ -94,6 +94,15 @@ def main(comm):
   nspecies = len(species)
   mu.msg(verb, "There are {:d} layers and {:d} species.".format(nlayers,
                                                                 nspecies))
+  # Find index for Hydrogen and Helium:
+  species = np.asarray(species)
+  iH2     = np.where(species=="H2")[0]
+  iHe     = np.where(species=="He")[0]
+  # Find indices for the metals:
+  imetals = np.where((species != "He") & (species != "H2"))[0]
+  # Get H2/He abundance ratio:
+  ratio = (abundances[:,iH2] / abundances[:,iHe]).squeeze()
+
   # Send nlayers + nspecies to master:
   mu.comm_gather(comm, np.array([nlayers, nspecies], dtype='i'), MPI.INT)
   mu.msg(verb, "ICON FLAG 55")
@@ -111,8 +120,8 @@ def main(comm):
     MadhuPT = True
 
   # Allocate arrays for receiving and sending data to master:
-  freepars = np.zeros(nfree,                dtype='d')
-  profiles = np.zeros(nlayers*(nspecies+1), dtype='d')
+  freepars = np.zeros(nfree,                 dtype='d')
+  profiles = np.zeros((nspecies+1, nlayers), dtype='d')
 
   # Index of molecular abundances being modified:
   imol = np.zeros(nmolfit, dtype='i')
@@ -122,7 +131,7 @@ def main(comm):
 
   # Store abundance profiles:
   for i in np.arange(nspecies):
-    profiles[(i+1)*nlayers:(i+2)*nlayers] = abundances[:, i]
+    profiles[i+1] = abundances[:, i]
 
   # ::::::  MAIN MCMC LOOP  ::::::::::::::::::::::::::::::::::::::::::
   mu.msg(verb, "ICON FLAG 70: Enter main loop")
@@ -133,7 +142,7 @@ def main(comm):
 
     # Get temperature profile and check for non-physical outputs:
     try:
-      profiles[0:nlayers] = pt.PT_generator(pressure, freepars[0:nPT], MadhuPT)
+      profiles[0] = pt.PT_generator(pressure, freepars[0:nPT], MadhuPT)
     except ValueError:
       mu.msg(verb, 'Input parameters give non-physical profile.')
       # FINDME: what to do here?
@@ -141,14 +150,16 @@ def main(comm):
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
-      #profiles[(m+1)*nlayers:(m+2)*nlayers] = abundances[:,m]*freepars[nPT+i]
-      # Use variable as the log10
-      profiles[(m+1)*nlayers:(m+2)*nlayers] = (abundances[:,m] *
-                                               10.0**freepars[nPT+i])
-    
-    mu.msg(verb, "ICON FLAG 76: profiles size: {:d}".format(len(profiles)))
+      # Use variable as the log10:
+      profiles[m+1] = (abundances[:,m] * 10.0**freepars[nPT+i])
+    # Update H2,He abundances so sum(abundances) = 1.0 in each layer:
+    q = 1.0 - np.sum(profiles[imetals+1], axis=0)  
+    profiles[iH2+1] = ratio * q / (1.0 + ratio)
+    profiles[iHe+1] =         q / (1.0 + ratio)
+
+    mu.msg(verb, "ICON FLAG 76: profiles size: {:d}".format(np.size(profiles)))
     # Gather (send) the temperature and abundance profile:
-    mu.comm_gather(comm, profiles, MPI.DOUBLE)
+    mu.comm_gather(comm, profiles.flatten(), MPI.DOUBLE)
     niter -= 1
 
   # Close communications and disconnect:
