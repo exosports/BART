@@ -41,6 +41,7 @@ def main():
                         read/execute steps.
   2014-09-20  Jasmina   Made call to makeRadius() function. Added progress
                         statements.
+  2014-10-12  Jasmina   Updated to new TEA structure.
   """
   mu.msg(1, "\nThis is BART!")
   mu.msg(1, "\nInitialization:")
@@ -62,7 +63,8 @@ def main():
   else: # Search for a .cfg file in current directory:
     files = os.listdir('.')
     try:
-      cfile = re.search("[\n]?(.+\.cfg)[\n]?", "\n".join(files)).groups(1)[0]
+      #cfile = re.search("[\n]?(.+\.cfg)[\n]?", "\n".join(files)).groups(1)[0]
+      cfile = 'BART.cfg'
     except:
       mu.error("No configuration file specified.")
   mu.msg(1, "The configuration file is: '{:s}'.".format(cfile), 2)
@@ -116,7 +118,7 @@ def main():
   dirfmt = loc_dir + "%4d-%02d-%02d_%02d:%02d:%02d"
   date_dir = dirfmt % time.localtime()[0:6]
   # FINDME: Temporary hack:
-  date_dir = os.path.normpath(loc_dir)
+  date_dir = os.path.normpath(loc_dir) + "/"
   if not os.path.isabs(date_dir):
     date_dir = os.getcwd() + "/" + date_dir + "/"
   mu.msg(1, "Output folder: '{:s}'".format(date_dir), 2)
@@ -128,7 +130,6 @@ def main():
     else:
       mu.error("Cannot create folder '{:s}'. {:s}.".format(date_dir,
                                                      os.strerror(e.errno)))
-
   # Copy files to date dir:
   shutil.copy2(cfile, date_dir)     # Configuration file
   if not os.path.isfile(tep_name):  # TEP file
@@ -187,13 +188,14 @@ def main():
 
   if runMCMC < 8:  # Atmospheric file
     # Call TEA to calculate the atmospheric file:
-    TEAcall = TEAdir + "runatm.py"
+    TEAcall = TEAdir + "tea/runatm.py"
     TEAout  = os.path.splitext(atmfile)[0]  # Remove extension
+    #preatm_file = '/home/jasmina/BART-test/modules/TEA/doc/examples/multiTP/inputs/multiTP_Example.atm'    # temporal test case
     # Execute TEA:
     mu.msg(1, "\nExecute TEA:")
-    proc = subprocess.Popen([TEAcall, preatm_file, TEAout], cwd=TEAdir)
+    proc = subprocess.Popen([TEAcall, preatm_file, 'TEA'])
     proc.communicate()
-    shutil.copy2(TEAdir + "results/"+TEAout+"/"+atmfile, date_dir+atmfile)
+    shutil.copy2(date_dir+"TEA/results/TEA.tea", date_dir+atmfile) 
     atmfile = date_dir + atmfile
     # Add radius array:
     mat.makeRadius(in_elem, out_spec, atmfile, abun_file, tep_name)
@@ -204,6 +206,8 @@ def main():
 
   # Make transit configuration file:
   mc.makecfg(cfile, date_dir, atmfile)
+
+  return 
 
   # Run the MCMC:
   mu.msg(1, "\nStart MCMC:")
