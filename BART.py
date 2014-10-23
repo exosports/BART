@@ -207,8 +207,6 @@ def main():
   # Make transit configuration file:
   mc.makecfg(cfile, date_dir, atmfile)
 
-  return 
-
   # Run the MCMC:
   mu.msg(1, "\nStart MCMC:")
   MC3call = MC3dir + "/mccubed.py"
