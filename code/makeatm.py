@@ -2,8 +2,7 @@
 
 # ****************************** START LICENSE ******************************
 # Thermal Equilibrium Abundances (TEA), a code to calculate gaseous molecular
-# abundances in planetary atmospheres under thermochemical equilibrium
-# conditions.
+# abundances under thermochemical equilibrium conditions.
 #
 # This project was completed with the support of the NASA Earth and Space 
 # Science Fellowship Program, grant NNX12AL83H, held by Jasmina Blecic, 
@@ -75,15 +74,20 @@ import re
     Notes
     -----
     Possible user errors in making pre-atm file that conflict with TEA:
-     - use elements names as they appear in the periodic table
-     - all in_elem must be included in the list of out_species with their states
-     - use species names as readJANAF.py produces them. See gdata folder or sorted
-       version of the conversion-record.txt for the correct names of the species. 
-     - H, and He elements as in_elem must be included for hot-Jupiters
-     - H_g, He_ref and H2_ref species in out_spec must be included in hot-Jupiters
-     - If the code stalls at the first iteration of the first temperature, check 
-       if all elements that appear in the species list are included with their 
-       correct names.
+     - The user should have unique T-P values for each line in the
+     PT-profile file before running \texttt{makeatm.py}, otherwise
+     each repeated layer will be overwritten and the final atmosphere
+     file will end up with fewer lines.
+     - input_elem must have names as they appear in the
+     conversion_record_sorted.txt file for the correct names of
+     the species.
+     - Should the code stall on the first iteration of the first
+     temperature, check if all elements that appear in the species
+     list are included with their correct names.
+     - Elemental hydrogen (H) and helium (He) must be included in 
+     in_elem for hot-Jupiter atmosphere calculations. Similarly, 
+     the H_g, He_ref and H2_ref species must also appear in out_spec
+    for these calculations.
 
     Developers
     ----------
@@ -108,6 +112,7 @@ import re
                               Cleaned documentation.
     2014-10-02  Jasmina       Added option to read atmfile with or without radius 
                               array in it.
+    2014-11-06  Jasmina       Minor adjustments for proper TEA execution.
 """
 
 # reads the tep file and calculates surface gravity
@@ -687,6 +692,7 @@ def make_preatm(tepfile, press_file, abun_file, in_elem, out_spec,
     2014-07-12  Jasmina   Written by.
     2014-08-15  Patricio  Removed PT re-calculation, use input T array.
     2014-09-15  Jasmina   Added call to readAbun() function.
+    2014-11-06  Jasmina   Adjusted to work properly with TEA.
     '''
 
     # Read pressure data
@@ -704,12 +710,14 @@ def make_preatm(tepfile, press_file, abun_file, in_elem, out_spec,
     # Convert strings to floats
     out_dex  = map(float, abun_trim[:,2])
 
-    # Convert dex exponents to elemental counts
+    # Convert dex exponents to number density
     out_num  = 10**np.array(out_dex)
 
-    # Get fractions of elemental counts to the 
-    #     total sum of elemental counts in the mixture
-    out_abn  = (out_num / np.sum(out_num)).tolist()
+    # Hydrogen number density
+    H_num = 10**12
+
+    # Get fractions of element number density to hydrogen number density
+    out_abn  = (out_num / H_num).tolist()
  
     # Write pre-atm file
     f = open(pre_atm, 'w')
