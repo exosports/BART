@@ -1,13 +1,20 @@
 #! /usr/bin/env python
 
-# ****************************** START LICENSE ******************************
-# Thermal Equilibrium Abundances (TEA), a code to calculate gaseous molecular
-# abundances under thermochemical equilibrium conditions.
-#
-# This project was completed with the support of the NASA Earth and Space 
-# Science Fellowship Program, grant NNX12AL83H, held by Jasmina Blecic, 
-# PI Joseph Harrington. Lead scientist and coder Jasmina Blecic, 
-# assistant coder for the first pre-release Oliver M. Bowman.  
+# ****************************** START LICENSE *******************************
+# Bayesian Atmospheric Radiative Transfer (BART), a code to infer
+# properties of planetary atmospheres based on observed spectroscopic
+# information.
+# 
+# This project was completed with the support of the NASA Planetary
+# Atmospheres Program, grant NNX12AI69G, held by Principal Investigator
+# Joseph Harrington. Principal developers included graduate students
+# Patricio E. Cubillos and Jasmina Blecic, programmer Madison Stemm, and
+# undergraduates M. Oliver Bowman and Andrew S. D. Foster.  The included
+# 'transit' radiative transfer code is based on an earlier program of
+# the same name written by Patricio Rojo (Univ. de Chile, Santiago) when
+# he was a graduate student at Cornell University under Joseph
+# Harrington.  Statistical advice came from Thomas J. Loredo and Nate
+# B. Lust.
 # 
 # Copyright (C) 2014 University of Central Florida.  All rights reserved.
 # 
@@ -17,21 +24,35 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 # PURPOSE.
 # 
-# We welcome your feedback, but do not guarantee support.  Please send
-# feedback or inquiries to both:
+# Our intent is to release this software under an open-source,
+# reproducible-research license, once the code is mature and the first
+# research paper describing the code has been accepted for publication
+# in a peer-reviewed journal.  We are committed to development in the
+# open, and have posted this code on github.com so that others can test
+# it and give us feedback.  However, until its first publication and
+# first stable release, we do not permit others to redistribute the code
+# in either original or modified form, nor to publish work based in
+# whole or in part on the output of this code.  By downloading, running,
+# or modifying this code, you agree to these conditions.  We do
+# encourage sharing any modifications with us and discussing them
+# openly.
 # 
-# Jasmina Blecic <jasmina@physics.ucf.edu>
+# We welcome your feedback, but do not guarantee support.  Please send
+# feedback or inquiries to:
+# 
 # Joseph Harrington <jh@physics.ucf.edu>
+# Patricio Cubillos <pcubillos@fulbrightmail.org>
+# Jasmina Blecic <jasmina@physics.ucf.edu>
 # 
 # or alternatively,
 # 
-# Jasmina Blecic and Joseph Harrington
+# Joseph Harrington, Patricio Cubillos, and Jasmina Blecic
 # UCF PSB 441
-# 4000 Central Florida Blvd
+# 4111 Libra Drive
 # Orlando, FL 32816-2385
 # USA
 # 
-# Thank you for testing TEA!
+# Thank you for testing BART!
 # ******************************* END LICENSE *******************************
 
 import numpy as np
