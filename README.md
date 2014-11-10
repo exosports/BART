@@ -3,21 +3,20 @@ BART
 
 Bayesian Atmospheric Radiative Transfer fitting code
 
-This code will implement a Bayesian, Monte Carlo-driven,
+This code implements a Bayesian, Monte Carlo-driven,
 radiative-transfer scheme for extracting parameters from spectra of
 planetary atmospheres.  It is being developed by:
 
 Joseph Harrington  
 Jasmina Blecic  
 Patricio Cubillos  
-Sarah Blumenthal  
 Oliver Bowman  
 Andrew Foster  
 Madison Stemm  
 
 With support from:
 
-Jonathan Fortney (UCSC), Nikku Madhusudhan (Yale), Patricio Rojo (U. de Chile)
+Thomas J. Loredo (Cornell), Jonathan Fortney (UCSC), Nikku Madhusudhan (Yale), Patricio Rojo (U. de Chile)
 
 BART Development Plan
 
@@ -53,13 +52,10 @@ wreck anything.
 
 **STATUS OF COMPONENTS**
 
-Apparently GIThub's Markdown doesn't support tables yet...
-
-
 | Component     | Code          | Doc           | Package | Git | Centralgit(here) |
 | ------------- | --------------| ------------  |---------|-----| -----------------|
-| comm loop     | done (?)      |               |         | yes |                  |
+| comm loop     | done          |               |         | yes |                  |
 | MC-cubed      | done          | To be revised |         | yes |                  |
-| TEA           | dev           | On revision   |         | yes |                  |
+| TEA           | done          | On revision   |         | yes |                  |
 | transit       | dev           |               |         | yes |                  |
 | BART          | dev           |               |         | dev |                  |
