@@ -61,12 +61,12 @@ import numpy as np
 
 # Directory of BART.py file:
 BARTdir = os.path.dirname(os.path.realpath(__file__))
-TEAdir  = BARTdir + "/modules/TEA/"
-MC3dir  = BARTdir + "/modules/MCcubed/src"
+TEAdir     = BARTdir + "/modules/TEA/"
+MC3dir     = BARTdir + "/modules/MCcubed/src"
+Transitdir = BARTdir + "/modules/transit/"
 
 # Add path to submodules:
 sys.path.append(BARTdir + "/code")
-sys.path.append(TEAdir)
 sys.path.append(MC3dir)
 
 # Import submodules:
@@ -97,8 +97,20 @@ def main():
   2014-09-20  Jasmina   Made call to makeRadius() function. Added progress
                         statements.
   2014-10-12  Jasmina   Updated to new TEA structure.
+  2014-12-13  patricio  Added Opacity calculation step (through Transit), 
+                        added flags to break after TEA or Opacity calculation.
   """
-  mu.msg(1, "\nThis is BART!")
+
+  mu.msg(1,
+     "\n======= Bayesian Atmospheric Radiative Transfer (BART) ==============="
+     "\nA code to infer planetary atmospheric properties based on observed  "
+     "\nspectroscopic information."
+   "\n\nCopyright (C) 2014 University of Central Florida. All rights reserved."
+   "\n\nDevelopers contact:  Patricio Cubillos  pcubillos@fulbrightmail.org"
+     "\n                     Jasmina Blecic     jasmina@physics.ucf.edu"
+     "\n                     Joseph Harrington  jh@physics.ucf.edu"
+     "\n======================================================================")
+
   mu.msg(1, "\nInitialization:")
 
   # Parse the config file from the command line:
@@ -107,6 +119,11 @@ def main():
   # Add config file option:
   cparser.add_argument("-c", "--config_file",
                        help="Configuration file", metavar="FILE")
+  cparser.add_argument("--justTEA",
+                       help="Run only TEA.", action='store_true')
+  cparser.add_argument("--justOpacity",
+                       help="Run only Transit to generate the Opacity table.",
+                       action='store_true')
   # Remaining_argv contains all other command-line-arguments:
   args, remaining_argv = cparser.parse_known_args()
 
@@ -135,38 +152,45 @@ def main():
   loc_dir     = config.get(cfgsec, 'loc_dir')
   tep_name    = config.get(cfgsec, 'tep_name')
 
-  # STEP 1 pressure:
+  # STEP 1: Pressure array:
   n_layers    = config.getint(cfgsec,     'n_layers')
   p_top       = config.getfloat(cfgsec,   'p_top')
   p_bottom    = config.getfloat(cfgsec,   'p_bottom')
   log         = config.getboolean(cfgsec, 'log')
   press_file  = config.get(cfgsec,        'press_file')
 
-  # STEP 2 abundances file:
+  # STEP 2 Elemental abundances:
   abun_file   = config.get(cfgsec, 'abun_file')
   abun_basic  = config.get(cfgsec, 'abun_basic')
   solar_times = config.getfloat(cfgsec, 'solar_times')
   COswap      = config.getboolean(cfgsec, 'COswap')
 
-  # STEP 3 initial PT profile:
+  # STEP 3: Temperature profile:
   p3     = config.getfloat(cfgsec, 'p3')
   p1     = config.getfloat(cfgsec, 'p1')
   a2     = config.getfloat(cfgsec, 'a2')
   a1     = config.getfloat(cfgsec, 'a1')
   T3_fac = config.getfloat(cfgsec, 'T3_fac')
 
-  # STEP 4 makeatm:
+  # STEP 4: Elemental-abundances profile:
   in_elem     = config.get(cfgsec, 'in_elem')
   out_spec    = config.get(cfgsec, 'out_spec')
   preatm_file = config.get(cfgsec, 'preatm_file')
 
-  # STEP 5 run TEA:
+  # STEP 5: Atmospheric (species) file:
   #output_dir = config.get(cfgsec, 'output_dir')
   atmfile = config.get(cfgsec, 'atmfile')
 
+  # Flag to break after TEA:
+  TEAbreak = args.justTEA
+  # Flag to break after the opacity calculation:
+  Transitbreak = args.justOpacity
+
   # Transit variables:
-  linedb = config.get(cfgsec, 'linedb')
-  cia    = config.get(cfgsec, 'cia')
+  linedb  = config.get(cfgsec, 'linedb')
+  cia     = config.get(cfgsec, 'cia')
+  tconfig = config.get(cfgsec, 'config')
+  opacity = config.get(cfgsec, 'opacityfile')
 
   # Make output directory:
   # Make a subdirectory with the date and time
@@ -175,7 +199,7 @@ def main():
   # FINDME: Temporary hack:
   date_dir = os.path.normpath(loc_dir) + "/"
   if not os.path.isabs(date_dir):
-    date_dir = os.getcwd() + "/" + date_dir + "/"
+    date_dir = os.getcwd() + "/" + date_dir
   mu.msg(1, "Output folder: '{:s}'".format(date_dir), 2)
   try:
     os.mkdir(date_dir)
@@ -186,8 +210,10 @@ def main():
       mu.error("Cannot create folder '{:s}'. {:s}.".format(date_dir,
                                                      os.strerror(e.errno)))
   # Copy files to date dir:
-  shutil.copy2(cfile, date_dir)     # Configuration file
-  if not os.path.isfile(tep_name):  # TEP file
+  # BART configuration file:
+  shutil.copy2(cfile, date_dir)
+  # TEP file:
+  if not os.path.isfile(tep_name):
     mu.error("Tepfile ('{:s}') Not found.".format(tep_name))
   else:
     shutil.copy2(tep_name, date_dir + os.path.basename(tep_name))
@@ -242,14 +268,16 @@ def main():
     mu.msg(1, "Created new pre-atmospheric file.", 2)
 
   if runMCMC < 8:  # Atmospheric file
+    # Generate the TEA configuration file:
+    mc.makeTEA(cfile, TEAdir)
     # Call TEA to calculate the atmospheric file:
     TEAcall = TEAdir + "tea/runatm.py"
     TEAout  = os.path.splitext(atmfile)[0]  # Remove extension
-    #preatm_file = '/home/jasmina/BART-test/modules/TEA/doc/examples/multiTP/inputs/multiTP_Example.atm'    # temporal test case
     # Execute TEA:
     mu.msg(1, "\nExecute TEA:")
     proc = subprocess.Popen([TEAcall, preatm_file, 'TEA'])
     proc.communicate()
+
     shutil.copy2(date_dir+"TEA/results/TEA.tea", date_dir+atmfile) 
     atmfile = date_dir + atmfile
     # Add radius array:
@@ -259,15 +287,31 @@ def main():
     mat.reformat(atmfile)
     mu.msg(1, "Atmospheric file reformatted for Transit.", 2)
 
+  if TEAbreak:
+    mu.msg(1, "~~ BART End (after TEA) ~~")
+    return
+
   # Make transit configuration file:
   mc.makecfg(cfile, date_dir, atmfile)
+
+  # Generate the opacity file if it doesn't exist:
+  if (not os.path.isfile(opacity) and 
+      not os.path.isfile(date_dir + os.path.normpath(opacity))):
+    mu.msg("Transit call to generate the Opacity grid table.")
+    Tcall = Transitdir + "/transit/transit"
+    subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
+                    shell=True, cwd=date_dir)
+
+  if Transitbreak:
+    mu.msg(1, "~~ BART End (after Transit) ~~")
+    return
 
   # Run the MCMC:
   mu.msg(1, "\nStart MCMC:")
   MC3call = MC3dir + "/mccubed.py"
   subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, cfile)], shell=True,
                   cwd=date_dir)
-  mu.msg(1, "~~  The End  ~~", 2)
+  mu.msg(1, "~~ BART End ~~")
 
 
 if __name__ == "__main__":

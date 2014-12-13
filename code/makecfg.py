@@ -128,3 +128,61 @@ def makecfg(cfg, directory, atmfile):
       tcfg.write("{:s} {:s}\n".format(key, defaults[key]))
 
   tcfg.close()
+
+
+def makeTEA(cfg, TEAdir):
+  """
+  Make a TEA configuration file.
+
+  Parameters:
+  -----------
+  cfg: String
+     BART configuration file
+  TEAdir: String
+     Default TEA directory.
+
+  Modification History:
+  ---------------------
+  2014-12-08  patricio  Initial implementation.
+  """
+  # Open New ConfigParser:
+  config = ConfigParser.SafeConfigParser()
+  config.add_section('TEA')
+
+  # Open BART ConfigParser:
+  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig.read([cfg])
+
+  # List of known TEA arguments:
+  keys = ["maxiter", "save_headers", "save_outputs", "doprint", "times",
+          "location_TEA", "abun_file", "location_out"]
+  # TEA default values:
+  defaults = ["100", "False", "False", "False", "False",
+              "None", "None", "None"]
+
+  # Set TEA default arguments:
+  for i in np.arange(len(keys)):
+    if Bconfig.has_option("MCMC", keys[i]):
+      config.set("TEA", keys[i], Bconfig.get("MCMC", keys[i]))
+    else:
+      config.set("TEA", keys[i], defaults[i])
+
+  # Aliases:
+  if Bconfig.has_option("MCMC", "abun_basic"):
+    config.set("TEA", "abun_file", Bconfig.get("MCMC", "abun_basic"))
+  if Bconfig.has_option("MCMC", "loc_dir"):
+    config.set("TEA", "location_out", Bconfig.get("MCMC", "loc_dir"))
+  # Default TEA dir:
+  if config.get("TEA", "location_TEA") == "":
+    config.set("TEA", "location_TEA", TEAdir)
+
+  # For completion:
+  config.add_section('PRE-ATM')
+  config.set("PRE-ATM", "PT_file",        "None")
+  config.set("PRE-ATM", "pre_atm_name",   "None")
+  config.set("PRE-ATM", "input_elem",     "None")
+  config.set("PRE-ATM", "output_species", "None")
+
+  # Write TEA configuration file:
+  with open("TEA.cfg", 'w') as configfile:
+    config.write(configfile)
