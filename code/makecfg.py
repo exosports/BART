@@ -81,14 +81,13 @@ def makecfg(cfg, directory, atmfile):
   """
 
   # Known (single-value) transit arguments:
-  known_args = ["numberabund", "allowq",
-                "radlow",  "radhigh",  "raddelt",  "radfct",
-                "wllow",   "wlhigh",   "wldelt",   "wlfct", "wlosamp",
-                "wnlow",   "wnhigh",   "wndelt",   "wnfct", "wnosamp",
+  known_args = ["radlow",  "radhigh",  "raddelt",  "radfct",
+                "wllow",   "wlhigh",   "wlfct",
+                "wnlow",   "wnhigh",   "wndelt",  "wnfct", "wnosamp",
                 "tlow",    "thigh",    "tempdelt",
-                "finebin", "nwidth", "blowex", "minelow",
+                "allowq",  "finebin",  "nwidth",
                 "opacityfile",
-                "molfile",
+                #"molfile",
                 "toomuch", "tauiso", "outtau", "taulevel", "modlevel",
                 "starrad", "transparent",
                 "solutiontype", "raygrid",
@@ -115,6 +114,9 @@ def makecfg(cfg, directory, atmfile):
 
   # Print the atmospheric name:
   tcfg.write("atm {:s}\n".format(atmfile))
+  # Default the molfile path:
+  tcfg.write("molfile {:s}\n".format(
+      os.path.normpath(filedir + "/../modules/transit/inputs/molecules.dat")))
 
   # Print the known arguments:
   for key in known_tuple_args:
