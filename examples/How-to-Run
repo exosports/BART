@@ -1,14 +1,12 @@
 
-- make run01 directory
-- take BART.cfg, TEA.cfg, and config_transit.cfg files from Examples directory
-- edit them with correct information and put them in run01 directory
-- cd to run01 directory
-  run BART with ../BART.py
+- Make a run/ directory
+- Take BART.cfg files from the examples/ directory
+- Edit the configuration file and put it in run/ directory
+- cd to run/ directory
+- Run BART with: ../BART.py
 
--to execute just the Initial part in BART.py put return after:
+- To execute just the Atmospheric file section (TEA), run:
+  ../BART.py --justTEA
 
-  # Make transit configuration file:
-  mc.makecfg(cfile, date_dir, atmfile)
-
-  return
-
+- To execute just up to the Opacity calculation section, run:
+  ../BART.py --justOpacity

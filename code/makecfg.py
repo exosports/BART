@@ -154,11 +154,11 @@ def makeTEA(cfg, TEAdir):
   Bconfig.read([cfg])
 
   # List of known TEA arguments:
-  keys = ["maxiter", "save_headers", "save_outputs", "doprint", "times",
-          "location_TEA", "abun_file", "location_out"]
+  keys = ["maxiter",      "save_headers", "save_outputs", "doprint", "times",
+          "location_TEA", "abun_file",    "location_out"]
   # TEA default values:
   defaults = ["100", "False", "False", "False", "False",
-              "None", "None", "None"]
+              "",    "None",  "None"]
 
   # Set TEA default arguments:
   for i in np.arange(len(keys)):
