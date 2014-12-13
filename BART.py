@@ -297,7 +297,7 @@ def main():
   # Generate the opacity file if it doesn't exist:
   if (not os.path.isfile(opacity) and 
       not os.path.isfile(date_dir + os.path.normpath(opacity))):
-    mu.msg("Transit call to generate the Opacity grid table.")
+    mu.msg(1, "Transit call to generate the Opacity grid table.")
     Tcall = Transitdir + "/transit/transit"
     subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
                     shell=True, cwd=date_dir)
