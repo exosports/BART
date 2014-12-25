@@ -167,6 +167,8 @@ def main(comm):
   mu.msg(verb, "ICON FLAG 50")
   # Read atmospheric file to get data arrays:
   species, pressure, temp, abundances = mat.readatm(atmfile)
+  # Reverse pressure order (for PT to work):
+  pressure = pressure[::-1]
   nlayers  = len(pressure)   # Number of atmospheric layers
   nspecies = len(species)    # Number of species in the atmosphere
   mu.msg(verb, "There are {:d} layers and {:d} species.".format(nlayers,
@@ -299,20 +301,22 @@ def main(comm):
 
     # Input converter calculate the profiles:
     try:
-      profiles[0] = pt.PT_generator(pressure, params[0:nPT], MadhuPT)
+      profiles[0] = pt.PT_generator(pressure, params[0:nPT], MadhuPT)[::-1]
     except ValueError:
       mu.msg(verb, 'Input parameters give non-physical profile.')
       # FINDME: what to do here?
 
+    mu.msg(verb-10, "Temperature profile: {}".format(profiles[0]))
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
       # Use variable as the log10:
-      profiles[m+1] = (abundances[:, m] * 10.0**params[nPT+i])
+      profiles[m+1] = abundances[:, m] * 10.0**params[nPT+i]
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
     q = 1.0 - np.sum(profiles[imetals+1], axis=0)
     profiles[iH2+1] = ratio * q / (1.0 + ratio)
     profiles[iHe+1] =         q / (1.0 + ratio)
+    #print("qH2O: {}  Qmetals: {}  QH2: {}  p: {}".format(params[nPT], q[50], profiles[iH2+1,50], profiles[:,50]))
 
     # transit calculates the model spectrum:
     mu.comm_scatter(transitcomm, profiles.flatten(), MPI.DOUBLE)

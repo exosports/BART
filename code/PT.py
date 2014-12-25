@@ -561,6 +561,11 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
      2014-09-24  Jasmina   Updated documentation.
      '''
 
+     if verb:
+       print("Pressure range: {} -- {} bar\n"
+             "PT params: {} {} {} {} {}\n".format(p[0], p[-1],
+                                                  a1, a2, p1, p3, T3))
+
      # The following set of equations derived using Equation 2
      # Madhusudhan and Seager 2009
 

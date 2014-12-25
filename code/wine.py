@@ -137,7 +137,7 @@ def readkurucz(kfile, temperature, logg):
   Returns:
   --------
   starfl: 1D ndarray
-     Kurucz stellar flux in ergs s-1 cm-2 cm-1.
+     Kurucz stellar flux in ergs s-1 cm-2 cm.
   starwn: 1D ndarray
      Array with wavenumber values in cm^-1.
   tmodel: Scalar
@@ -165,14 +165,16 @@ def readkurucz(kfile, temperature, logg):
   # Get the stellar flux:
   starfl = inten[imodel]  # W m^-2 sr^-1 Hz^-1
 
-  # Convert F_freq to F_lambda  (Hz-1 --> m-1):
-  #   multiply by c/lambda**2 = c*wnumber**2
+  # Convert F_freq to F_wavenumber (Hz-1 --> m):
+  #   multiply by c.
   # Convert units MKS to cgs:
   #   W m-2 = 1e3 ergs s-1 cm-2
   # Convert intensity (astrophysical flux) to flux:
   #   sr-1 = pi
-  starfl = starfl * 1e3 * np.pi * (1e2*sc.c) * starwn**2
-  
+
+  # Flux per wavenumber:  ergs s-1 cm-2 cm
+  starfl = starfl * 1e3 * np.pi * (1e2 * sc.c)
+
   return starfl, starwn, tmodel, gmodel
 
 
