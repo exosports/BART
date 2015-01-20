@@ -58,6 +58,7 @@
 import sys, os
 import argparse, ConfigParser
 import numpy as np
+import scipy.constants as sc
 from mpi4py import MPI
 
 BARTdir = os.path.dirname(os.path.realpath(__file__))
@@ -69,6 +70,12 @@ import PT as pt
 import wine   as w
 import reader as rd
 
+# Some constants:
+# http://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html
+# http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
+Mjup =   1898.3 * 1e24 # m
+Rjup =  71492.0 * 1e3  # m
+Rsun = 696000.0 * 1e3  # m
 
 def main(comm):
   """
@@ -93,6 +100,7 @@ def main(comm):
   cfile = args.config_file
   if cfile:
     config = ConfigParser.SafeConfigParser()
+    config.optionxform = str
     config.read([cfile])
     defaults = dict(config.items("MCMC"))
   else:
@@ -116,6 +124,14 @@ def main(comm):
   group.add_argument("--atmospheric_file",  action="store",
                      help="Atmospheric file [default: %(default)s]",
                      dest="atmfile", type=str,    default=None)
+  group.add_argument("--PTtype",            action="store",
+                     help="PT profile type.",
+                     dest="PTtype",  type=str,    default="none")
+                     #choices=('line', 'madhu'))
+  group.add_argument("--tint",              action="store",
+                     help="Internal temperature of the planet [default: "
+                     "%(default)s].",
+                     dest="tint",    type=float,  default=100.0)
   # transit Options:
   group = parser.add_argument_group("transit Options")
   group.add_argument("--config",  action="store",
@@ -139,7 +155,6 @@ def main(comm):
 
   parser.set_defaults(**defaults)
   args2, unknown = parser.parse_known_args(remaining_argv)
-
   # Add path to func:
   # if len(args2.func) == 3:
   #   sys.path.append(args2.func[2])
@@ -153,18 +168,32 @@ def main(comm):
   mu.comm_bcast(comm, array1)
   npars, niter = array1
 
-  mu.msg(verb, "BFUN FLAG 40  ***")
   # :::::::  Initialize the Input converter ::::::::::::::::::::::::::
   atmfile = args2.atmfile
   molfit  = args2.molfit
+  PTtype  = args2.PTtype
   params  = args2.params
+  tepfile = args2.tep_name
+  tint    = args2.tint
+
+  # Extract necessary values from the TEP file:
+  tep = rd.File(tepfile)
+  # Stellar temperature in K:
+  tstar = float(tep.getvalue('Ts')[0])
+  # Stellar radius (in meters):
+  rstar = float(tep.getvalue('Rs')[0]) * Rsun
+  # Semi-major axis (in meters):
+  sma   = float(tep.getvalue( 'a')[0]) * sc.au
+  # Planetary radius (in meters):
+  rplanet = float(tep.getvalue('Rp')[0]) * Rjup
+  # Planetary mass (in kg):
+  mplanet = float(tep.getvalue('Mp')[0]) * Mjup
 
   # Number of parameters:
   nfree   = len(params)                # Total number of free parameters
   nmolfit = len(molfit)                # Number of molecular free parameters
   nPT     = len(params) - len(molfit)  # Number of PT free parameters
 
-  mu.msg(verb, "ICON FLAG 50")
   # Read atmospheric file to get data arrays:
   species, pressure, temp, abundances = mat.readatm(atmfile)
   # Reverse pressure order (for PT to work):
@@ -190,8 +219,13 @@ def main(comm):
   #mu.comm_gather(comm, np.array([nlayers, nspecies], dtype='i'), MPI.INT)
   mu.msg(verb, "ICON FLAG 55")
 
-  # Determine inversion or non-inversion (by looking at parameter P2):
-  MadhuPT = params[3] != -1
+  # Pressure-Temperature profile:
+  PTargs = [PTtype]
+  if PTtype == "line":
+    # Planetary surface gravity (in cm s-2):
+    gplanet = sc.G * mplanet / rplanet**2
+    # Additional PT arguments:
+    PTargs += [rstar, tstar, tint, sma, gplanet]
 
   # Allocate arrays for receiving and sending data to master:
   freepars = np.zeros(nfree,                 dtype='d')
@@ -235,20 +269,9 @@ def main(comm):
 
   # :::::::  Output Converter  :::::::::::::::::::::::::::::::::::::::
   ffile    = args2.filter        # Filter files
-  tepfile  = args2.tep_name      # TEP file
   kurucz   = args2.kurucz        # Kurucz file
   solution = args2.solutiontype  # Solution type
 
-  # Some constants:
-  # http://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html
-  # http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
-  Rjup =  71492.0 * 1e3 # m
-  Rsun = 696000.0 * 1e3 # m
-
-  # Extract necessary values from the TEP file:
-  tep = rd.File(tepfile)
-  # Stellar temperature in K.
-  tstar = float(tep.getvalue('Ts')[0])
   # Log10(stellar gravity)
   gstar = float(tep.getvalue('loggstar')[0])
   # Planet-to-star radius ratio:
@@ -301,7 +324,7 @@ def main(comm):
 
     # Input converter calculate the profiles:
     try:
-      profiles[0] = pt.PT_generator(pressure, params[0:nPT], MadhuPT)[::-1]
+      profiles[0] = pt.PT_generator(pressure, params[0:nPT], PTargs)[::-1]
     except ValueError:
       mu.msg(verb, 'Input parameters give non-physical profile.')
       # FINDME: what to do here?

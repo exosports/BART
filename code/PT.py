@@ -56,6 +56,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.constants as sc
+import scipy.special   as sp
 from scipy.ndimage import gaussian_filter1d
 import reader as rd
 
@@ -616,45 +617,167 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
      return PT_NoInver, T_smooth
 
 
-# generates PT profile
-def PT_generator(p, free_params, inversion):
-     '''
-     Wrapper to generate an inverted or non-inverted temperature and pressure
-     profile.
+def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
+  '''
+  Generats a PT profile based on input free parameters and pressure array.
+  If no inputs are provided, it will run in demo mode, using free
+  parameters given by the Line 2013 paper and some dummy pressure
+  parameters.
 
-     Parameters:
-     -----------
-     p: 1D float ndarray
-        Atmospheric pressure profile (in bar).
-     free_params: 1D array of floats
-        Set of 6 PT parameters (a1, a2, p1, p2, p3, T3) as
-        in Madhusudhan & Seager (2009).
-     inversion: Bool
-        Boolean that determines inversion (True) or non-inversion (False)
-        temperature profile case.
-   
-     Returns
-     -------
-     T_smooth: 1D floats array
-        Temperature array (in K).
+  Inputs
+  ------
+  pressure: 1D float ndarray
+     Array of pressure values in bars.
+  params: 1D float ndarray
+     Array of free parameters:
+       kappa:  Planck thermal IR opacity in units cm^2/g
+       gamma1: Visible-to-thermal stream Planck mean opacity ratio.
+       gamma2: Visible-to-thermal stream Planck mean opacity ratio.
+       alpha:  Visible-stream partition (0.0--1.0).
+       beta:   A 'catch-all' for albedo, emissivity, and day-night
+               redistribution (on the order of unity).
+  R_star: Float
+     Stellar radius (in solar-radius units).
+  T_star: Float
+     Stellar effective temperature (in Kelvin degrees).
+  T_int:  Float
+     Planetary internal heat flux (in Kelvin degrees).
+  sma:    Float
+     Semi-major axis (in meters).
+  grav:   Float
+     Planetary surface gravity (at 1 bar) in cm/second^2.
 
-     Modification History:
-     ---------------------
-     2013-11-23  Jasmina   Written by.
-     2014-04-05  Jasmina   Set T3 as free parameter instead of T0.
-     2014-04-11  Patricio  Modified to work with the BART code.
-     '''
+  Returns
+  -------
+  T: temperature array
 
-    # Unpack parameters:
-     a1, a2, p1, p2, p3, T3 = free_params
+  Example:
+  --------
+  >>> import PT as pt
+  >>> import scipy.constants as sc
+  >>> import matplotlib.pyplot as plt
+  >>> import numpy as np
 
-     # Call PTatmfile.py module:
-     if inversion:  # Inverted PT profile:
-          PT, T_smooth = PT_Inversion(  p, a1, a2, p1, p2, p3, T3)
-     else:        # Non-inverted PT profile:
-          PT, T_smooth = PT_NoInversion(p, a1, a2, p1,     p3, T3)
+  >>> Rsun = 6.995e8 # Sun radius in meters
 
-     return T_smooth
+  >>> # Pressure array (bars):
+  >>> p = np.logspace(2, -5, 100)
+
+  >>> # Physical (fixed for each planet) parameters:
+  >>> Ts = 5040.0        # K
+  >>> Ti =  100.0        # K
+  >>> a  = 0.031 * sc.au # m
+  >>> Rs = 0.756 * Rsun  # m
+  >>> g  = 2192.8        # cm s-2
+
+  >>> # Fitting parameters:
+  >>> kappa  = 3e-2
+  >>> gamma1 = 0.158
+  >>> gamma2 = 0.158
+  >>> alpha  = 0.5
+  >>> beta   = 1.0
+  >>> params = [kappa, gamma1, gamma2, alpha, beta]
+  >>> T0 = pt.PT(p, params, Rs, Ts, Ti, a, g)
+
+  >>> plt.figure(1)
+  >>> plt.clf()
+  >>> plt.semilogy(T0, p, lw=2, color="b")
+  >>> plt.ylim(p[0], p[-1])
+  >>> plt.xlim(800, 2000)
+  >>> plt.xlabel("Temperature  (K)")
+  >>> plt.ylabel("Pressure  (bars)")
+
+  Developers:
+  -----------
+  Madison Stemm      astromaddie@gmail.com
+  Patricio Cubillos  pcubillos@fulbrightmail.org
+
+  Modification History:
+  ---------------------
+  2012-09-12  Madison   Initial version, adapted from equations (13)-(16)
+                        in Line et al. (2013), Apj, 775, 137.
+  2014-12-10  patricio  Reviewed and updated code.
+  '''
+
+  # Unpack free parameters:
+  kappa, gamma1, gamma2, alpha, beta = params
+
+  # Stellar input temperature (at top of atmosphere):
+  T_irr = beta * (R_star / (2.0*sma))**0.5 * T_star
+
+  # Gray IR optical depth:
+  tau = kappa * (pressure*1e6) / grav
+
+  xi1 = xi(gamma1, tau)
+  xi2 = xi(gamma2, tau)
+
+  # Temperature profile (Eq. 13 of Line et al. 2013):
+  temperature = (0.75 * (T_int**4 * (2.0/3.0 + tau) +
+                         T_irr**4 * (1-alpha) * xi1 +
+                         T_irr**4 * alpha     * xi2 ) )**0.25
+
+  return temperature
+
+
+def xi(gamma, tau):
+  """
+  Calculate Equation (14) of Line et al. (2013) Apj 775, 137
+
+  Parameters:
+  -----------
+  gamma: Float
+     Visible-to-thermal stream Planck mean opacity ratio.
+  tau: 1D float ndarray
+     Gray IR optical depth.
+
+  Modification History:
+  ---------------------
+  2014-12-10  patricio  Initial implemetation.
+  """
+  return (2.0/3) * (1 + (1/gamma) * (1 + (0.5*gamma*tau-1)*np.exp(-gamma*tau)) +
+                    gamma*(1 - 0.5*tau**2) * sp.expn(2, gamma*tau)             )
+
+
+def PT_generator(p, free_params, args):
+  '''
+  Wrapper to generate an inverted or non-inverted temperature and pressure
+  profile.
+
+  Parameters:
+  -----------
+  p: 1D float ndarray
+     Atmospheric pressure profile (in bar).
+  free_params: 1D array of floats
+     Set of 6 PT parameters (a1, a2, p1, p2, p3, T3) as
+     in Madhusudhan & Seager (2009).
+  args: List
+     Boolean that determines inversion (True) or non-inversion (False)
+     temperature profile case.
+
+  Returns
+  -------
+  T_smooth: 1D floats array
+     Temperature array (in K).
+
+  Modification History:
+  ---------------------
+  2013-11-23  Jasmina   Written by.
+  2014-04-05  Jasmina   Set T3 as free parameter instead of T0.
+  2014-04-11  Patricio  Modified to work with the BART code.
+  2014-12-27  Patricio  Added profile from Line et al. (2013).
+  '''
+  # args[0] indicate the type of temperature profile:
+  if   args[0] == "line":
+    Temp = PT_line(p, free_pars, *args[1:])
+  elif args[0] == "madhu":
+    if   len(free_params) == 5: # Non-inversion layer
+      PT, Temp = PT_NoInversion(p, *free_params)
+    elif len(free_params) == 6: # With inversion layer
+      PT, Temp = PT_Inversion(p,   *free_params)
+  else:
+    print("Unknown T profile type: '{:s}'".format(args[0]))
+    # FINDME: throw error and stop.
+  return Temp
 
 
 # plots PT profiles
