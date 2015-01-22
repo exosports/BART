@@ -637,7 +637,7 @@ def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
        beta:   A 'catch-all' for albedo, emissivity, and day-night
                redistribution (on the order of unity).
   R_star: Float
-     Stellar radius (in solar-radius units).
+     Stellar radius (in meters).
   T_star: Float
      Stellar effective temperature (in Kelvin degrees).
   T_int:  Float
