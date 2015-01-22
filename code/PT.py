@@ -768,7 +768,7 @@ def PT_generator(p, free_params, args):
   '''
   # args[0] indicate the type of temperature profile:
   if   args[0] == "line":
-    Temp = PT_line(p, free_pars, *args[1:])
+    Temp = PT_line(p, free_params, *args[1:])
   elif args[0] == "madhu":
     if   len(free_params) == 5: # Non-inversion layer
       PT, Temp = PT_NoInversion(p, *free_params)
