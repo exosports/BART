@@ -630,12 +630,12 @@ def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
      Array of pressure values in bars.
   params: 1D float ndarray
      Array of free parameters:
-       kappa:  Planck thermal IR opacity in units cm^2/g
-       gamma1: Visible-to-thermal stream Planck mean opacity ratio.
-       gamma2: Visible-to-thermal stream Planck mean opacity ratio.
-       alpha:  Visible-stream partition (0.0--1.0).
-       beta:   A 'catch-all' for albedo, emissivity, and day-night
-               redistribution (on the order of unity).
+       - log10(kappa):  Planck thermal IR opacity in units cm^2/gr
+       - log10(gamma1): Visible-to-thermal stream Planck mean opacity ratio.
+       - log10(gamma2): Visible-to-thermal stream Planck mean opacity ratio.
+       - alpha:         Visible-stream partition (0.0--1.0).
+       - beta:          A 'catch-all' for albedo, emissivity, and day-night
+                      redistribution (on the order of unity).
   R_star: Float
      Stellar radius (in meters).
   T_star: Float
@@ -671,9 +671,9 @@ def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
   >>> g  = 2192.8        # cm s-2
 
   >>> # Fitting parameters:
-  >>> kappa  = 3e-2
-  >>> gamma1 = 0.158
-  >>> gamma2 = 0.158
+  >>> kappa  = -1.5   # log10(3e-2)
+  >>> gamma1 = -0.8   # log10(0.158)
+  >>> gamma2 = -0.8   # log10(0.158)
   >>> alpha  = 0.5
   >>> beta   = 1.0
   >>> params = [kappa, gamma1, gamma2, alpha, beta]
@@ -694,19 +694,23 @@ def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
 
   Modification History:
   ---------------------
-  2012-09-12  Madison   Initial version, adapted from equations (13)-(16)
+  2014-09-12  Madison   Initial version, adapted from equations (13)-(16)
                         in Line et al. (2013), Apj, 775, 137.
   2014-12-10  patricio  Reviewed and updated code.
+  2015-01-22  patricio  Receive log10 of free parameters now.
   '''
 
   # Unpack free parameters:
-  kappa, gamma1, gamma2, alpha, beta = params
+  kappa  = 10**(params[0])
+  gamma1 = 10**(params[1])
+  gamma2 = 10**(params[2])
+  alpha, beta = params[3], params[4]
 
   # Stellar input temperature (at top of atmosphere):
   T_irr = beta * (R_star / (2.0*sma))**0.5 * T_star
 
   # Gray IR optical depth:
-  tau = kappa * (pressure*1e6) / grav
+  tau = kappa * (pressure*1e6) / grav # Convert bars to barye (CGS)
 
   xi1 = xi(gamma1, tau)
   xi2 = xi(gamma2, tau)

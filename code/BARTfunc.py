@@ -223,7 +223,7 @@ def main(comm):
   PTargs = [PTtype]
   if PTtype == "line":
     # Planetary surface gravity (in cm s-2):
-    gplanet = sc.G * mplanet / rplanet**2
+    gplanet = 100.0 * sc.G * mplanet / rplanet**2
     # Additional PT arguments:
     PTargs += [rstar, tstar, tint, sma, gplanet]
 
@@ -329,6 +329,7 @@ def main(comm):
       mu.msg(verb, 'Input parameters give non-physical profile.')
       # FINDME: what to do here?
 
+    #mu.msg(verb, "T pars: \n{}\n".format(PTargs))
     mu.msg(verb-10, "Temperature profile: {}".format(profiles[0]))
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
@@ -339,7 +340,8 @@ def main(comm):
     q = 1.0 - np.sum(profiles[imetals+1], axis=0)
     profiles[iH2+1] = ratio * q / (1.0 + ratio)
     profiles[iHe+1] =         q / (1.0 + ratio)
-    #print("qH2O: {}  Qmetals: {}  QH2: {}  p: {}".format(params[nPT], q[50], profiles[iH2+1,50], profiles[:,50]))
+    # print("qH2O: {}, Qmetals: {}, QH2: {}  p: {}".format(params[nPT],
+    #                               q[50], profiles[iH2+1,50], profiles[:,50]))
 
     # transit calculates the model spectrum:
     mu.comm_scatter(transitcomm, profiles.flatten(), MPI.DOUBLE)
@@ -360,10 +362,15 @@ def main(comm):
                                       nifilter[i], wnindices[i])
 
     # Send resutls back to MCMC:
-    mu.msg(verb, "OCON FLAG 95: Flux band integrated")
+    mu.msg(verb, "OCON FLAG 95: Flux band integrated ({})".format(bandflux))
+    #mu.msg(verb, "{}".format(params[nPT:]))
+
     mu.comm_gather(comm, bandflux, MPI.DOUBLE)
     mu.msg(verb, "OCON FLAG 97: Sent results back to MCMC")
     niter -= 1
+
+  # ::::::  End main Loop  :::::::::::::::::::::::::::::::::::::::::::
+  # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
   # Close the transit communicators:
   transitcomm.Barrier()
