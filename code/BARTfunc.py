@@ -112,10 +112,16 @@ def main(comm):
                                      action="store",   default=[])
   parser.add_argument("--params",    dest="params",    type=mu.parray,
                                      action="store",   default=None,
-                      help="Model fitting parameter [default: %(default)s]")
+                      help="Model-fitting parameters [default: %(default)s]")
   parser.add_argument("--molfit",    dest="molfit",    type=mu.parray,
                                      action="store",   default=None,
-                      help="Molecule fit [default: %(default)s]")
+                      help="Molecules fit [default: %(default)s]")
+  parser.add_argument("--Tmin",      dest="Tmin",      type=float,
+                      action="store",  default=400.0,
+                      help="Lower Temperature boundary [default: %(default)s]")
+  parser.add_argument("--Tmax",      dest="Tmax",      type=float,
+                      action="store",  default=3000.0,
+                      help="Higher Temperature boundary [default: %(default)s]")
   parser.add_argument("--quiet",             action="store_true",
                       help="Set verbosity level to minimum",
                       dest="quiet")
@@ -175,6 +181,8 @@ def main(comm):
   params  = args2.params
   tepfile = args2.tep_name
   tint    = args2.tint
+  Tmin    = args2.Tmin
+  Tmax    = args2.Tmax
 
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)
@@ -317,10 +325,12 @@ def main(comm):
   # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
   while niter >= 0:
+    niter -= 1
     # Receive parameters from MCMC:
     mu.msg(verb, "ICON FLAG 70: Start iteration")
     mu.comm_scatter(comm, params)
-    mu.msg(verb, "ICON FLAG 71: incon pars: {}".format(params))
+    mu.msg(verb, "ICON FLAG 71: incon pars: {:s}".
+                 format(str(params).replace("\n", "")))
 
     # Input converter calculate the profiles:
     try:
@@ -328,6 +338,11 @@ def main(comm):
     except ValueError:
       mu.msg(verb, 'Input parameters give non-physical profile.')
       # FINDME: what to do here?
+
+    # If the temperature goes out of bounds:
+    if np.any(profiles[0] < Tmin) or np.any(profiles[0] > Tmax):
+      mu.comm_gather(comm, -np.ones(nfiletrs), MPI.DOUBLE)
+      continue
 
     #mu.msg(verb, "T pars: \n{}\n".format(PTargs))
     mu.msg(verb-10, "Temperature profile: {}".format(profiles[0]))
@@ -364,21 +379,20 @@ def main(comm):
     # Send resutls back to MCMC:
     mu.msg(verb, "OCON FLAG 95: Flux band integrated ({})".format(bandflux))
     #mu.msg(verb, "{}".format(params[nPT:]))
-
     mu.comm_gather(comm, bandflux, MPI.DOUBLE)
     mu.msg(verb, "OCON FLAG 97: Sent results back to MCMC")
-    niter -= 1
 
   # ::::::  End main Loop  :::::::::::::::::::::::::::::::::::::::::::
   # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+  # Close communications and disconnect:
+  mu.comm_disconnect(comm)
+  mu.msg(verb, "FUNC FLAG 99: func out")
+
   # Close the transit communicators:
   transitcomm.Barrier()
   transitcomm.Disconnect()
-
-  mu.msg(verb, "FUNC FLAG 99: func out")
-  # Close communications and disconnect:
-  mu.exit(comm)
+  mu.msg(verb, "FUNC FLAG OUT ~~ 100 ~~")
 
 
 if __name__ == "__main__":
