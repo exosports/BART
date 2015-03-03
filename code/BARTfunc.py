@@ -341,7 +341,8 @@ def main(comm):
 
     # If the temperature goes out of bounds:
     if np.any(profiles[0] < Tmin) or np.any(profiles[0] > Tmax):
-      mu.comm_gather(comm, -np.ones(nfiletrs), MPI.DOUBLE)
+      print("Out of bounds")
+      mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
 
     #mu.msg(verb, "T pars: \n{}\n".format(PTargs))

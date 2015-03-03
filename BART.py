@@ -74,6 +74,7 @@ import mcutils   as mu
 import makeP     as mp
 import makeAbun  as ma
 import InitialPT as ipt
+#import PT        as pt
 import makeatm   as mat
 import makecfg   as mc
 
@@ -119,11 +120,12 @@ def main():
   # Add config file option:
   cparser.add_argument("-c", "--config_file",
                        help="Configuration file", metavar="FILE")
-  cparser.add_argument("--justTEA",
-                       help="Run only TEA.", action='store_true')
-  cparser.add_argument("--justOpacity",
-                       help="Run only Transit to generate the Opacity table.",
-                       action='store_true')
+  cparser.add_argument("--justTEA",               action='store_true',
+                       help="Run only TEA.")
+  cparser.add_argument("--justOpacity",           action='store_true',
+                       help="Run only Transit to generate the Opacity table.")
+  cparser.add_argument("--resume",                action='store_true',
+                       help="Resume a previous run.")
   # Remaining_argv contains all other command-line-arguments:
   args, remaining_argv = cparser.parse_known_args()
 
@@ -166,11 +168,8 @@ def main():
   COswap      = config.getboolean(cfgsec, 'COswap')
 
   # STEP 3: Temperature profile:
-  p3     = config.getfloat(cfgsec, 'p3')
-  p1     = config.getfloat(cfgsec, 'p1')
-  a2     = config.getfloat(cfgsec, 'a2')
-  a1     = config.getfloat(cfgsec, 'a1')
-  T3_fac = config.getfloat(cfgsec, 'T3_fac')
+  PTtype = config.get(cfgsec, 'PTtype')
+  PTinit = np.asarray(config.get(cfgsec, 'PTinit').split(), np.double)
 
   # STEP 4: Elemental-abundances profile:
   in_elem     = config.get(cfgsec, 'in_elem')
@@ -257,7 +256,7 @@ def main():
 
   if runMCMC < 4:  # Pre-atmospheric file
     # Calculate the temperature profile:
-    temp = ipt.initialPT(date_dir, tep_name, press_file, a1, a2, p1, p3, T3_fac)
+    temp = ipt.initialPT2(PTinit, press_file, PTtype, tep_name)
     # Choose a pressure-temperature profile
     mu.msg(1, "\nChoose temperature and pressure profile:", 2)
     raw_input("  Press enter to continue, or quit and choose other initial "

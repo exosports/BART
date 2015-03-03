@@ -57,8 +57,17 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.constants   as sc
 
-import PT as pt
+import PT     as pt
+import reader as rd
+
+# Some constants:
+# http://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html
+# http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
+Mjup =   1898.3 * 1e24 # m
+Rjup =  71492.0 * 1e3  # m
+Rsun = 696000.0 * 1e3  # m
 
 def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
   """
@@ -157,3 +166,48 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
   plt.savefig(date_dir + '/InitialPTSmoothed.png') 
 
   return T_smooth
+
+def initialPT2(params, pressfile, mode, tepfile, tint=100.0):
+  """
+  Compute a Temperature profile.
+
+  Parameters:
+  -----------
+  params: 1D Float ndarray
+    Array of fitting parameters.
+  pressfile: String
+    File name of the pressure array.
+  mode: String
+    Chose the PT model: 'madhu' or 'line'.
+  tepfile: String
+    Filename of the planet's TEP file.
+  tint: Float
+    Internal planetary temperature.
+  """
+  # Read pressures from file:
+  pressure = pt.read_press_file(pressfile)
+
+  # PT arguments:
+  PTargs = [mode]
+
+  # Read the TEP file:
+  tep = rd.File(tepfile)
+  # Stellar radius (in meters):
+  rstar = float(tep.getvalue('Rs')[0]) * Rsun
+  # Stellar temperature in K:
+  tstar = float(tep.getvalue('Ts')[0])
+  # Semi-major axis (in meters):
+  sma   = float(tep.getvalue( 'a')[0]) * sc.au
+  # Planetary radius (in meters):
+  rplanet = float(tep.getvalue('Rp')[0]) * Rjup
+  # Planetary mass (in kg):
+  mplanet = float(tep.getvalue('Mp')[0]) * Mjup
+
+  if mode == "line":
+    # Planetary surface gravity (in cm s-2):
+    gplanet = 100.0 * sc.G * mplanet / rplanet**2
+    # Additional PT arguments:
+    PTargs += [rstar, tstar, tint, sma, gplanet]
+
+  Temp =  pt.PT_generator(pressure, params, PTargs)
+  return Temp
