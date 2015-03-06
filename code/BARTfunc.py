@@ -16,7 +16,7 @@
 # Harrington.  Statistical advice came from Thomas J. Loredo and Nate
 # B. Lust.
 # 
-# Copyright (C) 2014 University of Central Florida.  All rights reserved.
+# Copyright (C) 2015 University of Central Florida.  All rights reserved.
 # 
 # This is a test version only, and may not be redistributed to any third
 # party.  Please refer such requests to us.  This program is distributed
@@ -154,9 +154,9 @@ def main(comm):
   group.add_argument("--kurucz_file",           action="store",
                      help="Stellar Kurucz file [default: %(default)s]",
                      dest="kurucz",   type=str,       default=None)
-  group.add_argument("--solutiontype",                    action="store",
+  group.add_argument("--solution",                    action="store",
                      help="Solution geometry [default: %(default)s]",
-                     dest="solutiontype", type=str,       default="transit",
+                     dest="solution", type=str,       default="None",
                      choices=('transit', 'eclipse'))
 
   parser.set_defaults(**defaults)
@@ -276,9 +276,9 @@ def main(comm):
   mu.comm_gather(transitcomm, specwn)
 
   # :::::::  Output Converter  :::::::::::::::::::::::::::::::::::::::
-  ffile    = args2.filter        # Filter files
-  kurucz   = args2.kurucz        # Kurucz file
-  solution = args2.solutiontype  # Solution type
+  ffile    = args2.filter    # Filter files
+  kurucz   = args2.kurucz    # Kurucz file
+  solution = args2.solution  # Solution type
 
   # Log10(stellar gravity)
   gstar = float(tep.getvalue('loggstar')[0])
