@@ -16,7 +16,7 @@
 # Harrington.  Statistical advice came from Thomas J. Loredo and Nate
 # B. Lust.
 # 
-# Copyright (C) 2014 University of Central Florida.  All rights reserved.
+# Copyright (C) 2015 University of Central Florida.  All rights reserved.
 # 
 # This is a test version only, and may not be redistributed to any third
 # party.  Please refer such requests to us.  This program is distributed
@@ -136,6 +136,63 @@ import re
     2014-11-06  Jasmina       Minor adjustments for proper TEA execution.
 """
 
+def read_eabun(solabun):
+  """
+  Extract the Solar elemental-abundances information from file.
+
+  Parameters:
+  -----------
+  efile: String
+    Name of the elemental abundances file.
+
+  Returns:
+  --------
+  index: 1D integer ndarray
+     Ordinal index.
+  symbol: 1D string ndarray
+     Elemental chemical symbol.
+  dex: 1D float ndarray
+     Logarithmic number-abundance, scaled to log(H) = 12.
+  name: 1D string ndarray
+     Element names.
+  mass: 1D float ndarray
+     Elemental mass in amu.
+
+  Modification History:
+  --------------------
+  2014-07-12  Jasmina   Written by.
+  2014-08-15  Patricio  Rewrote data handling. Updated data strings.
+  2014-09-24  Jasmina   Updated documentation.
+  2015-03-06  patricio  Reworked code from makeAbun function.
+  """
+
+  # Read the elemental-abundances file:
+  f = open(solabun, 'r')
+  lines = f.readlines()
+  f.close()
+
+  # Count the number of elements:
+  nelements = len(lines)
+  for line in lines:
+    if line.startswith("#"):
+      nelements -= 1
+
+  # Allocate arrays to put information:
+  index  = np.zeros(nelements, int)
+  symbol = np.zeros(nelements, '|S2')
+  dex    = np.zeros(nelements, np.double)
+  name   = np.zeros(nelements, '|S20')
+  mass   = np.zeros(nelements, np.double)
+
+  # Store data into the arrays:
+  i = 0
+  for line in lines:
+    if not line.startswith("#"):
+      index[i], symbol[i], dex[i], name[i], mass[i] = line.strip().split()
+      i += 1
+  return index, symbol, dex, name, mass
+
+
 # reads the tep file and calculates surface gravity
 def get_g(tepfile):
     '''
@@ -210,25 +267,25 @@ def radpress(tepfile, temp, mu, pres):
     Parameters
     ----------
     tepfile: String
-          Name of the tep ASCII file.
+       Transiting extrasolar planet filename.
     temp: 1D array of floats
-          Array containing temperatures for each layer in the atmosphere (in K).
+       Temperatures for each atmospheric layer (in K).
     mu: 1D array of floats
-          Array containing mean molecular mass for each layer from in the atmosphere
-          (in g/mol).
+       Mean molecular mass for each atmospheric layer (g/mol).
     pres: 1D array of floats
-          Array containing pressures for each layer in the atmosphere (in bar).
+       Pressures for each atmospheric layer (bar).
 
     Returns
     -------
     rad: 1D array of floats
-        Array containing radii for each pressure layer in the atmosphere (in km).
+       Array containing radii for each atmospheric layer (in km).
 
     Revisions
     ---------
     2014-07-04 Jasmina   Written by.
-    2014-09-29 Jasmina   Added radii calculation based on the referenced pressure 
-                         level of 1bar and surface radius defined in the tepfile.
+    2014-09-29 Jasmina   Added radii calculation based on the referenced
+                         pressure level of 1.00 bar and surface radius
+                         defined in the tepfile.
     '''
 
     # Define physical constants
@@ -307,55 +364,71 @@ def radpress(tepfile, temp, mu, pres):
     return rad
 
 
-# reads abundances for elements of interest
-def readAbun(in_elem, abun_file):
+def makeAbun(solar_abun, abun_file, solar_times=1, COswap=False):
     """
-    Read the basic abundances file,'abundances.txt', that carries
-    Asplund et al (2009) solar photosphere elemental abundances
-    information.
+    This function makes the abundaces file to be used by BART.
+    The function uses Asplund et al (2009) elemental abundances file
+    http://adsabs.harvard.edu/abs/2009ARA%26A..47..481A, (abudances.txt),
+    and multiplies the abundances by the number user wants, or swaps the
+    C/O ratio.
 
-    Parameters:
-    in_elem: string
-             String with all input elemental species.
-    abun_file: string
-             Name of the abundances file (default: abundances.txt)
+    Parameters
+    ----------
+    solar_abun: String
+       Input Solar abundances filename.
+    abun_file: String
+       Output filename to store the modified elemental abundances.
 
-    Returns:
-    abun_trim: list of strings
-             List containing information from abundances.txt file only
-             for elements of interest
+    Optional parameters
+    -------------------
+    solar_times: Integer
+       Multiplication factor for metallic elemental abundances (everything
+       except H and He).
+    COswap: Boolean
+       If True, swap the abundances of C and O.
 
-    Notes: 
-             in_elem MUST be in the order thay appear in 'abundances.txt'
+    Returns
+    -------
+    None
+
+    Developers
+    ----------
+    Jasmina Blecic     UCF  jasmina@physics.ucf.edu
+    Patricio Cubillos  UCF  pcubillos@fulbrightmail.org
 
     Revisions
     ---------
-    2014-09-10  Jasmina   Written by.
+    2014-07-12  Jasmina   Written by.
+    2014-08-15  Patricio  Rewrote data handling. Updated data strings.
+    2014-09-24  Jasmina   Updated documentation.
+    2015-03-06  Patricio  Updated code to read the solar abundances.
     """
 
-    # Read abundance data and convert to array (skip rows with comments):
-    f = open(abun_file, 'r')
-    abundata = []
-    for line in f.readlines():
-        if line.startswith('#'):
-            continue
-        else:
-            l = [value for value in line.split()]
-            abundata.append(l)
-    abundata = np.asarray(abundata)
+    # Read the solar abundances file:
+    index, symbol, dex, name, mass = read_eabun(solar_abun)
+    # Count the number of elements:
+    nelements = len(symbol)
+
+    # Scale the metals aundances:
+    imetals = np.where((symbol != "H") & (symbol != "He"))
+    dex[imetals] += np.log10(solar_times)
+
+    # Swap C and O abundances if requested:
+    if COswap:
+      Cdex = dex[np.where(symbol == "C")]
+      dex[np.where(symbol == "C")] = dex[np.where(symbol == "O")]
+      dex[np.where(symbol == "O")] = Cdex
+
+    # Save data to file
+    f = open(abun_file, "w")
+    # Write header
+    f.write("# Elemental abundances:\n"
+            "# Columns: ordinal, symbol, dex abundances, name, molar mass.\n")
+    # Write data
+    for i in np.arange(nelements):
+      f.write("{:3d}  {:2s}  {:5.2f}  {:10s}  {:12.8f}\n".format(
+              index[i], symbol[i], dex[i], name[i], mass[i]))
     f.close()
-
-    # Trim abundata to elements we need
-    in_elem_split = in_elem.split(" ")
-    nelem  = np.size(in_elem_split)
-    data_slice = np.zeros(abundata.shape[0], dtype=bool)
-    for i in np.arange(nelem):
-        data_slice += (abundata[:,1] == in_elem_split[i])
-
-    # List of elements of interest and their corresponding data
-    abun_trim = abundata[data_slice]
-
-    return abun_trim
 
 
 # calculates species stoichiometric values
@@ -457,7 +530,7 @@ def stoich(specie):
 
 
 # calculates mean molecular mass
-def mean_molar_mass(in_elem, abun_file, atmfile):
+def mean_molar_mass(abun_file, atmfile):
     """
     This function calculates mean molar mass at each layer in the atmosphere.
     For input elements it trims the data from the abundances file, and
@@ -471,102 +544,57 @@ def mean_molar_mass(in_elem, abun_file, atmfile):
  
     Parameters
     ----------
-    in_elem: string
-             String containing input elements. Input elements MUST be in the
-             order they appear in the 'abundances.txt' file.
     abun_file: string
-             Name of the file carrying abundance information
-             (default: 'abundances.txt', Asplund et al. 2009)
+       Name of the file carrying abundance information
     atmfile: String
-             Name of TEA atmospheric ASCII file.
+       Name of TEA atmospheric ASCII file.
 
     Returns
     -------
     mu: 1D array of floats
-        Array containing mean molecular mass for each layer in the atmosphere.
+       Array containing mean molecular mass for each layer in the atmosphere.
 
     Revisions
     ---------
-    2014-09-29 Jasmina   Written by.
+    2014-09-29  Jasmina   Written by.
+    2015-03-05  Patricio  Simplified a few calculations.
     """
 
-    # Take the abundance data of interest
-    abun_trim = readAbun(in_elem, abun_file)
+    # Read the elemental abundances file:
+    index, element, dex, name, weights = read_eabun(abun_file)
 
-    # Take only weights from abundance data and convert them to floats
-    weights = map(float, abun_trim[:,4])
-
-    # Read the final atmospheric file
+    # Read the atmospheric file:
     out_spec, pressure, temp, abundances = readatm(atmfile)
 
-    # Number of molecules
-    nspec = len(out_spec)
-
-    # Take the JANAF extension from out_spec names
-    for m in np.arange(len(out_spec)):
-        out_spec[m] = out_spec[m].partition('_')[0]
-
-    # Take elements from abun_trim to get the correct elements order
-    elements = abun_trim[:,1]
-
-    # Initiate a list of stoichiometric values
-    stoich_val = []
-    
-    # Loop over all species to make 2D array of stoichiometry
-    for i in np.arange(nspec):
-        # Call stoich function and get each species full info 
-        #      each element name and its stoichiometric value
-        spec_info = stoich(out_spec[i])
-        
-        # Initiate list of each species stoichiometry
-        spec_stoich = np.zeros(len(elements), int).tolist()
-
-        # Loop over all species information
-        for j in np.arange(len(spec_info)):
-
-            # Take each element info
-            elem_info = spec_info[j]
- 
-            # Take the name of the element
-            atom = elem_info[0]
-
-            # Loop over all elements
-            for k in np.arange(len(elements)):
-
-               # If name of the atom equal to the name of the input element
-               if  atom == elements[k]:
-                   
-                   # Fill out species stoichiometry
-                   spec_stoich[k] = int(elem_info[1])
-
-        # To the final stoichiometric values append each species stoichiometry
-        stoich_val.append(spec_stoich)
-
-        # Multiple elemental molar mass with stoichiometric value
-        elem_weight = np.asarray(weights) * np.asarray(stoich_val)  
-
-    # Allocate space for the sum of elemental weights
-    spec_weight = np.zeros(nspec)
-
-    # Sum all elemental weights to get the molar mass of the species
-    for i in np.arange(nspec):
-            spec_weight[i] = sum(elem_weight[i])
-
-    # Number of layers in the atmosphere
+    # Number of molecules:
+    nspec   = len(out_spec)
+    # Number of layers in the atmosphere:
     nLayers = len(abundances)
 
-    # Allocate space for mu, final mean molar mass for each T-P
+    spec_weight = np.zeros(nspec)
+    # Get the mass of each species:
+    for i in np.arange(nspec):
+      # Remove the JANAF extension from species name and get the
+      #  stoichiometric data:
+      spec_stoich = stoich(out_spec[i].partition('_')[0])
+      # Add the mass from each element in this species:
+      for j in np.arange(len(spec_stoich)):
+        # Find the element:
+        elem_idx = np.where(element == spec_stoich[j,0])
+        # Add the weighted mass:
+        spec_weight[i] += weights[elem_idx][0] * float(spec_stoich[j,1])
+
+    # Allocate array (for each layer) of mean molar mass:
     mu = np.zeros(nLayers)
 
-    # Sum of all species weight fraction for one T-P
+    # Sum of all species weight in the layer:
     for i in np.arange(nLayers):
         mu[i] = sum(spec_weight * abundances[i])
 
     return mu
 
 
-# adds radius array to the final TEA atmospheric file
-def makeRadius(in_elem, out_spec, atmfile, abun_file, tepfile):
+def makeRadius(out_spec, atmfile, abun_file, tepfile):
     """
     This function adds radius array into the final TEA output atmospheric file.
     It opens a new file to write, adds headers, reads the final TEA output
@@ -578,8 +606,6 @@ def makeRadius(in_elem, out_spec, atmfile, abun_file, tepfile):
 
     Parameters
     ----------
-    in_elem: string
-             String containing input elements.
     out_spec: String
              String containing all output molecular species.
     atmfile: String
@@ -603,22 +629,30 @@ def makeRadius(in_elem, out_spec, atmfile, abun_file, tepfile):
     # Make a copy of the original TEA atmfile
     #shutil.copy2(atmfile, atmfile[:-4] + '_genuine.tea')
 
-    # Open atmfile to read and write
-    fout = open(atmfile, 'r+')
+    # Read the final atmospheric file
+    molecules, pressure, temperature, abundances = readatm(atmfile)
+
+    # Calculate the mean molecular mass of each layer:
+    mu = mean_molar_mass(abun_file, atmfile)
+
+    # Open atmfile to overwrite:
+    fout = open(atmfile, 'w')
 
     # Write a header file
-    header = ("# This is a final TEA output file with calculated abundances (mixing fractions) for all listed species. \n"
-              "# Units: radius (km), pressure (bar), temperature (K), abundance (unitless).")
-
-    # Write header
+    header = (
+      "# This is an atmospheric file with calculated radius, pressure,\n"
+      "# temperature, and species abundances (mixing ratio) for all listed\n"
+      "# species.\n"
+      "# Units: radius (km), pressure (bar), temperature (K),\n"
+      "#        abundance (unitless).")
     fout.write(header + '\n\n')
     
     # Retrieve planet name and surface radius
-    head, tepname = os.path.split(tepfile)
     g, Rp = get_g(tepfile)
 
     # Write planet name and surface radius
-    fout.write('#' + tepname[:-4] +'\n\n')
+    #head, tepname = os.path.split(tepfile)
+    #fout.write('#' + tepname[:-4] +'\n\n')
     #fout.write('Rp ' + str(Rp) + '\n\n')
 
     # Write species names
@@ -627,13 +661,7 @@ def makeRadius(in_elem, out_spec, atmfile, abun_file, tepfile):
     # Write TEA data
     fout.write('#TEADATA\n')
 
-    # Read the final atmospheric file
-    molecules, pressure, temperature, abundances = readatm(atmfile)
-
-    # Call mean_molar_mass() function to calculate mu for each T-P
-    mu = mean_molar_mass(in_elem, abun_file, atmfile)
-
-    # Call radpress() to calculate radii
+    # Calculate the radius of each layer:
     rad = radpress(tepfile, temperature, mu, pressure)
 
     # Number of layers in the atmosphere
@@ -644,7 +672,6 @@ def makeRadius(in_elem, out_spec, atmfile, abun_file, tepfile):
 
     # Make a list of labels
     label = ['#Radius'.ljust(11)] + ['Pressure'.ljust(11)] + ['Temp'.ljust(8)]
-    #label = ['#Radius-Rp'.ljust(11)] + ['Pressure'.ljust(11)] + ['Temp'.ljust(8)]
     for i in np.arange(nspec):
          label = label + [molecules[i].ljust(11)]
     label = ''.join(label)
@@ -675,101 +702,152 @@ def makeRadius(in_elem, out_spec, atmfile, abun_file, tepfile):
     fout.close()
 
 
-# Make pre-atmospheric file for TEA
 def make_preatm(tepfile, press_file, abun_file, in_elem, out_spec,
                 pre_atm, Temp):
-    '''
-    This code produces a pre-atm file in the format that TEA can read it. 
-    It reads the pressure file and trimmed elemental dex abundance data 
-    by calling readAbun() function. It converts dex abundances of all 
-    elements of interest to number density and divides them by the sum
-    of all number densities in the mixture to get fractional abundances.
-    It calls radpress() to calculate radii, and writes the data 
-    (pressure, temperature, elemental abundances) into a pre-atm file.
+  """
+  This code produces a pre-atm file in the format that TEA can read it.
+  It reads the pressure file and elemental dex abundance data, trims to
+  the selected elements.  It converts dex abundances to number density
+  and divides them by the sum of all number densities in the mixture to
+  get fractional abundances.
+  It calls radpress() to calculate radii, and writes the data
+  (pressure, temperature, elemental abundances) into a pre-atm file.
 
-    Parameters
-    ----------
-    tepfile: String
-             Name of the tepfile.
-    press_file: String
-             Name of the pressure file.
-    abun_file: String
-             Name of the abundances file.
-    in_elem: String
-             String containing input elemental species.
-    out_spec: String
-             String containing output molecular species.
-    pre_atm: String
-             Pre-atmospheric filename.
-    Temp: 1D float array
-             Array containing temperatures for each layer in the atmosphere (in K).
+  Parameters
+  ----------
+  tepfile: String
+     Name of the tepfile.
+  press_file: String
+     Name of the pressure file.
+  abun_file: String
+     Name of the abundances file.
+  in_elem: String
+     String containing input elemental species.
+  out_spec: String
+     String containing output molecular species.
+  pre_atm: String
+     Pre-atmospheric filename.
+  Temp: 1D float array
+     Array containing temperatures for each layer in the atmosphere (in K).
 
-    Returns
-    -------
-    None
+  Revisions
+  ---------
+  2014-07-12  Jasmina   Written by.
+  2014-08-15  Patricio  Removed PT re-calculation, use input T array.
+  2014-09-15  Jasmina   Added call to readAbun() function.
+  2014-11-06  Jasmina   Adjusted to work properly with TEA.
+  2015-03-05  Patricio  Adapted to use read_eabun function, reworked some bits.
+  """
 
-    Revisions
-    ---------
-    2014-07-12  Jasmina   Written by.
-    2014-08-15  Patricio  Removed PT re-calculation, use input T array.
-    2014-09-15  Jasmina   Added call to readAbun() function.
-    2014-11-06  Jasmina   Adjusted to work properly with TEA.
-    '''
+  # Read pressure data
+  pres = pt.read_press_file(press_file)
 
-    # Read pressure data
-    pres = pt.read_press_file(press_file)
+  # Number of layers in the atmosphere
+  n_layers = len(pres)
 
-    # Number of layers in the atmosphere
-    n_layers = len(pres)
+  # Get the elemental abundace data:
+  index, symbol, dex, name, mass = read_eabun(abun_file)
 
-    # Take the abundace data of interest
-    abun_trim = readAbun(in_elem, abun_file)
+  # Take only the elements we need:
+  in_arg = np.in1d(symbol, in_elem.split())
+  in_symbol = symbol[in_arg]
+  in_dex    = dex   [in_arg]
 
-    # Take data and create list
-    out_elem = abun_trim[:,1].tolist()
+  # Hydrogen number density:
+  H_num = 10**12
 
-    # Convert strings to floats
-    out_dex  = map(float, abun_trim[:,2])
+  # Get fractional number density relative to hydrogen:
+  out_abn  = (10.0**in_dex / H_num).tolist()
 
-    # Convert dex exponents to number density
-    out_num  = 10**np.array(out_dex)
+  # Write pre-atm file
+  f = open(pre_atm, 'w')
 
-    # Hydrogen number density
-    H_num = 10**12
+  # Pre-atm header with basic instructions
+  header = ("# This is a TEA pre-atmosphere input file.\n"
+   "# TEA accepts a file in this format to produce species abundances as\n"
+   "# a function of pressure and temperature.\n"
+   "# Output species must be added in the line immediately following the \n"
+   "# SPECIES marker and must be named to match JANAF converted names.\n"
+   "# Units: pressure (bar), temperature (K), abundance (unitless).\n\n")
 
-    # Get fractions of element number density to hydrogen number density
-    out_abn  = (out_num / H_num).tolist()
- 
-    # Write pre-atm file
-    f = open(pre_atm, 'w')
+  # Write header
+  f.write(header)
 
-    # Pre-atm header with basic instructions
-    header = ("# This is a TEA pre-atmosphere input file.\n"
-     "# TEA accepts a file in this format to produce species abundances as\n"
-     "# a function of pressure and temperature.\n"
-     "# Output species must be added in the line immediately following the \n"
-     "# SPECIES marker and must be named to match JANAF converted names.\n"
-     "# Units: pressure (bar), temperature (K), abundance (unitless).\n\n")
+  # Write species names
+  f.write('#SPECIES\n' + out_spec + '\n\n')
 
-    # Write header
-    f.write(header)
+  # Write header of TEA data
+  f.write('#TEADATA\n')
+  # Column's header:
+  f.write("#Pressure   Temp          " +
+        "".join(["{:<18s}".format(elem) for elem in in_symbol]) + "\n")
 
-    # Write species names
-    f.write('#SPECIES\n' + out_spec + '\n\n')
+  # Write data for each layer:
+  for i in np.arange(n_layers):
+    # Pressure, and Temperature:
+    f.write("{:10.4e} {:8.2f}  ".format(pres[i], Temp[i]))
+    # Elemental abundance list:
+    f.write("  ".join(["{:16.10e}".format(abun) for abun in out_abn]) + "\n")
+  f.close()
 
-    # Write header of TEA data
-    f.write('#TEADATA\n')
-    # Column's header:
-    f.write("#Pressure   Temp          " +
-          "".join(["{:<18s}".format(elem) for elem in out_elem]) + "\n")
 
-    # For each layer write TEA data
-    for i in np.arange(n_layers):
-        # Pressure, and Temperature
-        f.write("{:10.4e} {:8.2f}  ".format(pres[i], Temp[i]))
-        # Elemental abundance list
-        f.write("  ".join(["{:16.10e}".format(abun) for abun in out_abn]) + "\n")
-    f.close()
+def uniform(atmfile, press_file, abun_file, tepfile, species, abundances, temp):
+  """
+  Generate an atmospheric file with uniform abundances.
+
+  Parameters:
+  -----------
+  atmfile: String
+     Name of output atmospheric file.
+  press_file: String
+     Input pressure-array filename.
+  abun_file: String
+     Input elemental-abundances filename.
+  tepfile: String
+     Transiting extrasolar planet filename.
+  species: String
+     String with list of atmospheric species (blank space separated).
+  abundances: String
+     String with list of species mole-mixing-ratio (blank space separated).
+  temp: 1D float ndarray
+     Temperature profile.
+
+  Modification History:
+  ---------------------
+  2015-03-04  patricio  Initial implementation.
+  """
+
+  # Read pressure array:
+  press = pt.read_press_file(press_file)
+  # Put species names into an array:
+  spec = np.asarray(species.split())
+  # Put abundance values into an array:
+  abun = np.asarray(abundances.split(), np.double)
+
+  # Write to file:
+  f = open(atmfile, 'w')
+
+  # Write species names:
+  f.write('#SPECIES\n' + species + '\n\n')
+
+  # Write header of TEA data:
+  f.write('#TEADATA\n')
+  # Column's header:
+  f.write("#Pressure   Temp     " +
+        "".join(["{:<18s}".format(mol) for mol in spec]) + "\n")
+
+  # For each layer write TEA data
+  for i in np.arange(len(press)):
+      # Pressure, and Temperature
+      f.write("{:10.4e} {:8.2f}  ".format(press[i], temp[i]))
+      # Elemental abundance list
+      f.write("  ".join(["{:16.10e}".format(ab) for ab in abun]) + "\n")
+  f.close()
+
+  # Calculate the radius of each layer and put it into the atmfile:
+  makeRadius(species, atmfile, abun_file, tepfile)
+  # Reformat to use in transit:
+  reformat(atmfile)
 
 
 # reads final TEA atmospheric file
@@ -909,6 +987,3 @@ def reformat(atmfile):
     f = open(atmfile, 'w')
     f.writelines(lines)
     f.close()
-
-
-

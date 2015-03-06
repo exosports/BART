@@ -72,9 +72,7 @@ sys.path.append(MC3dir)
 # Import submodules:
 import mcutils   as mu
 import makeP     as mp
-import makeAbun  as ma
 import InitialPT as ipt
-#import PT        as pt
 import makeatm   as mat
 import makecfg   as mc
 
@@ -154,31 +152,32 @@ def main():
   loc_dir     = config.get(cfgsec, 'loc_dir')
   tep_name    = config.get(cfgsec, 'tep_name')
 
-  # STEP 1: Pressure array:
+  # Pressure array:
   n_layers    = config.getint(cfgsec,     'n_layers')
   p_top       = config.getfloat(cfgsec,   'p_top')
   p_bottom    = config.getfloat(cfgsec,   'p_bottom')
   log         = config.getboolean(cfgsec, 'log')
   press_file  = config.get(cfgsec,        'press_file')
 
-  # STEP 2 Elemental abundances:
+  # Elemental abundances:
   abun_file   = config.get(cfgsec, 'abun_file')
   abun_basic  = config.get(cfgsec, 'abun_basic')
   solar_times = config.getfloat(cfgsec, 'solar_times')
   COswap      = config.getboolean(cfgsec, 'COswap')
 
-  # STEP 3: Temperature profile:
+  # Temperature profile:
   PTtype = config.get(cfgsec, 'PTtype')
   PTinit = np.asarray(config.get(cfgsec, 'PTinit').split(), np.double)
 
-  # STEP 4: Elemental-abundances profile:
+  # Elemental-abundances profile:
   in_elem     = config.get(cfgsec, 'in_elem')
   out_spec    = config.get(cfgsec, 'out_spec')
   preatm_file = config.get(cfgsec, 'preatm_file')
 
-  # STEP 5: Atmospheric (species) file:
+  # Atmospheric (species) file:
   #output_dir = config.get(cfgsec, 'output_dir')
   atmfile = config.get(cfgsec, 'atmfile')
+  uniform = config.get(cfgsec, 'uniform')
 
   # Flag to break after TEA:
   TEAbreak = args.justTEA
@@ -249,9 +248,19 @@ def main():
     mp.makeP(n_layers, p_top, p_bottom, press_file, log)
     mu.msg(1, "Created new pressure file.", 2)
 
+  # Make uniform-abundance profiles if requested:
+  if uniform != 'None' and runMCMC < 8:
+    # Calculate the temperature profile:
+    temp = ipt.initialPT2(PTinit, press_file, PTtype, tep_name)
+    # Generate the uniform-abundance profiles file:
+    mat.uniform(date_dir + atmfile, press_file, abun_basic, tep_name,
+               out_spec, uniform, temp)
+    # Update the runMCMC flag to skip upcoming steps:
+    runMCMC |= 8
+
   if runMCMC < 2:  # Elemental-abundances file
     abun_file = date_dir + abun_file
-    ma.makeAbun(abun_basic, abun_file, solar_times, COswap)
+    mat.makeAbun(abun_basic, abun_file, solar_times, COswap)
     mu.msg(1, "Created new elemental abundances file.", 2)
 
   if runMCMC < 4:  # Pre-atmospheric file
@@ -280,7 +289,7 @@ def main():
     shutil.copy2(date_dir+"TEA/results/TEA.tea", date_dir+atmfile) 
     atmfile = date_dir + atmfile
     # Add radius array:
-    mat.makeRadius(in_elem, out_spec, atmfile, abun_file, tep_name)
+    mat.makeRadius(out_spec, atmfile, abun_file, tep_name)
     mu.msg(1, "Added radius column to TEA atmospheric file.", 2)
     # Re-format file for use with transit:
     mat.reformat(atmfile)
