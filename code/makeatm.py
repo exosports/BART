@@ -302,7 +302,7 @@ def radpress(tepfile, temp, mu, pres):
     rad = np.zeros(n)
 
     # Referenced surface pressure
-    p0 = 1.0  # bar
+    p0 = 0.1  # bar
 
     # Interpolate temp and mu in lin-log space (1bar)
     interPT = interp1d(np.log10(pres), temp)
@@ -313,7 +313,7 @@ def radpress(tepfile, temp, mu, pres):
         temp_1bar = interPT(np.log10(p0))
         mu_1bar   = intermu(np.log10(p0))
     except IOError:
-        print("\nReferenced surface pressure of 1bar is not in the range of pressures: " + \
+        print("\nReferenced surface pressure of 0.1bar is not in the range of pressures: " + \
                "[" + str(min(pres), max(pres)) + "]\n")
 
     # Return back to desending order for radius calculation
@@ -708,8 +708,7 @@ def make_preatm(tepfile, press_file, abun_file, in_elem, out_spec,
   This code produces a pre-atm file in the format that TEA can read it.
   It reads the pressure file and elemental dex abundance data, trims to
   the selected elements.  It converts dex abundances to number density
-  and divides them by the sum of all number densities in the mixture to
-  get fractional abundances.
+  and divide them by hydrogen number density to get fractional abundances.
   It calls radpress() to calculate radii, and writes the data
   (pressure, temperature, elemental abundances) into a pre-atm file.
 
