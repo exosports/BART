@@ -16,7 +16,7 @@
 # Harrington.  Statistical advice came from Thomas J. Loredo and Nate
 # B. Lust.
 # 
-# Copyright (C) 2014 University of Central Florida.  All rights reserved.
+# Copyright (C) 2015 University of Central Florida.  All rights reserved.
 # 
 # This is a test version only, and may not be redistributed to any third
 # party.  Please refer such requests to us.  This program is distributed
@@ -104,7 +104,7 @@ def main():
      "\n======= Bayesian Atmospheric Radiative Transfer (BART) ==============="
      "\nA code to infer planetary atmospheric properties based on observed  "
      "\nspectroscopic information."
-   "\n\nCopyright (C) 2014 University of Central Florida. All rights reserved."
+   "\n\nCopyright (C) 2015 University of Central Florida. All rights reserved."
    "\n\nDevelopers contact:  Patricio Cubillos  pcubillos@fulbrightmail.org"
      "\n                     Jasmina Blecic     jasmina@physics.ucf.edu"
      "\n                     Joseph Harrington  jh@physics.ucf.edu"
@@ -125,10 +125,10 @@ def main():
   cparser.add_argument("--resume",                action='store_true',
                        help="Resume a previous run.")
   # Remaining_argv contains all other command-line-arguments:
-  args, remaining_argv = cparser.parse_known_args()
+  cargs, remaining_argv = cparser.parse_known_args()
 
   # Take configuration file from command-line:
-  cfile = args.config_file
+  cfile = cargs.config_file
 
   if cfile is not None and not os.path.isfile(cfile):
     mu.error("Configuration file: '{:s}' not found.".format(cfile))
@@ -141,60 +141,121 @@ def main():
       mu.error("No configuration file specified.")
   mu.msg(1, "The configuration file is: '{:s}'.".format(cfile), 2)
 
-  # FINDME: Put this into an argparse object
-  # Open config file:
-  config = ConfigParser.RawConfigParser({})
-  config.read(cfile)
+  # Read values from configuration file:
+  config = ConfigParser.SafeConfigParser()
+  config.optionxform = str  # This one enable Uppercase in arguments
+  config.read([cfile])
+  defaults = dict(config.items("MCMC"))
 
-  # Read BART.cfg parameters:
-  cfgsec = "MCMC"
-  # Directories and files:
-  loc_dir     = config.get(cfgsec, 'loc_dir')
-  tep_name    = config.get(cfgsec, 'tep_name')
+  # Parser for the MCMC arguments:
+  parser = argparse.ArgumentParser(parents=[cparser])
 
-  # Pressure array:
-  n_layers    = config.getint(cfgsec,     'n_layers')
-  p_top       = config.getfloat(cfgsec,   'p_top')
-  p_bottom    = config.getfloat(cfgsec,   'p_bottom')
-  log         = config.getboolean(cfgsec, 'log')
-  press_file  = config.get(cfgsec,        'press_file')
+  # Directories and files options:
+  group = parser.add_argument_group("Directories and files")
+  group.add_argument("--loc_dir", dest="loc_dir",
+           help="Output directory to store results [default: %(default)s]",
+           type=str, action="store", default="outdir")
+  group.add_argument("--tep_name", dest="tep_name",
+           help="Transiting exoplanet file name.",
+           type=str, action="store", default=None)
 
-  # Elemental abundances:
-  abun_file   = config.get(cfgsec, 'abun_file')
-  abun_basic  = config.get(cfgsec, 'abun_basic')
-  solar_times = config.getfloat(cfgsec, 'solar_times')
-  COswap      = config.getboolean(cfgsec, 'COswap')
+  # Pressure layers options:
+  group = parser.add_argument_group("Layers pressure sampling")
+  group.add_argument("--n_layers", dest="n_layers",
+           help="Number of atmospheric layers [default: %(default)s]",
+           type=int, action="store", default=100)
+  group.add_argument("--p_top", dest="p_top",
+           help="Pressure at the top of the atmosphere (bars) "
+                "[default: %(default)s]",
+           type=np.double, action="store", default=1.0e-5)
+  group.add_argument("--p_bottom", dest="p_bottom",
+           help="Pressure at the botom of the atmosphere (bars) "
+                "[default: %(default)s]",
+           type=np.double, action="store", default=100.0)
+  group.add_argument("--log", dest="log",
+           help="Use log (True) or linear (False) scale sampling "
+                "[default: %(default)s]",
+           type=eval, action="store", default=True)
+  group.add_argument("--press_file", dest="press_file",
+           help="Input/Output file with pressure array.",
+           type=str, action="store", default=None)
 
-  # Temperature profile:
-  PTtype = config.get(cfgsec, 'PTtype')
-  PTinit = np.asarray(config.get(cfgsec, 'PTinit').split(), np.double)
+  # Elemental abundance options:
+  group = parser.add_argument_group("Elemental abundances")
+  group.add_argument("--abun_basic", dest="abun_basic",
+           help="Input elemental abundances file "
+                "[default: 'BART/inputs/abundances_Asplund2009.txt']",
+           type=str, action="store", default=None)
+  group.add_argument("--abun_file", dest="abun_file",
+           help="Input/Output modified elemental abundances file",
+           type=str, action="store", default=None)
+  group.add_argument("--solar_times", dest="solar_times",
+           help="Multiplication factor for metal-element abundances",
+           type=int, action="store", default=1.0)
+  group.add_argument("--COswap", dest="COswap",
+           help="Swap C and O abundances if True [default: %(default)s]",
+           type=eval, action="store", default=False)
 
-  # Elemental-abundances profile:
-  in_elem     = config.get(cfgsec, 'in_elem')
-  out_spec    = config.get(cfgsec, 'out_spec')
-  preatm_file = config.get(cfgsec, 'preatm_file')
+  # Temperature profile options:
+  group = parser.add_argument_group("Temperature profile")
+  group.add_argument("--PTtype", dest="PTtype",
+           help="Temperature profile model [default: %(default)s]",
+           type=str, action="store", default="line", choices=("line","madhu"))
+  group.add_argument("--PTinit", dest="PTinit",
+           help="Temperature profile model parameters",
+           type=mu.parray, action="store", default=None)
 
-  # Atmospheric (species) file:
-  #output_dir = config.get(cfgsec, 'output_dir')
-  atmfile = config.get(cfgsec, 'atmfile')
-  uniform = config.get(cfgsec, 'uniform')
+  # Atmospheric model options:
+  group = parser.add_argument_group("Atmospheric model")
+  group.add_argument("--in_elem", dest="in_elem",
+           help="Input elements to consider in TEA [default: %(default)s]",
+           type=str, action="store", default='H He C N O')
+  group.add_argument("--out_spec", dest="out_spec",
+           help="Output species to include in the atmospheric model "
+                "[default: %(default)s]",
+           type=str, action="store",
+           default='H_g He_ref C_g N_g O_g H2_ref CO_g CO2_g CH4_g H2O_g')
+  group.add_argument("--preatm_file", dest="preatm_file",
+           help="Pre-atmospheric file with elemental abundances per layer "
+                "[default: %(default)s]",
+           type=str, action="store", default="elem.atm")
+  group.add_argument("--atmfile", dest="atmfile",
+           help="Atmospheric model file [default: %(default)s]",
+           type=str, action="store", default="")
+  group.add_argument("--uniform", dest="uniform",
+           help="If not None, set uniform abundances with the specified "
+                "values for each species in out_spec [default: %(default)s]",
+           type=mu.parray, action="store", default=None)
 
-  # Flag to break after TEA:
-  TEAbreak = args.justTEA
-  # Flag to break after the opacity calculation:
-  Transitbreak = args.justOpacity
+  group = parser.add_argument_group("Transit variables")
+  group.add_argument("--tconfig", dest="tconfig",
+           help="Transit configuration file [default: %(default)s]",
+           type=str, action="store", default="transit.cfg")
+  group.add_argument("--opacityfile", dest="opacityfile",
+           help="Opacity table file [default: %(default)s]",
+           type=str, action="store", default=None)
 
-  # Transit variables:
-  linedb  = config.get(cfgsec, 'linedb')
-  cia     = config.get(cfgsec, 'cia')
-  tconfig = config.get(cfgsec, 'config')
-  opacity = config.get(cfgsec, 'opacityfile')
+  # Get only the arguments defined above:
+  known, unknown = parser.parse_known_args(remaining_argv)
+  # Set the defaults from the configuration file:
+  parser.set_defaults(**defaults)
+  # Set values from command line:
+  args, unknown = parser.parse_known_args(remaining_argv)
+
+  # Unpack the variables from args:
+  variables = dir(args)
+  for var in dir(known):
+    if not var.startswith("_"):
+      exec("{:s} = args.{:s}".format(var, var))
+      print(var)
+      #exec("print({})".format(var))
+      #print("")
 
   # Make output directory:
   # Make a subdirectory with the date and time
   dirfmt = loc_dir + "%4d-%02d-%02d_%02d:%02d:%02d"
   date_dir = dirfmt % time.localtime()[0:6]
-  # FINDME: Temporary hack:
+  # FINDME: Temporary hack (temporary?):
   date_dir = os.path.normpath(loc_dir) + "/"
   if not os.path.isabs(date_dir):
     date_dir = os.getcwd() + "/" + date_dir
@@ -249,7 +310,7 @@ def main():
     mu.msg(1, "Created new pressure file.", 2)
 
   # Make uniform-abundance profiles if requested:
-  if uniform != 'None' and runMCMC < 8:
+  if uniform is not None and runMCMC < 8:
     # Calculate the temperature profile:
     temp = ipt.initialPT2(PTinit, press_file, PTtype, tep_name)
     # Generate the uniform-abundance profiles file:
@@ -260,6 +321,7 @@ def main():
 
   if runMCMC < 2:  # Elemental-abundances file
     abun_file = date_dir + abun_file
+    print("CO swap: {}".format(COswap))
     mat.makeAbun(abun_basic, abun_file, solar_times, COswap)
     mu.msg(1, "Created new elemental abundances file.", 2)
 
@@ -295,7 +357,7 @@ def main():
     mat.reformat(atmfile)
     mu.msg(1, "Atmospheric file reformatted for Transit.", 2)
 
-  if TEAbreak:
+  if justTEA:
     mu.msg(1, "~~ BART End (after TEA) ~~")
     return
 
@@ -303,14 +365,14 @@ def main():
   mc.makecfg(cfile, date_dir, atmfile)
 
   # Generate the opacity file if it doesn't exist:
-  if (not os.path.isfile(opacity) and 
-      not os.path.isfile(date_dir + os.path.normpath(opacity))):
+  if (not os.path.isfile(opacityfile) and 
+      not os.path.isfile(date_dir + os.path.normpath(opacityfile))):
     mu.msg(1, "Transit call to generate the Opacity grid table.")
     Tcall = Transitdir + "/transit/transit"
     subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
                     shell=True, cwd=date_dir)
 
-  if Transitbreak:
+  if justOpacity:
     mu.msg(1, "~~ BART End (after Transit) ~~")
     return
 
