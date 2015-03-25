@@ -38,10 +38,9 @@ Download the latest stable version from the BART
 machine with the following terminal commands.
 First create a working directory to place the code:
 ```shell
-cd
-mkdir tmp/
-mkdir tmp/BART_demo/
-cd tmp/BART_demo/
+mkdir BART_demo/
+cd BART_demo/
+topdir=`pwd`
 ```
 
 Clone the repository with all its submodules:
@@ -51,12 +50,11 @@ git clone --recursive https://github.com/joeharr4/BART BART/
 
 Compile the transit module programs:
 ```shell
-barttop=`pwd`
-cd BART/modules/transit/pylineread/src/fortran/
+cd $topdir/BART/modules/transit/pylineread/src/fortran/
 make
-cd ../../../pu/
+cd $topdir/BART/modules/transit/pu
 make
-cd ../transit/
+cd $topdir/BART/modules/transit/transit/
 make
 ./config
 ./compile
@@ -64,7 +62,7 @@ make
 
 Compile the MCcubed routines:
 ```shell
-cd ../../MCcubed/src/cfuncs/
+cd $topdir/BART/modules/MCcubed/src/cfuncs/
 make
 ```
 
@@ -76,7 +74,45 @@ make clean
 
 ### Quick Example:
 
+The following script lets you quickly fit a methane emission spectrum model to a set of 10 filters between 2 and 4 um.  These instructions are meant to be executed from the shell terminal.  To begin, follow the instructions in the previous Section to install and compile the code.  Now, create a working directory in your top directory to place the files and execute the programs:
+```shell
+cd $topdir
+mkdir run/
+cd run/
+```
+
+Download the methane line-transition database from the HITRAN server:
+```shell
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip  
+unzip 06_hit08.zip
+```
+
+Copy the pylineread configuration file and run pylineread to make the transition-line-information (TLI) file:
+```shell
+cp $topdir/BART/examples/demo/pyline_demo.cfg .  
+$topdir/BART/modules/transit/pylineread/src/pylineread.py -c pyline_demo.cfg
+```
+
+Copy the transit configuration file and run it to make a table of opacities:
+```shell
+cp $topdir/BART/examples/demo/transit_demo.cfg .  
+$topdir/BART/modules/transit/transit/transit -c transit_demo.cfg --justOpacity
+```
+
+Copy the BART configuration file and run the MCMC code to sample the posteriors:
+```shell
+cp $topdir/BART/examples/demo/BART.cfg .  
+$topdir/BART/BART.py -c BART.py
+```
+
+
 ### Be Kind:
+
+A number of graduate and undergraduate-student dreams and hopes have been sacrificed on the making of this project.  Please, be kind and aknowledge their effort by citing the articles asociated to this project:
+
+  [Cubillos et al. 2015: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling I](), in preparation.  
+  [Blecic et al. 2015: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling II](), in preparation.  
+  [Harrington et al. 2015: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling III](), in preparation.  
 
 ### License:
 
@@ -172,4 +208,5 @@ wreck anything.
 | TEA           | done          | On revision   |         | yes |                  |
 | transit       | dev           |               |         | yes |                  |
 | BART          | dev           |               |         | dev |                  |
+
 
