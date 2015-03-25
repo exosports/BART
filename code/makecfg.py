@@ -14,7 +14,7 @@
 # Harrington.  Statistical advice came from Thomas J. Loredo and Nate
 # B. Lust.
 # 
-# Copyright (C) 2014 University of Central Florida.  All rights reserved.
+# Copyright (C) 2015 University of Central Florida.  All rights reserved.
 # 
 # This is a test version only, and may not be redistributed to any third
 # party.  Please refer such requests to us.  This program is distributed
@@ -62,22 +62,14 @@ sys.path.append(filedir + "/../modules/MCcubed/src/")
 import mcutils as mu
 
 
-def makecfg(cfg, directory, atmfile):
+def makeTransit(cfile):
   """
-  Make a transit configuration file.
+  Make the transit configuration file.
 
   Parameters:
   -----------
-  cfg: String
-     BART configuration file
-  directory:  String
-     Directory where to store the transit configuration file.
-  atmfile: String
-     Name of the atmospheric filename.
-
-  Modification History:
-  ---------------------
-  2014-09-09  patricio  Initial implementation.
+  cfile: String
+     BART configuration file.
   """
 
   # Known (single-value) transit arguments:
@@ -87,7 +79,7 @@ def makecfg(cfg, directory, atmfile):
                 "tlow",    "thigh",    "tempdelt",
                 "allowq",  "nwidth",
                 "opacityfile",
-                #"molfile",
+                "molfile",
                 "toomuch", "tauiso", "outtau", "taulevel", "modlevel",
                 "starrad", "transparent",
                 "solution", "raygrid",
@@ -95,57 +87,106 @@ def makecfg(cfg, directory, atmfile):
                 "cloudrad", "cloudfct", "cloudext",
                 "verb",
                 "outtoomuch", "outsample", "output",
-               ]
-  # Known multiple-value transit arguments:
-  known_tuple_args = ["linedb", "cia", "orbpars", "orbparsfct"]
+                "linedb", "cia", "orbpars", "orbparsfct"]
 
-  # Get all BART arguments in a dict:
-  config = ConfigParser.SafeConfigParser()
-  config.read([cfg])
-  defaults = dict(config.items("MCMC"))
+  # Name of the configuration-file section:
+  section = "MCMC"
+  # Read BART configuration file:
+  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig.read([cfile])
 
-  # Key names of the arguments in the BART configuration file:
-  cfg_args = defaults.keys()
+  # Keyword names of the arguments in the BART configuration file:
+  args = Bconfig.options(section)
 
   # transit configuration filename:
+  tcfile = open(Bconfig.get(section, "config"), "w")
   # FINDME: Add file-not-found exception
-  transitcfg = defaults["config"]
-  tcfg = open(directory + transitcfg, "w")
 
-  # Print the atmospheric name:
-  tcfg.write("atm {:s}\n".format(atmfile))
-  # Default the molfile path:
-  tcfg.write("molfile {:s}\n".format(
-      os.path.normpath(filedir + "/../modules/transit/inputs/molecules.dat")))
+  # Keyword for the atmospheric file is different in transit:
+  tcfile.write("atm {:s}\n".format(Bconfig.get(section, "atmfile")))
 
-  # Print the known arguments:
-  for key in known_tuple_args:
-    if key in cfg_args:
-      values = defaults[key].strip().split()
-      for val in values:
-        tcfg.write("{:s} {:s}\n".format(key, val))
+  # Default molfile path:
+  if "molfile" not in args:
+    tcfile.write("molfile {:s}\n".format(
+      os.path.realpath(filedir + "/../modules/transit/inputs/molecules.dat")))
 
-  for key in known_args:
-    if key in cfg_args:
-      tcfg.write("{:s} {:s}\n".format(key, defaults[key]))
+  # Print the known arguments to file:
+  for key in np.intersect1d(args, known_args):
+    values = Bconfig.get(section, key).split("\n")
+    for val in values:
+      tcfile.write("{:s} {:s}\n".format(key, val))
 
-  tcfg.close()
+  tcfile.close()
 
 
-def makeTEA(cfg, TEAdir):
+def makeMCMC(cfile, MCMC_cfile):
+  """
+  Reformat configuration file to remove relative paths.  This output 
+  configuration file is used by the BART's MCMC program.
+
+  Parameters:
+  -----------
+  cfile: String
+     BART configuration file.
+  MCMC_cfile: String
+     Reformated configuration file.
+  """
+
+  # Name of the configuration-file section:
+  section = "MCMC"
+  # Open input BART configuration file:
+  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig.optionxform = str
+  Bconfig.read([cfile])
+  # Keyword names of the arguments in the BART configuration file:
+  args = Bconfig.options(section)
+
+  # Known arguments that may have a path:
+  input_args = ["tep_name", "kurucz", "molfile", "filter", "linedb",
+                "cia", "loc_dir"]
+  output_args = ["config", "atmfile", "opacityfile", "press_file",
+               "abun_basic", "abun_file", "preatm_file", "output", "savemodel"]
+
+  # Inputs should always exist:
+  for arg in np.intersect1d(args, input_args):
+    # Split multiple values (if more than one), get full path, join back:
+    values = Bconfig.get(section, arg).split("\n")
+    for v in np.arange(len(values)):
+      values[v] = os.path.realpath(values[v])
+    Bconfig.set(section, arg, "\n".join(values))
+
+  # Outputs are stored/copied into loc_dir:
+  for arg in np.intersect1d(args, output_args):
+    Bconfig.set(section, arg,
+                Bconfig.get(section, "loc_dir") + "/" +
+                os.path.basename(Bconfig.get(section, arg)))
+
+  # Func is a special case:
+  funcvalues = Bconfig.get(section, "func").split()
+  funcvalues[2] = os.path.realpath(funcvalues[2])
+  Bconfig.set(section, "func", " ".join(funcvalues))
+
+  # Params is another special case:
+  params = Bconfig.get(section, "params")
+  # It may or not be a file path:
+  if os.path.isfile(params):
+    Bconfig.set(section, "params", os.path.realpath(params))
+
+  # Write the configuration file for use by MC3:
+  with open(MCMC_cfile, 'w') as configfile:
+    Bconfig.write(configfile)
+
+
+def makeTEA(cfile, TEAdir):
   """
   Make a TEA configuration file.
 
   Parameters:
   -----------
-  cfg: String
+  cfile: String
      BART configuration file
   TEAdir: String
      Default TEA directory.
-
-  Modification History:
-  ---------------------
-  2014-12-08  patricio  Initial implementation.
   """
   # Open New ConfigParser:
   config = ConfigParser.SafeConfigParser()
@@ -153,7 +194,7 @@ def makeTEA(cfg, TEAdir):
 
   # Open BART ConfigParser:
   Bconfig = ConfigParser.SafeConfigParser()
-  Bconfig.read([cfg])
+  Bconfig.read([cfile])
 
   # List of known TEA arguments:
   keys = ["maxiter",      "save_headers", "save_outputs", "doprint", "times",

@@ -255,8 +255,7 @@ def main(comm):
   # transit executable:
   tfunc = BARTdir + "/../modules/transit/transit/MPItransit"
   # transit configuration file:
-  config = args2.config
-  transitcfile = os.getcwd() + "/" + config
+  transitcfile = args2.config
 
   # Spawn transit MPI communicator:
   transitcomm = mu.comm_spawn(tfunc, 1, transitcfile, rargs=rargs,

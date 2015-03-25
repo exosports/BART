@@ -124,32 +124,9 @@ def main():
                        help="Run only Transit to generate the Opacity table.")
   cparser.add_argument("--resume",                action='store_true',
                        help="Resume a previous run.")
-  # Remaining_argv contains all other command-line-arguments:
-  cargs, remaining_argv = cparser.parse_known_args()
-
-  # Take configuration file from command-line:
-  cfile = cargs.config_file
-
-  if cfile is not None and not os.path.isfile(cfile):
-    mu.error("Configuration file: '{:s}' not found.".format(cfile))
-  else: # Search for a .cfg file in current directory:
-    files = os.listdir('.')
-    try:
-      #cfile = re.search("[\n]?(.+\.cfg)[\n]?", "\n".join(files)).groups(1)[0]
-      cfile = 'BART.cfg'
-    except:
-      mu.error("No configuration file specified.")
-  mu.msg(1, "The configuration file is: '{:s}'.".format(cfile), 2)
-
-  # Read values from configuration file:
-  config = ConfigParser.SafeConfigParser()
-  config.optionxform = str  # This one enable Uppercase in arguments
-  config.read([cfile])
-  defaults = dict(config.items("MCMC"))
 
   # Parser for the MCMC arguments:
   parser = argparse.ArgumentParser(parents=[cparser])
-
   # Directories and files options:
   group = parser.add_argument_group("Directories and files")
   group.add_argument("--loc_dir", dest="loc_dir",
@@ -227,6 +204,47 @@ def main():
                 "values for each species in out_spec [default: %(default)s]",
            type=mu.parray, action="store", default=None)
 
+  # MCMC options:
+  group = parser.add_argument_group("MCMC")
+  group.add_argument("--func", dest="func",
+           help="",
+           type=mu.parray, action="store", default=None)
+  group.add_argument("--params",  dest="params",
+           help="Model-fitting parameters [default: %(default)s]",
+           type=mu.parray, action="store", default=None)
+  group.add_argument("--molfit",  dest="molfit", 
+           help="Molecules fit [default: %(default)s]",
+           type=mu.parray, action="store", default=None)
+  group.add_argument("--Tmin",    dest="Tmin", 
+           help="Lower Temperature boundary [default: %(default)s]",
+           type=float,     action="store", default=400.0)
+  group.add_argument("--Tmax",    dest="Tmax",
+           help="Higher Temperature boundary [default: %(default)s]",
+           type=float,     action="store", default=3000.0)
+  group.add_argument("--quiet",   dest="quiet",
+           help="Set verbosity level to minimum",
+           action="store_true")
+
+  # Input converter options:
+  group = parser.add_argument_group("Input Converter Options")
+  group.add_argument("--tint", dest="tint",
+           help="Internal temperature of the planet [default: %(default)s].",
+           type=float, action="store", default=100.0)
+
+  # Output-Converter Options:
+  group = parser.add_argument_group("Output Converter Options")
+  group.add_argument("--filter",                 action="store",
+           help="Waveband filter name [default: %(default)s]",
+           dest="filter",   type=mu.parray, default=None)
+  group.add_argument("--kurucz_file",           action="store",
+           help="Stellar Kurucz file [default: %(default)s]",
+           dest="kurucz",   type=str,       default=None)
+  group.add_argument("--solution",                    action="store",
+           help="Solution geometry [default: %(default)s]",
+           dest="solution", type=str,       default="None",
+           choices=('transit', 'eclipse'))
+
+  # Transit options:
   group = parser.add_argument_group("Transit variables")
   group.add_argument("--tconfig", dest="tconfig",
            help="Transit configuration file [default: %(default)s]",
@@ -235,8 +253,27 @@ def main():
            help="Opacity table file [default: %(default)s]",
            type=str, action="store", default=None)
 
+  # Remaining_argv contains all other command-line-arguments:
+  cargs, remaining_argv = cparser.parse_known_args()
   # Get only the arguments defined above:
   known, unknown = parser.parse_known_args(remaining_argv)
+
+  # Get configuration file from command-line:
+  cfile = cargs.config_file
+  # Default:
+  if cfile is None:
+    cfile = "./BART.cfg"
+  # Always require a configuration file:
+  if not os.path.isfile(cfile):
+    mu.error("Configuration file: '{:s}' not found.".format(cfile))
+
+  # Read values from configuration file:
+  config = ConfigParser.SafeConfigParser()
+  config.optionxform = str  # This one enable Uppercase in arguments
+  config.read([cfile])
+  defaults = dict(config.items("MCMC"))
+  mu.msg(1, "The configuration file is: '{:s}'.".format(cfile), 2)
+
   # Set the defaults from the configuration file:
   parser.set_defaults(**defaults)
   # Set values from command line:
@@ -247,9 +284,7 @@ def main():
   for var in dir(known):
     if not var.startswith("_"):
       exec("{:s} = args.{:s}".format(var, var))
-      print(var)
-      #exec("print({})".format(var))
-      #print("")
+      #print(var)
 
   # Make output directory:
   # Make a subdirectory with the date and time
@@ -263,7 +298,7 @@ def main():
   try:
     os.mkdir(date_dir)
   except OSError, e:
-    if e.errno == 17: # FINDME: Allow overwritting while we debug
+    if e.errno == 17: # Allow overwritting while we debug
       pass
     else:
       mu.error("Cannot create folder '{:s}'. {:s}.".format(date_dir,
@@ -282,22 +317,24 @@ def main():
   runMCMC = 0  # Flag that indicate which steps to run
   # Atmospheric file:
   if os.path.isfile(atmfile):
+    atmfile = os.path.realpath(atmfile)
     shutil.copy2(atmfile, date_dir + os.path.basename(atmfile))
     mu.msg(1, "Atmospheric file copied from: '{:s}'.".format(atmfile),2)
     runMCMC |= 8
   # Pre-atmospheric file:
   if os.path.isfile(preatm_file):
+    preatm_file = os.path.realpath(preatm_file)
     shutil.copy2(preatm_file, date_dir + os.path.basename(preatm_file))
     mu.msg(1, "Pre-atmospheric file copied from: '{:s}'.".format(preatm_file),2)
     runMCMC |= 4
   # Elemental-abundances file:
-  if os.path.isfile(abun_file):
+  if abun_file is not None and os.path.isfile(abun_file):
     shutil.copy2(abun_file, date_dir + os.path.basename(abun_file))
     mu.msg(1, "Elemental abundances file copied from: '{:s}'.".format(
                                                                  abun_file), 2)
     runMCMC |= 2
   # Pressure file:
-  if os.path.isfile(press_file):
+  if press_file is not None and os.path.isfile(press_file):
     shutil.copy2(press_file, date_dir + os.path.basename(press_file))
     mu.msg(1, "Pressure file copied from: '{:s}'.".format(press_file), 2)
     runMCMC |= 1
@@ -361,16 +398,20 @@ def main():
     mu.msg(1, "~~ BART End (after TEA) ~~")
     return
 
+  # Make the MC3 configuration file:
+  MCMC_cfile = os.path.realpath(loc_dir) + "/MCMC_" + os.path.basename(cfile)
+  mc.makeMCMC(cfile, MCMC_cfile)
   # Make transit configuration file:
-  mc.makecfg(cfile, date_dir, atmfile)
+  mc.makeTransit(MCMC_cfile)
 
   # Generate the opacity file if it doesn't exist:
-  if (not os.path.isfile(opacityfile) and 
-      not os.path.isfile(date_dir + os.path.normpath(opacityfile))):
+  if not os.path.isfile(opacityfile):
     mu.msg(1, "Transit call to generate the Opacity grid table.")
     Tcall = Transitdir + "/transit/transit"
     subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
                     shell=True, cwd=date_dir)
+  else:
+    shutil.copy2(opacityfile, date_dir + os.path.basename(opacityfile))
 
   if justOpacity:
     mu.msg(1, "~~ BART End (after Transit) ~~")
@@ -379,8 +420,8 @@ def main():
   # Run the MCMC:
   mu.msg(1, "\nStart MCMC:")
   MC3call = MC3dir + "/mccubed.py"
-  subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, cfile)], shell=True,
-                  cwd=date_dir)
+  subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
+                  shell=True, cwd=date_dir)
   mu.msg(1, "~~ BART End ~~")
 
 
