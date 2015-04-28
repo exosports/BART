@@ -19,6 +19,7 @@ planetary atmospheres.
 * Jasmina Blecic (UCF)
 * Joseph Harrington (UCF)
 * Patricio Rojo (U. de Chile)
+* Nate Lust (UCF)
 * Oliver Bowman (UCF)
 * Madison Stemm (UCF)
 * Andrew Foster (UCF)
