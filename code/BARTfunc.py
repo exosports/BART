@@ -61,14 +61,17 @@ import numpy as np
 import scipy.constants as sc
 from mpi4py import MPI
 
-BARTdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(BARTdir + "/../modules/MCcubed/src/")
-import mcutils as mu
-
 import makeatm as mat
 import PT as pt
 import wine   as w
 import reader as rd
+
+BARTdir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(BARTdir + "/../modules/MCcubed/src/")
+import mcutils as mu
+
+sys.path.append(BARTdir + "/../modules/transit/transit/python")
+import transit_module as trm
 
 # Some constants:
 # http://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html
@@ -161,9 +164,6 @@ def main(comm):
 
   parser.set_defaults(**defaults)
   args2, unknown = parser.parse_known_args(remaining_argv)
-  # Add path to func:
-  # if len(args2.func) == 3:
-  #   sys.path.append(args2.func[2])
 
   # Quiet all threads except rank 0:
   rank = comm.Get_rank()
@@ -246,33 +246,23 @@ def main(comm):
     profiles[i+1] = abundances[:, i]
 
   # :::::::  Spawn transit code  :::::::::::::::::::::::::::::::::::::
-  # Silence all threads except rank 0:
-  if verb == 0:
-    rargs = ["--quiet"]
-  else:
-    rargs = []
-
-  # transit executable:
-  tfunc = BARTdir + "/../modules/transit/transit/MPItransit"
-  # transit configuration file:
+  # # transit configuration file:
   transitcfile = args2.config
+ 
+  # FINDME: Find a way to set verb to the transit subprocesses.
+  # Silence all threads except rank 0:
+  # if verb == 0:
+  #   rargs = ["--quiet"]
+  # else:
+  #   rargs = []
 
-  # Spawn transit MPI communicator:
-  transitcomm = mu.comm_spawn(tfunc, 1, transitcfile, rargs=rargs,
-                              path=args2.func[2])
-
-  # Get the number of spectral samples from transit:
-  arrsize = np.zeros(1, dtype="i")
-  mu.comm_gather(transitcomm, arrsize)
-  nwave   = arrsize[0]
-
-  # Send the input array size to transit (temperature and abundance profiles):
-  nprofile = nlayers * (nspecies + 1)
-  mu.comm_bcast(transitcomm, np.array([nprofile, niter], dtype="i"), MPI.INT)
+  # Initialize the transit python module:
+  transit_args = ["transit", "-c", transitcfile]
+  trm.transit_init(len(transit_args), transit_args)
 
   # Get wavenumber array from transit:
-  specwn = np.zeros(nwave, dtype="d")
-  mu.comm_gather(transitcomm, specwn)
+  nwave  = trm.get_no_samples()
+  specwn = trm.get_waveno_arr(nwave)
 
   # :::::::  Output Converter  :::::::::::::::::::::::::::::::::::::::
   ffile    = args2.filter    # Filter files
@@ -326,10 +316,10 @@ def main(comm):
   while niter >= 0:
     niter -= 1
     # Receive parameters from MCMC:
-    mu.msg(verb, "ICON FLAG 70: Start iteration")
+    #mu.msg(verb, "ICON FLAG 70: Start iteration")
     mu.comm_scatter(comm, params)
-    mu.msg(verb, "ICON FLAG 71: incon pars: {:s}".
-                 format(str(params).replace("\n", "")))
+    #mu.msg(verb, "ICON FLAG 71: incon pars: {:s}".
+    #             format(str(params).replace("\n", "")))
 
     # Input converter calculate the profiles:
     try:
@@ -358,14 +348,12 @@ def main(comm):
     # print("qH2O: {}, Qmetals: {}, QH2: {}  p: {}".format(params[nPT],
     #                               q[50], profiles[iH2+1,50], profiles[:,50]))
 
-    # transit calculates the model spectrum:
-    mu.comm_scatter(transitcomm, profiles.flatten(), MPI.DOUBLE)
-    mu.msg(verb, "BART FLAG 81: sent data to transit")
-    # Gather (receive) spectrum from transit:
-    mu.comm_gather(transitcomm, spectrum)
+    # Let transit calculate the model spectrum:
+    #mu.msg(verb, "FLAG 81: sent data to transit")
+    spectrum = trm.run_transit(profiles.flatten(),nwave)
 
     # Output converter band-integrate the spectrum:
-    mu.msg(verb, "OCON FLAG 91: receive spectum")
+    #mu.msg(verb, "FLAG 91: receive spectum")
     # Calculate the band-integrated intensity per filter:
     for i in np.arange(nfilters):
       if   solution == "eclipse":
@@ -377,10 +365,10 @@ def main(comm):
                                       nifilter[i], wnindices[i])
 
     # Send resutls back to MCMC:
-    mu.msg(verb, "OCON FLAG 95: Flux band integrated ({})".format(bandflux))
+    #mu.msg(verb, "OCON FLAG 95: Flux band integrated ({})".format(bandflux))
     #mu.msg(verb, "{}".format(params[nPT:]))
     mu.comm_gather(comm, bandflux, MPI.DOUBLE)
-    mu.msg(verb, "OCON FLAG 97: Sent results back to MCMC")
+    #mu.msg(verb, "OCON FLAG 97: Sent results back to MCMC")
 
   # ::::::  End main Loop  :::::::::::::::::::::::::::::::::::::::::::
   # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -390,8 +378,7 @@ def main(comm):
   mu.msg(verb, "FUNC FLAG 99: func out")
 
   # Close the transit communicators:
-  transitcomm.Barrier()
-  transitcomm.Disconnect()
+  trm.free_memory()
   mu.msg(verb, "FUNC FLAG OUT ~~ 100 ~~")
 
 
