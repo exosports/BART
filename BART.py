@@ -75,6 +75,7 @@ import makeP     as mp
 import InitialPT as ipt
 import makeatm   as mat
 import makecfg   as mc
+import bestFit   as bf
 
 def main():
   """
@@ -98,6 +99,7 @@ def main():
   2014-10-12  Jasmina   Updated to new TEA structure.
   2014-12-13  patricio  Added Opacity calculation step (through Transit), 
                         added flags to break after TEA or Opacity calculation.
+  2015-05-03  jasmina   Added best-fit Transit run.
   """
 
   mu.msg(1,
@@ -224,6 +226,9 @@ def main():
   group.add_argument("--quiet",   dest="quiet",
            help="Set verbosity level to minimum",
            action="store_true")
+  group.add_argument("--stepsize", dest="stepsize",
+           help="Parameters stepsize",
+           type=mu.parray, action="store", default=None)
 
   # Input converter options:
   group = parser.add_argument_group("Input Converter Options")
@@ -411,6 +416,7 @@ def main():
     subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
                     shell=True, cwd=date_dir)
   else:
+    mu.msg(1, "\nTransit copies the existing opacity file from:\n '{:s}'.".format(opacityfile),2)
     shutil.copy2(opacityfile, date_dir + os.path.basename(opacityfile))
 
   if justOpacity:
@@ -422,6 +428,24 @@ def main():
   MC3call = MC3dir + "/mccubed.py"
   subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
                   shell=True, cwd=date_dir)
+
+  # Run best-fit Transit call
+  mu.msg(1, "Transit call with the best-fit values.")
+ 
+  # MCcubed output file
+  MCfile = date_dir + 'best_params.txt'
+
+  # Call bestFit submodule and make new bestFit_tconfig.cfg
+  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, tconfig, date_dir)
+
+  # Best-fit tconfig
+  bestFit_tconfig = date_dir + 'bestFit_tconfig.cfg'
+
+  # Call Transit with the best-fit tconfig :
+  Tcall = Transitdir + "/transit/transit"
+  subprocess.call(["{:s} -c {:s}".format(Tcall, bestFit_tconfig)],
+                    shell=True, cwd=date_dir)
+
   mu.msg(1, "~~ BART End ~~")
 
 

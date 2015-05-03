@@ -134,6 +134,7 @@ import re
     2014-10-02  Jasmina       Added option to read atmfile with or without radius 
                               array in it.
     2014-11-06  Jasmina       Minor adjustments for proper TEA execution.
+    2015-05-03  jasmina       Corrected atm header.
 """
 
 def read_eabun(solabun):
@@ -623,7 +624,7 @@ def makeRadius(out_spec, atmfile, abun_file, tepfile):
     Revisions
     ---------
     2014-09-20 Jasmina   Written by.
-    2014-09-26 Jasmina   Added correct atm header.
+    2015-05-03 Jasmina   Corrected atm header.
     """
 
     # Make a copy of the original TEA atmfile
@@ -640,11 +641,8 @@ def makeRadius(out_spec, atmfile, abun_file, tepfile):
 
     # Write a header file
     header = (
-      "# This is an atmospheric file with calculated radius, pressure,\n"
-      "# temperature, and species abundances (mixing ratio) for all listed\n"
-      "# species.\n"
-      "# Units: radius (km), pressure (bar), temperature (K),\n"
-      "#        abundance (unitless).")
+    "# This is a final TEA output file with calculated abundances (mixing fractions) for all listed species.\n\
+    # Units: pressure (bar), temperature (K), abundance (unitless).")
     fout.write(header + '\n\n')
     
     # Retrieve planet name and surface radius
