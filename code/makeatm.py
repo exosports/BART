@@ -641,8 +641,8 @@ def makeRadius(out_spec, atmfile, abun_file, tepfile):
 
     # Write a header file
     header = (
-    "# This is a final TEA output file with calculated abundances (mixing fractions) for all listed species.\n\
-    # Units: pressure (bar), temperature (K), abundance (unitless).")
+    "# This is a final TEA output file with calculated abundances (mixing fractions) for all listed species.\n"
+    "# Units: pressure (bar), temperature (K), abundance (unitless).")
     fout.write(header + '\n\n')
     
     # Retrieve planet name and surface radius
@@ -819,7 +819,7 @@ def uniform(atmfile, press_file, abun_file, tepfile, species, abundances, temp):
   # Put species names into an array:
   spec = np.asarray(species.split())
   # Put abundance values into an array:
-  abun = np.asarray(abundances.split(), np.double)
+  abun = np.asarray(abundances, np.double)
 
   # Write to file:
   f = open(atmfile, 'w')

@@ -72,7 +72,7 @@ def makeTransit(cfile):
      BART configuration file.
   """
 
-  # Known (single-value) transit arguments:
+  # Known transit arguments:
   known_args = ["radlow",  "radhigh",  "raddelt",  "radfct",
                 "wllow",   "wlhigh",   "wlfct",
                 "wnlow",   "wnhigh",   "wndelt",  "wnfct", "wnosamp",
@@ -99,7 +99,7 @@ def makeTransit(cfile):
   args = Bconfig.options(section)
 
   # transit configuration filename:
-  tcfile = open(Bconfig.get(section, "config"), "w")
+  tcfile = open(Bconfig.get(section, "tconfig"), "w")
   # FINDME: Add file-not-found exception
 
   # Keyword for the atmospheric file is different in transit:
@@ -144,7 +144,7 @@ def makeMCMC(cfile, MCMC_cfile):
   # Known arguments that may have a path:
   input_args = ["tep_name", "kurucz", "molfile", "filter", "linedb",
                 "cia", "loc_dir"]
-  output_args = ["config", "atmfile", "opacityfile", "press_file",
+  output_args = ["tconfig", "atmfile", "opacityfile", "press_file",
                "abun_basic", "abun_file", "preatm_file", "output", "savemodel"]
 
   # Inputs should always exist:

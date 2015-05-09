@@ -120,15 +120,15 @@ def main():
   # Add config file option:
   cparser.add_argument("-c", "--config_file",
                        help="Configuration file", metavar="FILE")
-  cparser.add_argument("--justTEA",               action='store_true',
-                       help="Run only TEA.")
-  cparser.add_argument("--justOpacity",           action='store_true',
-                       help="Run only Transit to generate the Opacity table.")
-  cparser.add_argument("--resume",                action='store_true',
-                       help="Resume a previous run.")
 
   # Parser for the MCMC arguments:
   parser = argparse.ArgumentParser(parents=[cparser])
+  parser.add_argument("--justTEA",               action='store_true',
+                       help="Run only TEA.")
+  parser.add_argument("--justOpacity",           action='store_true',
+                       help="Run only Transit to generate the Opacity table.")
+  parser.add_argument("--resume",                action='store_true',
+                       help="Resume a previous run.")
   # Directories and files options:
   group = parser.add_argument_group("Directories and files")
   group.add_argument("--loc_dir", dest="loc_dir",
@@ -263,6 +263,7 @@ def main():
   # Get only the arguments defined above:
   known, unknown = parser.parse_known_args(remaining_argv)
 
+
   # Get configuration file from command-line:
   cfile = cargs.config_file
   # Default:
@@ -363,7 +364,7 @@ def main():
 
   if runMCMC < 2:  # Elemental-abundances file
     abun_file = date_dir + abun_file
-    print("CO swap: {}".format(COswap))
+    mu.msg(1, "CO swap: {}".format(COswap), 2)
     mat.makeAbun(abun_basic, abun_file, solar_times, COswap)
     mu.msg(1, "Created new elemental abundances file.", 2)
 
@@ -420,7 +421,7 @@ def main():
     shutil.copy2(opacityfile, date_dir + os.path.basename(opacityfile))
 
   if justOpacity:
-    mu.msg(1, "~~ BART End (after Transit) ~~")
+    mu.msg(1, "~~ BART End (after Transit opacity calculation) ~~")
     return
 
   # Run the MCMC:
