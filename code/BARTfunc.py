@@ -247,7 +247,7 @@ def main(comm):
 
   # :::::::  Spawn transit code  :::::::::::::::::::::::::::::::::::::
   # # transit configuration file:
-  transitcfile = args2.config
+  transitcfile = args2.tconfig
  
   # FINDME: Find a way to set verb to the transit subprocesses.
   # Silence all threads except rank 0:
