@@ -225,7 +225,6 @@ def main(comm):
 
   # Send nlayers + nspecies to master:
   #mu.comm_gather(comm, np.array([nlayers, nspecies], dtype='i'), MPI.INT)
-  mu.msg(verb, "ICON FLAG 55")
 
   # Pressure-Temperature profile:
   PTargs = [PTtype]
@@ -284,7 +283,6 @@ def main(comm):
   nifilter  = [] # Normalized interpolated filter
   istarfl   = [] # interpolated stellar flux
   wnindices = [] # wavenumber indices used in interpolation
-  mu.msg(verb, "OCON FLAG 66: Prepare!")
   for i in np.arange(nfilters):
     # Read filter:
     filtwaven, filttransm = w.readfilter(ffile[i])
@@ -335,7 +333,7 @@ def main(comm):
       continue
 
     #mu.msg(verb, "T pars: \n{}\n".format(PTargs))
-    mu.msg(verb-10, "Temperature profile: {}".format(profiles[0]))
+    mu.msg(verb-20, "Temperature profile: {}".format(profiles[0]))
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]

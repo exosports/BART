@@ -6,20 +6,30 @@ import scipy.special   as sp
 import makeatm as mat
 import PT as pt
 
-# read MCMC out
-def read_MCMC_out(MCfile):
 
-    # open file to read
+def read_MCMC_out(MCfile):
+    """
+    Read the MCMC output log file. Extract the best fitting parameters.
+    """
+    # Open file to read
     f = open(MCfile, 'r')
     lines = np.asarray(f.readlines())
     f.close() 
 
-    # find where the data starts and ends
-    datalines = lines[1:]
-    ndata = len(datalines)
-    data = np.zeros((ndata, 4))
-    for i in np.arange(ndata):
-            data[i] = datalines[i].split()
+    # Find where the data starts and ends:
+    for ini in np.arange(len(lines)):
+        if lines[ini].startswith(' Best-fit params'):
+            break
+    ini += 1
+    end = ini
+    for end in np.arange(ini, len(lines)):
+        if lines[end].strip() == "":
+            break
+
+    # Read data:
+    data = np.zeros((end-ini, 4))
+    for i in np.arange(ini, end):
+        data[i-ini] = lines[i].split()
     bestP = data[:, 0]
     uncer = data[:, 1]
     SN    = data[:, 2] 

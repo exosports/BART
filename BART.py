@@ -137,7 +137,9 @@ def main():
   group.add_argument("--tep_name", dest="tep_name",
            help="Transiting exoplanet file name.",
            type=str, action="store", default=None)
-
+  group.add_argument("--logfile", dest="logfile",
+           help="Help me!",
+           type=str, action="store", default=None)
   # Pressure layers options:
   group = parser.add_argument_group("Layers pressure sampling")
   group.add_argument("--n_layers", dest="n_layers",
@@ -278,7 +280,7 @@ def main():
   config.optionxform = str  # This one enable Uppercase in arguments
   config.read([cfile])
   defaults = dict(config.items("MCMC"))
-  mu.msg(1, "The configuration file is: '{:s}'.".format(cfile), 2)
+  mu.msg(1, "The configuration file is: '{:s}'.".format(cfile), indent=2)
 
   # Set the defaults from the configuration file:
   parser.set_defaults(**defaults)
@@ -290,7 +292,6 @@ def main():
   for var in dir(known):
     if not var.startswith("_"):
       exec("{:s} = args.{:s}".format(var, var))
-      #print(var)
 
   # Make output directory:
   # Make a subdirectory with the date and time
@@ -300,7 +301,7 @@ def main():
   date_dir = os.path.normpath(loc_dir) + "/"
   if not os.path.isabs(date_dir):
     date_dir = os.getcwd() + "/" + date_dir
-  mu.msg(1, "Output folder: '{:s}'".format(date_dir), 2)
+  mu.msg(1, "Output folder: '{:s}'".format(date_dir), indent=2)
   try:
     os.mkdir(date_dir)
   except OSError, e:
@@ -318,31 +319,31 @@ def main():
   else:
     shutil.copy2(tep_name, date_dir + os.path.basename(tep_name))
 
-
   # Check if files already exist:
   runMCMC = 0  # Flag that indicate which steps to run
   # Atmospheric file:
   if os.path.isfile(atmfile):
     atmfile = os.path.realpath(atmfile)
     shutil.copy2(atmfile, date_dir + os.path.basename(atmfile))
-    mu.msg(1, "Atmospheric file copied from: '{:s}'.".format(atmfile),2)
+    mu.msg(1, "Atmospheric file copied from: '{:s}'.".format(atmfile),indent=2)
     runMCMC |= 8
   # Pre-atmospheric file:
   if os.path.isfile(preatm_file):
     preatm_file = os.path.realpath(preatm_file)
     shutil.copy2(preatm_file, date_dir + os.path.basename(preatm_file))
-    mu.msg(1, "Pre-atmospheric file copied from: '{:s}'.".format(preatm_file),2)
+    mu.msg(1, "Pre-atmospheric file copied from: '{:s}'.".format(preatm_file),
+           indent=2)
     runMCMC |= 4
   # Elemental-abundances file:
   if abun_file is not None and os.path.isfile(abun_file):
     shutil.copy2(abun_file, date_dir + os.path.basename(abun_file))
-    mu.msg(1, "Elemental abundances file copied from: '{:s}'.".format(
-                                                                 abun_file), 2)
+    mu.msg(1, "Elemental abundances file copied from: '{:s}'.".
+              format(abun_file), indent=2)
     runMCMC |= 2
   # Pressure file:
   if press_file is not None and os.path.isfile(press_file):
     shutil.copy2(press_file, date_dir + os.path.basename(press_file))
-    mu.msg(1, "Pressure file copied from: '{:s}'.".format(press_file), 2)
+    mu.msg(1, "Pressure file copied from: '{:s}'.".format(press_file), indent=2)
     runMCMC |= 1
 
 
@@ -350,7 +351,7 @@ def main():
   if runMCMC < 1:  # Pressure file
     press_file = date_dir + press_file
     mp.makeP(n_layers, p_top, p_bottom, press_file, log)
-    mu.msg(1, "Created new pressure file.", 2)
+    mu.msg(1, "Created new pressure file.", indent=2)
 
   # Make uniform-abundance profiles if requested:
   if uniform is not None and runMCMC < 8:
@@ -364,21 +365,21 @@ def main():
 
   if runMCMC < 2:  # Elemental-abundances file
     abun_file = date_dir + abun_file
-    mu.msg(1, "CO swap: {}".format(COswap), 2)
+    mu.msg(1, "CO swap: {}".format(COswap), indent=2)
     mat.makeAbun(abun_basic, abun_file, solar_times, COswap)
-    mu.msg(1, "Created new elemental abundances file.", 2)
+    mu.msg(1, "Created new elemental abundances file.", indent=2)
 
   if runMCMC < 4:  # Pre-atmospheric file
     # Calculate the temperature profile:
     temp = ipt.initialPT2(PTinit, press_file, PTtype, tep_name)
     # Choose a pressure-temperature profile
-    mu.msg(1, "\nChoose temperature and pressure profile:", 2)
+    mu.msg(1, "\nChoose temperature and pressure profile:", indent=2)
     raw_input("  Press enter to continue, or quit and choose other initial "
               "PT parameters.")
     preatm_file = date_dir + preatm_file
     mat.make_preatm(tep_name, press_file, abun_file, in_elem, out_spec,
                   preatm_file, temp)
-    mu.msg(1, "Created new pre-atmospheric file.", 2)
+    mu.msg(1, "Created new pre-atmospheric file.", indent=2)
 
   if runMCMC < 8:  # Atmospheric file
     # Generate the TEA configuration file:
@@ -395,10 +396,10 @@ def main():
     atmfile = date_dir + atmfile
     # Add radius array:
     mat.makeRadius(out_spec, atmfile, abun_file, tep_name)
-    mu.msg(1, "Added radius column to TEA atmospheric file.", 2)
+    mu.msg(1, "Added radius column to TEA atmospheric file.", indent=2)
     # Re-format file for use with transit:
     mat.reformat(atmfile)
-    mu.msg(1, "Atmospheric file reformatted for Transit.", 2)
+    mu.msg(1, "Atmospheric file reformatted for Transit.", indent=2)
 
   if justTEA:
     mu.msg(1, "~~ BART End (after TEA) ~~")
@@ -417,7 +418,8 @@ def main():
     subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
                     shell=True, cwd=date_dir)
   else:
-    mu.msg(1, "\nTransit copies the existing opacity file from:\n '{:s}'.".format(opacityfile),2)
+    mu.msg(1, "\nTransit copies the existing opacity file from:\n '{:s}'.".
+                 format(opacityfile), indent=2)
     shutil.copy2(opacityfile, date_dir + os.path.basename(opacityfile))
 
   if justOpacity:
@@ -431,10 +433,10 @@ def main():
                   shell=True, cwd=date_dir)
 
   # Run best-fit Transit call
-  mu.msg(1, "Transit call with the best-fit values.")
+  mu.msg(1, "Transit call with the best-fitting values.")
  
   # MCcubed output file
-  MCfile = date_dir + 'best_params.txt'
+  MCfile = date_dir + logfile
 
   # Call bestFit submodule and make new bestFit_tconfig.cfg
   bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, tconfig, date_dir)
