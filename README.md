@@ -103,7 +103,7 @@ $topdir/BART/modules/transit/transit/transit -c transit_demo.cfg --justOpacity
 Copy the BART configuration file and run the MCMC code to sample the posteriors:
 ```shell
 cp $topdir/BART/examples/demo/BART.cfg .  
-$topdir/BART/BART.py -c BART.py
+$topdir/BART/BART.py -c BART.cfg
 ```
 
 
