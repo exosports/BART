@@ -209,5 +209,19 @@ def initialPT2(params, pressfile, mode, tepfile, tint=100.0):
     # Additional PT arguments:
     PTargs += [rstar, tstar, tint, sma, gplanet]
 
+  # Calculate temperature
   Temp =  pt.PT_generator(pressure, params, PTargs)
+
+  # Plot PT profile
+  plt.figure(1)
+  plt.semilogy(Temp, pressure, '-', color = 'r')
+  plt.xlim(0.9*min(Temp), 1.1*max(Temp))
+  plt.ylim(max(pressure), min(pressure))
+  plt.title('Initial PT Line', fontsize=14)
+  plt.xlabel('T [K]'     , fontsize=14)
+  plt.ylabel('logP [bar]', fontsize=14)
+
+  # Save plot to current directory
+  plt.savefig('InitialPT.png') 
+
   return Temp
