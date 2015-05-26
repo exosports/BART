@@ -2,6 +2,8 @@ import numpy as np
 import reader as rd
 import scipy.constants as sc
 import scipy.special   as sp
+import matplotlib.pyplot as plt
+plt.ion()
 
 import makeatm as mat
 import PT as pt
@@ -37,17 +39,20 @@ def read_MCMC_out(MCfile):
 
     return bestP, uncer, SN, mean
 
+
 # get correct number of all parameters from stepsize
-def get_params(bestP, stepsize):
+def get_params(bestP, stepsize, params):
 
     j = 0
-    params = np.zeros(len(stepsize))
+    allParams = np.zeros(len(stepsize))
     for i in np.arange(len(stepsize)):
         if stepsize[i] != 0.0:
-            params[i] = bestP[j]
+            allParams[i] = bestP[j]
             j +=1
-
-    return params
+        else:
+            allParams[i] = params[i]
+            
+    return allParams
 
 
 # reads the tep file and calculates surface gravity
@@ -56,7 +61,7 @@ def get_starData(tepfile):
     # Sun mass, radius and AU:
     # Source: http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
     #         http://neo.jpl.nasa.gov/glossary/au.html
-    Rsun = 696.0 * 1e3          # m
+    Rsun = 696.0 * 1e6          # m
     AU   = 149597870.7 * 1e3    # m
 
     # Open tepfile to read and get data:
@@ -78,7 +83,7 @@ def get_starData(tepfile):
     return R_star, T_star, sma
 
 # write best-fit atm file with scaled H2 and He to abundances sum of 1
-def write_atmfile(atmfile, molfit, T_line, params, date_dir):
+def write_atmfile(atmfile, molfit, T_line, allParams, date_dir):
 
     # Open atmfile to read
     f = open(atmfile, 'r')
@@ -131,7 +136,7 @@ def write_atmfile(atmfile, molfit, T_line, params, date_dir):
 
     # number of molecules to fit
     nfit = len(molfit)
-    abun_fact = params[5:]
+    abun_fact = allParams[5:]
 
     # multiply the abundances of molfit molecules
     for i in np.arange(len(columns)):
@@ -158,28 +163,6 @@ def write_atmfile(atmfile, molfit, T_line, params, date_dir):
     # open best fit atmospheric file
     fout = open(date_dir + 'bestFit.atm', 'w')
     fout.writelines(lines[:start])
-
-    #print T_line
-    #print type(T_line)
-    # TEMPORARY HACK!
-    T_line = np.array([ 1592.61,  1592.49,  1592.22,  1591.62,  1590.43,  1588.31,
-        1584.9 ,  1579.83,  1572.82,  1563.69,  1552.41,  1539.06,
-        1523.84,  1507.05,  1489.04,  1470.21,  1450.94,  1431.61,
-        1412.56,  1394.09,  1376.43,  1359.8 ,  1344.32,  1330.07,
-        1317.1 ,  1305.41,  1294.96,  1285.7 ,  1277.56,  1270.44,
-        1264.25,  1258.9 ,  1254.31,  1250.37,  1247.01,  1244.15,
-        1241.73,  1239.68,  1237.95,  1236.49,  1235.27,  1234.24,
-        1233.38,  1232.66,  1232.06,  1231.56,  1231.14,  1230.79,
-        1230.51,  1230.26,  1230.06,  1229.9 ,  1229.76,  1229.65,
-        1229.55,  1229.47,  1229.41,  1229.36,  1229.31,  1229.28,
-        1229.25,  1229.22,  1229.2 ,  1229.19,  1229.17,  1229.16,
-        1229.15,  1229.15,  1229.14,  1229.14,  1229.13,  1229.13,
-        1229.13,  1229.12,  1229.12,  1229.12,  1229.12,  1229.12,
-        1229.12,  1229.12,  1229.12,  1229.12,  1229.12,  1229.12,
-        1229.12,  1229.12,  1229.12,  1229.12,  1229.12,  1229.12,
-        1229.12,  1229.12,  1229.12,  1229.12,  1229.12,  1229.12,
-        1229.12,  1229.12,  1229.12,  1229.12])
-
 
     # Write atm file for each run
     for i in np.arange(ndata): 
@@ -221,13 +204,16 @@ def bestFit_tconfig(tconfig, date_dir):
 
 
 # call above functions to prepare Transit for best-fit execution
-def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir):
+def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, params):
 
     # read atmfile
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
 
     # get surface gravity
     grav, Rp = mat.get_g(tepfile)
+
+    # convert gravity to cm/s^2
+    grav = grav*1e2
 
     # get star data
     R_star, T_star, sma = get_starData(tepfile)
@@ -236,23 +222,35 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir):
     bestP, uncer, SN, mean = read_MCMC_out(MCfile)
 
     # get all params
-    params = get_params(bestP, stepsize)
+    allParams = get_params(bestP, stepsize, params)
 
     # get PTparams and abundances factors
-    nparams = len(params)
+    nparams = len(allParams)
     nmol = len(molfit)
     nPTparams = nparams - nmol
-    PTparams  = params[:nPTparams]
-    AbunFact  = params[nPTparams:]
+    PTparams  = allParams[:nPTparams]
+    AbunFact  = allParams[nPTparams:]
 
-    # HARDCODED !!!!!!!!!!!!
+    # HARDCODED !
     T_int = 100 # K
 
     # call PT line profile to calculate temperature
     T_line = pt.PT_line(pressure, PTparams, R_star, T_star, T_int, sma, grav)
 
+    # Plot best PT profile
+    plt.figure(1)
+    plt.semilogy(T_line, pressure, '-', color = 'r')
+    plt.xlim(0.9*min(T_line), 1.1*max(T_line))
+    plt.ylim(max(pressure), min(pressure))
+    plt.title('Best PT', fontsize=14)
+    plt.xlabel('T [K]'     , fontsize=14)
+    plt.ylabel('logP [bar]', fontsize=14)
+
+    # Save plot to current directory
+    plt.savefig('Best_PT.png') 
+
     # write best-fit atmospheric file
-    write_atmfile(atmfile, molfit, T_line, params, date_dir)
+    write_atmfile(atmfile, molfit, T_line, allParams, date_dir)
 
     # bestFit atm file
     bestFit_atm = date_dir + 'bestFit.atm'
