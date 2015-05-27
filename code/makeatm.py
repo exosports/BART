@@ -242,127 +242,115 @@ def get_g(tepfile):
     g = sc.G * Mp / (Rp**2)
 
     # convert Rp back to km
-    Rp = Rp / 1000.
+    Rp = Rp / 1000.0
 
     return g, Rp
 
 
 # calculates radii for each pressure in the atmosphere
-def radpress(tepfile, temp, mu, pres):
-    '''
-    Given a pressure in bar, temperature in K, mean molecular
-    mass in g/mol, the function calculates radii in km for each 
-    layer in the atmosphere. It declares constants, calls get_g()
-    function, allocates array for radii, and calculates radii for
-    each pressure. The input pressure and temperature arrays MUST be
-    in ascending order before interpolation is done, and then in
-    in descending order because reference radius Rp is placed on
-    the bottom of the atmosphere where pressure is largest. 
-    All radii are calculated based on the reference level (p = 1bar). 
-    The final radii array is calculated based on the referenced surface
-    radius, above and below the surface radius. Above values are positive
-    below values are negative relative to the value of the surface radius.
-    Radii array is given in km, and converted back to ascending order for
-    pre-atm file. 
+def radpress(tepfile, temp, mu, press, p0):
+  '''
+  Calculate the radii (in km) for each layer in the atmosphere, given
+  their pressures (bar), temperatures (K), mean molecular mass (g/mol),
+  and the reference pressure at the planet 'surface' radius.
 
-    Parameters
-    ----------
-    tepfile: String
-       Transiting extrasolar planet filename.
-    temp: 1D array of floats
-       Temperatures for each atmospheric layer (in K).
-    mu: 1D array of floats
-       Mean molecular mass for each atmospheric layer (g/mol).
-    pres: 1D array of floats
-       Pressures for each atmospheric layer (bar).
+  Calculations are based on the hydrostatic-equilibrium equations
+  (Andrews: "Introduction to Atmospheric Physics" page 26):
+    rad2 - rad1 = (R * T1)/g * ln(p1/p2)
+    R = R*/mu, R* - universal gas constant, mu - mean molecular mass
+    R* = Avogadro * Boltzmann
+    rad2 = rad1 + (Avogadro * Boltzmann * T1) / (g * mu1) * ln(p1/p2)
 
-    Returns
-    -------
-    rad: 1D array of floats
-       Array containing radii for each atmospheric layer (in km).
+  Parameters
+  ----------
+  tepfile: String
+     Transiting extrasolar planet filename.
+  temp: 1D array of floats
+     Temperatures for each atmospheric layer (in K).
+  mu: 1D array of floats
+     Mean molecular mass for each atmospheric layer (g/mol).
+  press: 1D array of floats
+     Pressures for each atmospheric layer (bar).
+  p0: Float
+     Pressure (bar) at the planet 'surface' radius.
 
-    Revisions
-    ---------
-    2014-07-04 Jasmina   Written by.
-    2014-09-29 Jasmina   Added radii calculation based on the referenced
-                         pressure level of 1.00 bar and surface radius
-                         defined in the tepfile.
-    '''
+  Returns
+  -------
+  rad: 1D array of floats
+     Array containing radii for each atmospheric layer (in km).
 
-    # Define physical constants
-    Boltzmann = 1.38065e-23 # J/K == (N*m) / K = kg m/s^2 * m / K
-    Avogadro  = 6.022e23    # 1/mol
+  Notes:
+  ------
+  The input pressure array is reversed to have an ascending order before the
+  interpolation, later it is reversed back to the original order.
 
-    # Calculate surface gravity
-    g, Rp = get_g(tepfile)
+  Revisions
+  ---------
+  2014-07-04  Jasmina  Written by.
+  2014-09-29  Jasmina  Added radii calculation based on the referenced
+                       pressure level of 1.00 bar and surface radius
+                       defined in the tepfile.
+  2015-05-27  Patricio  Addded p0 as argument.
+  '''
 
-    # Number of layers in the atmosphere
-    n = len(pres)
+  # Read the surface gravity and planet radius from the tepfile:
+  g, Rp = get_g(tepfile)
 
-    # Allocate array of radii
-    rad = np.zeros(n)
+  # Number of layers in the atmosphere:
+  n = len(press)
 
-    # Referenced surface pressure
-    p0 = 0.1  # bar
+  # Allocate array of radii:
+  rad = np.zeros(n)
 
-    # Interpolate temp and mu in lin-log space (1bar)
-    interPT = interp1d(np.log10(pres), temp)
-    intermu = interp1d(np.log10(pres),   mu)
+  # Interpolate temp and mu in lin-log space (1bar)
+  interPT = interp1d(np.log10(press), temp)
+  intermu = interp1d(np.log10(press),   mu)
 
-    # Get temp and mu at surface pressure (1bar)
-    try:
-        temp_1bar = interPT(np.log10(p0))
-        mu_1bar   = intermu(np.log10(p0))
-    except IOError:
-        print("\nReferenced surface pressure of 0.1bar is not in the range of pressures: " + \
-               "[" + str(min(pres), max(pres)) + "]\n")
+  # Get temp and mu at surface pressure (1bar)
+  try:
+    temp_1bar = interPT(np.log10(p0))
+    mu_1bar   = intermu(np.log10(p0))
+  except IOError:
+    print("Referenced surface pressure of {:.3e} bar is not in the "
+          "range of pressures: [{}, {}] bar.".
+                            format(p0, np.amin(press), np.amax(pres)))
 
-    # Return back to desending order for radius calculation
-    pres = pres[::-1]
-    temp = temp[::-1]
-    mu   =   mu[::-1]
+  # Return back to desending order for radius calculation
+  press = press[::-1]
+  temp  = temp[::-1]
+  mu    =   mu[::-1]
 
-    # Find the index of the closest pressure point to surface (1bar)
-    idx = (np.abs(pres - p0)).argmin()
+  # Find the index of the closest pressure point to p0:
+  idx = np.argmin(np.abs(press - p0))
 
-    # Andrews:"Introduction to Atmospheric Physics" page 26
-    # rad2 - rad1 = (R * T1)/g * ln(p1/p2)
-    # R = R*/mu, R* - universal gas constant, mu - mean molecular mass
-    # R* = Avogadro * Boltzmann
-    # rad2 = rad1 + (Avogadro * Boltzmann * T1) / (g * mu1) * ln(p1/p2)
-    # to convert from g to kg, mu[i] need to be multiplied with 1000
+  # If p0 is not in press:
+  if press[idx] != p0:
+      # If the point is above p0:
+      if press[idx] > p0:
+          rad[idx] = Rp + 0.5 * (temp[idx] / mu[idx] + temp_1bar / mu_1bar) *\
+                     (sc.Avogadro * sc.k * np.log(p0/press[idx]) / g)
+      # If the point is below p0:
+      else:
+          rad[idx] = Rp - 0.5 * (temp[idx] / mu[idx] + temp_1bar / mu_1bar) *\
+                     (sc.Avogadro * sc.k * np.log(press[idx]/p0) / g)
 
-    # ====== If pres = 1 bar is not in the list of pressure points ====== #
-    if float(pres[idx]) != p0:
-        # If the point is above the surface (1bar)
-        if pres[idx] > p0:
-            rad[idx] = Rp + 1./2. * (temp[idx] / mu[idx] + temp_1bar / mu_1bar) * \
-                       (Avogadro * Boltzmann * np.log(p0/pres[idx]) / g)
-        # If the point is below the surface (1 bar)
-        else:
-            rad[idx] = Rp - 1./2. * (temp[idx] / mu[idx] + temp_1bar / mu_1bar) * \
-                       (Avogadro * Boltzmann * np.log(pres[idx]/p0) / g)
-    # ====== If pres = 1 bar is in list of pressure points ====== #
-    else:
-        rad[idx] = Rp
- 
-    # Calculate radius below the surface (1 bar)
-    for i in reversed(np.arange(idx)):
-        rad[i] = rad[i+1] - 1./2. * (temp[i] / mu[i] + temp[i+1] / mu[i+1]) * \
-                 (Avogadro * Boltzmann * np.log(pres[i]/pres[i+1]) / g)
-    # Calculate radius above the surface (1bar)  
-    for i in np.arange(idx+1, n):
-        rad[i] = rad[i-1] + 1./2. * (temp[i] / mu[i] + temp[i-1] / mu[i-1]) * \
-                 (Avogadro * Boltzmann * np.log(pres[i-1]/pres[i]) / g)  
+  else:
+      rad[idx] = Rp
 
-    # Reverse the order of calculated radii to write them in the right order
-    #         in pre-atm file
-    rad = rad[::-1]
+  # Calculate radius below p0:
+  for i in reversed(np.arange(idx)):
+      rad[i] = rad[i+1] - 0.5 * (temp[i] / mu[i] + temp[i+1] / mu[i+1]) * \
+               (sc.Avogadro * sc.k * np.log(press[i]/press[i+1]) / g)
+  # Calculate radius above p0:
+  for i in np.arange(idx+1, n):
+      rad[i] = rad[i-1] + 0.5 * (temp[i] / mu[i] + temp[i-1] / mu[i-1]) * \
+               (sc.Avogadro * sc.k * np.log(press[i-1]/press[i]) / g)
 
-    # Subtract radius array from the referenced surface radius
-    rad = rad #- Rp
+  # Reverse the order of calculated radii to write them in the right order
+  # in pre-atm file:
+  rad = rad[::-1]
 
-    return rad
+  return rad
 
 
 def makeAbun(solar_abun, abun_file, solar_times=1, COswap=False):
@@ -595,109 +583,102 @@ def mean_molar_mass(abun_file, atmfile):
     return mu
 
 
-def makeRadius(out_spec, atmfile, abun_file, tepfile):
-    """
-    This function adds radius array into the final TEA output atmospheric file.
-    It opens a new file to write, adds headers, reads the final TEA output
-    atmospheric file to take the species, pressure, temperature, and abundances, 
-    calls the mean_molar_mass() function to calculate mu, calls radpress() to
-    calculate radius, and then write all the data into a new file. Radius array
-    is added as the first column in the file, the rest of the TEA format is
-    preserved. 
+def makeRadius(out_spec, atmfile, abun_file, tepfile, p0):
+  """
+  Add radius array into the final TEA output atmospheric file.
+  It opens a new file to write, adds headers, reads the final TEA output
+  atmospheric file to take the species, pressure, temperature, and abundances, 
+  calls the mean_molar_mass() function to calculate mu, calls radpress() to
+  calculate radius, and then write all the data into a new file. Radius array
+  is added as the first column in the file, the rest of the TEA format is
+  preserved. 
 
-    Parameters
-    ----------
-    out_spec: String
-             String containing all output molecular species.
-    atmfile: String
-             Name of TEA atmospheric ASCII file.
-    abun_file: String
-             Name of the abundances file.
-             (default: 'abundances.txt', Asplund et al 2009)
-    tepfile: String
-             Name of the tepfile.
+  Parameters
+  ----------
+  out_spec: String
+      String containing all output molecular species.
+  atmfile: String
+      Name of TEA atmospheric ASCII file.
+  abun_file: String
+      Name of the abundances file.
+      (default: 'abundances.txt', Asplund et al 2009)
+  tepfile: String
+      Name of the tepfile.
+  p0: Float
+      Reference pressure level (corresponding to Rplanet from the tepfile).
 
-    Return
-    ------
-    None
+  Revisions
+  ---------
+  2014-09-20 Jasmina   Written by.
+  2015-05-03 Jasmina   Corrected atm header.
+  """
 
-    Revisions
-    ---------
-    2014-09-20 Jasmina   Written by.
-    2015-05-03 Jasmina   Corrected atm header.
-    """
+  # Make a copy of the original TEA atmfile
+  #shutil.copy2(atmfile, atmfile[:-4] + '_genuine.tea')
 
-    # Make a copy of the original TEA atmfile
-    #shutil.copy2(atmfile, atmfile[:-4] + '_genuine.tea')
+  # Read the final atmospheric file
+  molecules, pressure, temperature, abundances = readatm(atmfile)
 
-    # Read the final atmospheric file
-    molecules, pressure, temperature, abundances = readatm(atmfile)
+  # Calculate the mean molecular mass of each layer:
+  mu = mean_molar_mass(abun_file, atmfile)
 
-    # Calculate the mean molecular mass of each layer:
-    mu = mean_molar_mass(abun_file, atmfile)
+  # Open atmfile to overwrite:
+  fout = open(atmfile, 'w')
 
-    # Open atmfile to overwrite:
-    fout = open(atmfile, 'w')
+  # Write a header file
+  header = (
+  "# This is a final TEA output file with calculated abundances (mixing fractions) for all listed species.\n"
+  "# Units: pressure (bar), temperature (K), abundance (unitless).")
+  fout.write(header + '\n\n')
+  
+  # Retrieve planet name and surface radius
+  g, Rp = get_g(tepfile)
 
-    # Write a header file
-    header = (
-    "# This is a final TEA output file with calculated abundances (mixing fractions) for all listed species.\n"
-    "# Units: pressure (bar), temperature (K), abundance (unitless).")
-    fout.write(header + '\n\n')
-    
-    # Retrieve planet name and surface radius
-    g, Rp = get_g(tepfile)
+  # Write species names
+  fout.write('#SPECIES\n' + out_spec + '\n\n')
 
-    # Write planet name and surface radius
-    #head, tepname = os.path.split(tepfile)
-    #fout.write('#' + tepname[:-4] +'\n\n')
-    #fout.write('Rp ' + str(Rp) + '\n\n')
+  # Write TEA data
+  fout.write('#TEADATA\n')
 
-    # Write species names
-    fout.write('#SPECIES\n' + out_spec + '\n\n')
+  # Calculate the radius of each layer:
+  rad = radpress(tepfile, temperature, mu, pressure, p0)
 
-    # Write TEA data
-    fout.write('#TEADATA\n')
+  # Number of layers in the atmosphere
+  nLayers = len(abundances)
 
-    # Calculate the radius of each layer:
-    rad = radpress(tepfile, temperature, mu, pressure)
+  # Number of molecules
+  nspec = len(molecules)
 
-    # Number of layers in the atmosphere
-    nLayers = len(abundances)
+  # Make a list of labels
+  label = ['#Radius'.ljust(11)] + ['Pressure'.ljust(11)] + ['Temp'.ljust(8)]
+  for i in np.arange(nspec):
+       label = label + [molecules[i].ljust(11)]
+  label = ''.join(label)
 
-    # Number of molecules
-    nspec = len(molecules)
+  # Write new label
+  fout.write(label + '\n')
 
-    # Make a list of labels
-    label = ['#Radius'.ljust(11)] + ['Pressure'.ljust(11)] + ['Temp'.ljust(8)]
-    for i in np.arange(nspec):
-         label = label + [molecules[i].ljust(11)]
-    label = ''.join(label)
+  # Write atm file for each run
+  for i in np.arange(nLayers): 
+      # Radius, pressure, and temp for the current line
+      radi = str('%10.3f'%rad[i])
+      presi = str('%10.4e'%pressure[i])
+      tempi = str('%7.2f'%temperature[i])
 
-    # Write new label
-    fout.write(label + '\n')
+      # Insert radii array
+      fout.write(radi.ljust(10) + ' ')
 
-    # Write atm file for each run
-    for i in np.arange(nLayers): 
-        # Radius, pressure, and temp for the current line
-        radi = str('%10.3f'%rad[i])
-        presi = str('%10.4e'%pressure[i])
-        tempi = str('%7.2f'%temperature[i])
+      # Insert results from the current line (T-P) to atm file
+      fout.write(presi.ljust(10) + ' ')
+      fout.write(tempi.ljust(7) + ' ')
 
-        # Insert radii array
-        fout.write(radi.ljust(10) + ' ')
+      # Write current abundances
+      for j in np.arange(nspec):
+          fout.write('%1.4e'%abundances[i][j] + ' ')
+      fout.write('\n')
 
-        # Insert results from the current line (T-P) to atm file
-        fout.write(presi.ljust(10) + ' ')
-        fout.write(tempi.ljust(7) + ' ')
-
-        # Write current abundances
-        for j in np.arange(nspec):
-            fout.write('%1.4e'%abundances[i][j] + ' ')
-        fout.write('\n')
-
-    # Close atm file
-    fout.close()
+  # Close atm file
+  fout.close()
 
 
 def make_preatm(tepfile, press_file, abun_file, in_elem, out_spec,
@@ -707,8 +688,8 @@ def make_preatm(tepfile, press_file, abun_file, in_elem, out_spec,
   It reads the pressure file and elemental dex abundance data, trims to
   the selected elements.  It converts dex abundances to number density
   and divide them by hydrogen number density to get fractional abundances.
-  It calls radpress() to calculate radii, and writes the data
-  (pressure, temperature, elemental abundances) into a pre-atm file.
+  It writes the pressure, temperature, and elemental-abundances data
+  into a pre-atm file.
 
   Parameters
   ----------
@@ -788,7 +769,7 @@ def make_preatm(tepfile, press_file, abun_file, in_elem, out_spec,
   f.close()
 
 
-def uniform(atmfile, press_file, abun_file, tepfile, species, abundances, temp):
+def uniform(atmfile, press_file, abun_file, tepfile, species, abundances, temp, p0):
   """
   Generate an atmospheric file with uniform abundances.
 
@@ -808,6 +789,8 @@ def uniform(atmfile, press_file, abun_file, tepfile, species, abundances, temp):
      String with list of species mole-mixing-ratio (blank space separated).
   temp: 1D float ndarray
      Temperature profile.
+  p0: Float
+     Reference pressure level (corresponding to Rp from the tepfile).
 
   Modification History:
   ---------------------
@@ -842,7 +825,7 @@ def uniform(atmfile, press_file, abun_file, tepfile, species, abundances, temp):
   f.close()
 
   # Calculate the radius of each layer and put it into the atmfile:
-  makeRadius(species, atmfile, abun_file, tepfile)
+  makeRadius(species, atmfile, abun_file, tepfile, p0)
   # Reformat to use in transit:
   reformat(atmfile)
 

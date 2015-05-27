@@ -1,1 +1,11 @@
-We will have examples for the user to run.
+The files in the 'demo' folder correspond to the quick demo shown in the
+project's front page (https://github.com/joeharr4/BART).
+
+The BART_example.cfg is an example configuration file to run the BART code.
+Note that the demo config file does NOT contain all the possible variables
+that a full BART run can have.  Use the BART_example.cfg file for a
+real-life run.
+
+See the project's User and Code documentation:
+  https://github.com/joeharr4/BART/tree/master/doc
+for more details about how to run BART and the specific files and variables.

@@ -207,6 +207,10 @@ def main():
            help="If not None, set uniform abundances with the specified "
                 "values for each species in out_spec [default: %(default)s]",
            type=mu.parray, action="store", default=None)
+  group.add_argument("--refpress", dest="refpress",
+           help="Reference pressure level (bar) corresponding to the pressure"
+                "at the planet radius [default: %(default)s]",
+           type=float, action="store", default=0.1)
 
   # MCMC options:
   group = parser.add_argument_group("MCMC")
@@ -359,7 +363,7 @@ def main():
     temp = ipt.initialPT2(PTinit, press_file, PTtype, tep_name)
     # Generate the uniform-abundance profiles file:
     mat.uniform(date_dir + atmfile, press_file, abun_basic, tep_name,
-               out_spec, uniform, temp)
+               out_spec, uniform, temp, refpress)
     # Update the runMCMC flag to skip upcoming steps:
     runMCMC |= 8
 
@@ -395,7 +399,7 @@ def main():
     shutil.copy2(date_dir+"TEA/results/TEA.tea", date_dir+atmfile) 
     atmfile = date_dir + atmfile
     # Add radius array:
-    mat.makeRadius(out_spec, atmfile, abun_file, tep_name)
+    mat.makeRadius(out_spec, atmfile, abun_file, tep_name, refpress)
     mu.msg(1, "Added radius column to TEA atmospheric file.", indent=2)
     # Re-format file for use with transit:
     mat.reformat(atmfile)
