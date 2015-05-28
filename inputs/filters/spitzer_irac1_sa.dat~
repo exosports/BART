@@ -1,8 +1,5 @@
-# Average Spectral response curve for Spitzer IRAC 3.6 micron subarray
-
-# Extracted from:
-# http://irsa.ipac.caltech.edu/data/SPITZER/docs/irac/calibrationfiles/spectralresponse/080924ch1trans_sub.txt
-
+# Average Spectral response curve for IRAC 3.6 micron subarray
+# Sub-array mode
 # Wave     Spectral Response
 # microns  electrons / photon
 3.081060	0.001538
