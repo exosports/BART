@@ -86,7 +86,8 @@ def makeTransit(cfile):
                 "gsurf", "refpress", "refradius",
                 "cloudrad", "cloudfct", "cloudext",
                 "verb",
-                "outtoomuch", "outsample", "output",
+                "savefiles",
+                "outtoomuch", "outsample", "outmod", "outflux", "outintens",
                 "linedb", "cia", "orbpars", "orbparsfct"]
 
   # Name of the configuration-file section:
