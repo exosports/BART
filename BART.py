@@ -65,17 +65,16 @@ TEAdir     = BARTdir + "/modules/TEA/"
 MC3dir     = BARTdir + "/modules/MCcubed/src"
 Transitdir = BARTdir + "/modules/transit/"
 
-# Add path to submodules:
+# Add path to submodules and import:
 sys.path.append(BARTdir + "/code")
-sys.path.append(MC3dir)
-
-# Import submodules:
-import mcutils   as mu
 import makeP     as mp
 import InitialPT as ipt
 import makeatm   as mat
 import makecfg   as mc
 import bestFit   as bf
+
+sys.path.append(MC3dir)
+import mcutils   as mu
 
 def main():
   """
@@ -413,7 +412,7 @@ def main():
   MCMC_cfile = os.path.realpath(loc_dir) + "/MCMC_" + os.path.basename(cfile)
   mc.makeMCMC(cfile, MCMC_cfile)
   # Make transit configuration file:
-  mc.makeTransit(MCMC_cfile)
+  mc.makeTransit(MCMC_cfile, tep_name)
 
   # Generate the opacity file if it doesn't exist:
   if not os.path.isfile(opacityfile):

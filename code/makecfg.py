@@ -57,12 +57,14 @@ import os, sys
 import argparse, ConfigParser
 import numpy as np
 
+import reader as rd
+
 filedir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(filedir + "/../modules/MCcubed/src/")
 import mcutils as mu
 
 
-def makeTransit(cfile):
+def makeTransit(cfile, tepfile):
   """
   Make the transit configuration file.
 
@@ -70,6 +72,8 @@ def makeTransit(cfile):
   -----------
   cfile: String
      BART configuration file.
+  tepfile: String
+     A TEP file.
   """
 
   # Known transit arguments:
@@ -101,7 +105,6 @@ def makeTransit(cfile):
 
   # transit configuration filename:
   tcfile = open(Bconfig.get(section, "tconfig"), "w")
-  # FINDME: Add file-not-found exception
 
   # Keyword for the atmospheric file is different in transit:
   tcfile.write("atm {:s}\n".format(Bconfig.get(section, "atmfile")))
@@ -110,6 +113,18 @@ def makeTransit(cfile):
   if "molfile" not in args:
     tcfile.write("molfile {:s}\n".format(
       os.path.realpath(filedir + "/../modules/transit/inputs/molecules.dat")))
+
+  # Calculate gsurf and refradius from the tepfile:
+  tep = rd.File(tepfile)
+  mplanet = float(tep.getvalue('Mp')[0]) * 1.8983e+27
+  rplanet = float(tep.getvalue('Rp')[0]) * 7.1492e+07
+
+  # Planetary radius reference level in km:
+  Bconfig.set(section, "refradius", "{:.2f}".format(rplanet * 1e-3))
+  # Planetary surface gravity in cm/s2:
+  Bconfig.set(section, "gsurf", "{:.1f}".format(100*sc.G*mplanet/rplanet**2))
+  # Add these keywords:
+  args = np.union1d(args, ["refradius", "gsurf"])
 
   # Print the known arguments to file:
   for key in np.intersect1d(args, known_args):
