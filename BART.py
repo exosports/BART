@@ -234,6 +234,9 @@ def main():
   group.add_argument("--stepsize", dest="stepsize",
            help="Parameters stepsize",
            type=mu.parray, action="store", default=None)
+  group.add_argument("--burnin", dest="burnin",
+           help="Number of burn-in iterations per chain",
+           type=mu.parray, action="store", default=None)
 
   # Input converter options:
   group = parser.add_argument_group("Input Converter Options")
@@ -436,13 +439,13 @@ def main():
                   shell=True, cwd=date_dir)
 
   # Run best-fit Transit call
-  mu.msg(1, "Transit call with the best-fitting values.")
+  mu.msg(1, "\nTransit call with the best-fitting values.")
  
   # MCcubed output file
   MCfile = date_dir + logfile
 
   # Call bestFit submodule and make new bestFit_tconfig.cfg
-  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, tconfig, date_dir, params)
+  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, tconfig, date_dir, params, burnin)
 
   # Best-fit tconfig
   bestFit_tconfig = date_dir + 'bestFit_tconfig.cfg'
