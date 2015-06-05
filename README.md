@@ -57,8 +57,6 @@ cd $topdir/BART/modules/transit/pu
 make
 cd $topdir/BART/modules/transit/transit/
 make
-./config
-./compile
 ```
 
 Compile the MCcubed routines:
