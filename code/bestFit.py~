@@ -3,6 +3,7 @@ import reader as rd
 import scipy.constants as sc
 import scipy.special   as sp
 import matplotlib.pyplot as plt
+plt.ion()
 
 import makeatm as mat
 import PT as pt
@@ -194,6 +195,7 @@ def bestFit_tconfig(tconfig, date_dir):
     f.close()
 
     atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n' 
+    #atm_line = 'atm /home/jasmina/BART_WASP43b/BART-new/run/WASP-43b-short/WASP43b_noHCN_atm.tea\n'
     lines[0] = atm_line
     f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
     f.writelines(lines)
@@ -201,12 +203,9 @@ def bestFit_tconfig(tconfig, date_dir):
     f.close()
 
 
-# call above functions to prepare Transit for best-fit execution, plot MCMC PT profiles
-def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, params, burnin):
-    '''
-    Call Transit to produce best-fit outputs.
+# call above functions to prepare Transit for best-fit execution
+def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, params):
 
-    '''
     # read atmfile
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
 
@@ -230,27 +229,28 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, p
     nmol = len(molfit)
     nPTparams = nparams - nmol
     PTparams  = allParams[:nPTparams]
+    AbunFact  = allParams[nPTparams:]
 
     # HARDCODED !
     T_int = 100 # K
 
     # call PT line profile to calculate temperature
-    best_T = pt.PT_line(pressure, PTparams, R_star, T_star, T_int, sma, grav)
+    T_line = pt.PT_line(pressure, PTparams, R_star, T_star, T_int, sma, grav)
 
     # Plot best PT profile
     plt.figure(1)
-    plt.semilogy(best_T, pressure, '-', color = 'r')
-    plt.xlim(0.9*min(best_T), 1.1*max(best_T))
+    plt.semilogy(T_line, pressure, '-', color = 'r')
+    plt.xlim(0.9*min(T_line), 1.1*max(T_line))
     plt.ylim(max(pressure), min(pressure))
     plt.title('Best PT', fontsize=14)
     plt.xlabel('T [K]'     , fontsize=14)
     plt.ylabel('logP [bar]', fontsize=14)
 
     # Save plot to current directory
-    plt.savefig(date_dir + 'Best_PT.png') 
+    plt.savefig('Best_PT.png') 
 
     # write best-fit atmospheric file
-    write_atmfile(atmfile, molfit, best_T, allParams, date_dir)
+    write_atmfile(atmfile, molfit, T_line, allParams, date_dir)
 
     # bestFit atm file
     bestFit_atm = date_dir + 'bestFit.atm'
@@ -258,57 +258,4 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, p
     # write new bestFit Transit config
     bestFit_tconfig(tconfig, date_dir)
 
-    # plot MCMC PT profiles ===================================================
 
-    # get MCMC data:
-    MCMCdata = date_dir + "/output.npy"
-    data = np.load(MCMCdata)
-    nchains, npars, niter = np.shape(data)
-
-    # stuck chains:
-    data_stack = data[0,:,burnin:]
-    for c in np.arange(1, nchains):
-        data_stack = np.hstack((data_stack, data[c, :, burnin:]))
-
-    # create array of PT profiles
-    PTprofiles = np.zeros((np.shape(data_stack)[1], len(pressure)))
-
-    # current PT parameters for each chain, iteration
-    curr_PTparams = PTparams
-
-    # fill-in PT profiles array
-    print("  Plotting MCMC PT profile figure.")
-    for k in np.arange(0, np.shape(data_stack)[1]):
-        j = 0
-        for i in np.arange(len(PTparams)):
-            if stepsize[i] != 0.0:
-                curr_PTparams[i] = data_stack[j,k]
-                j +=1
-            else:
-                pass
-        PTprofiles[k] = pt.PT_line(pressure, curr_PTparams, R_star, T_star, T_int, sma, grav)
-        if k %10 == 0:
-            print(k)
-
-    # get percentiles (for 1,2-sigma boundaries):
-    low1 = np.percentile(PTprofiles, 16.0, axis=0)
-    hi1  = np.percentile(PTprofiles, 84.0, axis=0)
-    low2 = np.percentile(PTprofiles,  2.5, axis=0)
-    hi2  = np.percentile(PTprofiles, 97.5, axis=0)
-    median = np.median(PTprofiles, axis=0)
-
-    # plot figure
-    plt.figure(2)
-    ax=plt.subplot(111)
-    ax.fill_betweenx(pressure, low2, hi2, facecolor="#62B1FF", edgecolor="0.5")
-    ax.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC", edgecolor="#1873CC")
-    plt.semilogy(median, pressure, "-", lw=2, label='Median',   color="limegreen")
-    plt.semilogy(best_T, pressure, "-", lw=2, label="Best fit", color="r")
-    plt.ylim(pressure[0], pressure[-1])
-    plt.legend(loc="best")
-    plt.xlabel("Temperature  (K)", size=15)
-    plt.ylabel("Pressure  (bar)",  size=15)
-
-    # save figure
-    savefile = date_dir + "MCMC_PTprofiles.ps" 
-    plt.savefig(savefile, transparent=True)
