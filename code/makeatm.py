@@ -55,15 +55,16 @@
 # Thank you for testing BART!
 # ******************************* END LICENSE *******************************
 
+import os
+import shutil
+import re
 import numpy as np
 import scipy.constants as sc
 from scipy.interpolate import interp1d
-import os
-import shutil
 
-import PT as pt
-import reader as rd
-import re
+import PT        as pt
+import reader    as rd
+import constants as c
 
 """
     This code produces a pre-atm file in the format that TEA can read it.
@@ -94,21 +95,20 @@ import re
 
     Notes
     -----
-    Possible user errors in making pre-atm file that conflict with TEA:
-     - The user should have unique T-P values for each line in the
-     PT-profile file before running \texttt{makeatm.py}, otherwise
-     each repeated layer will be overwritten and the final atmosphere
-     file will end up with fewer lines.
-     - input_elem must have names as they appear in the
-     conversion_record_sorted.txt file for the correct names of
-     the species.
-     - Should the code stall on the first iteration of the first
-     temperature, check if all elements that appear in the species
-     list are included with their correct names.
-     - Elemental hydrogen (H) and helium (He) must be included in 
-     in_elem for hot-Jupiter atmosphere calculations. Similarly, 
-     the H_g, He_ref and H2_ref species must also appear in out_spec
-    for these calculations.
+    - The user should have unique T-P values for each line in the
+      PT-profile file before running makeatm.py, otherwise
+      each repeated layer will be overwritten and the final atmosphere
+      file will end up with fewer lines.
+    - input_elem must have names as they appear in the
+      conversion_record_sorted.txt file for the correct names of
+      the species.
+    - Should the code stall on the first iteration of the first
+      temperature, check if all elements that appear in the species
+      list are included with their correct names.
+    - Elemental hydrogen (H) and helium (He) must be included in
+      in_elem for hot-Jupiter atmosphere calculations. Similarly,
+      the H_g, He_ref and H2_ref species must also appear in out_spec
+      for these calculations.
 
     Developers
     ----------
@@ -118,23 +118,22 @@ import re
 
     Revisions
     ---------
-    2014-06-01 Oliver/Jasmina Made initial makeatm() function for TEA.
-    2014-07-14 Jasmina        Added get_g, radpress, and read_press_file
-                              functions, and rewrote and renames 
-                              make_preatm() for BART project.
-    2014-08-15 Patricio       Removed read_press_file, use function from PT.py.
-                              Modified read_press_file to readatm(). 
-                              Added reformat()
-    2014-09-15 Jasmina        Added makeRadius(), readAbun(), 
-                              mean_molar_mass(), stoich(). Modified readatm(),
-                              make_preatm(), reformat().
-    2014-09-27 Jasmina        Modified radpress() to calculate radius from the
-                              referenced surface pressure of 1bar. 
-                              Cleaned documentation.
-    2014-10-02  Jasmina       Added option to read atmfile with or without radius 
-                              array in it.
-    2014-11-06  Jasmina       Minor adjustments for proper TEA execution.
-    2015-05-03  jasmina       Corrected atm header.
+    2014-07-14 Jasmina   Added get_g, radpress, and read_press_file
+                         functions, and rewrote and renames
+                         make_preatm() for BART project.
+    2014-08-15 Patricio  Removed read_press_file, use function from PT.py.
+                         Modified read_press_file to readatm().
+                         Added reformat()
+    2014-09-15 Jasmina   Added makeRadius(), readAbun(),
+                         mean_molar_mass(), stoich(). Modified readatm(),
+                         make_preatm(), reformat().
+    2014-09-27 Jasmina   Modified radpress() to calculate radius from the
+                         referenced surface pressure of 1bar.
+                         Cleaned documentation.
+    2014-10-02  Jasmina  Added option to read atmfile with or without radius
+                         array in it.
+    2014-11-06  Jasmina  Minor adjustments for proper TEA execution.
+    2015-05-03  jasmina  Corrected atm header.
 """
 
 def read_eabun(solabun):
@@ -196,55 +195,42 @@ def read_eabun(solabun):
 
 # reads the tep file and calculates surface gravity
 def get_g(tepfile):
-    '''
-    Calculates planetary surface gravity. Calls tep reader and 
-    gets data needed for calculation (g = G*M/r^2). Returns
-    surface gravity and surface radius.
+  '''
+  Calculates planetary surface gravity. Calls tep reader and
+  gets data needed for calculation (g = G*M/r^2). Returns
+  surface gravity and surface radius.
 
-    Parameters
-    ----------
-    tepfile: String
-             Name of the tep ASCII file.
+  Parameters
+  ----------
+  tepfile: String
+     Name of the tep ASCII file.
 
-    Returns
-    -------
-    g: Float
-       The planet surface gravity in m/s^2.
-    Rp: Float
-       The planet radius in km.
+  Returns
+  -------
+  g: Float
+     The planet surface gravity in m/s^2.
+  Rp: Float
+     The planet radius in km.
 
-    Revisions
-    ---------
-    2014-06-11  Jasmina   Written by.
-    2014-08-15  Patricio  Updated docstring.  Got NASA Jupiter values.
-    '''
+  Revisions
+  ---------
+  2014-06-11  Jasmina   Written by.
+  2014-08-15  Patricio  Updated docstring.  Got NASA Jupiter values.
+  '''
+  # Open tepfile to read and get data:
+  tep = rd.File(tepfile)
 
-    # Jupiter mass and radius:
-    # Source: http://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html
-    Mjup = 1.8983e27      # kg
-    Rjup = 71492.0 * 1e3  # m
+  # Get planet mass in kg:
+  Mplanet = np.float(tep.getvalue('Mp')[0]) * c.Mjup
+  # Get planet radius in m:
+  Rplanet = np.float(tep.getvalue('Rp')[0]) * c.Rjup
 
-    # Open tepfile to read and get data:
-    tep = rd.File(tepfile)
+  # Calculate the planet surface gravity in m/s^2:
+  g = sc.G * Mplanet / (Rplanet**2)
+  # Return Rp in km:
+  Rp = Rplanet / 1000.0
 
-    # Get planet mass in Mjup:
-    planet_mass = np.float(tep.getvalue('Mp')[0])
-
-    # Get planet radius in units of Rjup:
-    planet_rad = np.float(tep.getvalue('Rp')[0])
-
-    # Mass and radius of the planet in MKS units:
-    Mp = planet_mass * Mjup  # kg
-    Rp = planet_rad  * Rjup  # m
-
-    # Calculate the planet surface gravity:
-    # g = G*Mp/ Rp^2 in m/s^2
-    g = sc.G * Mp / (Rp**2)
-
-    # convert Rp back to km
-    Rp = Rp / 1000.0
-
-    return g, Rp
+  return g, Rp
 
 
 # calculates radii for each pressure in the atmosphere

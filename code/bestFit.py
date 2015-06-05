@@ -5,9 +5,9 @@ import scipy.special   as sp
 import matplotlib.pyplot as plt
 plt.ion()
 
-import makeatm as mat
-import PT as pt
-
+import makeatm   as mat
+import PT        as pt
+import constants as c
 
 def read_MCMC_out(MCfile):
     """
@@ -40,9 +40,10 @@ def read_MCMC_out(MCfile):
     return bestP, uncer, SN, mean
 
 
-# get correct number of all parameters from stepsize
 def get_params(bestP, stepsize, params):
-
+    """
+    Get correct number of all parameters from stepsize
+    """
     j = 0
     allParams = np.zeros(len(stepsize))
     for i in np.arange(len(stepsize)):
@@ -55,36 +56,27 @@ def get_params(bestP, stepsize, params):
     return allParams
 
 
-# reads the tep file and calculates surface gravity
 def get_starData(tepfile):
+  """
+  Extract the Stellar temperature, radius, and mass from a TEP file.
+  """
+  # Open tepfile to read and get data:
+  tep = rd.File(tepfile)
 
-    # Sun mass, radius and AU:
-    # Source: http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
-    #         http://neo.jpl.nasa.gov/glossary/au.html
-    Rsun = 696.0 * 1e6          # m
-    AU   = 149597870.7 * 1e3    # m
+  # Get star mass in Mjup:
+  Tstar = np.float(tep.getvalue('Ts')[0])
+  # Get star radius in MKS units:
+  Rstar = np.float(tep.getvalue('Rs')[0]) * c.Rsun
+  # Get semi major axis in meters:
+  sma = np.float(tep.getvalue('a')[0]) * sc.au
 
-    # Open tepfile to read and get data:
-    tep = rd.File(tepfile)
+  return Rstar, Tstar, sma
 
-    # Get star mass in Mjup:
-    T_star = np.float(tep.getvalue('Ts')[0])
 
-    # Get star radius in units of Rjup:
-    star_rad = np.float(tep.getvalue('Rs')[0])
-
-    # Get semi major axis in units of AU:
-    a = np.float(tep.getvalue('a')[0])
-
-    # Mass, radius, semi major axis in MKS units:
-    R_star = star_rad  * Rsun  # m
-    sma    = a * AU            # m
-
-    return R_star, T_star, sma
-
-# write best-fit atm file with scaled H2 and He to abundances sum of 1
 def write_atmfile(atmfile, molfit, T_line, allParams, date_dir):
-
+    """
+    Write best-fit atm file with scaled H2 and He to abundances sum of 1.
+    """
     # Open atmfile to read
     f = open(atmfile, 'r')
     lines = np.asarray(f.readlines())

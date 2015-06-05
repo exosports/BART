@@ -61,10 +61,11 @@ import numpy as np
 import scipy.constants as sc
 from mpi4py import MPI
 
-import makeatm as mat
-import PT as pt
-import wine   as w
-import reader as rd
+import makeatm   as mat
+import PT        as pt
+import wine      as w
+import reader    as rd
+import constants as c
 
 BARTdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(BARTdir + "/../modules/MCcubed/src/")
@@ -73,12 +74,6 @@ import mcutils as mu
 sys.path.append(BARTdir + "/../modules/transit/transit/python")
 import transit_module as trm
 
-# Some constants:
-# http://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html
-# http://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
-Mjup =   1898.3 * 1e24 # m
-Rjup =  71492.0 * 1e3  # m
-Rsun = 696000.0 * 1e3  # m
 
 def main(comm):
   """
@@ -189,13 +184,13 @@ def main(comm):
   # Stellar temperature in K:
   tstar = float(tep.getvalue('Ts')[0])
   # Stellar radius (in meters):
-  rstar = float(tep.getvalue('Rs')[0]) * Rsun
+  rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
   # Semi-major axis (in meters):
   sma   = float(tep.getvalue( 'a')[0]) * sc.au
   # Planetary radius (in meters):
-  rplanet = float(tep.getvalue('Rp')[0]) * Rjup
+  rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
   # Planetary mass (in kg):
-  mplanet = float(tep.getvalue('Mp')[0]) * Mjup
+  mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
 
   # Number of parameters:
   nfree   = len(params)                # Total number of free parameters
@@ -238,8 +233,6 @@ def main(comm):
   freepars = np.zeros(nfree,                 dtype='d')
   profiles = np.zeros((nspecies+1, nlayers), dtype='d')
 
-  mu.msg(verb, "ICON FLAG 62: i-molecs {}".format(imol))
-
   # Store abundance profiles:
   for i in np.arange(nspecies):
     profiles[i+1] = abundances[:, i]
@@ -271,7 +264,7 @@ def main(comm):
   # Log10(stellar gravity)
   gstar = float(tep.getvalue('loggstar')[0])
   # Planet-to-star radius ratio:
-  rprs  = float(tep.getvalue('Rp')[0])*Rjup/(float(tep.getvalue('Rs')[0])*Rsun)
+  rprs  = rplanet / rstar
   mu.msg(verb, "OCON FLAG 10: {}, {}, {}".format(tstar, gstar, rprs))
 
   nfilters = len(ffile)  # Number of filters:
@@ -314,7 +307,6 @@ def main(comm):
   while niter >= 0:
     niter -= 1
     # Receive parameters from MCMC:
-    #mu.msg(verb, "ICON FLAG 70: Start iteration")
     mu.comm_scatter(comm, params)
     #mu.msg(verb, "ICON FLAG 71: incon pars: {:s}".
     #             format(str(params).replace("\n", "")))

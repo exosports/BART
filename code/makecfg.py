@@ -56,8 +56,10 @@
 import os, sys
 import argparse, ConfigParser
 import numpy as np
+import scipy.constants as sc
 
 import reader as rd
+import constants as c
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(filedir + "/../modules/MCcubed/src/")
@@ -116,8 +118,8 @@ def makeTransit(cfile, tepfile):
 
   # Calculate gsurf and refradius from the tepfile:
   tep = rd.File(tepfile)
-  mplanet = float(tep.getvalue('Mp')[0]) * 1.8983e+27
-  rplanet = float(tep.getvalue('Rp')[0]) * 7.1492e+07
+  mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
+  rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
 
   # Planetary radius reference level in km:
   Bconfig.set(section, "refradius", "{:.2f}".format(rplanet * 1e-3))
