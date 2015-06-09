@@ -2,10 +2,15 @@ import numpy as np
 import reader as rd
 import scipy.constants as sc
 import scipy.special   as sp
+import scipy.interpolate as si
+from scipy.ndimage.filters import gaussian_filter1d as gaussf
 import matplotlib.pyplot as plt
+import matplotlib
 
-import makeatm   as mat
-import PT        as pt
+import makeatm as mat
+import PT as pt
+import wine as w
+import readtransit as rt
 import constants as c
 
 def read_MCMC_out(MCfile):
@@ -56,20 +61,25 @@ def get_params(bestP, stepsize, params):
 
 
 def get_starData(tepfile):
-  """
-  Extract the Stellar temperature, radius, and mass from a TEP file.
-  """
-  # Open tepfile to read and get data:
-  tep = rd.File(tepfile)
+    """
+    Extract the Stellar temperature, radius, and mass from a TEP file.
+    """
+    # Open tepfile to read and get data:
+    tep = rd.File(tepfile)
 
-  # Get star mass in Mjup:
-  Tstar = np.float(tep.getvalue('Ts')[0])
-  # Get star radius in MKS units:
-  Rstar = np.float(tep.getvalue('Rs')[0]) * c.Rsun
-  # Get semi major axis in meters:
-  sma = np.float(tep.getvalue('a')[0]) * sc.au
+    # Get star mass in Mjup:
+    Tstar = np.float(tep.getvalue('Ts')[0])
 
-  return Rstar, Tstar, sma
+    # Get star radius in MKS units:
+    Rstar = np.float(tep.getvalue('Rs')[0]) * c.Rsun
+
+    # Get semi major axis in meters:
+    sma = np.float(tep.getvalue('a')[0]) * sc.au
+
+    # Get star loggstar:
+    gstar = np.float(tep.getvalue('loggstar')[0])
+
+    return Rstar, Tstar, sma, gstar
 
 
 def write_atmfile(atmfile, molfit, T_line, allParams, date_dir):
@@ -177,9 +187,11 @@ def write_atmfile(atmfile, molfit, T_line, allParams, date_dir):
     # Close atm file
     fout.close()
 
-# write best-fit config file for new Transit run
-def bestFit_tconfig(tconfig, date_dir):
 
+def bestFit_tconfig(tconfig, date_dir):
+    '''
+    Write best-fit config file for best-fit Transit run
+    '''
     # Open atmfile to read
     f = open(date_dir + tconfig, 'r')
     lines = np.asarray(f.readlines())
@@ -193,12 +205,13 @@ def bestFit_tconfig(tconfig, date_dir):
     f.close()
 
 
-# call above functions to prepare Transit for best-fit execution, plot MCMC PT profiles
-def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, params, burnin):
+def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
+                                           date_dir, params, burnin):
     '''
     Call Transit to produce best-fit outputs.
+    Plot MCMC posterior PT plot.
 
-    '''
+    ''' 
     # read atmfile
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
 
@@ -209,7 +222,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, p
     grav = grav*1e2
 
     # get star data
-    R_star, T_star, sma = get_starData(tepfile)
+    R_star, T_star, sma, gstar = get_starData(tepfile)
 
     # get best parameters
     bestP, uncer, SN, mean = read_MCMC_out(MCfile)
@@ -250,7 +263,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, p
     # write new bestFit Transit config
     bestFit_tconfig(tconfig, date_dir)
 
-    # plot MCMC PT profiles ===================================================
+    # ========== plot MCMC PT profiles ==========
 
     # get MCMC data:
     MCMCdata = date_dir + "/output.npy"
@@ -278,9 +291,8 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, p
                 j +=1
             else:
                 pass
-        PTprofiles[k] = pt.PT_line(pressure, curr_PTparams, R_star, T_star, T_int, sma, grav)
-        if k %10 == 0:
-            print(k)
+        PTprofiles[k] = pt.PT_line(pressure, curr_PTparams, R_star, T_star,
+                                                          T_int, sma, grav)
 
     # get percentiles (for 1,2-sigma boundaries):
     low1 = np.percentile(PTprofiles, 16.0, axis=0)
@@ -293,8 +305,9 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, p
     plt.figure(2)
     ax=plt.subplot(111)
     ax.fill_betweenx(pressure, low2, hi2, facecolor="#62B1FF", edgecolor="0.5")
-    ax.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC", edgecolor="#1873CC")
-    plt.semilogy(median, pressure, "-", lw=2, label='Median',   color="limegreen")
+    ax.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC",
+                                                           edgecolor="#1873CC")
+    plt.semilogy(median, pressure, "-", lw=2, label='Median',color="k")
     plt.semilogy(best_T, pressure, "-", lw=2, label="Best fit", color="r")
     plt.ylim(pressure[0], pressure[-1])
     plt.legend(loc="best")
@@ -302,5 +315,111 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig, date_dir, p
     plt.ylabel("Pressure  (bar)",  size=15)
 
     # save figure
-    savefile = date_dir + "MCMC_PTprofiles.ps" 
-    plt.savefig(savefile, transparent=True)
+    savefile = date_dir + "MCMC_PTprofiles.png" 
+    plt.savefig(savefile)
+
+
+
+def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
+                                                          uncert, date_dir):
+    '''
+    plots BART best-model spectrum
+    '''
+    # get star data
+    R_star, T_star, sma, gstar = get_starData(tepfile)
+
+    # get surface gravity
+    grav, Rp = mat.get_g(tepfile)
+
+    # convert Rp to m
+    Rp = Rp * 1000
+
+    # ratio planet to star
+    rprs = Rp/R_star
+  
+    # read kurucz file
+    starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, T_star, gstar)
+
+    # read best-fit spectrum output file, take wn and spectra values
+    if solution == 'eclipse':
+        specwn, bestspectrum = rt.readspectrum(date_dir + output, wn=True)
+        # print on screen
+        print("  Plotting BART best-fit eclipse spectrum figure.")
+    elif solution == 'transit':
+        specwn, bestspectrum = rt.readspectrum(date_dir + output, wn=True)
+        # print on screen
+        print("  Plotting BART best-fit modulation spectrum figure.")
+
+    # convert wn to wl
+    specwl = 1e4/specwn
+
+    # number of filters
+    nfilters = len(filters)
+
+    # read and resample the filters:
+    nifilter  = [] # Normalized interpolated filter
+    istarfl   = [] # interpolated stellar flux
+    wnindices = [] # wavenumber indices used in interpolation
+    meanwn    = [] # Filter mean wavenumber
+    for i in np.arange(nfilters):
+        # read filter:
+        filtwaven, filttransm = w.readfilter(filters[i])
+        meanwn.append(np.sum(filtwaven*filttransm)/sum(filttransm))
+        # resample filter and stellar spectrum:
+        nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
+                                            starwn,    starfl)
+        nifilter.append(nifilt)
+        istarfl.append(strfl)
+        wnindices.append(wnind)
+
+    # convert mean wn to mean wl
+    meanwl = 1e4/np.asarray(meanwn)
+
+    # band-integrate the flux-ratio or modulation:
+    bandflux = np.zeros(nfilters, dtype='d')
+    bandmod  = np.zeros(nfilters, dtype='d')
+    for i in np.arange(nfilters):
+        fluxrat = (bestspectrum[wnindices[i]]/istarfl[i]) * rprs*rprs
+        bandflux[i] = w.bandintegrate(fluxrat, specwn, nifilter[i],
+                                                                 wnindices[i])
+        bandmod[i]  = w.bandintegrate(bestspectrum[wnindices[i]],
+                                            specwn, nifilter[i], wnindices[i])
+
+    # stellar spectrum on specwn:
+    sinterp = si.interp1d(starwn, starfl)
+    sflux = sinterp(specwn)
+    frat = bestspectrum/sflux * rprs * rprs
+
+    # plot figure
+    plt.rcParams["mathtext.default"] = 'rm'
+    matplotlib.rcParams.update({'mathtext.default':'rm'})
+    matplotlib.rcParams.update({'font.size':10})
+    plt.figure(3, (8.5, 5))
+    plt.clf()
+
+    # depending on solution plot eclipse or modulation spectrum
+    if solution == 'eclipse':
+        gfrat = gaussf(frat, 4)
+        plt.semilogx(specwl, gfrat, "b", lw=1.5, label="Best-fit")
+        plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
+        plt.plot(meanwl, bandflux, "ok", label="model", alpha=0.5)
+        plt.ylabel(r"$F_p/F_s$", fontsize=12)
+
+    elif solution == 'transit':
+        gmodel = gaussf(bestspectrum, 4)
+        plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best-fit")
+        # Check units!
+        plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
+        plt.plot(meanwl, bandmod, "ok", label="model", alpha=0.5)
+        plt.ylabel(r"$(R_p/R_s)^2$", fontsize=12)
+
+    leg = plt.legend(loc="lower right")
+    leg.get_frame().set_alpha(0.5)
+    ax = plt.subplot(111)
+    ax.set_xscale('log')
+    plt.xlabel(r"${\rm Wavelength\ \ (um)}$", fontsize=12)  
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    ax.set_xticks(np.arange(min(specwl),max(specwl),1))
+    plt.xlim(min(specwl),max(specwl))
+    plt.savefig(date_dir + "BART-bestFit-Spectrum.png")
+

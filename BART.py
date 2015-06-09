@@ -237,6 +237,12 @@ def main():
   group.add_argument("--burnin", dest="burnin",
            help="Number of burn-in iterations per chain",
            type=mu.parray, action="store", default=None)
+  group.add_argument("--data", dest="data",
+           help="Transit or eclipse depths",
+           type=mu.parray, action="store", default=None)
+  group.add_argument("--uncert", dest="uncert",
+           help="Uncertanties on transit or eclipse depths",
+           type=mu.parray, action="store", default=None)
 
   # Input converter options:
   group = parser.add_argument_group("Input Converter Options")
@@ -265,6 +271,13 @@ def main():
   group.add_argument("--opacityfile", dest="opacityfile",
            help="Opacity table file [default: %(default)s]",
            type=str, action="store", default=None)
+  group.add_argument("--outflux", dest="outflux",
+           help="Output with flux values [default: %(default)s]",
+           type=str, action="store", default=None)
+  group.add_argument("--outmod", dest="outmod",
+           help="Output with modulation values [default: %(default)s]",
+           type=str, action="store", default=None)
+
 
   # Remaining_argv contains all other command-line-arguments:
   cargs, remaining_argv = cparser.parse_known_args()
@@ -450,10 +463,19 @@ def main():
   # Best-fit tconfig
   bestFit_tconfig = date_dir + 'bestFit_tconfig.cfg'
 
-  # Call Transit with the best-fit tconfig :
+  # Call Transit with the best-fit tconfig
   Tcall = Transitdir + "/transit/transit"
   subprocess.call(["{:s} -c {:s}".format(Tcall, bestFit_tconfig)],
                     shell=True, cwd=date_dir)
+
+  # Plot best-fit eclipse or modulation spectrum, depending on solution 
+  if solution == 'eclipse':
+    # Plot best-fit eclipse spectrum
+    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outflux, data, uncert, date_dir)
+  elif solution == 'transit':
+    # Plot best-fit transit spectrum
+    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod, data, uncert, date_dir)
+
 
   mu.msg(1, "~~ BART End ~~")
 
