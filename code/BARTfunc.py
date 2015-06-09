@@ -170,14 +170,15 @@ def main(comm):
   npars, niter = array1
 
   # :::::::  Initialize the Input converter ::::::::::::::::::::::::::
-  atmfile = args2.atmfile
-  molfit  = args2.molfit
-  PTtype  = args2.PTtype
-  params  = args2.params
-  tepfile = args2.tep_name
-  tint    = args2.tint
-  Tmin    = args2.Tmin
-  Tmax    = args2.Tmax
+  atmfile  = args2.atmfile
+  molfit   = args2.molfit
+  PTtype   = args2.PTtype
+  params   = args2.params
+  tepfile  = args2.tep_name
+  tint     = args2.tint
+  Tmin     = args2.Tmin
+  Tmax     = args2.Tmax
+  solution = args2.solution  # Solution type
 
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)
@@ -192,9 +193,10 @@ def main(comm):
   # Planetary mass (in kg):
   mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
 
-  # Number of parameters:
+  # Number of fitting parameters:
   nfree   = len(params)                # Total number of free parameters
   nmolfit = len(molfit)                # Number of molecular free parameters
+  nradfit = solution == 'transit'      # 1 for transit, 0 for eclipse
   nPT     = len(params) - len(molfit)  # Number of PT free parameters
 
   # Read atmospheric file to get data arrays:
@@ -218,9 +220,6 @@ def main(comm):
   for i in np.arange(nmolfit):
     imol[i] = np.where(np.asarray(species) == molfit[i])[0]
 
-  # Send nlayers + nspecies to master:
-  #mu.comm_gather(comm, np.array([nlayers, nspecies], dtype='i'), MPI.INT)
-
   # Pressure-Temperature profile:
   PTargs = [PTtype]
   if PTtype == "line":
@@ -232,10 +231,14 @@ def main(comm):
   # Allocate arrays for receiving and sending data to master:
   freepars = np.zeros(nfree,                 dtype='d')
   profiles = np.zeros((nspecies+1, nlayers), dtype='d')
+  # This are sub-sections of profiles, containing just the temperature and
+  # the abundance profiles, respectively:
+  tprofile  = profiles[0, :]
+  aprofiles = profiles[1:,:]
 
   # Store abundance profiles:
   for i in np.arange(nspecies):
-    profiles[i+1] = abundances[:, i]
+    aprofiles[i] = abundances[:, i]
 
   # :::::::  Spawn transit code  :::::::::::::::::::::::::::::::::::::
   # # transit configuration file:
@@ -259,7 +262,6 @@ def main(comm):
   # :::::::  Output Converter  :::::::::::::::::::::::::::::::::::::::
   ffile    = args2.filter    # Filter files
   kurucz   = args2.kurucz    # Kurucz file
-  solution = args2.solution  # Solution type
 
   # Log10(stellar gravity)
   gstar = float(tep.getvalue('loggstar')[0])
@@ -330,20 +332,22 @@ def main(comm):
     for i in np.arange(nmolfit):
       m = imol[i]
       # Use variable as the log10:
-      profiles[m+1] = abundances[:, m] * 10.0**params[nPT+i]
+      aprofiles[m] = abundances[:, m] * 10.0**params[nPT+nradfit+i]
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
-    q = 1.0 - np.sum(profiles[imetals+1], axis=0)
-    profiles[iH2+1] = ratio * q / (1.0 + ratio)
-    profiles[iHe+1] =         q / (1.0 + ratio)
+    q = 1.0 - np.sum(aprofiles[imetals], axis=0)
+    aprofiles[iH2] = ratio * q / (1.0 + ratio)
+    aprofiles[iHe] =         q / (1.0 + ratio)
     # print("qH2O: {}, Qmetals: {}, QH2: {}  p: {}".format(params[nPT],
     #                               q[50], profiles[iH2+1,50], profiles[:,50]))
 
+    # Set the 'surface' level:
+    if solution == "transit":
+      trm.set_radius(params[nPT])
+
     # Let transit calculate the model spectrum:
-    #mu.msg(verb, "FLAG 81: sent data to transit")
-    spectrum = trm.run_transit(profiles.flatten(),nwave)
+    spectrum = trm.run_transit(profiles.flatten(), nwave)
 
     # Output converter band-integrate the spectrum:
-    #mu.msg(verb, "FLAG 91: receive spectum")
     # Calculate the band-integrated intensity per filter:
     for i in np.arange(nfilters):
       if   solution == "eclipse":
