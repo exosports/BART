@@ -165,9 +165,8 @@ def main():
   # Elemental abundance options:
   group = parser.add_argument_group("Elemental abundances")
   group.add_argument("--abun_basic", dest="abun_basic",
-           help="Input elemental abundances file "
-                "[default: 'BART/inputs/abundances_Asplund2009.txt']",
-           type=str, action="store", default=None)
+           help="Input elemental abundances file [default: %(default)s]",
+           type=str, action="store", default="../BART/inputs/abundances_Asplund2009.txt")
   group.add_argument("--abun_file", dest="abun_file",
            help="Input/Output modified elemental abundances file",
            type=str, action="store", default=None)
@@ -465,7 +464,8 @@ def main():
   MCfile = date_dir + logfile
 
   # Call bestFit submodule and make new bestFit_tconfig.cfg
-  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, tconfig, date_dir, params, burnin)
+  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, solution,
+                 refpress, tconfig, date_dir, params, burnin, abun_basic)
 
   # Best-fit tconfig
   bestFit_tconfig = date_dir + 'bestFit_tconfig.cfg'

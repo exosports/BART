@@ -194,10 +194,10 @@ def main(comm):
   mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
 
   # Number of fitting parameters:
-  nfree   = len(params)                # Total number of free parameters
-  nmolfit = len(molfit)                # Number of molecular free parameters
-  nradfit = solution == 'transit'      # 1 for transit, 0 for eclipse
-  nPT     = len(params) - len(molfit)  # Number of PT free parameters
+  nfree   = len(params)                 # Total number of free parameters
+  nmolfit = len(molfit)                 # Number of molecular free parameters
+  nradfit = int(solution == 'transit')  # 1 for transit, 0 for eclipse
+  nPT     = nfree - nmolfit - nradfit   # Number of PT free parameters
 
   # Read atmospheric file to get data arrays:
   species, pressure, temp, abundances = mat.readatm(atmfile)
@@ -315,19 +315,19 @@ def main(comm):
 
     # Input converter calculate the profiles:
     try:
-      profiles[0] = pt.PT_generator(pressure, params[0:nPT], PTargs)[::-1]
+      tprofile[:] = pt.PT_generator(pressure, params[0:nPT], PTargs)[::-1]
     except ValueError:
       mu.msg(verb, 'Input parameters give non-physical profile.')
       # FINDME: what to do here?
 
     # If the temperature goes out of bounds:
-    if np.any(profiles[0] < Tmin) or np.any(profiles[0] > Tmax):
+    if np.any(tprofile < Tmin) or np.any(tprofile > Tmax):
       print("Out of bounds")
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
 
     #mu.msg(verb, "T pars: \n{}\n".format(PTargs))
-    mu.msg(verb-20, "Temperature profile: {}".format(profiles[0]))
+    mu.msg(verb-20, "Temperature profile: {}".format(tprofile))
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
@@ -344,6 +344,8 @@ def main(comm):
     if solution == "transit":
       trm.set_radius(params[nPT])
 
+    if rank == 1:
+      print("Iteration: {:05}".format(niter))
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
 
