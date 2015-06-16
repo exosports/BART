@@ -89,7 +89,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-
 import makeatm as mat
 import PT as pt
 import wine as w
@@ -335,6 +334,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     abun_file: String
        Elemental abundances file.
     """
+
     # read atmfile
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
 
@@ -540,10 +540,10 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
         plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best-fit")
         plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="data")
         plt.plot(meanwl, bandflux*1e3, "ok", label="model", alpha=1.0)
-        plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=12)
+        plt.ylabel(r"$F_p/F_s$ (10$^{3}$)", fontsize=12)
 
     elif solution == 'transit':
-        gmodel = gaussf(bestspectrum, 4)
+        gmodel = gaussf(bestspectrum, 2)
         plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best-fit")
         # Check units!
         plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
