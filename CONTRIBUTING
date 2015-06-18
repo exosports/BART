@@ -10,8 +10,8 @@ MAILING LISTS
 
 We hold discusions on two email lists:
 
-bart-user@physics.ucf.edu   - user support and feature requests
-bart-devel@physics.ucf.edu  - for people contributing code, docs, data, etc.
+bart-user@physics.ucf.edu  - user support and feature requests
+bart-devel@physics.ucf.edu - for people contributing code, docs, data, etc.
 
 Please send messages to the right list.  You need to be a member to
 post, to prevent spam.  Both are public lists with archives available
@@ -102,7 +102,9 @@ looked at your change and given initial feedback.
 
 Because of the risk of harming ongoing work, ONLY CORE CONTRIBUTORS
 MAY MERGE INTO MASTER!  Pull requests may or may not be merged
-immediately, depending on the nature of the change.
+immediately, depending on the nature of the change.  DO NOT CLICK
+"This pull request can be automatically merged" unless you are a core
+developer.
 
 Currently, the Core Contributors are:
 
