@@ -129,10 +129,20 @@ def makeTransit(cfile, tepfile):
   args = np.union1d(args, ["refradius", "gsurf"])
 
   # Print the known arguments to file:
+  ciawritten = 0
   for key in np.intersect1d(args, known_args):
     values = Bconfig.get(section, key).split("\n")
     for val in values:
-      tcfile.write("{:s} {:s}\n".format(key, val))
+      if key == "cia" and ciawritten == 0:
+        tcfile.write("{:s} {:s}".format(key, val))
+        ciawritten = 1
+      elif key == "cia" and ciawritten == 1:
+        tcfile.write(",{:s}".format(val))
+      elif key != "cia" and ciawritten == 1:
+        tcfile.write("\n{:s} {:s}\n".format(key, val))
+        ciawritten = 0
+      else:
+        tcfile.write("{:s} {:s}\n".format(key, val))
 
   tcfile.close()
 
