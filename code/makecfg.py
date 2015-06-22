@@ -128,28 +128,16 @@ def makeTransit(cfile, tepfile):
   # Add these keywords:
   args = np.union1d(args, ["refradius", "gsurf"])
 
-  # CIA flag
-  ciawritten = 0
+  # Reformat the cia input for Transit:
+  cia = Bconfig.get(section, "cia")
+  Bconfig.set(section, "cia", ",".join(cia.split()))
 
   # Print the known arguments to file:
   for key in np.intersect1d(args, known_args):
+    # FINDME: Why am I splitting?
     values = Bconfig.get(section, key).split("\n")
     for val in values:
-      # If the first cia entry, flip flag, print normally but without final \n
-      if key == "cia" and ciawritten == 0:
-        tcfile.write("{:s} {:s}".format(key, val))
-        ciawritten = 1
-      # If not first cia entry, print comma then new file
-      elif key == "cia" and ciawritten == 1:
-        tcfile.write(",{:s}".format(val))
-      # If first not cia entry after cia entries, print \n to end cia entries,
-      # then print normally
-      elif key != "cia" and ciawritten == 1:
-        tcfile.write("\n{:s} {:s}\n".format(key, val))
-        ciawritten = 0
-      # Print normally
-      else:
-        tcfile.write("{:s} {:s}\n".format(key, val))
+      tcfile.write("{:s} {:s}\n".format(key, val))
 
   tcfile.close()
 
