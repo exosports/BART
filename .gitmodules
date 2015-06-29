@@ -1,9 +1,3 @@
-[submodule "tea"]
-	path = tea
-	url = https://github.com/dzesmin/TEA
-[submodule "modules/commloop"]
-	path = modules/commloop
-	url = https://github.com/astromaddie/commloop
 [submodule "modules/MCcubed"]
 	path = modules/MCcubed
 	url = https://github.com/pcubillos/MCcubed
