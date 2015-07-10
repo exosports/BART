@@ -66,7 +66,7 @@ sys.path.append(filedir + "/../modules/MCcubed/src/")
 import mcutils as mu
 
 
-def makeTransit(cfile, tepfile):
+def makeTransit(cfile, tepfile, shareOpacity):
   """
   Make the transit configuration file.
 
@@ -139,6 +139,8 @@ def makeTransit(cfile, tepfile):
     for val in values:
       tcfile.write("{:s} {:s}\n".format(key, val))
 
+  if shareOpacity:
+    tcfile.write("shareOpacity \n")
   tcfile.close()
 
 

@@ -277,6 +277,10 @@ def main():
   group.add_argument("--outmod", dest="outmod",
            help="Output with modulation values [default: %(default)s]",
            type=str, action="store", default=None)
+  group.add_argument("--shareOpacity", dest="shareOpacity",
+           help="If True, use shared memory for the Transit opacity file "
+                "[default: %(default)s]",
+           type=eval, action="store", default=True)
 
 
   # Remaining_argv contains all other command-line-arguments:
@@ -428,7 +432,7 @@ def main():
   MCMC_cfile = os.path.realpath(loc_dir) + "/MCMC_" + os.path.basename(cfile)
   mc.makeMCMC(cfile, MCMC_cfile, logfile)
   # Make transit configuration file:
-  mc.makeTransit(MCMC_cfile, tep_name)
+  mc.makeTransit(MCMC_cfile, tep_name, shareOpacity)
 
   # Generate the opacity file if it doesn't exist:
   if not os.path.isfile(opacityfile):
