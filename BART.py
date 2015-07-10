@@ -137,8 +137,8 @@ def main():
            help="Transiting exoplanet file name.",
            type=str, action="store", default=None)
   group.add_argument("--logfile", dest="logfile",
-           help="Help me!",
-           type=str, action="store", default=None)
+           help="MCMC log file [default: %(default)s]",
+           type=str, action="store", default="MCMC.log")
   # Pressure layers options:
   group = parser.add_argument_group("Layers pressure sampling")
   group.add_argument("--n_layers", dest="n_layers",
