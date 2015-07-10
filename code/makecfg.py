@@ -142,7 +142,7 @@ def makeTransit(cfile, tepfile):
   tcfile.close()
 
 
-def makeMCMC(cfile, MCMC_cfile):
+def makeMCMC(cfile, MCMC_cfile, logfile):
   """
   Reformat configuration file to remove relative paths.  This output 
   configuration file is used by the BART's MCMC program.
@@ -167,8 +167,14 @@ def makeMCMC(cfile, MCMC_cfile):
   # Known arguments that may have a path:
   input_args = ["tep_name", "kurucz", "molfile", "filter", "linedb",
                 "cia", "loc_dir"]
-  output_args = ["tconfig", "atmfile", "opacityfile", "press_file",
-               "abun_basic", "abun_file", "preatm_file", "output", "savemodel"]
+  output_args = ["tconfig",    "atmfile",   "opacityfile", "press_file",
+                 "abun_basic", "abun_file", "preatm_file", "output",
+                 "savemodel",  "logfile"]
+
+  # Set default logfile:
+  if "logfile" not in args:
+    Bconfig.set(section, "logfile", logfile)
+    args.append("logfile")
 
   # Inputs should always exist:
   for arg in np.intersect1d(args, input_args):

@@ -426,7 +426,7 @@ def main():
 
   # Make the MC3 configuration file:
   MCMC_cfile = os.path.realpath(loc_dir) + "/MCMC_" + os.path.basename(cfile)
-  mc.makeMCMC(cfile, MCMC_cfile)
+  mc.makeMCMC(cfile, MCMC_cfile, logfile)
   # Make transit configuration file:
   mc.makeTransit(MCMC_cfile, tep_name)
 
