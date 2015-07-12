@@ -72,6 +72,7 @@ import InitialPT as ipt
 import makeatm   as mat
 import makecfg   as mc
 import bestFit   as bf
+import cf        as cf
 
 sys.path.append(MC3dir)
 import mcutils   as mu
@@ -480,6 +481,9 @@ def main():
     # Plot best-fit transit spectrum
     bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod, data, uncert, date_dir)
 
+  # Calculate contribution functions and plot them
+  mu.msg(1, "\nContribution functions calculation.")
+  cf.cf(date_dir, atmfile, filters)
 
   mu.msg(1, "~~ BART End ~~")
 
