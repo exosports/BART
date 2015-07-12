@@ -278,8 +278,17 @@ def bestFit_tconfig(tconfig, date_dir):
     lines = np.asarray(f.readlines())
     f.close()
 
-    atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n' 
-    lines[0] = atm_line
+    # Change name to the atmfile in line zero
+    atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n'
+	lines[0] = atm_line
+
+    # Find where toomuch argument is written and put 500.0
+    data = [[] for x in range(len(lines))]
+    for i in np.arange(len(lines)):
+		data[i] = lines[i].split()
+		if data[i][0] == 'toomuch':
+			lines[i] = 'toomuch 500.0\n'
+  
     f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
     f.writelines(lines)
     f.writelines('savefiles yes')
