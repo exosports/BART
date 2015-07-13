@@ -85,8 +85,10 @@ import scipy.constants as sc
 import scipy.special   as sp
 import scipy.interpolate as si
 from scipy.ndimage.filters import gaussian_filter1d as gaussf
-import matplotlib.pyplot as plt
 import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 
 import makeatm as mat
 import PT as pt
@@ -270,29 +272,38 @@ def write_atmfile(atmfile, molfit, T_line, allParams, date_dir):
 
 
 def bestFit_tconfig(tconfig, date_dir):
-    '''
-    Write best-fit config file for best-fit Transit run
-    '''
-    # Open atmfile to read
-    f = open(date_dir + tconfig, 'r')
-    lines = np.asarray(f.readlines())
-    f.close()
+	'''
+	Write best-fit config file for best-fit Transit run
+	'''
+	# Open atmfile to read
+	f = open(date_dir + tconfig, 'r')
+	lines = np.asarray(f.readlines())
+	f.close()
 
-    # Change name to the atmfile in line zero
-    atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n'
+	# Change name to the atmfile in line zero
+	atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n'
 	lines[0] = atm_line
 
-    # Find where toomuch argument is written and put 500.0
-    data = [[] for x in range(len(lines))]
-    for i in np.arange(len(lines)):
+	# Find where toomuch argument is written and put 500.0
+	data = [[] for x in range(len(lines))]
+	for i in np.arange(len(lines)):
 		data[i] = lines[i].split()
 		if data[i][0] == 'toomuch':
-			lines[i] = 'toomuch 500.0\n'
-  
-    f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
-    f.writelines(lines)
-    f.writelines('savefiles yes')
-    f.close()
+			lines[i] = 'toomuch 1e6\n'
+		elif data[i][0] == 'verb':
+			lines[i] = 'verb 0\n'
+		elif data[i][0] == 'outflux':
+			lines[i] = 'outflux ./bestFit-flux.dat\n'
+		elif data[i][0] == 'outintens':
+			lines[i] = 'outintens ./bestFit-intens.dat\n'
+		elif data[i][0] == 'outtoomuch':
+			lines[i] = 'outtoomuch ./bestFit-toom.dat\n'
+
+	# Write lines into the bestFit config file
+	f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
+	f.writelines(lines)
+	f.writelines('savefiles yes')
+	f.close()
 
 
 def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
@@ -332,8 +343,9 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
     # call PT line profile to calculate temperature
     best_T = pt.PT_line(pressure, PTparams, R_star, T_star, T_int, sma, grav)
 
-    # Plot best PT profile
+    # Plot best PT profile, avoid displying
     plt.figure(1)
+    plt.clf()
     plt.semilogy(best_T, pressure, '-', color = 'r')
     plt.xlim(0.9*min(best_T), 1.1*max(best_T))
     plt.ylim(max(pressure), min(pressure))
@@ -391,8 +403,9 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
     hi2  = np.percentile(PTprofiles, 97.5, axis=0)
     median = np.median(PTprofiles, axis=0)
 
-    # plot figure
+    # plot figure, avoid displying
     plt.figure(2)
+    plt.clf()
     ax=plt.subplot(111)
     ax.fill_betweenx(pressure, low2, hi2, facecolor="#62B1FF", edgecolor="0.5")
     ax.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC",
@@ -489,11 +502,11 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
 
     # depending on solution plot eclipse or modulation spectrum
     if solution == 'eclipse':
-        gfrat = gaussf(frat, 4)
-        plt.semilogx(specwl, gfrat, "b", lw=1.5, label="Best-fit")
-        plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
-        plt.plot(meanwl, bandflux, "ok", label="model", alpha=0.5)
-        plt.ylabel(r"$F_p/F_s$", fontsize=12)
+        gfrat = gaussf(frat, 2)
+        plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best-fit")
+        plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="data")
+        plt.plot(meanwl, bandflux*1e3, "ok", label="model", alpha=1.0)
+        plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=12)
 
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 4)

@@ -82,6 +82,8 @@
 import numpy as np
 from scipy.interpolate import interp1d
 import os
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
@@ -126,10 +128,6 @@ def Plunck(T, wns):
 	Calculate Plunch function.
 	"""
 
-	H  = 6.6260755e-27       # Planck's constant (erg * s)
-	LS = 2.99792458e10       # Light Speed (cm / s)
-	KB = 1.380658e-16        # Boltzmann constant (erg / K) 
-
     # Number of layers
 	nlayers = len(T)
 
@@ -137,8 +135,8 @@ def Plunck(T, wns):
 	BB = np.zeros((nlayers, len(wns)))
 	for i in np.arange(nlayers):
 		for j in np.arange(len(wns)):
-			BB[i, j] = (2. * H * wns[j]**3 * LS **(2)) / \
-						(np.exp((H * wns[j] * LS) / (KB * T[i])) - 1)
+			BB[i, j] = (2. * c.H * wns[j]**3 * c.LS **(2)) / \
+						(np.exp((c.H * wns[j] * c.LS) / (c.KB * T[i])) - 1)
 
 	return BB
 
@@ -229,6 +227,8 @@ def cf(date_dir, atmfile, filters):
 	for i in np.arange(nlayers):
 		for j in np.arange(len(wns)):
 			if i != 0 and tau[i, j] == 0.0:
+				#print 'JASMINA PRINTA i, gde tau[i, j] ==0.0', i
+				#print 'JASMINA PRINTA j, gde tau[i, j] ==0.0', j
 				tau[i, j] = huck[i]
 
 	# Calculate BB, reverse the order of p and T
@@ -244,9 +244,10 @@ def cf(date_dir, atmfile, filters):
 
 	############ Plotting ################
 
-	print("  Plotting contribution functions.")
-	# Not normalized cf
-	plt.figure(1)
+	print("  Plotting contribution functions.\n")
+	# Not normalized cf, avoid displying
+	plt.figure(4)
+	plt.clf()
 	gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1]) 
 	ax0 = plt.subplot(gs[0])
 	for i in np.arange(len(filt_cf)):
@@ -261,8 +262,10 @@ def cf(date_dir, atmfile, filters):
 	plt.savefig(date_dir + 'ContrFuncs.png')
 
 
-	# Normalized cf
-	plt.figure(2)
+	# Normalized cf, avoid displying
+	matplotlib.use('Agg')
+	plt.figure(5)
+	plt.clf()
 	gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1]) 
 	ax0 = plt.subplot(gs[0])
 	for i in np.arange(len(filt_cf_norm)):

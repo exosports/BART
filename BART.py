@@ -482,8 +482,8 @@ def main():
     bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod, data, uncert, date_dir)
 
   # Calculate contribution functions and plot them
-  mu.msg(1, "\nContribution functions calculation.")
-  cf.cf(date_dir, atmfile, filters)
+  mu.msg(1, "\nCalculating contribution functions ...")
+  cf.cf(date_dir, atmfile, filter)
 
   mu.msg(1, "~~ BART End ~~")
 
