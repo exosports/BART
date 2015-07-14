@@ -92,12 +92,41 @@ import wine as w
 import constants as c
 
 
+def cf_tconfig(date_dir):
+	'''
+	Write cf_tconfig file for cf Transit run
+	'''
+	# Open atmfile to read
+	f = open(date_dir + 'bestFit_tconfig.cfg', 'r')
+	lines = np.asarray(f.readlines())
+	f.close()
+
+	# Find where toomuch argument is written and put 500.0
+	data = [[] for x in range(len(lines))]
+	for i in np.arange(len(lines)):
+		data[i] = lines[i].split()
+		if data[i][0] == 'toomuch':
+			lines[i] = 'toomuch 1e100\n'
+		elif data[i][0] == 'verb':
+			lines[i] = 'verb 0\n'
+		elif data[i][0] == 'outflux':
+			lines[i] = 'outflux ./cf-flux.dat\n'
+		elif data[i][0] == 'outintens':
+			lines[i] = 'outintens ./cf-intens.dat\n'
+		elif data[i][0] == 'outtoomuch':
+			lines[i] = 'outtoomuch ./cf-toom.dat\n'
+
+	# Write lines into the bestFit config file
+	f = open(date_dir + 'cf_tconfig.cfg', 'w')
+	f.writelines(lines)
+	f.writelines('savefiles yes')
+	f.close()
+
 
 def readTauDat(file, nlayers):
     """
-    Read the tau.dat file that carries best-fit tau values.
+    Read the tau.dat file that carries cf tau values.
     """
-
     # Open and read the filter file:
     data = open(file, "r")
     lines = data.readlines()
@@ -127,7 +156,6 @@ def Plunck(T, wns):
 	"""
 	Calculate Plunch function.
 	"""
-
     # Number of layers
 	nlayers = len(T)
 
@@ -144,10 +172,9 @@ def Plunck(T, wns):
 
 def cf_eq(BB, p, tau, nlayers, wns):
 	"""
-	Applies the contribution function equation as in Knutson et al 2008
+	Apply the contribution function equation as in Knutson et al 2008
 	equation (2).
 	"""
-
 	# Calculate change in exp(-tau) and log(p), and cf 
 	de_tau = np.zeros((nlayers, len(wns)))
 	d_logp = np.zeros(nlayers)
@@ -171,7 +198,6 @@ def filter_cf(filters, nlayers, wns, cf):
 	"""
 	Band-averaged (filters) contribution functions.
 	""" 
-
 	# Allocate arrays for filter cf and normalize cf
 	filt_cf      = np.zeros((len(filters), nlayers))
 	filt_cf_norm = np.zeros((len(filters), nlayers))
@@ -213,7 +239,6 @@ def cf(date_dir, atmfile, filters):
 	"""
 	Call above functions to calculate cf and plot them
 	"""
-
 	# Read atmfile
 	molecules, p, T, abundances = mat.readatm(atmfile)
 	nlayers = len(p)
@@ -223,13 +248,13 @@ def cf(date_dir, atmfile, filters):
 	tau, wns = readTauDat(file, nlayers)
 
 	# Compensates for Transit's tau=0 after reaching toomuch
-	huck = np.linspace(11, 110, 100)
-	for i in np.arange(nlayers):
-		for j in np.arange(len(wns)):
-			if i != 0 and tau[i, j] == 0.0:
-				#print 'JASMINA PRINTA i, gde tau[i, j] ==0.0', i
-				#print 'JASMINA PRINTA j, gde tau[i, j] ==0.0', j
-				tau[i, j] = huck[i]
+	#huck = np.linspace(11, 110, 100)
+	#for i in np.arange(nlayers):
+	#	for j in np.arange(len(wns)):
+	#		if i != 0 and tau[i, j] == 0.0:
+	#			#print 'JASMINA PRINTA i, gde tau[i, j] ==0.0', i
+	#			#print 'JASMINA PRINTA j, gde tau[i, j] ==0.0', j
+	#			tau[i, j] = huck[i]
 
 	# Calculate BB, reverse the order of p and T
 	p = p[::-1]
@@ -263,7 +288,6 @@ def cf(date_dir, atmfile, filters):
 
 
 	# Normalized cf, avoid displying
-	matplotlib.use('Agg')
 	plt.figure(5)
 	plt.clf()
 	gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1]) 

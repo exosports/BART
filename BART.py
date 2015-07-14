@@ -481,8 +481,22 @@ def main():
     # Plot best-fit transit spectrum
     bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod, data, uncert, date_dir)
 
+  # Run Transit with unlimited 'toomuch' argument for contribution function calculation
+  mu.msg(1, "\nTransit call for contribution functions calculation.")
+
+  # Make cf_tconfig
+  cf.cf_tconfig(date_dir)
+
+  # Contribution functions tconfig
+  cf_tconfig = date_dir + 'cf_tconfig.cfg'
+
+  # Call Transit with the cf_tconfig
+  Tcall = Transitdir + "/transit/transit"
+  subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
+                    shell=True, cwd=date_dir)
+
   # Calculate contribution functions and plot them
-  mu.msg(1, "\nCalculating contribution functions ...")
+  mu.msg(1, "Calculating contribution functions ...", indent=2)
   cf.cf(date_dir, atmfile, filter)
 
   mu.msg(1, "~~ BART End ~~")

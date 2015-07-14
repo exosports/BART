@@ -284,25 +284,10 @@ def bestFit_tconfig(tconfig, date_dir):
 	atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n'
 	lines[0] = atm_line
 
-	# Find where toomuch argument is written and put 500.0
-	data = [[] for x in range(len(lines))]
-	for i in np.arange(len(lines)):
-		data[i] = lines[i].split()
-		if data[i][0] == 'toomuch':
-			lines[i] = 'toomuch 1e6\n'
-		elif data[i][0] == 'verb':
-			lines[i] = 'verb 0\n'
-		elif data[i][0] == 'outflux':
-			lines[i] = 'outflux ./bestFit-flux.dat\n'
-		elif data[i][0] == 'outintens':
-			lines[i] = 'outintens ./bestFit-intens.dat\n'
-		elif data[i][0] == 'outtoomuch':
-			lines[i] = 'outtoomuch ./bestFit-toom.dat\n'
-
 	# Write lines into the bestFit config file
 	f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
 	f.writelines(lines)
-	f.writelines('savefiles yes')
+	#f.writelines('savefiles yes')
 	f.close()
 
 
