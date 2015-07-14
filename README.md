@@ -46,12 +46,12 @@ topdir=`pwd`
 
 Clone the repository with all its submodules:
 ```shell
-git clone --recursive https://github.com/joeharr4/BART BART/
+git clone --recursive https://github.com/exosports/BART BART/
 ```
 
 Compile the transit module programs:
 ```shell
-cd $topdir/BART/modules/transit/pylineread/src/fortran/
+cd $topdir/BART/modules/transit/pylineread/src/ctips/
 make
 cd $topdir/BART/modules/transit/pu
 make
