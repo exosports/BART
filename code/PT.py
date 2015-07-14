@@ -54,13 +54,14 @@
 # ******************************* END LICENSE *******************************
 
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.constants as sc
 import scipy.special   as sp
 from scipy.ndimage import gaussian_filter1d
 import reader as rd
 
-plt.ion()
 
 """
   This code serves as an input generator for BART. It generates

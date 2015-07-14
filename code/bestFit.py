@@ -1,11 +1,94 @@
+# ****************************** START LICENSE *******************************
+# Bayesian Atmospheric Radiative Transfer (BART), a code to infer
+# properties of planetary atmospheres based on observed spectroscopic
+# information.
+#
+# This project was completed with the support of the NASA Planetary
+# Atmospheres Program, grant NNX12AI69G, held by Principal Investigator
+# Joseph Harrington. Principal developers included graduate students
+# Patricio E. Cubillos and Jasmina Blecic, programmer Madison Stemm, and
+# undergraduates M. Oliver Bowman and Andrew S. D. Foster.  The included
+# 'transit' radiative transfer code is based on an earlier program of
+# the same name written by Patricio Rojo (Univ. de Chile, Santiago) when
+# he was a graduate student at Cornell University under Joseph
+# Harrington.  Statistical advice came from Thomas J. Loredo and Nate
+# B. Lust.
+#
+# Copyright (C) 2015 University of Central Florida.  All rights reserved.
+#
+# This is a test version only, and may not be redistributed to any third
+# party.  Please refer such requests to us.  This program is distributed
+# in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.
+#
+# Our intent is to release this software under an open-source,
+# reproducible-research license, once the code is mature and the first
+# research paper describing the code has been accepted for publication
+# in a peer-reviewed journal.  We are committed to development in the
+# open, and have posted this code on github.com so that others can test
+# it and give us feedback.  However, until its first publication and
+# first stable release, we do not permit others to redistribute the code
+# in either original or modified form, nor to publish work based in
+# whole or in part on the output of this code.  By downloading, running,
+# or modifying this code, you agree to these conditions.  We do
+# encourage sharing any modifications with us and discussing them
+# openly.
+#
+# We welcome your feedback, but do not guarantee support.  Please send
+# feedback or inquiries to:
+#
+# Joseph Harrington <jh@physics.ucf.edu>
+# Patricio Cubillos <pcubillos@fulbrightmail.org>
+# Jasmina Blecic <jasmina@physics.ucf.edu>
+#
+# or alternatively,
+#
+# Joseph Harrington, Patricio Cubillos, and Jasmina Blecic
+# UCF PSB 441
+# 4111 Libra Drive
+# Orlando, FL 32816-2385
+# USA
+#
+# Thank you for testing BART!
+# ******************************* END LICENSE *******************************
+
+"""
+    This code runs and processes best-fit Transit run outputs.
+    
+    Functions
+    ---------
+    read_MCMC_out:
+          Read the MCMC output log file. Extract the best fitting parameters.
+    get_params:
+	      Get correct number of all parameters from stepsize
+    get_starData:
+          Extract stellar temperature, radius, and mass from TEP file
+    write_atmfile:
+          Write best-fit atm file with scaled H2 and He to abundances sum of 1
+    bestFit_tconfig:
+          Write best-fit config file for best-fit Transit run
+    callTransit:
+          Call Transit to produce best-fit outputs. Plot MCMC posterior PT plot.
+    plot_bestFit_Spectrum:
+          Plot BART best-model spectrum
+
+    Revisions
+    ---------
+    2015-05-03  Jasmina  Original implementation
+    2015-07-12  Jasmina  Added documentation.
+"""
+
 import numpy as np
 import reader as rd
 import scipy.constants as sc
 import scipy.special   as sp
 import scipy.interpolate as si
 from scipy.ndimage.filters import gaussian_filter1d as gaussf
-import matplotlib.pyplot as plt
 import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 
 import makeatm as mat
 import PT as pt
@@ -189,20 +272,23 @@ def write_atmfile(atmfile, molfit, T_line, allParams, date_dir):
 
 
 def bestFit_tconfig(tconfig, date_dir):
-    '''
-    Write best-fit config file for best-fit Transit run
-    '''
-    # Open atmfile to read
-    f = open(date_dir + tconfig, 'r')
-    lines = np.asarray(f.readlines())
-    f.close()
+	'''
+	Write best-fit config file for best-fit Transit run
+	'''
+	# Open atmfile to read
+	f = open(date_dir + tconfig, 'r')
+	lines = np.asarray(f.readlines())
+	f.close()
 
-    atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n' 
-    lines[0] = atm_line
-    f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
-    f.writelines(lines)
-    f.writelines('savefiles yes')
-    f.close()
+	# Change name to the atmfile in line zero
+	atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n'
+	lines[0] = atm_line
+
+	# Write lines into the bestFit config file
+	f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
+	f.writelines(lines)
+	#f.writelines('savefiles yes')
+	f.close()
 
 
 def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
@@ -244,6 +330,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
 
     # Plot best PT profile
     plt.figure(1)
+    plt.clf()
     plt.semilogy(best_T, pressure, '-', color = 'r')
     plt.xlim(0.9*min(best_T), 1.1*max(best_T))
     plt.ylim(max(pressure), min(pressure))
@@ -303,6 +390,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
 
     # plot figure
     plt.figure(2)
+    plt.clf()
     ax=plt.subplot(111)
     ax.fill_betweenx(pressure, low2, hi2, facecolor="#62B1FF", edgecolor="0.5")
     ax.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC",
@@ -323,7 +411,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
 def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
                                                           uncert, date_dir):
     '''
-    plots BART best-model spectrum
+    Plot BART best-model spectrum
     '''
     # get star data
     R_star, T_star, sma, gstar = get_starData(tepfile)
@@ -399,11 +487,11 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
 
     # depending on solution plot eclipse or modulation spectrum
     if solution == 'eclipse':
-        gfrat = gaussf(frat, 4)
-        plt.semilogx(specwl, gfrat, "b", lw=1.5, label="Best-fit")
-        plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
-        plt.plot(meanwl, bandflux, "ok", label="model", alpha=0.5)
-        plt.ylabel(r"$F_p/F_s$", fontsize=12)
+        gfrat = gaussf(frat, 2)
+        plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best-fit")
+        plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="data")
+        plt.plot(meanwl, bandflux*1e3, "ok", label="model", alpha=1.0)
+        plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=12)
 
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 4)

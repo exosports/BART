@@ -72,6 +72,7 @@ import InitialPT as ipt
 import makeatm   as mat
 import makecfg   as mc
 import bestFit   as bf
+import cf        as cf
 
 sys.path.append(MC3dir)
 import mcutils   as mu
@@ -85,12 +86,12 @@ def main():
   Patricio Cubillos   pcubillos@fulbrightmail.org
   Jasmina Blecic      jasmina@physics.ucf.edu
   Joseph Harrington   jh@physics.ucf.edu
-  Madison Stemm       astromaddie@gmail.com  (FINDME)
+  Madison Stemm       astromaddie@gmail.com
 
   Modification History:
   ---------------------
   2014-07-25  Jasmina   Initial version.
-  2014-08-15  Patricio  put code into main() function.
+  2014-08-15  Patricio  Put code into main() function.
   2014-08-18  Patricio  Merged with MC3 module.  Added flag to sort
                         read/execute steps.
   2014-09-20  Jasmina   Made call to makeRadius() function. Added progress
@@ -98,7 +99,8 @@ def main():
   2014-10-12  Jasmina   Updated to new TEA structure.
   2014-12-13  patricio  Added Opacity calculation step (through Transit), 
                         added flags to break after TEA or Opacity calculation.
-  2015-05-03  jasmina   Added best-fit Transit run.
+  2015-05-03  Jasmina   Added best-fit Transit run.
+  2015-07-14  Jasmina   Added contribution function Transit run.
   """
 
   mu.msg(1,
@@ -480,6 +482,23 @@ def main():
     # Plot best-fit transit spectrum
     bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod, data, uncert, date_dir)
 
+  # Run Transit with unlimited 'toomuch' argument for contribution function calculation
+  mu.msg(1, "\nTransit call for contribution functions calculation.")
+
+  # Make cf_tconfig
+  cf.cf_tconfig(date_dir)
+
+  # Contribution functions tconfig
+  cf_tconfig = date_dir + 'cf_tconfig.cfg'
+
+  # Call Transit with the cf_tconfig
+  Tcall = Transitdir + "/transit/transit"
+  subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
+                    shell=True, cwd=date_dir)
+
+  # Calculate contribution functions and plot them
+  mu.msg(1, "Calculating contribution functions ...", indent=2)
+  cf.cf(date_dir, atmfile, filter)
 
   mu.msg(1, "~~ BART End ~~")
 
