@@ -75,7 +75,7 @@
 
     Revisions
     ---------
-    2015-05-03  Jasmina  Initial version
+    2015-05-03  Jasmina  Original implementation
     2015-07-12  Jasmina  Added documentation.
 """
 
@@ -328,7 +328,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
     # call PT line profile to calculate temperature
     best_T = pt.PT_line(pressure, PTparams, R_star, T_star, T_int, sma, grav)
 
-    # Plot best PT profile, avoid displying
+    # Plot best PT profile
     plt.figure(1)
     plt.clf()
     plt.semilogy(best_T, pressure, '-', color = 'r')
@@ -388,7 +388,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, tconfig,
     hi2  = np.percentile(PTprofiles, 97.5, axis=0)
     median = np.median(PTprofiles, axis=0)
 
-    # plot figure, avoid displying
+    # plot figure
     plt.figure(2)
     plt.clf()
     ax=plt.subplot(111)

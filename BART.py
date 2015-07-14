@@ -86,12 +86,12 @@ def main():
   Patricio Cubillos   pcubillos@fulbrightmail.org
   Jasmina Blecic      jasmina@physics.ucf.edu
   Joseph Harrington   jh@physics.ucf.edu
-  Madison Stemm       astromaddie@gmail.com  (FINDME)
+  Madison Stemm       astromaddie@gmail.com
 
   Modification History:
   ---------------------
   2014-07-25  Jasmina   Initial version.
-  2014-08-15  Patricio  put code into main() function.
+  2014-08-15  Patricio  Put code into main() function.
   2014-08-18  Patricio  Merged with MC3 module.  Added flag to sort
                         read/execute steps.
   2014-09-20  Jasmina   Made call to makeRadius() function. Added progress
@@ -99,7 +99,8 @@ def main():
   2014-10-12  Jasmina   Updated to new TEA structure.
   2014-12-13  patricio  Added Opacity calculation step (through Transit), 
                         added flags to break after TEA or Opacity calculation.
-  2015-05-03  jasmina   Added best-fit Transit run.
+  2015-05-03  Jasmina   Added best-fit Transit run.
+  2015-07-14  Jasmina   Added contribution function Transit run.
   """
 
   mu.msg(1,

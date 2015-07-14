@@ -58,24 +58,23 @@
     
     Functions
     ---------
-    read_MCMC_out:
-          Read the MCMC output log file. Extract the best fitting parameters.
-    get_params:
-	      Get correct number of all parameters from stepsize
-    get_starData:
-          Extract stellar temperature, radius, and mass from TEP file
-    write_atmfile:
-          Write best-fit atm file with scaled H2 and He to abundances sum of 1
-    bestFit_tconfig:
-          Write best-fit config file for best-fit Transit run
-    callTransit:
-          Call Transit to produce best-fit outputs. Plot MCMC posterior PT plot.
-    plot_bestFit_Spectrum:
-          Plot BART best-model spectrum
+    cf_tconfig:
+          Write cf_tconfig file for cf Transit run.
+    readTauDat:
+          Read the tau.dat file that carries cf tau values.
+    Planck:
+          Calculate Planch function.
+    cf_eq:
+	      Apply the contribution function equation as in Knutson et al 2008
+          equation (2).
+    filter_cf:
+          Band-averaged (filters) contribution functions.
+    cf:
+	      Call above functions to calculate cf and plot them
 
     Revisions
     ---------
-    2015-07-12  Jasmina  Initial version
+    2015-07-14  Jasmina  Original implementation
 
 """
 
@@ -152,9 +151,9 @@ def readTauDat(file, nlayers):
     return tau, wns
 
 
-def Plunck(T, wns):
+def Planck(T, wns):
 	"""
-	Calculate Plunch function.
+	Calculate Planch function.
 	"""
     # Number of layers
 	nlayers = len(T)
@@ -167,7 +166,6 @@ def Plunck(T, wns):
 						(np.exp((c.H * wns[j] * c.LS) / (c.KB * T[i])) - 1)
 
 	return BB
-
 
 
 def cf_eq(BB, p, tau, nlayers, wns):
@@ -247,19 +245,10 @@ def cf(date_dir, atmfile, filters):
 	file = date_dir + 'tau.dat'
 	tau, wns = readTauDat(file, nlayers)
 
-	# Compensates for Transit's tau=0 after reaching toomuch
-	#huck = np.linspace(11, 110, 100)
-	#for i in np.arange(nlayers):
-	#	for j in np.arange(len(wns)):
-	#		if i != 0 and tau[i, j] == 0.0:
-	#			#print 'JASMINA PRINTA i, gde tau[i, j] ==0.0', i
-	#			#print 'JASMINA PRINTA j, gde tau[i, j] ==0.0', j
-	#			tau[i, j] = huck[i]
-
 	# Calculate BB, reverse the order of p and T
 	p = p[::-1]
 	T = T[::-1]
-	BB = Plunck(T, wns)
+	BB = Planck(T, wns)
 
 	# Call cf_eq() to calculate cf
 	cf = cf_eq(BB, p, tau, nlayers, wns)
@@ -270,7 +259,7 @@ def cf(date_dir, atmfile, filters):
 	############ Plotting ################
 
 	print("  Plotting contribution functions.\n")
-	# Not normalized cf, avoid displying
+	# Not normalized cf
 	plt.figure(4)
 	plt.clf()
 	gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1]) 
@@ -286,8 +275,7 @@ def cf(date_dir, atmfile, filters):
 	ax0.set_ylabel('Pressure [bar]' , fontsize=14)
 	plt.savefig(date_dir + 'ContrFuncs.png')
 
-
-	# Normalized cf, avoid displying
+	# Normalized cf
 	plt.figure(5)
 	plt.clf()
 	gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1]) 
