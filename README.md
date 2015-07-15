@@ -194,7 +194,7 @@ Test after each upgrade, record output, compare output of next upgrade
 with upgrade turned off to previous output to make sure we didn't
 wreck anything.
 
-<a href="  Comment out this table that makes not much sense
+<!--
 **STATUS OF COMPONENTS**
 
 | Component     | Code          | Doc           | Package | Git | Centralgit(here) |
@@ -204,5 +204,4 @@ wreck anything.
 | TEA           | done          | On revision   |         | yes |                  |
 | transit       | done          |               |         | yes |                  |
 | BART          | done          |               |         | yes |                  |
-"></a>
-
+-->
