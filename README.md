@@ -51,11 +51,7 @@ git clone --recursive https://github.com/exosports/BART BART/
 
 Compile the transit module programs:
 ```shell
-cd $topdir/BART/modules/transit/pylineread/src/ctips/
-make
-cd $topdir/BART/modules/transit/pu
-make
-cd $topdir/BART/modules/transit/transit/
+cd $topdir/BART/modules/transit/
 make
 ```
 
@@ -198,6 +194,7 @@ Test after each upgrade, record output, compare output of next upgrade
 with upgrade turned off to previous output to make sure we didn't
 wreck anything.
 
+<a href="  Comment out this table that makes not much sense
 **STATUS OF COMPONENTS**
 
 | Component     | Code          | Doc           | Package | Git | Centralgit(here) |
@@ -205,7 +202,7 @@ wreck anything.
 | comm loop     | done          |               |         | yes |                  |
 | MC-cubed      | done          | To be revised |         | yes |                  |
 | TEA           | done          | On revision   |         | yes |                  |
-| transit       | dev           |               |         | yes |                  |
-| BART          | dev           |               |         | dev |                  |
-
+| transit       | done          |               |         | yes |                  |
+| BART          | done          |               |         | yes |                  |
+"></a>
 
