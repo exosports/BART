@@ -500,7 +500,7 @@ def main():
   # Calculate contribution functions and plot them
   mu.msg(1, "Calculating contribution functions ...", indent=2)
   bestFit_atmfile = date_dir + 'bestFit.atm'
-  cf.cf(date_dir, atmfile, filter)
+  cf.cf(date_dir, bestFit_atmfile, filter)
 
   mu.msg(1, "~~ BART End ~~")
 
