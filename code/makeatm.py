@@ -232,20 +232,27 @@ def get_g(tepfile):
 
   return g, Rp
 
-def radpress2(pressure, temperature, mu, p0, R0, g):
+
+def radpress(pressure, temperature, mu, p0, R0, g):
   """
-  Calculate the radius for the layers (defined by pressure, temperature,
-  and mu) applying the hidrostatic-equilibrium equation, where g is the
-  atmospheric gravity, and with the constraint that radius(p0) = R0.
+  Calculate the radii for the atmospheric layers applying the
+  hidrostatic-equilibrium equation with the constraint that:
+  radius(p0) = R0.
 
   Parameters:
   -----------
-  pressure:
-  temperature:
-  mu:
-  p0:
-  R0:
-  g:
+  pressure: 1D float ndarray
+     Atmospheric layers' pressure in bars.
+  temperature: 1D float ndarray
+     Atmospheric layers' temperature in K.
+  mu: 1D float ndarray
+     Atmospheric layers' mean molecular mass.
+  p0: Float
+     Reference pressure level, i.e. R(p0) = R0, in bars.
+  R0: Float
+     Reference radius level in km.
+  g: Float
+     Atmospheric gravity in m s-2.
   """
   # Number of layers in the atmosphere:
   n = len(pressure)
@@ -287,112 +294,6 @@ def radpress2(pressure, temperature, mu, p0, R0, g):
 
   else:
       rad[idx] = R0
-
-  # Calculate radius below p0:
-  for i in reversed(np.arange(idx)):
-      rad[i] = rad[i+1] - 0.5 * (temp[i] / mu[i] + temp[i+1] / mu[i+1]) * \
-               (sc.Avogadro * sc.k * np.log(press[i]/press[i+1]) / g)
-  # Calculate radius above p0:
-  for i in np.arange(idx+1, n):
-      rad[i] = rad[i-1] + 0.5 * (temp[i] / mu[i] + temp[i-1] / mu[i-1]) * \
-               (sc.Avogadro * sc.k * np.log(press[i-1]/press[i]) / g)
-
-  # Reverse the order of calculated radii to write them in the right order
-  # in pre-atm file:
-  rad = rad[::-1]
-
-  return rad
-
-
-# calculates radii for each pressure in the atmosphere
-def radpress(tepfile, temp, mu, press, p0):
-  '''
-  Calculate the radii (in km) for each layer in the atmosphere, given
-  their pressures (bar), temperatures (K), mean molecular mass (g/mol),
-  and the reference pressure at the planet 'surface' radius.
-
-  Calculations are based on the hydrostatic-equilibrium equations
-  (Andrews: "Introduction to Atmospheric Physics" page 26):
-    rad2 - rad1 = (R * T1)/g * ln(p1/p2)
-    R = R*/mu, R* - universal gas constant, mu - mean molecular mass
-    R* = Avogadro * Boltzmann
-    rad2 = rad1 + (Avogadro * Boltzmann * T1) / (g * mu1) * ln(p1/p2)
-
-  Parameters
-  ----------
-  tepfile: String
-     Transiting extrasolar planet filename.
-  temp: 1D array of floats
-     Temperatures for each atmospheric layer (in K).
-  mu: 1D array of floats
-     Mean molecular mass for each atmospheric layer (g/mol).
-  press: 1D array of floats
-     Pressures for each atmospheric layer (bar).
-  p0: Float
-     Pressure (bar) at the planet 'surface' radius.
-
-  Returns
-  -------
-  rad: 1D array of floats
-     Array containing radii for each atmospheric layer (in km).
-
-  Notes:
-  ------
-  The input pressure array is reversed to have an ascending order before the
-  interpolation, later it is reversed back to the original order.
-
-  Revisions
-  ---------
-  2014-07-04  Jasmina  Written by.
-  2014-09-29  Jasmina  Added radii calculation based on the referenced
-                       pressure level of 1.00 bar and surface radius
-                       defined in the tepfile.
-  2015-05-27  Patricio  Addded p0 as argument.
-  '''
-
-  # Read the surface gravity and planet radius from the tepfile:
-  g, Rp = get_g(tepfile)
-
-  # Number of layers in the atmosphere:
-  n = len(press)
-
-  # Allocate array of radii:
-  rad = np.zeros(n)
-
-  # Interpolate temp and mu in lin-log space (1bar)
-  interPT = interp1d(np.log10(press), temp)
-  intermu = interp1d(np.log10(press),   mu)
-
-  # Get temp and mu at surface pressure (1bar)
-  try:
-    temp_1bar = interPT(np.log10(p0))
-    mu_1bar   = intermu(np.log10(p0))
-  except IOError:
-    print("Referenced surface pressure of {:.3e} bar is not in the "
-          "range of pressures: [{}, {}] bar.".
-                            format(p0, np.amin(press), np.amax(pres)))
-
-  # Return back to desending order for radius calculation
-  press = press[::-1]
-  temp  = temp[::-1]
-  mu    =   mu[::-1]
-
-  # Find the index of the closest pressure point to p0:
-  idx = np.argmin(np.abs(press - p0))
-
-  # If p0 is not in press:
-  if press[idx] != p0:
-      # If the point is above p0:
-      if press[idx] > p0:
-          rad[idx] = Rp + 0.5 * (temp[idx] / mu[idx] + temp_1bar / mu_1bar) *\
-                     (sc.Avogadro * sc.k * np.log(p0/press[idx]) / g)
-      # If the point is below p0:
-      else:
-          rad[idx] = Rp - 0.5 * (temp[idx] / mu[idx] + temp_1bar / mu_1bar) *\
-                     (sc.Avogadro * sc.k * np.log(press[idx]/p0) / g)
-
-  else:
-      rad[idx] = Rp
 
   # Calculate radius below p0:
   for i in reversed(np.arange(idx)):
@@ -695,7 +596,7 @@ def makeRadius(out_spec, atmfile, abun_file, tepfile, p0):
   fout.write('#TEADATA\n')
 
   # Calculate the radius of each layer:
-  rad = radpress(tepfile, temperature, mu, pressure, p0)
+  rad = radpress(pressure, temperature, mu, p0, Rp, g)
 
   # Number of layers in the atmosphere
   nLayers = len(abundances)

@@ -341,9 +341,6 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     # get surface gravity
     grav, Rp = mat.get_g(tepfile)
 
-    # convert gravity to cm/s^2
-    grav = grav*1e2
-
     # get star data
     R_star, T_star, sma, gstar = get_starData(tepfile)
 
@@ -364,7 +361,8 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     T_int = 100  # K
 
     # call PT line profile to calculate temperature
-    best_T = pt.PT_line(pressure, PTparams, R_star, T_star, T_int, sma, grav)
+    best_T = pt.PT_line(pressure, PTparams, R_star, T_star, T_int,
+                        sma, grav*1e2)
 
     # Plot best PT profile
     plt.figure(1)
@@ -386,7 +384,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     # Re-calculate the layers' radii using the Hydrostatic-equilibrium calc:
     # (Has to be in reversed order since the interpolation requires the
     #  pressure array in increasing order)
-    rad = mat.radpress2(pressure[::-1], best_T[::-1], mu[::-1], p0, Rp, grav)
+    rad = mat.radpress(pressure[::-1], best_T[::-1], mu[::-1], p0, Rp, grav)
     rad = rad[::-1]
 
     # write best-fit atmospheric file
@@ -428,7 +426,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
             else:
                 pass
         PTprofiles[k] = pt.PT_line(pressure, curr_PTparams, R_star, T_star,
-                                                          T_int, sma, grav)
+                                   T_int, sma, grav*1e2)
 
     # get percentiles (for 1,2-sigma boundaries):
     low1 = np.percentile(PTprofiles, 16.0, axis=0)
