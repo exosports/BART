@@ -381,7 +381,7 @@ def main():
   # Make uniform-abundance profiles if requested:
   if uniform is not None and runMCMC < 8:
     # Calculate the temperature profile:
-    temp = ipt.initialPT2(PTinit, press_file, PTtype, tep_name)
+    temp = ipt.initialPT2(date_dir, PTinit, press_file, PTtype, tep_name)
     # Generate the uniform-abundance profiles file:
     mat.uniform(date_dir + atmfile, press_file, abun_basic, tep_name,
                out_spec, uniform, temp, refpress)
@@ -396,10 +396,11 @@ def main():
 
   if runMCMC < 4:  # Pre-atmospheric file
     # Calculate the temperature profile:
-    temp = ipt.initialPT2(PTinit, press_file, PTtype, tep_name)
+    temp = ipt.initialPT2(date_dir, PTinit, press_file, PTtype, tep_name)
     # Choose a pressure-temperature profile
     mu.msg(1, "\nChoose temperature and pressure profile:", indent=2)
-    raw_input("  Press enter to continue, or quit and choose other initial "
+    raw_input("  Open Initial PT profile figure.\n" 
+              "  Press enter to continue or quit and choose other initial "
               "PT parameters.")
     preatm_file = date_dir + preatm_file
     mat.make_preatm(tep_name, press_file, abun_file, in_elem, out_spec,
@@ -498,6 +499,7 @@ def main():
 
   # Calculate contribution functions and plot them
   mu.msg(1, "Calculating contribution functions ...", indent=2)
+  bestFit_atmfile = date_dir + 'bestFit.atm'
   cf.cf(date_dir, atmfile, filter)
 
   mu.msg(1, "~~ BART End ~~")

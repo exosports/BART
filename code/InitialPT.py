@@ -161,7 +161,7 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
 
   return T_smooth
 
-def initialPT2(params, pressfile, mode, tepfile, tint=100.0):
+def initialPT2(date_dir, params, pressfile, mode, tepfile, tint=100.0):
   """
   Compute a Temperature profile.
 
@@ -216,6 +216,6 @@ def initialPT2(params, pressfile, mode, tepfile, tint=100.0):
   plt.ylabel('logP [bar]', fontsize=14)
 
   # Save plot to current directory
-  plt.savefig('InitialPT.png') 
+  plt.savefig(date_dir + 'InitialPT.png') 
 
   return Temp
