@@ -94,10 +94,16 @@ cp $topdir/BART/examples/demo/transit_demo.cfg .
 $topdir/BART/modules/transit/transit/transit -c transit_demo.cfg --justOpacity
 ```
 
-Copy the BART configuration file and run the MCMC code to sample the posteriors:
+Copy and run the BART configuration file for eclipse geometry:
 ```shell
-cp $topdir/BART/examples/demo/BART.cfg .  
-$topdir/BART/BART.py -c BART.cfg
+cp $topdir/BART/examples/demo/BART_eclipse.cfg .
+$topdir/BART/BART.py -c BART_eclipse.cfg
+```
+
+Copy and run the BART configuration file for transit geometry:
+```shell
+cp $topdir/BART/examples/demo/BART_transit.cfg .
+$topdir/BART/BART.py -c BART_transit.cfg
 ```
 
 
