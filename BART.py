@@ -214,9 +214,6 @@ def main():
 
   # MCMC options:
   group = parser.add_argument_group("MCMC")
-  group.add_argument("--func", dest="func",
-           help="",
-           type=mu.parray, action="store", default=None)
   group.add_argument("--params",  dest="params",
            help="Model-fitting parameters [default: %(default)s]",
            type=mu.parray, action="store", default=None)
@@ -473,17 +470,20 @@ def main():
   # Call Transit with the best-fit tconfig
   Tcall = Transitdir + "/transit/transit"
   subprocess.call(["{:s} -c {:s}".format(Tcall, bestFit_tconfig)],
-                    shell=True, cwd=date_dir)
+                   shell=True, cwd=date_dir)
 
-  # Plot best-fit eclipse or modulation spectrum, depending on solution 
+  # Plot best-fit eclipse or modulation spectrum, depending on solution:
   if solution == 'eclipse':
     # Plot best-fit eclipse spectrum
-    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outflux, data, uncert, date_dir)
+    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outflux,
+                             data, uncert, date_dir)
   elif solution == 'transit':
     # Plot best-fit transit spectrum
-    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod, data, uncert, date_dir)
+    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod,
+                             data, uncert, date_dir)
 
-  # Run Transit with unlimited 'toomuch' argument for contribution function calculation
+  # Run Transit with unlimited 'toomuch' argument for contribution
+  # function calculation:
   mu.msg(1, "\nTransit call for contribution functions calculation.")
 
   # Make cf_tconfig
