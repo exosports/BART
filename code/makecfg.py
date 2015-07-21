@@ -155,6 +155,8 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
      BART configuration file.
   MCMC_cfile: String
      Reformated configuration file.
+  logfile: String
+     Default logfile argument if not specified in cfile.
   """
 
   # Name of the configuration-file section:
@@ -170,8 +172,8 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   input_args = ["tep_name", "kurucz", "molfile", "filter", "linedb",
                 "cia", "loc_dir"]
   output_args = ["tconfig",    "atmfile",   "opacityfile", "press_file",
-                 "abun_basic", "abun_file", "preatm_file", "output",
-                 "savemodel",  "logfile"]
+                 "abun_basic", "abun_file", "preatm_file", "outflux",
+                 "outmod",     "savemodel", "logfile"]
 
   # Set default logfile:
   if "logfile" not in args:
@@ -192,12 +194,13 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
                 Bconfig.get(section, "loc_dir") + "/" +
                 os.path.basename(Bconfig.get(section, arg)))
 
-  # Func is a special case:
-  funcvalues = Bconfig.get(section, "func").split()
-  funcvalues[2] = os.path.realpath(funcvalues[2])
-  Bconfig.set(section, "func", " ".join(funcvalues))
+  # Add mpi:
+  Bconfig.set(section, "mpi", "True")
 
-  # Params is another special case:
+  # Add func:
+  Bconfig.set(section, "func", "hack BARTfunc {:s}".format(filedir))
+
+  # Params is a special case:
   params = Bconfig.get(section, "params")
   # It may or not be a file path:
   if os.path.isfile(params):

@@ -165,9 +165,8 @@ def main():
   # Elemental abundance options:
   group = parser.add_argument_group("Elemental abundances")
   group.add_argument("--abun_basic", dest="abun_basic",
-           help="Input elemental abundances file "
-                "[default: 'BART/inputs/abundances_Asplund2009.txt']",
-           type=str, action="store", default=None)
+           help="Input elemental abundances file [default: %(default)s]",
+           type=str, action="store", default="../BART/inputs/abundances_Asplund2009.txt")
   group.add_argument("--abun_file", dest="abun_file",
            help="Input/Output modified elemental abundances file",
            type=str, action="store", default=None)
@@ -215,9 +214,6 @@ def main():
 
   # MCMC options:
   group = parser.add_argument_group("MCMC")
-  group.add_argument("--func", dest="func",
-           help="",
-           type=mu.parray, action="store", default=None)
   group.add_argument("--params",  dest="params",
            help="Model-fitting parameters [default: %(default)s]",
            type=mu.parray, action="store", default=None)
@@ -465,7 +461,8 @@ def main():
   MCfile = date_dir + logfile
 
   # Call bestFit submodule and make new bestFit_tconfig.cfg
-  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, tconfig, date_dir, params, burnin)
+  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, solution,
+                 refpress, tconfig, date_dir, params, burnin, abun_basic)
 
   # Best-fit tconfig
   bestFit_tconfig = date_dir + 'bestFit_tconfig.cfg'
@@ -473,17 +470,20 @@ def main():
   # Call Transit with the best-fit tconfig
   Tcall = Transitdir + "/transit/transit"
   subprocess.call(["{:s} -c {:s}".format(Tcall, bestFit_tconfig)],
-                    shell=True, cwd=date_dir)
+                   shell=True, cwd=date_dir)
 
-  # Plot best-fit eclipse or modulation spectrum, depending on solution 
+  # Plot best-fit eclipse or modulation spectrum, depending on solution:
   if solution == 'eclipse':
     # Plot best-fit eclipse spectrum
-    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outflux, data, uncert, date_dir)
+    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outflux,
+                             data, uncert, date_dir)
   elif solution == 'transit':
     # Plot best-fit transit spectrum
-    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod, data, uncert, date_dir)
+    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod,
+                             data, uncert, date_dir)
 
-  # Run Transit with unlimited 'toomuch' argument for contribution function calculation
+  # Run Transit with unlimited 'toomuch' argument for contribution
+  # function calculation:
   mu.msg(1, "\nTransit call for contribution functions calculation.")
 
   # Make cf_tconfig
