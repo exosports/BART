@@ -94,7 +94,7 @@ def makeTransit(cfile, tepfile, shareOpacity):
                 "verb",
                 "savefiles",
                 "outtoomuch", "outsample", "outmod", "outflux", "outintens",
-                "linedb", "cia", "orbpars", "orbparsfct"]
+                "linedb", "csfile", "orbpars", "orbparsfct"]
 
   # Name of the configuration-file section:
   section = "MCMC"
@@ -128,9 +128,9 @@ def makeTransit(cfile, tepfile, shareOpacity):
   # Add these keywords:
   args = np.union1d(args, ["refradius", "gsurf"])
 
-  # Reformat the cia input for Transit:
-  cia = Bconfig.get(section, "cia")
-  Bconfig.set(section, "cia", ",".join(cia.split()))
+  # Reformat the cross-section inputs for Transit:
+  cs = Bconfig.get(section, "csfile")
+  Bconfig.set(section, "csfile", ",".join(cs.split()))
 
   # Print the known arguments to file:
   for key in np.intersect1d(args, known_args):
@@ -170,7 +170,7 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
 
   # Known arguments that may have a path:
   input_args = ["tep_name", "kurucz", "molfile", "filter", "linedb",
-                "cia", "loc_dir"]
+                "csfile", "loc_dir"]
   output_args = ["tconfig",    "atmfile",   "opacityfile", "press_file",
                  "abun_basic", "abun_file", "preatm_file", "outflux",
                  "outmod",     "savemodel", "logfile"]
