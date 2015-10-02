@@ -88,7 +88,7 @@ def main(comm):
   # Parse arguments:
   cparser = argparse.ArgumentParser(description=__doc__, add_help=False,
                          formatter_class=argparse.RawDescriptionHelpFormatter)
-  # Add config file option:
+  # Add config file ption:
   cparser.add_argument("-c", "--config_file", 
                        help="Configuration file", metavar="FILE")
   # Remaining_argv contains all other command-line-arguments:
@@ -360,6 +360,19 @@ def main(comm):
         bandflux[i] = w.bandintegrate(spectrum[wnindices[i]], specwn,
                                       nifilter[i], wnindices[i])
 
+    # Allocate arrays for total spectral integration
+    nofilter    = np.ones(  specwn.size[0])
+    fullindices = np.arange(specwn.size[0])
+
+    # Calculate energy from star to planet and from planet to observer
+    totaloutflux = w.bandintegrate(spectrum, specwn, nofilter, fullindices)
+    totalinflux  = w.bandintegrate(starfl,   specwn, nofilter, fullindices)
+
+    if totaloutflux > totalinflux:
+        autoreject = True
+    else:
+        autoreject = False
+        
     # Send resutls back to MCMC:
     #mu.msg(verb, "OCON FLAG 95: Flux band integrated ({})".format(bandflux))
     #mu.msg(verb, "{}".format(params[nPT:]))
