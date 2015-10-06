@@ -1,0 +1,422 @@
+\textwidth=6.5in
+\textheight=9.5in
+\topmargin=-0.75in
+\oddsidemargin=0.0in
+\evensidemargin=0.0in
+
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{amssymb, amsmath}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\usepackage{times}
+\usepackage{natbib}
+\usepackage{etoolbox}
+\usepackage{astjnlabbrev-jh}
+\usepackage{bibentry}
+\usepackage{ifthen}
+\usepackage{epsfig}
+
+\usepackage{commath}
+\usepackage{rotating}
+
+\usepackage{dirtree}
+\usepackage{changepage}
+\usepackage{alltt}
+
+%\usepackage[T1]{fontenc}
+%\usepackage[scaled]{beramono}
+%\usepackage[utf8]{inputenc}
+%\renewcommand*\familydefault{\ttdefault}
+
+% \lstset{
+% language=Python,
+% showstringspaces=false,
+% formfeed=\newpage,
+% tabsize=4,
+% commentstyle=\itshape,
+% basicstyle=\ttfamily,
+% morekeywords={models, lambda, forms}
+% }
+ 
+% \newcommand{\code}[2]{
+% \hrulefill
+% \subsection*{#1}
+% \lstinputlisting{#2}
+% \vspace{2em}
+% }
+
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{10} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{10}  % for normal
+% twelve-sized ttm:
+\DeclareFixedFont{\tttb}{T1}{txtt}{bx}{n}{12}  % for bold
+\DeclareFixedFont{\tttm}{T1}{txtt}{m} {n}{12}  % for normal
+
+\DeclareFixedFont{\ttnm}{T1}{txtt}{m}{n}{9.8}  % for normal
+
+% Custom colors
+\usepackage{color}
+\definecolor{deepblue}  {rgb}{0.0, 0.0, 0.5}
+\definecolor{deepred}   {rgb}{0.8, 0.0, 0.0}
+\definecolor{deepgreen} {rgb}{0.0, 0.5, 0.0}
+\definecolor{commentc}  {rgb}{0.5, 0.5, 0.5}
+\definecolor{DodgerBlue}{rgb}{0.1, 0.6, 1.0}
+
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+language=Python,
+basicstyle = \ttm,
+morekeywords = {self, as, assert, with, yield}, % Add keywords here
+keywordstyle  = \ttb\color{blue},      %
+emph        = {MyClass, __init__},     % Custom highlighting
+emphstyle   = \ttb\color{DodgerBlue},  % Custom  highlighting style
+stringstyle = \color{deepred},         % Strings highlighting style
+commentstyle=\color{commentc},         % Comment highlighting style
+frame       = tb,                      % Any extra options here
+showstringspaces = false
+}}
+
+% Python environment:
+\lstnewenvironment{python}[1][]{\pythonstyle\lstset{#1}}{}
+% Python for external files:
+\newcommand\pythonexternal[2][]{{\pythonstyle\lstinputlisting[#1]{#2}}}
+% Python for inline:
+\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
+
+% Python style for highlighting
+\newcommand\plainstyle{\lstset{
+language=Python,
+basicstyle = \ttnm,
+keywordstyle  = \ttnm,      %
+emph        = {MyClass, __init__},     % Custom highlighting
+emphstyle   = \ttnm\color{black},    % Custom  highlighting style
+stringstyle = \color{black},         % Strings highlighting style
+commentstyle=\color{black},         % Comment highlighting style
+frame       = tb,                      % Any extra options here
+showstringspaces = false
+}}
+
+% Plain environment:
+\lstnewenvironment{plain}[1][]{\plainstyle\lstset{#1}}{\vspace{10pt}}
+\newcommand\plaininline[1]{{\plainstyle\lstinline!#1!}}
+
+% To use boldface verbatim:
+%\lstset{basicstyle=\ttfamily,
+%        escapeinside={||},
+%        mathescape=true}
+
+\lstset{
+    language={[LaTeX]TeX},
+    basicstyle=\tt\color{red},
+    escapeinside={||},
+}
+
+\bibliographystyle{apj_hyperref}
+\usepackage[%pdftex,      %%% hyper-references for pdflatex
+bookmarks=true,           %%% generate bookmarks ...
+bookmarksnumbered=true,   %%% ... with numbers
+colorlinks=true,          % links are colored
+citecolor=blue,           % green   % color of cite links
+linkcolor=blue,           %cyan,         % color of hyperref links
+menucolor=blue,           % color of Acrobat Reader menu buttons
+urlcolor=blue,            % color of page of \url{...}
+breaklinks=true,
+linkbordercolor={0 0 1},  %%% blue frames around links
+pdfborder={0 0 1},
+frenchlinks=true]{hyperref}
+%\usepackage{breakurl}
+
+\newcommand{\eprint}[1]{\href{http://arxiv.org/abs/#1}{#1}}
+\newcommand{\ISBN}[1]{\href{http://cosmologist.info/ISBN/#1}{ISBN: #1}}
+\providecommand{\adsurl}[1]{\href{#1}{ADS}}
+
+% hyper ref only the year in citations:
+\makeatletter
+% Patch case where name and year are separated by aysep:
+\patchcmd{\NAT@citex}
+  {\@citea\NAT@hyper@{%
+     \NAT@nmfmt{\NAT@nm}%
+     \hyper@natlinkbreak{\NAT@aysep\NAT@spacechar}{\@citeb\@extra@b@citeb}%
+     \NAT@date}}
+  {\@citea\NAT@nmfmt{\NAT@nm}%
+   \NAT@aysep\NAT@spacechar\NAT@hyper@{\NAT@date}}{}{}
+% Patch case where name and year are separated by opening bracket:
+\patchcmd{\NAT@citex}
+  {\@citea\NAT@hyper@{%
+     \NAT@nmfmt{\NAT@nm}%
+     \hyper@natlinkbreak{\NAT@spacechar\NAT@@open\if*#1*\else#1\NAT@spacechar\fi}%
+       {\@citeb\@extra@b@citeb}%
+     \NAT@date}}
+  {\@citea\NAT@nmfmt{\NAT@nm}%
+   \NAT@spacechar\NAT@@open\if*#1*\else#1\NAT@spacechar\fi\NAT@hyper@{\NAT@date}}
+  {}{}
+\makeatother
+
+
+%\def\bibAnnoteFile#1{}
+%\bibpunct[, ]{(}{)}{,}{a}{}{,}
+
+% Packed reference list:
+\setlength\bibsep{0pt}
+
+% \pagestyle{myheadings}
+% \markright{MC\sp{3}}
+% \pagenumbering{arabic}
+
+
+% :::::::::::::::::::::::
+\newcommand\degree{\degr}
+\newcommand\degrees{\degree}
+\newcommand\vs{\emph{vs.}}
+
+% unslanted mu, for ``micro'' abbrev.
+\DeclareSymbolFont{UPM}{U}{eur}{m}{n}
+\DeclareMathSymbol{\umu}{0}{UPM}{"16}
+\let\oldumu=\umu
+\renewcommand\umu{\ifmmode\oldumu\else\math{\oldumu}\fi}
+\newcommand\micro{\umu}
+\newcommand\micron{\micro m}
+\newcommand\microns{\micron}
+
+\let\oldsim=\sim
+\renewcommand\sim{\ifmmode\oldsim\else\math{\oldsim}\fi}
+\let\oldpm=\pm
+\renewcommand\pm{\ifmmode\oldpm\else\math{\oldpm}\fi}
+\newcommand\by{\ifmmode\times\else\math{\times}\fi}
+\newcommand\ttt[1]{10\sp{#1}}
+\newcommand\tttt[1]{\by\ttt{#1}}
+\newcommand\tablebox[1]{\begin{tabular}[t]{@{}l@{}}#1\end{tabular}}
+\newbox{\wdbox}
+\renewcommand\c{\setbox\wdbox=\hbox{,}\hspace{\wd\wdbox}}
+\renewcommand\i{\setbox\wdbox=\hbox{i}\hspace{\wd\wdbox}}
+\newcommand\n{\hspace{0.5em}}
+\newcommand\marnote[1]{\marginpar{\raggedright\tiny\ttfamily\baselineskip=9pt #1}}
+\newcommand\herenote[1]{{\bfseries #1}\typeout{======================> note on page \arabic{page} <====================}}
+\newcommand\fillin{\herenote{fill in}}
+\newcommand\fillref{\herenote{ref}}
+\newcommand\findme[1]{\herenote{(FINDME: #1)}}
+
+\newcount\timect
+\newcount\hourct
+\newcount\minct
+\newcommand\now{\timect=\time \divide\timect by 60
+         \hourct=\timect \multiply\hourct by 60
+         \minct=\time \advance\minct by -\hourct
+         \number\timect:\ifnum \minct < 10 0\fi\number\minct}
+
+\newcommand\citeauthyear[1]{\citeauthor{#1} \citeyear{#1}}
+
+\newcommand\mc{\multicolumn}
+\newcommand\mctc{\multicolumn{2}{c}}
+
+
+% {\tttm -h, --help} \\
+% Print the list of arguments. \newline
+
+% \newenvironment{myindentpar}[1]%
+%   {\begin{list}{}%
+%          {\setlength{\leftmargin}{3cm}}%
+%      \item[]%
+%   }
+% {\end{list}}
+
+\newenvironment{packed_enum}{
+\begin{enumerate}[leftmargin=3cm]
+   \setlength{\itemsep}{1pt}
+   \setlength{\parskip}{5pt}
+   \setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
+\newcommand{\argument}[2]{{\noindent\tttm #1}%
+\begin{adjustwidth}{2.5em}{0pt}%
+#2 \vspace{0.3cm}%
+\end{adjustwidth}%
+}
+
+%\newcommand{\ttmb}[1]{\tttm\color{#1}}
+\newcommand{\routine}[2]{{\noindent\tttm\color{blue} #1:}%
+\begin{adjustwidth}{2.0em}{0pt}%
+#2 \vspace{0.15cm}%
+\end{adjustwidth}%
+}
+
+% \newcommand{\routine}[2]{{\noindent\tttm\color{blue} #1}%
+% \begin{adjustwidth}{0.0em}{0pt}%
+%  #2 \vspace{0.15cm}%
+% \end{adjustwidth}%
+% }
+
+% :::::::::::::::::: jhmacs2.tex :::::::::::::::::::::::::::::::::::::
+\typeout{Joe Harrington's personal setup, Wed Jun 17 10:53:17 EDT 1998}
+% Tue Mar 29 22:23:03 EST 1994
+
+% :::::: pato.tex ::::::
+% Joetex character unreservations.
+% This file frees most of TeX's reserved characters, and provides
+% several alternatives for their functions.
+
+
+% utility
+\catcode`@=11
+
+% comments are first....
+\newcommand\comment[1]{}
+
+\newcommand\commenton{\catcode`\%=14}
+\newcommand\commentoff{\catcode`\%=12}
+
+% Not-a-comment:
+\newcommand\nocomment[1]{#1}
+
+\renewcommand\math[1]{$#1$}
+\newcommand\mathshifton{\catcode`\$=3}
+\newcommand\mathshiftoff{\catcode`\$=12}
+
+\comment{alignment tab}
+\let\atab=&
+\newcommand\atabon{\catcode`\&=4}
+\newcommand\ataboff{\catcode`\&=12}
+
+\let\oldmsp=\sp
+\let\oldmsb=\sb
+\def\sp#1{\ifmmode
+           \oldmsp{#1}%
+         \else\strut\raise.85ex\hbox{\scriptsize #1}\fi}
+\def\sb#1{\ifmmode
+           \oldmsb{#1}%
+         \else\strut\raise-.54ex\hbox{\scriptsize #1}\fi}
+\newbox\@sp
+\newbox\@sb
+\def\sbp#1#2{\ifmmode%
+           \oldmsb{#1}\oldmsp{#2}%
+         \else
+           \setbox\@sb=\hbox{\sb{#1}}%
+           \setbox\@sp=\hbox{\sp{#2}}%
+           \rlap{\copy\@sb}\copy\@sp
+           \ifdim \wd\@sb >\wd\@sp
+             \hskip -\wd\@sp \hskip \wd\@sb
+           \fi
+        \fi}
+\def\msp#1{\ifmmode
+           \oldmsp{#1}
+         \else \math{\oldmsp{#1}}\fi}
+\def\msb#1{\ifmmode
+           \oldmsb{#1}
+         \else \math{\oldmsb{#1}}\fi}
+\def\supon{\catcode`\^=7}
+\def\supoff{\catcode`\^=12}
+\def\subon{\catcode`\_=8}
+\def\suboff{\catcode`\_=12}
+\def\supsubon{\supon \subon}
+\def\supsuboff{\supoff \suboff}
+
+
+\newcommand\actcharon{\catcode`\~=13}
+\newcommand\actcharoff{\catcode`\~=12}
+
+\newcommand\paramon{\catcode`\#=6}
+\newcommand\paramoff{\catcode`\#=12}
+
+\comment{And now to turn us totally on and off...}
+
+\newcommand\reservedcharson{ \commenton  \mathshifton  \atabon  \supsubon
+                             \actcharon  \paramon}
+
+\newcommand\reservedcharsoff{\commentoff \mathshiftoff \ataboff \supsuboff
+                             \actcharoff \paramoff}
+
+\newcommand\nojoe[1]{\reservedcharson #1 \reservedcharsoff}
+
+\catcode`@=12
+\reservedcharsoff
+
+\reservedcharson
+\newcommand\jhauth[1]{{#1}}
+\newcommand\jhstud[1]{{#1}}
+
+\comment{Must have ONLY ONE of these... trust these macros, they work
+\newcommand\jhauth[1]{{\bfseries #1}}
+\newcommand\jhstud[1]{{\em #1}}
+}
+
+\reservedcharsoff
+\reservedcharson
+
+
+% ::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+\def\vs{{\em vs.}}
+\def\p{\phantom{(0)}}
+
+% Section levels:
+\setcounter{secnumdepth}{5}
+%  \section{}       % level 1
+%  \subsection{}    % level 2
+%  \subsubsection{} % level 3
+%  \paragraph{}     % level 4 - equivalent to subsubsubsection
+%  \subparagraph{}  % level 5
+
+% To show in the table of content:
+\setcounter{tocdepth}{5}
+
+% Linebreak after \paragraph
+\makeatletter
+\renewcommand\paragraph{%
+   \@startsection{paragraph}{4}{0mm}%
+      {-\baselineskip}%
+      {.5\baselineskip}%
+      {\normalfont\normalsize\bfseries}}
+\makeatother
+
+% Linebreak after \paragraph
+\makeatletter
+\renewcommand\subparagraph{%
+   \@startsection{subparagraph}{4}{0mm}%
+      {-\baselineskip}%
+      {.5\baselineskip}%
+      {\normalfont\normalsize\bfseries}}
+\makeatother
+
+\actcharon
+\renewcommand{\textfraction}{0.1}
+\comment{\paramon\def\herenote#1{}\paramoff}
+\renewcommand{\thepage}{\arabic{page}}
+\reservedcharson
+
+% :::::::::::: My Additions ::::::::::::::
+\newcommand\Spitzer{{\em Spitzer}}
+\newcommand\SST{{\em Spitzer Space Telescope}}
+\newcommand\chisq{$\chi^2$}
+\newcommand\itbf[1]{\textit{\textbf{#1}}}
+\newcommand\bftt[1]{\texttt{\textbf{#1}}}
+\newcommand\function[1]{\noindent\texttt{\begin{tabular}{@{}l@{}l}#1\end{tabular}}\newline}
+\newcommand\bfv[1]{|\textbf{#1}|}
+\newcommand\ttred[1]{\textcolor{red}{\ttfamily #1}}
+\newcommand\ttblue[1]{\textcolor{blue}{\ttfamily #1}}
+\newcommand\ttblack[1]{\textcolor{black}{\ttfamily #1}}
+\newcommand\der{{\rm d}}
+\newcommand\tno{$\sp{-1}$}
+\newcommand\tnt{$\sp{-2}$}
+\newcommand*\Eval[3]{\left.#1\right\rvert_{#2}^{#3}}
+\newcommand\mcc{MC\sp{3}}
+
+%:::::::::::::::::::::::::::::::::::::::::
+% Next six lines adjust spacing above/below captions and Sections etc
+% Adjust as needed
+
+\comment{
+% \setlength{\abovecaptionskip}{0pt}
+% \setlength{\belowcaptionskip}{0pt}
+% \setlength{\textfloatsep}{8pt}
+% \titlespacing{\section}{0pt}{5pt}{*0}
+% \titlespacing{\subsection}{0pt}{5pt}{*0}
+% \titlespacing{\subsubsection}{0pt}{5pt}{*0}
+}
+
+\reservedcharsoff
+\actcharon
+\mathshifton
+
+\reservedcharson

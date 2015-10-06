@@ -1,0 +1,909 @@
+\documentclass[letterpaper, 12pt]{article}
+\input{top-BART_user_manual}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+
+\textsc{\LARGE University of Central Florida}\\[1.5cm]
+
+% Title
+\rule{\linewidth}{0.5mm} \\[0.4cm]
+{ \huge \bfseries BART Users Manual \\[0.4cm] }
+\rule{\linewidth}{0.5mm} \\[1.0cm]
+
+\textsc{\Large Bayesian Atmospheric Radiative Transfer}\\[1.5cm]
+
+% Author and supervisor
+\noindent
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft}
+\large
+\emph{Authors:} \\
+Patricio \textsc{Cubillos} \\
+Jasmina  \textsc{Blecic}   \\
+\end{flushleft}
+\end{minipage}%
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Supervisor:} \\
+Dr.~Joseph \textsc{Harrington}
+\end{flushright}
+\end{minipage}
+\vfill
+
+% Bottom of the page
+{\large \today}
+
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Team Members}
+\label{sec:team}
+
+\begin{itemize}
+\item \href{https://github.com/pcubillos/}{Patricio Cubillos}%
+  \footnote{https://github.com/pcubillos/}, University of
+  Central Florida (pcubillos@fulbrightmail.org).
+\item Jasmina Blecic, University of Central Florida (email).
+\item Joseph Harrington, University of Central Florida (email).
+\item Patricio M. Rojo, Universidad de Chile (email).
+\item M. Oliver Bowman, University of Central Florida (email).
+\item Madison Stemm, University of Central Florida (email).
+\item Andrew S. D. Foster, University of Central Florida (email).
+\item Ryan Challener, University of Central Florida (email).
+\item A.J. Foster, University of Central Florida (email).
+\item People, Institution (email).
+\end{itemize}
+
+\section{Introduction}
+\label{sec:theory}
+
+This document describes the University of Central Florida's computer
+program BART: Bayesian Atmospheric Radiative Transfer.  BART uses a
+Bayesian approach to retrieve molecular abundances and temperature
+profiles from exoplanet atmospheres for given spectro-photometric
+data.  The BART package include three stand-alone submodules: the
+Thermochemical Equilibrium Abundances (TEA) to calculate species
+equilibrium mole mixing ratios; the radiative-transfer solver Transit,
+and the statistical package MCcubed.
+
+% TEA calculates abundances of gaseous molecular species present in a
+% planetary atmosphere.
+% Transit produces models of planetary spectra,
+% and MCcubed compares the models with observations assessing the best one.
+
+The detailed BART documentation, The BART theory documents (FINDME),
+BART User Manual, and BART Code Documentation are provided with the
+package.
+
+This manual describes the BART program usage, inputs, and outputs.
+Complementary, TEA, Transit, and MCcubed with its documentation.
+
+% and for development (Sections \herenote{Z} through \herenote{W})
+
+This manual makes many references to the Transit and TEA user manuals
+\findme{add urls}.
+
+Section \ref{sec:installation} indicates how to obtain the code.
+Section \ref{sec:inputs} blah.  Section \ref{sec:outputs} blah. blah
+blah ...
+
+
+\subsection{BART Package Overview}
+
+BART is a Python and C programming language code written in a modular,
+object oriented style.  The Bayesian Atmospheric Radiative Transfer
+(\href{https://github.com/joeharr4/BART}{BART}) project combines the
+radiative-transfer code
+(\href{https://github.com/pcubillos/transit}{Transit}) with the
+Thermochemical Equilibrium Abundances
+(\href{https://github.com/dzesmin/TEA}{TEA}) module, which calculates
+abundances of gaseous species, and the Multi-Core Markov-chain Monte
+Carlo (\href{https://github.com/pcubillos/MCcubed}{MCcubed})
+statistical module, to assess the temperature and molecular-abundances
+posterior distributions, given a set of observations.
+
+
+Note that each one of the submodules, TEA, Transit, and MCcubed, are
+stand-alone routines, that can be used separately on their own for a
+diversity of project, not necessarily linked to exoplanet atmospheric
+retrieval.
+ 
+\subsubsection{Thermochemical Equilibrium}
+
+\subsubsection{Bayesian Statistics}
+
+\begin{figure}[htb]
+\centerline{
+\includegraphics[width=0.9\textwidth, clip]{figs/BARTcharts.ps}}
+\caption{\small \label{fig:BARTchart} The BART chart. \findme{explain}. \findme{Remove title}.}
+\end{figure}
+% SOURCE:  /home/patricio/ast/esp01/bart/transit/develop/plots/widths.py
+
+
+The BART package is organized as follow: \newline
+% The framebox and minipage are necessary because dirtree kills the
+% indentation.
+\noindent\framebox{\begin{minipage}[t]{0.97\columnwidth}%
+\dirtree{%
+ .1 BART. 
+ .2 code. 
+ .2 modules. 
+ .3 Transit. 
+ .4 RT. 
+ .4 pylineread. 
+ .3 TEA. 
+ .4 prepipe.
+ .4 tea. 
+ .3 MCcubed. 
+ .2 inputs. 
+ .2 doc. 
+ .2 examples. 
+}
+\end{minipage}}
+\vspace{0.7cm}
+% \newline is not working here, therefore I use vspace.
+% (because dirtree is such a pain in the ass)
+
+
+\subsection{License}
+\label{sec:license}
+
+Bayesian Atmospheric Radiative Transfer (BART), a code to infer
+properties of planetary atmospheres based on observed spectroscopic
+information. \\
+
+This project was completed with the support of the NASA Planetary
+Atmospheres Program, grant NNX12AI69G, held by Principal Investigator
+Joseph Harrington. Principal developers included graduate students
+Patricio E. Cubillos and Jasmina Blecic, programmer Madison Stemm, and
+undergraduates M. Oliver Bowman and Andrew S. D. Foster.  The included
+'transit' radiative transfer code is based on an earlier program of
+the same name written by Patricio Rojo (Univ. de Chile, Santiago) when
+he was a graduate student at Cornell University under Joseph
+Harrington.  Statistical advice came from Thomas J. Loredo and Nate
+B. Lust. \newline
+
+Copyright (C) 2015 University of Central Florida.  All rights
+reserved. \newline
+
+This is a test version only, and may not be redistributed to any third
+party.  Please refer such requests to us.  This program is distributed
+in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. \newline
+
+Our intent is to release this software under an open-source,
+reproducible-research license, once the code is mature and the first
+research paper describing the code has been accepted for publication
+in a peer-reviewed journal.  We are committed to development in the
+open, and have posted this code on github.com so that others can test
+it and give us feedback.  However, until its first publication and
+first stable release, we do not permit others to redistribute the code
+in either original or modified form, nor to publish work based in
+whole or in part on the output of this code.  By downloading, running,
+or modifying this code, you agree to these conditions.  We do
+encourage sharing any modifications with us and discussing them
+openly. \newline
+
+\noindent We welcome your feedback, but do not guarantee support.
+Please send feedback or inquiries to: \newline
+
+\noindent Patricio Cubillos $<$\href{mailto:pcubillos@fulbrightmail.org}
+                                    {pcubillos[at]fulbrightmail.org}$>$  \\
+\noindent Jasmina Blecic    $<$\href{jasmina@physics.ucf.edu}
+                                    {jasmina[at]physics.ucf.edu}$>$   \\
+\noindent Joseph Harrington $<$\href{jh@physics.ucf.edu}
+                                    {jh[at]physics.ucf.edu}$>$  \\
+
+
+\noindent or alternatively, \newline
+
+\noindent Joseph Harrington, Patricio Cubillos, and Jasmina Blecic \\
+UCF PSB 441            \\
+4111 Libra Drive       \\
+Orlando, FL 32816-2385 \\
+USA                    \\
+
+Thank you for using BART! \newline
+
+\section{Installation}
+\label{sec:installation}
+
+\subsection{System Requirements}
+\label{sec:requirements}
+
+BART was developed on a Unix/Linux machine using Python 2.7.6, Numpy
+1.8.2, and mpi4py 1.3.1.
+
+\noindent -- Python 2.7.6+. \\
+\noindent -- \href{http://www.numpy.org/}{NumPy} 1.8.2+. \\
+\noindent -- \href{http://matplotlib.org/index.html}{matplotlib}. \\
+\noindent -- \href{https://github.com/sympy/sympy/releases/tag/sympy/0.7.1.rc1}
+                  {SymPy} (version 0.7.1.rc1 to ensure better performance) \\
+\noindent -- \href{http://mpi4py.scipy.org/docs/usrman/install.html}
+                  {mpi4py} 1.3.1+. \\
+\noindent -- An MPI distribution (MPICH preferred). \\
+\noindent -- A C \findme{which?} compiler. \\
+\noindent -- A Fortran \findme{which?} compiler. \\
+\noindent -- GSL \findme{Give specifics}. \\
+
+\subsection{Install and Compile}
+\label{sec:install}
+
+To obtain the latest stable version from the BART
+\href{https://github.com/joeharr4/BART/releases}{releases} page
+\herenote{(TBD)}.  Alternatively, clone the repository to your local
+machine with the following Linux terminal commands. 
+%%
+First create a top-level directory to place the code:
+\begin{verbatim}
+mkdir BART_demo/
+cd BART_demo/
+topdir=`pwd`
+\end{verbatim}
+\findme{Backtick marks don't work when copy-pasting text to the terminal.}
+\newline
+
+\noindent Clone the repository with all its sub-modules:
+\begin{verbatim}
+git clone --recursive https://github.com/joeharr4/BART BART/
+\end{verbatim}
+
+\noindent Compile the transit module programs:
+\begin{verbatim}
+cd $topdir/BART/modules/transit/pylineread/src/fortran/
+make
+cd $topdir/BART/modules/transit/pu/
+make
+cd $topdir/BART/modules/transit/transit/
+make
+\end{verbatim}
+
+\noindent Compile the {\tttm MCcubed} routines:
+\begin{verbatim}
+cd ../../MCcubed/src/cfuncs/
+make
+\end{verbatim}
+
+\noindent To remove the program binaries, execute (in the respective
+directories):
+\begin{verbatim}
+make clean
+\end{verbatim}
+
+\noindent Note that there will be warnings. \\
+%\findme{Nate says pypy is a great thing to use. Investigate.} \newline
+
+\section{Quick Example}
+\label{sec:quick-example}
+
+The following script lets you quickly fit a methane emission spectrum
+model to a set of 10 filters between 2 and 4 {\microns}.  These
+instructions are meant to be executed from the shell Linux terminal.  To
+begin, follow the instructions in the previous Section to install and
+compile the code. Now, create a working directory in your top
+directory to place the files and execute the programs:
+
+{\fontsize{9.8}{1em}\selectfont 
+\begin{verbatim}
+cd $topdir
+mkdir run/
+cd run/
+\end{verbatim}}
+
+\noindent Download the methane line-transition database from the HITRAN server:
+
+{\fontsize{9.8}{1em}\selectfont 
+\begin{verbatim}
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip 
+unzip 06_hit08.zip
+\end{verbatim}}
+\findme{Verbatim doesn't break lines.} \\
+
+\noindent Copy the pylineread configuration file and run pylineread to
+make the transition-line-information (TLI) file:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+cp $topdir/BART/examples/demo/pyline_demo.cfg .  
+$topdir/BART/modules/transit/pylineread/src/pylineread.py -c pyline_demo.cfg
+\end{verbatim}}
+
+\noindent Copy the transit configuration file and run it to make a
+table of opacities:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+cp $topdir/BART/examples/demo/transit_demo.cfg .
+$topdir/BART/modules/transit/transit/transit -c transit_demo.cfg --justOpacity
+\end{verbatim}}
+
+\noindent Copy the BART configuration file and run the MCMC code to sample the
+posteriors:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+cp $topdir/BART/examples/demo/BART.cfg .
+$topdir/BART/BART.py -c BART.cfg
+\end{verbatim}}
+
+\section{Test Cases}
+\subsection{WASP-12b}
+The following commands will run a test case for BART, based on eclipse depths from Spitzer observations. This test is intended to be used to check that new additions to the BART code have not broken it. Keep in mind that the MCMC algorithm has an element of randomness and thus the output will not be identical every time, but with enough iterations and/or chains, differences should be small. 
+\newline
+
+\noindent Navigate to the correct directory:
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+cd $topdir/run/
+\end{verbatim}}
+
+\noindent Download the line-list .zip file and unzip:
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+\findme{command for download}
+unzip -j WASP12b_test_line-list.zip
+\end{verbatim}}
+
+\noindent Copy the pylineread configuration file and run pylineread to make a transition-line-information (TLI) file:
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+cp $topdir/BART/tests/WASP-12b/pyline.cfg .
+$topdir/BART/modules/transit/pylineread/src/pylineread.py -c pyline.cfg
+\end{verbatim}}
+
+\noindent Copy the Transiting Exoplanet (TEP) file and Stellar Kurucz file from the tests directory:
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+cp $topdir/BART/tests/WASP-12b/WASP-12b.tep ../BART/inputs/tep/WASP-12b.tep
+cp $topdir/BART/tests/WASP-12b/wasp12b-fp03k2.pck ../BART/inputs/kurucz/wasp12b-fp03k2.pck
+\end{verbatim}}
+
+
+\noindent Copy the BART configuration file and run BART. This will first generate a table of opacities and then run the MCMC code to sample the posteriors:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+cp $topdir/BART/tests/WASP-12b/BART.cfg .
+$topdir/BART/BART.py -c BART.cfg
+\end{verbatim}}
+
+\noindent The output should be comparable to the following:
+
+\findme{Put stuff here}
+
+
+\section{Walkthrough}
+\label{sec:walk}
+
+Lengthy and wordy, maybe boring too, explanation of what is BART, what
+it does, and how it does it.
+
+Talk about the initialization.  Running TEA, then the MCMC, and
+finally the best-fitting run.  Talk about what are the inputs, where
+to get them?, what are the outputs.
+
+% \newpage
+\section{Program Inputs}
+\label{sec:inputs}
+
+The executable BART.py is the main BART program to perform most
+calculations.  This file can take command-line arguments or a
+configuration file (preferred) to set up the calculation details.
+
+The BART configuration file is the one that set up and determine the inputs.
+The BART command-line arguments are roughly divided in three main
+subgroups.
+
+Some other input files that either exist before the run or can be
+created during the run.
+The BART program is capable of producing most of the inputs.
+
+Most of the BART inputs can either be given as pre-existing files or
+can be produced upon execution.
+BART requires the following input files to run:
+
+
+\subsection{BART Configuration File}
+\label{sec:BARTconfig}
+The BART configuration file is the main file that set 
+
+The main file for BART program is the BART configuration file.
+
+The BART program uses a Configuration File were the user set up
+the arguments.  Note that some of these argument inputs are files that
+should exist before running BART.
+
+\findme{Speak about the folder structure}.
+
+\subsection{Transit-Line Information (TLI) File}
+\label{sec:TLI}
+(created by the Pylineread routine placed in the BART/modules/transit/
+sub-module)
+
+   To make a transit linelist input (TLI) file do the following:
+
+        - cd to pylineread module
+                cd BART/modules/transit/pylineread
+
+        - inside the pylineread directory, make a TLI sub-directory
+                mkdir TLI
+
+        - cd to that directory
+                cd TLI/
+
+        - copy the pylineread example configuration file
+          ../examples/pyline\_example.cfg to the TLI directory
+                cp ../examples/pyline\_example.cfg pyline\_run01.cfg
+
+        - read the configuration file header and download desired databases
+          with the partition functions from the provided links
+
+        - edit the configuration file with the following information:
+                a) paths to the databases
+                b) type of the input databases
+                c) desired output TLI filename
+                d) desired initial and final wavelength range in microns
+                e) desired verbosity level
+
+        - run the pylineread module as:
+                ../src/pylineread.py -c pyline\_run01.cfg
+
+        - running the pylineread module will produce the TLI file with the
+          name requested in the configuration file. The file will be placed
+          in the current working directory (TLI/) if not specified, or in the
+          directory specified
+
+
+\subsection{Cross-section (CS) File}
+\label{sec:CS}
+ (provided in the 
+   BART/modules/transit/inputs/ directory)
+
+\subsection{Transiting Extrasolar Planet (TEP) File}
+\label{sec:TEP}
+ containing planetary system information (some tepfiles
+   are provided in the BART/inputs/tep/ directory)
+
+\subsection{Stellar Spectrum File}
+\label{sec:stellarSpec}
+Kurucz stellar spectrum file (some kurucz files are provided
+   in BART/inputs/kurucz/ directory)
+
+\subsection{Elemental Abundances File}
+\label{sec:elemAbund}
+ (abundances\_Asplund2009.txt file is
+   provided in BART/inputs/ directory)
+\subsection{Filter Files}
+\label{sec:filters}
+  (some Spitzer filter files are provided in BART/inputs/
+   filters/ directory)
+
+
+\subsection{Command-Line Arguments}
+\label{sec:configfile}
+
+The user provides the BART configuration arguments in a configuration
+file.  The configuration file follows the
+\href{https://docs.python.org/2/library/configparser.html}{ConfigParser}
+format.   See, e.g., the example below:
+
+\begin{plain}
+[MCMC]
+# Output directory:
+loc_dir = HD209458b
+
+# Elemental species:
+in_elem  = H He C N O
+
+# Eclipse-depth data:
+data   = 0.00119       ; Spitzer 3.6 microns
+         0.00123       ; Spitzer 4.5 microns
+\end{plain}
+
+The {\tt[MCMC]} line defines a section (do not edit this line).
+Argument entries are input in the format: {\tttb `parameter = value'}.
+Multiple valued arguments are set either with blank spaces or in
+separated lines.  Blank lines are allowed.  Lines beginning with the
+{\tttb `\#'} or the {\tttb `;'} characters are comments and are ignored
+by the code.  The {\tttb `;'} character can also be use as an in-line
+comment.
+
+
+\subsubsection{General Arguments}
+\label{sec:CLAgen}
+
+\subsubsection{Atmospheric Pressure Layers}
+\label{sec:CLApress}
+
+\subsubsection{Atomic Abundances}
+\label{sec:CLAabun}
+
+\subsubsection{Temperature Profile}
+\label{sec:CLAtemp}
+
+\subsubsection{Atmospheric File (TEA) Arguments}
+\label{sec:CLAtea}
+
+\subsubsection{MCMC Arguments}
+\label{sec:CLAmcmc}
+
+\subsubsection{Transit Arguments}
+\label{sec:CLAtran}
+
+\subsection{Configuration File}
+\label{sec:arguments}
+
+
+\section{Program Outputs}
+\label{sec:outputs}
+
+BART submodules produce the following outputs:
+
+TEA produces one output file:
+    1. <atmopsheric\_file>.tea, this file is placed in
+       and the BART modified version is placed in the
+       BART output folder
+
+MCcubed produces one output file:
+    1. output.npy - a binary file containing 3D array of
+                    parameters per each chain and each iteration
+
+TRANSIT produces three output files:
+    1. \_toomuch.dat - list of radii at each wavelength sample
+                      where the optical depth reaches the maximum
+                      'toomuch' value
+
+    2. \_sampling.dat - provides sampling information 
+
+    3. \_spectrum.dat - gives the flux/modulation (eclipse/transit 
+                       geometry) vs. wavelength
+
+In addition BART produces the following:
+    1. output file:
+        - band\_eclipse.npy - a binary file containing 3D array of
+                         eclipse depths per each chain and each iteration
+    2. plots:
+        - best fitting T-P profile with boundaries
+        - best fitting abundances plot
+        - contribution functions
+        - posterior histograms
+        - posterior correlation plots
+        - spectrum
+
+
+\section{Running BART}
+\label{sec:running}
+
+Make current working directory:
+    mkdir run
+    cd run
+
+In the BART/examples/ folder, an example of the BART configuration
+file is provided. Copy the BART.cfg example file to the run/ directory:
+    cp BART/examples/BART.cfg BART.cfg
+
+Edit the file with the correct information:
+
+  1. Give paths to the input tep and kurucz files and the output
+     directory
+
+  2. ::: Atmospheric pressure layers :::
+     Provide the information needed to make a pressure file with desired
+     number of layers, range and scale.
+
+  3. ::: Elemental-abundances file :::
+    Provide the name of the basic abundances files, information how it
+    needs to be changed, and the desired name of the final abundances
+    file.
+
+  4. ::: Temperature profile :::
+    There two parametrized temperature-pressure profiles that BART
+    can work with: Madhu (based on Madhusudhan adn Seager 2009) and
+    Line (based on Line et al 2013). Provide the model type and
+    its initial parameter values.
+
+  5. ::: Atmospheric Elemental Abundances (pre-atmospheric) File :::
+    Provide the name of the desired pre-atmospheric file that will
+    contain the temperature-pressure and elemental abundances information
+    for each layer in the atmosphere, and desired elemental and molecular
+    species. Note: the output species names must use naming convention
+    produced by the ../modules/TEA/ module.
+
+  6. ::: Atmospheric File (P, T, species-abundances)  :::
+     Provide the desired name of the final atmospheric file, that will
+     be used as input for ../modules/transit/ module.
+
+  7. ::: MCMC arguments  :::
+     Provide information to run ../modules/mccubed/ module:
+       - eclipse/transit depths and their uncertainties
+       - path to the filter files
+       - 3-element tuple to locate the fitting function
+         (<function\_name> <routine\_name> <path\_to\_routine>)
+       - list of molecules that have line list data
+       - temperature boundaries (this information depends on the
+         line-list and CS databases temperature range)
+       - model fitting parameters (temperature-pressure and abundances
+         scale factors).
+       - set basic MCMC variables and define the filename to store
+         model fit
+       - set desired verbosity level
+
+  8. ::: Transit variables  :::
+     Provide information to run ../modules/transit module:
+       - set the desired name of the ../modules/transit/ module
+         configuration file that will be produced based on the
+         information provided in this section
+       - locate TRANSIT line information and CS files
+       - spectrum information (Note: The range given must be within
+         the wavelength range given for the TLI file creation)
+       - the desired geometry solution (transit or eclipse),
+         max optical depth, and number of HWHM for Voight profile
+         calculation
+       - planetary surface gravity and reference radius and pressure
+       - opacity lines' strength threshold
+       - information to make an opacity-grid file.
+         a) If variable values and new file name is provided,
+            the opacity grid file will be made. This information
+            must include the temperatures from the atmospheric file.
+            Execution takes couple of hours.
+         b) If the opacity file already exists give the path to it.
+            Other variables are ignored. Execution will be successful
+            only if the pressure and wavenumber samplings are exactly
+            the same as in the atmospheric and TLI file, respectively.
+            Execution takes around 15 seconds.
+         c) If opacityfile name is commented, the opacity calculation
+            will be done on spot. Execution takes couple of minutes.
+
+       - provide the desired names of the output files
+
+
+% + Clone repo
+% + Compile code
+% + Generate TLI file:
+%   - Download database info
+%   + Set up pylineread
+%   + Run pylineread
+% - Generate Opacity file:
+%   - Set up Transit 
+%   - Run Transit
+% - Set up Config files
+
+\subsection{Real-Case Run}
+
+This example shows how to approach a real-life BART run.  In this case you don't want to use demo files (Section \ref{sec:quick-example}), because it uses many defaults that need to be specified for a given analysis.  See below a step-by-step guide to analyze a planet.
+
+\begin{enumerate}
+
+\item  Clone the BART repository to your working directory (See Section \ref{sec:install}).
+
+\item Copy this BART configuration file: BART/examples/BART\_example.cfg  to your run folder.  Start editing the arguments in the configuration file.
+
+\item Determine what observing geometry you will test, set {\tttb solution} to eclipse or transit.  Based on that, search for the available data (eclipse or transit depth, respectively) from the literature or your own data analysis.  Put those values in the {\tttb data}, and {\tttb uncert} arguments.
+
+\item For each data point, you will need to search for/make the instrumental transmission filter file (See Section \ref{sec:filters}).  Most observatories provide the filter files, but make sure that the file has the right format (Sec. \ref{sec:filters}), edit if needed.  If you use spectroscopic data (e.g., HST's WFC3 data), you will have to reproduce the data analysis of the observer (downsampling, spectral binning).  Set the path to the filter files in the {\tttb filter} argument.
+
+\item Find/make a TEP file for your planet (See Section \ref{sec:TEP}).  In practice, the only parameters that BART requires are the stellar temperture, the stellar radius, the semi-major axis, the planetary radius, the planetary mass, and the stellar $\log(g)$.  This information can be typically found in \href{http://exoplanets.org/}{exoplanets.org/} or \href{http://exoplanet.eu/}{exoplanet.eu/}.  Set the path to the file in {\tttb tep\_name}.
+
+\item Find a Kurucz stellar file (See Section \ref{sec:stellarSpec}).
+Follow instructions in /home/esp01/doc/info\_kurucz.
+\findme{Copy those instruction here or in Sec \ref{sec:stellarSpec}}
+Set the path to the Kurucz file in {\tttb kurucz}.
+
+\item Run pylineread to make a TLI file for the species of interest
+(See Section \ref{sec:TLI}).  Set the path to the TLI file in {\tttb linedb}.
+
+\item Determine if you want to load an existing atmospheric file
+or create a new one.  If the former, set {\tttb atmfile} to an existing
+file (and skip to step (\ref{item:molfit})).
+
+\item Set the atmospheric pressure layers with the {\tttb press\_file}, 
+{\tttb n\_layers},  {\tttb p\_top}, {\tttb p\_bottom}, and {\tttb log}
+arguments.
+
+\item Set the initial atmospheric temperature profile.  Set with {\tttm
+PTtype} if you want to use a model as in
+\citet{LineEtal2013apjRetrievalI} or 
+\citet{MadhusudhanSeager2009ApJ-AbundanceMethod}.  Adjust the model
+parameters in {\tttb PTinit} to set the temperature profile
+(See Section \ref{sec:PT}).  What is an appropriate initial temperature
+profile? that is a question yet to be answered.  Having no prior
+knowledge on the planet's properties, temperatures around the
+equilibrium temperature would be an initial guess.
+As a help, run the scripts in
+\href{https://github.com/joeharr4/BART/blob/master/scripts/quickguide.py}
+{BART/scripts/quickguide.py} to see how the temperature profile looks
+for a given set of model parameters.
+
+\item Determine the species present in the atmosphere by setting the
+{\tttb out\_spec} argument.  Follow the instruction in Section
+\ref{sec:FINDME}.
+
+\item Determine if you want to start with an atmosphere in
+thermochemical equilibrium or with uniform species abundances.  
+If the former, BART will calculate the abundances with the TEA module.
+Determine the elemental abundances by adjusting the {\tttb abun\_basic},
+\newline {\tttb solar\_times}, {\tttb COswap}, {\tttb abun\_file},
+{\tttb preatm\_file}, and {\tttb in\_elem} arguments (See Section
+\ref{sec:FINDME}).
+
+\item If the user chooses to use vertical-uniform abundance profiles.
+Set in the {\tttb uniform} argument the desired species abundances
+(the order must match that of the {\tttb out\_spec}).
+
+\item \label{item:molfit} Set in {\ttb molfit} the species whose
+abundances  you want to fit.
+
+\item Set in {\tttb Tmin} and {\tttb Tmax} the minimum and maximum
+boundaries of the temperature profiles to sample.  These boundaries
+should not lie beyond the limits set by the TLI and CS data.
+
+\item The {\tttb params} argument sets the initial guess for the list
+of fitting parameters. This list corresponds (in this specific order)
+the list of the temperature-model parameters (defined by {\tttb PTtype}),
+the planetary 'surface' level (only for transit geometry), and the
+species abundances (defined by {\tttb molfit}).
+
+\item The {\tttb pmin} and {\tttb pmax} arguments set the fitting parameter-phase space boundaries.
+
+\item The {\tttb stepsize} determines the initial stepsize and which
+fitting parameters are free or fixed (See Section \ref{sec:MC3}).
+
+\item See Section \ref{sec:MC3} to lear about the rest of MCMC arguments.
+
+\item wllow and wlhigh set the spectrum boundaries.  What's important
+to mention is that we are limited by the boundaries in the CS files.
+They go from \sim0.6 um to 400um. Thus, for the moment don’t go shorter
+than 0.6um. Also, the shorter the wllow value, the computation time
+increases (more than linearly (the spectrum is equi-spaced in wavenumber)),
+so stay as close to the shortest filter boundary as possible.
+
+\item For the rest of the wavelength/wavenumber arguments, the defaults
+are ok.  Again, ask me if the descriptions are not clear.
+
+\item The tlow, thigh, temp-delt, opacityfile arguments make the opacity file.
+
+\item If you do transit geometry instead of eclipse, you will need to change outflux to outmod.
+\end{enumerate}
+
+
+See the transit documentation (transit/doc/transitUM.pdf) to learn more
+about all the Transit settings.  It’s a bit outdated, but most of the
+info is current.
+
+\subsection{Before Running}
+Before running the BART code, we need to generate the required input
+files.  A Transit-Line-Information (TLI) file and an Opacity-Grid
+file.
+
+\subsubsection{TLI file}
+
+This are quick guidelines to generate a TLI file with the Transit's
+pylineread module.  For a detailed description see the Transit user's
+manual \findme{Link to TUM}.
+
+cd into the {\tttb myBART/} and create a directory to run pylineread
+and place the TLI file: \newline
+{\tttb mkdir TLI}  \\
+{\tttb cd TLI}     \\
+
+Copy a pylineread configuration-file template: \newline
+{\tttb cp ../modules/transit/pylineread/examples/pyline\_example.cfg ./pyline.cfg} \\
+
+Edit the configuration file and run it: \newline
+{\tttb ../modules/transit/pylineread/src/pylineread.py -c ./pyline.cfg}  \\
+
+\subsubsection{Cross-section file}
+See the Transit user's manual to set up a Cross-section
+file.
+
+\subsubsection{Atmospheric file}
+Should I start with the chicken or the egg? \newline
+\findme{Something like (to run just the atmosphere part):} \\
+{\tttb ../BART.py --atmosphere}  \\
+
+\findme{jh is not happy with the file extensions.}
+
+\subsubsection{Opacity file}
+
+\findme{If BART doesn't find these files, the code should created them
+  before running.} \\
+
+These are quick guidelines to generate an Opacity-grid file with
+Transit.  For a detailed description see the Transit user's manual. \\
+
+Create a directory to run Transit and place the Opacity file: \newline
+{\tttb cd ../}        \\
+{\tttb mkdir Opacity} \\
+{\tttb cd Opacity}    \\
+
+Copy a Transit configuration-file template: \newline
+{\tttb cp ../modules/transit/run/config\_sample.cfg ./opacity.cfg}  \\
+
+Edit the configuration file and run it: \newline
+{\tttb ../modules/transit/transit/transit -c opacity.cfg}  \\
+
+\findme{It would be nice to run Transit from BART, something like:} \\
+{\tttb ../BART.py --opacity}  \\
+
+% {\tttb }  \\
+
+\subsubsection{TEA setup}
+
+Copy the BART and TEA configuration-file templates from the examples
+directory into your running dir, e.g.: \newline
+{\tttb cp ../myBART/examples/BART.cfg .}  \\
+{\tttb cp ../myBART/examples/TEA.cfg .}   \\
+
+Edit the parameters in the TEA configuration file. \findme{Set this up
+  from the BART config file}
+\begin{plain}
+# === Full path to TEA package ===
+location_TEA = ../modules/TEA/
+
+# === Full path to abundances file ===
+abun_file = ../modules/TEA/lib/abundances.txt
+
+# === Full path to TEA working directory ===
+location_out = ./HD209458b/
+\end{plain}
+
+Even though transit has many command-line arguments, only a few of
+them are strictly necessary for a run.  See for example the file in
+{\tttm mytransit/examples/example03.cfg}.  \findme{For Jasmina: see
+  \newline
+  /home/patricio/ast/esp01/bart/transit/develop/examples/example03.cfg}
+
+\subsubsection{BART setup}
+
+BART can be run from any folder, provided the user gives the path to
+the executable.  We recommend to create a folder exclusively dedicated
+to run and hold the transit results to keep the results organized,
+e.g.: \\
+{\tttb cd myBART/}   \\
+{\tttb mkdir run}    \\
+{\tttb cd run/}      \\
+
+The BART code consists of an initialization step and the proper MCMC
+run on the spectrum modeling.
+
+% \section{Code Organization}
+% \label{sec:organization}
+
+% \findme{TBD}
+
+% \section{Routines}
+% \label{sec:routines}
+
+% \findme{TBD}
+
+\section{Be Kind}
+\label{sec:bekind}
+Please cite these papers if you found this package useful for your
+research:
+\begin{itemize}
+\item \href{https://github.com/pcubillos/transit}{Cubillos et
+    al. (2015)} (in preparation).
+
+\item \href{https://github.com/dzesmin/}{Blecic et al. (2015)} (in
+            preparation).
+\item \href{https://github.com/dzesmin/}{Harrington et al. (2015)} (in
+            preparation).
+\end{itemize}
+Thanks!
+
+% \section{Further Reading}
+% \label{sec:furtherreading}
+
+% TBD: Add papers here.
+
+\bibliography{BART_user_manual}
+%\nobibliography{BART_user_manual}
+
+\end{document}
