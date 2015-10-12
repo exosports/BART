@@ -23,6 +23,7 @@
 \emph{Authors:} \\
 Patricio \textsc{Cubillos} \\
 Jasmina  \textsc{Blecic}   \\
+Ryan     \textsc{Challener} \\
 \end{flushleft}
 \end{minipage}%
 \begin{minipage}{0.4\textwidth}
@@ -55,7 +56,7 @@ Dr.~Joseph \textsc{Harrington}
 \item M. Oliver Bowman, University of Central Florida (email).
 \item Madison Stemm, University of Central Florida (email).
 \item Andrew S. D. Foster, University of Central Florida (email).
-\item Ryan Challener, University of Central Florida (email).
+\item Ryan Challener, University of Central Florida (rchallen@knights.ucf.edu).
 \item A.J. Foster, University of Central Florida (email).
 \item People, Institution (email).
 \end{itemize}
@@ -98,7 +99,7 @@ blah ...
 
 BART is a Python and C programming language code written in a modular,
 object oriented style.  The Bayesian Atmospheric Radiative Transfer
-(\href{https://github.com/joeharr4/BART}{BART}) project combines the
+(\href{https://github.com/exosports/BART}{BART}) project combines the
 radiative-transfer code
 (\href{https://github.com/pcubillos/transit}{Transit}) with the
 Thermochemical Equilibrium Abundances
@@ -109,8 +110,8 @@ statistical module, to assess the temperature and molecular-abundances
 posterior distributions, given a set of observations.
 
 
-Note that each one of the submodules, TEA, Transit, and MCcubed, are
-stand-alone routines, that can be used separately on their own for a
+Note that each one of the submodules (TEA, Transit, and MCcubed) are
+stand-alone routines that can be used separately on their own for a
 diversity of project, not necessarily linked to exoplanet atmospheric
 retrieval.
  
@@ -120,13 +121,13 @@ retrieval.
 
 \begin{figure}[htb]
 \centerline{
-\includegraphics[width=0.9\textwidth, clip]{figs/BARTcharts.ps}}
+\includegraphics[width=0.9\textwidth, clip]{figs/BARTcharts}}
 \caption{\small \label{fig:BARTchart} The BART chart. \findme{explain}. \findme{Remove title}.}
 \end{figure}
 % SOURCE:  /home/patricio/ast/esp01/bart/transit/develop/plots/widths.py
 
 
-The BART package is organized as follow: \newline
+The BART package is organized as follows: \newline
 % The framebox and minipage are necessary because dirtree kills the
 % indentation.
 \noindent\framebox{\begin{minipage}[t]{0.97\columnwidth}%
@@ -231,13 +232,12 @@ BART was developed on a Unix/Linux machine using Python 2.7.6, Numpy
 \noindent -- An MPI distribution (MPICH preferred). \\
 \noindent -- A C \findme{which?} compiler. \\
 \noindent -- A Fortran \findme{which?} compiler. \\
-\noindent -- GSL \findme{Give specifics}. \\
 
 \subsection{Install and Compile}
 \label{sec:install}
 
 To obtain the latest stable version from the BART
-\href{https://github.com/joeharr4/BART/releases}{releases} page
+\href{https://github.com/exosports/BART/releases}{releases} page
 \herenote{(TBD)}.  Alternatively, clone the repository to your local
 machine with the following Linux terminal commands. 
 %%
@@ -252,22 +252,18 @@ topdir=`pwd`
 
 \noindent Clone the repository with all its sub-modules:
 \begin{verbatim}
-git clone --recursive https://github.com/joeharr4/BART BART/
+git clone --recursive https://github.com/exosports/BART BART/
 \end{verbatim}
 
 \noindent Compile the transit module programs:
 \begin{verbatim}
-cd $topdir/BART/modules/transit/pylineread/src/fortran/
-make
-cd $topdir/BART/modules/transit/pu/
-make
-cd $topdir/BART/modules/transit/transit/
+cd $topdir/BART/modules/transit/
 make
 \end{verbatim}
 
 \noindent Compile the {\tttm MCcubed} routines:
 \begin{verbatim}
-cd ../../MCcubed/src/cfuncs/
+cd ../MCcubed/src/cfuncs/
 make
 \end{verbatim}
 
@@ -300,11 +296,11 @@ cd run/
 \noindent Download the methane line-transition database from the HITRAN server:
 
 {\fontsize{9.8}{1em}\selectfont 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip 
 unzip 06_hit08.zip
-\end{verbatim}}
-\findme{Verbatim doesn't break lines.} \\
+\end{lstlisting}}
+
 
 \noindent Copy the pylineread configuration file and run pylineread to
 make the transition-line-information (TLI) file:
@@ -424,66 +420,91 @@ should exist before running BART.
 
 \subsection{Transit-Line Information (TLI) File}
 \label{sec:TLI}
-(created by the Pylineread routine placed in the BART/modules/transit/
-sub-module)
+Transit Line-Information (TLI) files are created by the Pylineread routine placed in the BART/modules/transit/
+sub-module. They contain information about the emission and absorption lines of molecules found in the exoplanet's atmosphere which ais necessary to calculate opacity. The file contains the following for each line:
+\begin{enumerate}
+\item[-]molecule isotope
+\item[-]central wavenumber
+\item[-]oscillator strength
+\item[-]lower-state energy
+\end{enumerate}
 
-   To make a transit linelist input (TLI) file do the following:
+\noindent
+To run this module and produce a transit linelist input (TLI) file do the following:
+\noindent
+Starting from the top directory, navigate to the pylineread module
 
-        - cd to pylineread module
-                cd BART/modules/transit/pylineread
+\begin{verbatim}
+cd BART/modules/transit/pylineread
+\end{verbatim}
 
-        - inside the pylineread directory, make a TLI sub-directory
-                mkdir TLI
+\noindent
+Inside the pylineread directory, make a TLI sub-directory and enter it.
 
-        - cd to that directory
-                cd TLI/
+\begin{verbatim}
+mkdir TLI
+cd TLI
+\end{verbatim}
 
-        - copy the pylineread example configuration file
-          ../examples/pyline\_example.cfg to the TLI directory
-                cp ../examples/pyline\_example.cfg pyline\_run01.cfg
+\noindent
+Copy the pylineread example configuration file.
 
-        - read the configuration file header and download desired databases
-          with the partition functions from the provided links
+\begin{verbatim}
+cp ../examples/pyline_example.cfg pyline_run01.cfg
+\end{verbatim}
 
-        - edit the configuration file with the following information:
-                a) paths to the databases
-                b) type of the input databases
-                c) desired output TLI filename
-                d) desired initial and final wavelength range in microns
-                e) desired verbosity level
+\noindent
+Read the configuration file header and download the desired databases with the partition functions from the provided links.\\
+\\
+\noindent
+Edit the configuration file with the following information:
 
-        - run the pylineread module as:
-                ../src/pylineread.py -c pyline\_run01.cfg
+\begin{enumerate}
+\item[-] Paths to the databases
+\item[-] Types of the input databases
+\item[-] Desired output TLI filename
+\item[-] Desired initial and final wavelength range in microns
+\item[-] Verbosity level
+\end{enumerate}
 
-        - running the pylineread module will produce the TLI file with the
-          name requested in the configuration file. The file will be placed
-          in the current working directory (TLI/) if not specified, or in the
-          directory specified
+\noindent
+Run the pylineread module.
+
+\begin{verbatim}
+../src/pylineread.py -c pyline\_run01.cfg
+\end{verbatim}
+
+\noindent
+This will produce the TLI file with the requested name. If unspecified, the file will be placed in the current working directory (/TLI). Otherwise, it will be place in the specified directory. A more in-depth description of the TLI files and the pylineread module can be found in the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}.
 
 
 \subsection{Cross-section (CS) File}
 \label{sec:CS}
- (provided in the 
-   BART/modules/transit/inputs/ directory)
+Cross-section (CS) files contain information for any opacity continuum. They must be in HITRAN cross-section format. Several Collision-Induced Absorption (CIA) files are included in the BART/modules/transit/inputs/ directory. These may be used as CS files and are named according to the molecular collisions they represent.
+
+CS files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}.
 
 \subsection{Transiting Extrasolar Planet (TEP) File}
 \label{sec:TEP}
- containing planetary system information (some tepfiles
-   are provided in the BART/inputs/tep/ directory)
+Transiting Extrasolar Planet (TEP) files contain information about the particular exoplanet in question. The file includes many orbital geometry parameters necessary for spectral calculation. Some TEP files can be found in the BART/modules/transit/inputs/tep/ directory.
+
+TEP files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}.
 
 \subsection{Stellar Spectrum File}
 \label{sec:stellarSpec}
-Kurucz stellar spectrum file (some kurucz files are provided
-   in BART/inputs/kurucz/ directory)
+The stellar spectrum is provided by a Kurucz stellar spectrum file. They are dependent on the star's metallicity and can be found on \href{http://kurucz.harvard.edu/grids.html}{Robert Kurucz's website}. Some Kurucz files are provided in the BARt/inputs/kurucz directory.
+
+Kurucz stellar spectrum files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}.
 
 \subsection{Elemental Abundances File}
 \label{sec:elemAbund}
- (abundances\_Asplund2009.txt file is
-   provided in BART/inputs/ directory)
+The elemental abundances file contains solar abundances of many elements (and some isotopes), along with atomic number, atomic symbol, atomic name, and molar mass. This file is used by TEA to calculate thermochemical equilibrium abundances. The solar abundances as found by Asplund et al, 2009 are found in the BART/inputs/abundances\_Asplund2009.txt file.
+
 \subsection{Filter Files}
 \label{sec:filters}
-  (some Spitzer filter files are provided in BART/inputs/
-   filters/ directory)
+The filter files tell BART how to integrate over the {\tt transit} output spectrum to compare with the given data points. They consist of two columns: wavenumber and filter efficiency. BART will interpolate the spectrum to the filter wavenumbers and multiply the spectrum by the filter before integrating over the bandpass.
+
+Several {\em Spitzer} filter files are provided in the BART/inputs/filters directory.
 
 
 \subsection{Command-Line Arguments}
@@ -546,123 +567,145 @@ comment.
 
 BART submodules produce the following outputs:
 
-TEA produces one output file:
-    1. <atmopsheric\_file>.tea, this file is placed in
-       and the BART modified version is placed in the
-       BART output folder
+\begin{enumerate}
 
-MCcubed produces one output file:
-    1. output.npy - a binary file containing 3D array of
-                    parameters per each chain and each iteration
+\item[*]TEA produces one output file:
+\begin{enumerate}
+\item[-]1. atmopsheric\_file.tea. This file and the BART modified version are placed in the BART output folder
+\end{enumerate}
 
-TRANSIT produces three output files:
-    1. \_toomuch.dat - list of radii at each wavelength sample
-                      where the optical depth reaches the maximum
-                      'toomuch' value
+\item[*] MCcubed produces one output file:
+\begin{enumerate}
+\item[-]1. output.npy - a binary file containing 3D array of parameters per each chain and each iteration
+\end{enumerate}
 
-    2. \_sampling.dat - provides sampling information 
+\item[*]{\tt Transit} produces three output files:
+\begin{enumerate}
+\item[-]1. \_toomuch.dat - list of radii at each wavelength sample where the optical depth reaches the maximum 'toomuch' value
 
-    3. \_spectrum.dat - gives the flux/modulation (eclipse/transit 
-                       geometry) vs. wavelength
+\item[-]2. \_sampling.dat - provides sampling information 
 
-In addition BART produces the following:
-    1. output file:
-        - band\_eclipse.npy - a binary file containing 3D array of
-                         eclipse depths per each chain and each iteration
-    2. plots:
-        - best fitting T-P profile with boundaries
-        - best fitting abundances plot
-        - contribution functions
-        - posterior histograms
-        - posterior correlation plots
-        - spectrum
+\item[-]3. \_spectrum.dat - gives the flux/modulation (eclipse/transit geometry) vs. wavelength
+\end{enumerate}
 
+\item[*] BART produces the following output files:
+\begin{enumerate}
+\item[-]1. output files:
+\begin{enumerate}
+\item[-] band\_eclipse.npy - a binary file containing 3D array of eclipse depths per each chain and each iteration
+\end{enumerate}
+\item[-]2. plots:
+\begin{enumerate}
+\item[-] best fitting T-P profile with boundaries
+\item[-] best fitting abundances
+\item[-] contribution functions
+\item[-] normalized contribution functions
+\item[-] posterior histograms
+\item[-] posterior correlation plots
+\item[-] spectrum
+\end{enumerate}
+\end{enumerate}
 
+\end{enumerate}
 \section{Running BART}
 \label{sec:running}
 
-Make current working directory:
-    mkdir run
-    cd run
+From the top directory (location of BART), make a current working directory and move into it:
 
+\begin{verbatim}
+mkdir run
+cd run
+\end{verbatim}
+
+\noindent
 In the BART/examples/ folder, an example of the BART configuration
 file is provided. Copy the BART.cfg example file to the run/ directory:
-    cp BART/examples/BART.cfg BART.cfg
 
+\begin{verbatim}
+cp BART/examples/BART.cfg BART.cfg
+\end{verbatim}
+
+\noindent
 Edit the file with the correct information:
+\begin{enumerate}
 
-  1. Give paths to the input tep and kurucz files and the output
+\item Give paths to the input tep and kurucz files and the output
      directory
 
-  2. ::: Atmospheric pressure layers :::
+\item ::: Atmospheric pressure layers :::
      Provide the information needed to make a pressure file with desired
      number of layers, range and scale.
 
-  3. ::: Elemental-abundances file :::
+\item ::: Elemental-abundances file :::
     Provide the name of the basic abundances files, information how it
     needs to be changed, and the desired name of the final abundances
     file.
 
-  4. ::: Temperature profile :::
+\item ::: Temperature profile :::
     There two parametrized temperature-pressure profiles that BART
     can work with: Madhu (based on Madhusudhan adn Seager 2009) and
     Line (based on Line et al 2013). Provide the model type and
     its initial parameter values.
 
-  5. ::: Atmospheric Elemental Abundances (pre-atmospheric) File :::
+\item ::: Atmospheric Elemental Abundances (pre-atmospheric) File :::
     Provide the name of the desired pre-atmospheric file that will
     contain the temperature-pressure and elemental abundances information
     for each layer in the atmosphere, and desired elemental and molecular
     species. Note: the output species names must use naming convention
     produced by the ../modules/TEA/ module.
 
-  6. ::: Atmospheric File (P, T, species-abundances)  :::
+\item ::: Atmospheric File (P, T, species-abundances)  :::
      Provide the desired name of the final atmospheric file, that will
      be used as input for ../modules/transit/ module.
 
-  7. ::: MCMC arguments  :::
+\item ::: MCMC arguments  :::
      Provide information to run ../modules/mccubed/ module:
-       - eclipse/transit depths and their uncertainties
-       - path to the filter files
-       - 3-element tuple to locate the fitting function
-         (<function\_name> <routine\_name> <path\_to\_routine>)
-       - list of molecules that have line list data
-       - temperature boundaries (this information depends on the
+     \begin{enumerate}
+    \item[-]eclipse/transit depths and their uncertainties
+    \item[-]path to the filter files
+    \item[-]3-element tuple to locate the fitting function
+         (function\_name routine\_name path\_to\_routine)
+    \item[-]list of molecules that have line list data
+    \item[-]temperature boundaries (this information depends on the
          line-list and CS databases temperature range)
-       - model fitting parameters (temperature-pressure and abundances
+    \item[-]model fitting parameters (temperature-pressure and abundances
          scale factors).
-       - set basic MCMC variables and define the filename to store
+    \item[-]set basic MCMC variables and define the filename to store
          model fit
-       - set desired verbosity level
+    \item[-]set desired verbosity level
+     \end{enumerate}
 
-  8. ::: Transit variables  :::
+\item ::: Transit variables  :::
      Provide information to run ../modules/transit module:
-       - set the desired name of the ../modules/transit/ module
+     \begin{enumerate}
+    \item[-]set the desired name of the ../modules/transit/ module
          configuration file that will be produced based on the
          information provided in this section
-       - locate TRANSIT line information and CS files
-       - spectrum information (Note: The range given must be within
+    \item[-]locate TRANSIT line information and CS files
+    \item[-]spectrum information (Note: The range given must be within
          the wavelength range given for the TLI file creation)
-       - the desired geometry solution (transit or eclipse),
+    \item[-]the desired geometry solution (transit or eclipse),
          max optical depth, and number of HWHM for Voight profile
          calculation
-       - planetary surface gravity and reference radius and pressure
-       - opacity lines' strength threshold
-       - information to make an opacity-grid file.
-         a) If variable values and new file name is provided,
+    \item[-]planetary surface gravity and reference radius and pressure
+    \item[-]opacity lines' strength threshold
+    \item[-]information to make an opacity-grid file.
+        \begin{enumerate}
+        \item If variable values and new file name is provided,
             the opacity grid file will be made. This information
             must include the temperatures from the atmospheric file.
             Execution takes couple of hours.
-         b) If the opacity file already exists give the path to it.
+        \item If the opacity file already exists give the path to it.
             Other variables are ignored. Execution will be successful
             only if the pressure and wavenumber samplings are exactly
             the same as in the atmospheric and TLI file, respectively.
             Execution takes around 15 seconds.
-         c) If opacityfile name is commented, the opacity calculation
+        \item If opacityfile name is commented, the opacity calculation
             will be done on spot. Execution takes couple of minutes.
-
-       - provide the desired names of the output files
-
+        \end{enumerate}
+    \item[-]provide the desired names of the output files
+    \end{enumerate}
+\end{enumerate}
 
 % + Clone repo
 % + Compile code
@@ -685,7 +728,7 @@ This example shows how to approach a real-life BART run.  In this case you don't
 
 \item Copy this BART configuration file: BART/examples/BART\_example.cfg  to your run folder.  Start editing the arguments in the configuration file.
 
-\item Determine what observing geometry you will test, set {\tttb solution} to eclipse or transit.  Based on that, search for the available data (eclipse or transit depth, respectively) from the literature or your own data analysis.  Put those values in the {\tttb data}, and {\tttb uncert} arguments.
+\item Determine what observing geometry you will test, and set {\tttb solution} to eclipse or transit accordingly.  Based on that, search for the available data (eclipse or transit depth, respectively) from the literature or your own data analysis.  Put those values in the {\tttb data} and {\tttb uncert} arguments.
 
 \item For each data point, you will need to search for/make the instrumental transmission filter file (See Section \ref{sec:filters}).  Most observatories provide the filter files, but make sure that the file has the right format (Sec. \ref{sec:filters}), edit if needed.  If you use spectroscopic data (e.g., HST's WFC3 data), you will have to reproduce the data analysis of the observer (downsampling, spectral binning).  Set the path to the filter files in the {\tttb filter} argument.
 
@@ -700,26 +743,13 @@ Set the path to the Kurucz file in {\tttb kurucz}.
 (See Section \ref{sec:TLI}).  Set the path to the TLI file in {\tttb linedb}.
 
 \item Determine if you want to load an existing atmospheric file
-or create a new one.  If the former, set {\tttb atmfile} to an existing
-file (and skip to step (\ref{item:molfit})).
+or create a new one.  If the former, set {\tttb atmfile} to an existing file (and skip to step (\ref{item:molfit})) If you did not change any atmospheric parameters, loading an existing file can save several minutes of runtime.
 
 \item Set the atmospheric pressure layers with the {\tttb press\_file}, 
 {\tttb n\_layers},  {\tttb p\_top}, {\tttb p\_bottom}, and {\tttb log}
 arguments.
 
-\item Set the initial atmospheric temperature profile.  Set with {\tttm
-PTtype} if you want to use a model as in
-\citet{LineEtal2013apjRetrievalI} or 
-\citet{MadhusudhanSeager2009ApJ-AbundanceMethod}.  Adjust the model
-parameters in {\tttb PTinit} to set the temperature profile
-(See Section \ref{sec:PT}).  What is an appropriate initial temperature
-profile? that is a question yet to be answered.  Having no prior
-knowledge on the planet's properties, temperatures around the
-equilibrium temperature would be an initial guess.
-As a help, run the scripts in
-\href{https://github.com/joeharr4/BART/blob/master/scripts/quickguide.py}
-{BART/scripts/quickguide.py} to see how the temperature profile looks
-for a given set of model parameters.
+\item Set the initial atmospheric temperature profile.  Set with {\tttm PTtype} if you want to use a model as in \citet{LineEtal2013apjRetrievalI} or  \citet{MadhusudhanSeager2009ApJ-AbundanceMethod}.  Adjust the model parameters in {\tttb PTinit} to set the temperature profile (See Section \ref{sec:PT}).  What is an appropriate initial temperature profile? That is a question yet to be answered.  Having no prior knowledge on the planet's properties, temperatures around the equilibrium temperature would be an initial guess. As a help, run the scripts in \href{https://github.com/joeharr4/BART/blob/master/scripts/quickguide.py}{BART/scripts/quickguide.py} to see how the temperature profile looks for a given set of model parameters. If TEA is creating a new atmospheric file it will allow you to inspect the profile before continuing.
 
 \item Determine the species present in the atmosphere by setting the
 {\tttb out\_spec} argument.  Follow the instruction in Section
@@ -773,8 +803,8 @@ are ok.  Again, ask me if the descriptions are not clear.
 \end{enumerate}
 
 
-See the transit documentation (transit/doc/transitUM.pdf) to learn more
-about all the Transit settings.  It’s a bit outdated, but most of the
+See the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{transit documentation}  to learn more
+about all the Transit settings. Keep in mind that it is undergoing constant change, but most of the
 info is current.
 
 \subsection{Before Running}
@@ -784,20 +814,31 @@ file.
 
 \subsubsection{TLI file}
 
-This are quick guidelines to generate a TLI file with the Transit's
-pylineread module.  For a detailed description see the Transit user's
-manual \findme{Link to TUM}.
+These are quick guidelines to generate a TLI file with the Transit's
+pylineread module.  For a detailed description see the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}. The following lines are intended to be run from the terminal. \\
 
-cd into the {\tttb myBART/} and create a directory to run pylineread
-and place the TLI file: \newline
-{\tttb mkdir TLI}  \\
-{\tttb cd TLI}     \\
+\noindent
+From the BART directory, make a TLI directory and move into it:
 
-Copy a pylineread configuration-file template: \newline
-{\tttb cp ../modules/transit/pylineread/examples/pyline\_example.cfg ./pyline.cfg} \\
+\begin{verbatim}
+mkdir TLI
+cd TLI
+\end{verbatim}
 
-Edit the configuration file and run it: \newline
-{\tttb ../modules/transit/pylineread/src/pylineread.py -c ./pyline.cfg}  \\
+\noindent
+Copy a pylineread configuration-file template: 
+\begin{lstlisting}[breaklines]
+cp ../modules/transit/pylineread/examples/pyline_example.cfg ./pyline.cfg
+\end{lstlisting}
+
+\noindent
+Edit the configuration file and run it: 
+\begin{verbatim}
+../modules/transit/pylineread/src/pylineread.py -c ./pyline.cfg
+\end{verbatim}
+
+\noindent
+Runtime can vary from a few minutes to an hour, depending on the number of line databases included. At the end, a TLI file will be saved in the working directory with the specified name.
 
 \subsubsection{Cross-section file}
 See the Transit user's manual to set up a Cross-section
