@@ -101,7 +101,7 @@ BART is a Python and C programming language code written in a modular,
 object oriented style.  The Bayesian Atmospheric Radiative Transfer
 (\href{https://github.com/exosports/BART}{BART}) project combines the
 radiative-transfer code
-(\href{https://github.com/pcubillos/transit}{Transit}) with the
+(\href{https://github.com/exosports/transit}{Transit}) with the
 Thermochemical Equilibrium Abundances
 (\href{https://github.com/dzesmin/TEA}{TEA}) module, which calculates
 abundances of gaseous species, and the Multi-Core Markov-chain Monte
@@ -112,7 +112,7 @@ posterior distributions, given a set of observations.
 
 Note that each one of the submodules (TEA, Transit, and MCcubed) are
 stand-alone routines that can be used separately on their own for a
-diversity of project, not necessarily linked to exoplanet atmospheric
+variety of projects, not necessarily linked to exoplanet atmospheric
 retrieval.
  
 \subsubsection{Thermochemical Equilibrium}
@@ -121,7 +121,7 @@ retrieval.
 
 \begin{figure}[htb]
 \centerline{
-\includegraphics[width=0.9\textwidth, clip]{figs/BARTcharts}}
+\includegraphics[width=0.9\textwidth, clip]{figs/BARTcharts.ps}}
 \caption{\small \label{fig:BARTchart} The BART chart. \findme{explain}. \findme{Remove title}.}
 \end{figure}
 % SOURCE:  /home/patricio/ast/esp01/bart/transit/develop/plots/widths.py
@@ -211,6 +211,7 @@ UCF PSB 441            \\
 Orlando, FL 32816-2385 \\
 USA                    \\
 
+\noindent
 Thank you for using BART! \newline
 
 \section{Installation}
@@ -390,16 +391,8 @@ to get them?, what are the outputs.
 \label{sec:inputs}
 
 The executable BART.py is the main BART program to perform most
-calculations.  This file can take command-line arguments or a
+calculations.  This program can take command-line arguments or a
 configuration file (preferred) to set up the calculation details.
-
-The BART configuration file is the one that set up and determine the inputs.
-The BART command-line arguments are roughly divided in three main
-subgroups.
-
-Some other input files that either exist before the run or can be
-created during the run.
-The BART program is capable of producing most of the inputs.
 
 Most of the BART inputs can either be given as pre-existing files or
 can be produced upon execution.
@@ -408,13 +401,7 @@ BART requires the following input files to run:
 
 \subsection{BART Configuration File}
 \label{sec:BARTconfig}
-The BART configuration file is the main file that set 
-
-The main file for BART program is the BART configuration file.
-
-The BART program uses a Configuration File were the user set up
-the arguments.  Note that some of these argument inputs are files that
-should exist before running BART.
+The BART configuration file is the main file that sets the arguments for a BART run. The arguments follow the format {\ttb argument = value}, where {\ttb argument} is any of the possible command-line arguments. While all options can be set from the command line, the number of required arguments makes using a configuration file much easier. Note that some of these argument inputs are files that should exist before running BART.
 
 \findme{Speak about the folder structure}.
 
@@ -540,23 +527,71 @@ comment.
 \subsubsection{General Arguments}
 \label{sec:CLAgen}
 
+\argument{-h, {-}{-}help}{Show the help message and exit.}
+\argument{-c FILE, {-}{-}config\_file FILE}{Configuration filename (string).}
+\argument{-v INT, {-}{-}verbose-level VERB}{Verbosity level (integer).}
+\argument{{-}{-}justTEA}{Run only TEA.}
+\argument{{-}{-}justOpacity}{Run just Transit and quit after generating opacity table.}
+\argument{{-}{-}resume}{Resume a previous run.}
+\argument{{-}{-}tint FLT}{Internal temperature of the planet.}
+\argument{{-}{-}filter FILE}{Filter file names (corresponding to data).}
+\argument{{-}{-}kurucz\_file FILE}{Kurucz file name.}
+\argument{{-}{-}solution STR}{Solution type (transit or eclipse).}
+
 \subsubsection{Atmospheric Pressure Layers}
 \label{sec:CLApress}
+
+\argument{{-}{-}n\_layers INT}{Number of atmospheric layers.}
+\argument{{-}{-}p\_top DBL}{Pressure at the top of the atmosphere (bars).}
+\argument{{-}{-}p\_bottom DBL}{Pressure at the bottom of the atmosphere (bars).}
+\argument{{-}{-}log BOOL}{Use log (True) or linear (False) scale sampling.}
+\argument{{-}{-}press\_file FILE}{Input/Ouput file with pressure array.}
 
 \subsubsection{Atomic Abundances}
 \label{sec:CLAabun}
 
+\argument{{-}{-}abun\_basic FILE}{Input elemental abundances file.}
+\argument{{-}{-}abun\_file  FILE}{Inpu/Output modified elemental abundances file.}
+\argument{{-}{-}solar\_times INT}{Multiplication factor for metal abundances.}
+\argument{{-}{-}COswap BOOL}{Swap Carbon and Oxygen abundances if True.}
+
 \subsubsection{Temperature Profile}
 \label{sec:CLAtemp}
+
+\argument{{-}{-}PTtype STR}{Temperature profile model ('line' or 'madhu')}
+\argument{{-}{-}PTinit DBL}{1D array of initial temperature profile model parameters.}
 
 \subsubsection{Atmospheric File (TEA) Arguments}
 \label{sec:CLAtea}
 
+\argument{{-}{-}in\_elem STR}{1D array of input elements.}
+\argument{{-}{-}out\_spec STR}{Output species to include in the atmospheric model}
+\argument{{-}{-}preatm\_file FILE}{Pre-atmospheric file name (with elemental abundances per layer.}
+\argument{{-}{-}atmfile FILE}{Atmospheric model file (output).}
+\argument{{-}{-}uniform DBL}{If not None, 1D array of uniform abundances for each species in out\_spec.}
+\argument{{-}{-}refpress FLT}{Reference pressure level (bars) corresponding to the planet radius.}
+
 \subsubsection{MCMC Arguments}
 \label{sec:CLAmcmc}
 
+\argument{{-}{-}params DBL}{Initial model-fitting parameters.}
+\argument{{-}{-}molfit STR}{1D string array of molecules to fit.}
+\argument{{-}{-}Tmin FLT}{Lower temperature boundary (K).}
+\argument{{-}{-}Tmax FLT}{Upper temperature boundary (K).}
+\argument{{-}{-}quiet}{Set verbosity to minimum.}
+\argument{{-}{-}stepsize FLT}{1D array of parameter step sizes.}
+\argument{{-}{-}burnin INT}{Number of burn-in iterations per chain.}
+\argument{{-}{-}data FLT}{1D array of eclipse/transit depths.}
+\argument{{-}{-}uncert FLT}{1D array of data uncertainties.}
+
 \subsubsection{Transit Arguments}
 \label{sec:CLAtran}
+
+\argument{{-}{-}tconfig FILE}{Transit configuration file.}
+\argument{{-}{-}opacityfile FILE}{Opacity table file (created if nonexistant).}
+\argument{{-}{-}outflux FILE}{Ouput file with flux values (for eclipse geometry).}
+\argument{{-}{-}outmod FILE}{Output file with modulation values (for transit geometry).}
+\argument{{-}{-}shareOpacity BOOL}{If True, use shared memory for the Transit opacity file.}
 
 \subsection{Configuration File}
 \label{sec:arguments}
@@ -749,7 +784,7 @@ or create a new one.  If the former, set {\tttb atmfile} to an existing file (an
 {\tttb n\_layers},  {\tttb p\_top}, {\tttb p\_bottom}, and {\tttb log}
 arguments.
 
-\item Set the initial atmospheric temperature profile.  Set with {\tttm PTtype} if you want to use a model as in \citet{LineEtal2013apjRetrievalI} or  \citet{MadhusudhanSeager2009ApJ-AbundanceMethod}.  Adjust the model parameters in {\tttb PTinit} to set the temperature profile (See Section \ref{sec:PT}).  What is an appropriate initial temperature profile? That is a question yet to be answered.  Having no prior knowledge on the planet's properties, temperatures around the equilibrium temperature would be an initial guess. As a help, run the scripts in \href{https://github.com/joeharr4/BART/blob/master/scripts/quickguide.py}{BART/scripts/quickguide.py} to see how the temperature profile looks for a given set of model parameters. If TEA is creating a new atmospheric file it will allow you to inspect the profile before continuing.
+\item Set the initial atmospheric temperature profile.  Set with {\tttm PTtype} if you want to use a model as in \citet{LineEtal2013apjRetrievalI} or  \citet{MadhusudhanSeager2009ApJ-AbundanceMethod}.  Adjust the model parameters in {\tttb PTinit} to set the temperature profile (See Section \ref{sec:PT}).  What is an appropriate initial temperature profile? That is a question yet to be answered.  Having no prior knowledge on the planet's properties, temperatures around the equilibrium temperature would be an initial guess. As a help, run the scripts in \href{https://github.com/exosports/BART/blob/master/scripts/quickguide.py}{BART/scripts/quickguide.py} to see how the temperature profile looks for a given set of model parameters. If TEA is creating a new atmospheric file it will allow you to inspect the profile before continuing.
 
 \item Determine the species present in the atmosphere by setting the
 {\tttb out\_spec} argument.  Follow the instruction in Section
