@@ -554,7 +554,56 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     ax.set_xscale('log')
     plt.xlabel(r"${\rm Wavelength\ \ (um)}$", fontsize=12)  
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    ax.set_xticks(np.arange(min(specwl),max(specwl),1))
+    ax.set_xticks(np.arange(round(min(specwl)),max(specwl),1))
     plt.xlim(min(specwl),max(specwl))
     plt.savefig(date_dir + "BART-bestFit-Spectrum.png")
+
+def plotabun(date_dir, atmfile, molfit):
+    '''
+    Plot abundance profiles from best fit run.
+
+    Input
+    -----
+    date_dir: string
+      Path to BART output directory
+    
+    atmfile: string
+      Name of best fit atmospheric file
+
+    molfit:  1D string array
+      Molecules to plot
+    '''
+
+    # Import best fit atmosphere results
+    species, pressure, temp, abundances = mat.readatm(date_dir + atmfile)
+
+    # Create array of indices for species to plot 
+    molfitindex = np.zeros(len(molfit), dtype='int')
+
+    k = 0
+
+    # Find the index of each species within the atmosphere file
+    for i in range(len(species)):
+        for j in range(len(molfit)):
+            if species[i] == molfit[j]:
+                molfitindex[k] = i
+                k += 1
+
+    plt.clf()
+
+    # Plot the abundance profile of each species
+    for i in range(len(molfit)):
+        plt.loglog(abundances[:,molfitindex[i]], pressure, label=species[molfitindex[i]], linewidth=4)
+
+    plt.legend(loc='upper left')
+    plt.xlabel('Molar Mixing Fraction')
+    plt.ylabel('Pressure (bars)')
+    plt.title('Best Fit Abundance Profiles')
+
+    plt.gca().invert_yaxis()
+    
+    plt.savefig(date_dir + 'abun_profiles.png')
+    
+                
+    
 
