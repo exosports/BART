@@ -381,6 +381,7 @@ def main():
     # Generate the uniform-abundance profiles file:
     mat.uniform(date_dir + atmfile, press_file, abun_basic, tep_name,
                out_spec, uniform, temp, refpress)
+    atmfile = date_dir + atmfile
     # Update the runMCMC flag to skip upcoming steps:
     runMCMC |= 8
 
@@ -459,7 +460,7 @@ def main():
  
   # MCcubed output file
   MCfile = date_dir + logfile
-
+  
   # Call bestFit submodule and make new bestFit_tconfig.cfg
   bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, solution,
                  refpress, tconfig, date_dir, params, burnin, abun_basic)
@@ -482,6 +483,10 @@ def main():
     bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod,
                              data, uncert, date_dir)
 
+
+  # Plot abundance profiles
+  bf.plotabun(date_dir, 'bestFit.atm', molfit)
+  
   # Run Transit with unlimited 'toomuch' argument for contribution
   # function calculation:
   mu.msg(1, "\nTransit call for contribution functions calculation.")
