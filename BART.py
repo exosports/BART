@@ -28,37 +28,17 @@ import mcutils   as mu
 def main():
   """
   One function to run them all.
-
-  Developer Team:
-  ---------------
-  Patricio Cubillos   pcubillos@fulbrightmail.org
-  Jasmina Blecic      jasmina@physics.ucf.edu
-  Joseph Harrington   jh@physics.ucf.edu
-  Madison Stemm       astromaddie@gmail.com
-
-  Modification History:
-  ---------------------
-  2014-07-25  Jasmina   Initial version.
-  2014-08-15  Patricio  Put code into main() function.
-  2014-08-18  Patricio  Merged with MC3 module.  Added flag to sort
-                        read/execute steps.
-  2014-09-20  Jasmina   Made call to makeRadius() function. Added progress
-                        statements.
-  2014-10-12  Jasmina   Updated to new TEA structure.
-  2014-12-13  patricio  Added Opacity calculation step (through Transit), 
-                        added flags to break after TEA or Opacity calculation.
-  2015-05-03  Jasmina   Added best-fit Transit run.
-  2015-07-14  Jasmina   Added contribution function Transit run.
   """
 
   mu.msg(1,
      "\n======= Bayesian Atmospheric Radiative Transfer (BART) ==============="
      "\nA code to infer planetary atmospheric properties based on observed  "
      "\nspectroscopic information."
-   "\n\nCopyright (C) 2015 University of Central Florida. All rights reserved."
-   "\n\nDevelopers contact:  Patricio Cubillos  patricio.cubillos[at]oeaw.ac.at"
-     "\n                     Jasmina Blecic     jasmina[at]physics.ucf.edu"
-     "\n                     Joseph Harrington  jh[at]physics.ucf.edu"
+   "\n\nCopyright (C) 2015-2016 University of Central Florida."
+     "\nAll rights reserved."
+   "\n\nContact:  Patricio Cubillos  patricio.cubillos[at]oeaw.ac.at"
+     "\n          Jasmina Blecic     jasmina[at]physics.ucf.edu"
+     "\n          Joseph Harrington  jh[at]physics.ucf.edu"
      "\n======================================================================")
 
   mu.msg(1, "\nInitialization:")
