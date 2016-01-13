@@ -108,9 +108,9 @@ def main():
      "\nA code to infer planetary atmospheric properties based on observed  "
      "\nspectroscopic information."
    "\n\nCopyright (C) 2015 University of Central Florida. All rights reserved."
-   "\n\nDevelopers contact:  Patricio Cubillos  pcubillos@fulbrightmail.org"
-     "\n                     Jasmina Blecic     jasmina@physics.ucf.edu"
-     "\n                     Joseph Harrington  jh@physics.ucf.edu"
+   "\n\nDevelopers contact:  Patricio Cubillos  patricio.cubillos[at]oeaw.ac.at"
+     "\n                     Jasmina Blecic     jasmina[at]physics.ucf.edu"
+     "\n                     Joseph Harrington  jh[at]physics.ucf.edu"
      "\n======================================================================")
 
   mu.msg(1, "\nInitialization:")

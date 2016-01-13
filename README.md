@@ -15,7 +15,7 @@ planetary atmospheres.
 
 
 ### Team Members:
-* [Patricio Cubillos](https://github.com/pcubillos/) (UCF) <pcubillos@fulbrightmail.org>
+* [Patricio Cubillos](https://github.com/pcubillos/) (UCF, IWF) <patricio.cubillos@oeaw.ac.at>
 * Jasmina Blecic (UCF)
 * Joseph Harrington (UCF)
 * Patricio Rojo (U. de Chile)
