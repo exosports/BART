@@ -111,9 +111,9 @@ $topdir/BART/BART.py -c BART_transit.cfg
 
 A number of graduate and undergraduate-student dreams and hopes have been sacrificed on the making of this project.  Please, be kind and aknowledge their effort by citing the articles asociated to this project:
 
-  [Cubillos et al. 2015: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling I](), in preparation.  
-  [Blecic et al. 2015: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling II](), in preparation.  
-  [Harrington et al. 2015: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling III](), in preparation.  
+  [Cubillos et al. 2016: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling](), in preparation.  
+  [Blecic et al. 2016: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling](), in preparation.  
+  [Harrington et al. 2016: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling](), in preparation.  
 
 ### License:
 
@@ -132,7 +132,8 @@ he was a graduate student at Cornell University under Joseph
 Harrington.  Statistical advice came from Thomas J. Loredo and Nate
 B. Lust.  
 
-Copyright (C) 2015 University of Central Florida.  All rights reserved.  
+Copyright (C) 2015-2016 University of Central Florida.
+All rights reserved.  
 
 This is a test version only, and may not be redistributed to any third
 party.  Please refer such requests to us.  This program is distributed
@@ -155,9 +156,9 @@ openly.
 
 We welcome your feedback, but do not guarantee support.  Please send
 feedback or inquiries to:  
-Patricio Cubillos <pcubillos[at]fulbrightmail.org>  
-Jasmina Blecic <jasmina[at]physics.ucf.edu>  
-Joseph Harrington <jh[at]physics.ucf.edu>  
+Patricio Cubillos <patricio.cubillos@oeaw.ac.at>  
+Jasmina Blecic <jasmina@physics.ucf.edu>  
+Joseph Harrington <jh@physics.ucf.edu>  
 
 or alternatively,  
 Joseph Harrington, Patricio Cubillos, and Jasmina Blecic  
