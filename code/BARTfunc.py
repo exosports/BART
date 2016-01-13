@@ -267,7 +267,6 @@ def main(comm):
   gstar = float(tep.getvalue('loggstar')[0])
   # Planet-to-star radius ratio:
   rprs  = rplanet / rstar
-  mu.msg(verb, "OCON FLAG 10: {}, {}, {}".format(tstar, gstar, rprs))
 
   nfilters = len(ffile)  # Number of filters:
 
@@ -291,7 +290,6 @@ def main(comm):
     # Resample filter and stellar spectrum:
     nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
                                               starwn,    starfl)
-    mu.msg(verb, "OCON FLAG 67: mean star flux: %.3e"%np.mean(strfl))
     nifilter.append(nifilt)
     istarfl.append(strfl)
     wnindices.append(wnind)

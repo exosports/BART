@@ -449,8 +449,8 @@ def main():
     mu.msg(1, "~~ BART End (after Transit opacity calculation) ~~")
     return
 
+
   # Run the MCMC:
-  mu.msg(1, "\nStart MCMC:")
   MC3call = MC3dir + "/mccubed.py"
   subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
                   shell=True, cwd=date_dir)
