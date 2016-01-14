@@ -1,59 +1,7 @@
 #! /usr/bin/env python
 
-# ****************************** START LICENSE *******************************
-# Bayesian Atmospheric Radiative Transfer (BART), a code to infer
-# properties of planetary atmospheres based on observed spectroscopic
-# information.
-# 
-# This project was completed with the support of the NASA Planetary
-# Atmospheres Program, grant NNX12AI69G, held by Principal Investigator
-# Joseph Harrington. Principal developers included graduate students
-# Patricio E. Cubillos and Jasmina Blecic, programmer Madison Stemm, and
-# undergraduates M. Oliver Bowman and Andrew S. D. Foster.  The included
-# 'transit' radiative transfer code is based on an earlier program of
-# the same name written by Patricio Rojo (Univ. de Chile, Santiago) when
-# he was a graduate student at Cornell University under Joseph
-# Harrington.  Statistical advice came from Thomas J. Loredo and Nate
-# B. Lust.
-# 
-# Copyright (C) 2015 University of Central Florida.  All rights reserved.
-# 
-# This is a test version only, and may not be redistributed to any third
-# party.  Please refer such requests to us.  This program is distributed
-# in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE.
-# 
-# Our intent is to release this software under an open-source,
-# reproducible-research license, once the code is mature and the first
-# research paper describing the code has been accepted for publication
-# in a peer-reviewed journal.  We are committed to development in the
-# open, and have posted this code on github.com so that others can test
-# it and give us feedback.  However, until its first publication and
-# first stable release, we do not permit others to redistribute the code
-# in either original or modified form, nor to publish work based in
-# whole or in part on the output of this code.  By downloading, running,
-# or modifying this code, you agree to these conditions.  We do
-# encourage sharing any modifications with us and discussing them
-# openly.
-# 
-# We welcome your feedback, but do not guarantee support.  Please send
-# feedback or inquiries to:
-# 
-# Joseph Harrington <jh@physics.ucf.edu>
-# Patricio Cubillos <pcubillos@fulbrightmail.org>
-# Jasmina Blecic <jasmina@physics.ucf.edu>
-# 
-# or alternatively,
-# 
-# Joseph Harrington, Patricio Cubillos, and Jasmina Blecic
-# UCF PSB 441
-# 4111 Libra Drive
-# Orlando, FL 32816-2385
-# USA
-# 
-# Thank you for testing BART!
-# ******************************* END LICENSE *******************************
+# Copyright (C) 2015-2016 University of Central Florida. All rights reserved.
+# BART is under an open-source, reproducible-research license (see LICENSE).
 
 import sys, os, re, shutil, time, subprocess
 import argparse, ConfigParser
@@ -80,37 +28,17 @@ import mcutils   as mu
 def main():
   """
   One function to run them all.
-
-  Developer Team:
-  ---------------
-  Patricio Cubillos   pcubillos@fulbrightmail.org
-  Jasmina Blecic      jasmina@physics.ucf.edu
-  Joseph Harrington   jh@physics.ucf.edu
-  Madison Stemm       astromaddie@gmail.com
-
-  Modification History:
-  ---------------------
-  2014-07-25  Jasmina   Initial version.
-  2014-08-15  Patricio  Put code into main() function.
-  2014-08-18  Patricio  Merged with MC3 module.  Added flag to sort
-                        read/execute steps.
-  2014-09-20  Jasmina   Made call to makeRadius() function. Added progress
-                        statements.
-  2014-10-12  Jasmina   Updated to new TEA structure.
-  2014-12-13  patricio  Added Opacity calculation step (through Transit), 
-                        added flags to break after TEA or Opacity calculation.
-  2015-05-03  Jasmina   Added best-fit Transit run.
-  2015-07-14  Jasmina   Added contribution function Transit run.
   """
 
   mu.msg(1,
      "\n======= Bayesian Atmospheric Radiative Transfer (BART) ==============="
      "\nA code to infer planetary atmospheric properties based on observed  "
      "\nspectroscopic information."
-   "\n\nCopyright (C) 2015 University of Central Florida. All rights reserved."
-   "\n\nDevelopers contact:  Patricio Cubillos  pcubillos@fulbrightmail.org"
-     "\n                     Jasmina Blecic     jasmina@physics.ucf.edu"
-     "\n                     Joseph Harrington  jh@physics.ucf.edu"
+   "\n\nCopyright (C) 2015-2016 University of Central Florida."
+     "\nAll rights reserved."
+   "\n\nContact:  Patricio Cubillos  patricio.cubillos[at]oeaw.ac.at"
+     "\n          Jasmina Blecic     jasmina[at]physics.ucf.edu"
+     "\n          Joseph Harrington  jh[at]physics.ucf.edu"
      "\n======================================================================")
 
   mu.msg(1, "\nInitialization:")
@@ -449,8 +377,8 @@ def main():
     mu.msg(1, "~~ BART End (after Transit opacity calculation) ~~")
     return
 
+
   # Run the MCMC:
-  mu.msg(1, "\nStart MCMC:")
   MC3call = MC3dir + "/mccubed.py"
   subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
                   shell=True, cwd=date_dir)

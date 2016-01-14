@@ -1,59 +1,7 @@
 #! /usr/bin/env python
 
-# ****************************** START LICENSE *******************************
-# Bayesian Atmospheric Radiative Transfer (BART), a code to infer
-# properties of planetary atmospheres based on observed spectroscopic
-# information.
-# 
-# This project was completed with the support of the NASA Planetary
-# Atmospheres Program, grant NNX12AI69G, held by Principal Investigator
-# Joseph Harrington. Principal developers included graduate students
-# Patricio E. Cubillos and Jasmina Blecic, programmer Madison Stemm, and
-# undergraduates M. Oliver Bowman and Andrew S. D. Foster.  The included
-# 'transit' radiative transfer code is based on an earlier program of
-# the same name written by Patricio Rojo (Univ. de Chile, Santiago) when
-# he was a graduate student at Cornell University under Joseph
-# Harrington.  Statistical advice came from Thomas J. Loredo and Nate
-# B. Lust.
-# 
-# Copyright (C) 2015 University of Central Florida.  All rights reserved.
-# 
-# This is a test version only, and may not be redistributed to any third
-# party.  Please refer such requests to us.  This program is distributed
-# in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE.
-# 
-# Our intent is to release this software under an open-source,
-# reproducible-research license, once the code is mature and the first
-# research paper describing the code has been accepted for publication
-# in a peer-reviewed journal.  We are committed to development in the
-# open, and have posted this code on github.com so that others can test
-# it and give us feedback.  However, until its first publication and
-# first stable release, we do not permit others to redistribute the code
-# in either original or modified form, nor to publish work based in
-# whole or in part on the output of this code.  By downloading, running,
-# or modifying this code, you agree to these conditions.  We do
-# encourage sharing any modifications with us and discussing them
-# openly.
-# 
-# We welcome your feedback, but do not guarantee support.  Please send
-# feedback or inquiries to:
-# 
-# Joseph Harrington <jh@physics.ucf.edu>
-# Patricio Cubillos <pcubillos@fulbrightmail.org>
-# Jasmina Blecic <jasmina@physics.ucf.edu>
-# 
-# or alternatively,
-# 
-# Joseph Harrington, Patricio Cubillos, and Jasmina Blecic
-# UCF PSB 441
-# 4111 Libra Drive
-# Orlando, FL 32816-2385
-# USA
-# 
-# Thank you for testing BART!
-# ******************************* END LICENSE *******************************
+# Copyright (C) 2015-2016 University of Central Florida. All rights reserved.
+# BART is under an open-source, reproducible-research license (see LICENSE).
 
 import sys, os
 import argparse, ConfigParser
@@ -267,7 +215,6 @@ def main(comm):
   gstar = float(tep.getvalue('loggstar')[0])
   # Planet-to-star radius ratio:
   rprs  = rplanet / rstar
-  mu.msg(verb, "OCON FLAG 10: {}, {}, {}".format(tstar, gstar, rprs))
 
   nfilters = len(ffile)  # Number of filters:
 
@@ -291,7 +238,6 @@ def main(comm):
     # Resample filter and stellar spectrum:
     nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
                                               starwn,    starfl)
-    mu.msg(verb, "OCON FLAG 67: mean star flux: %.3e"%np.mean(strfl))
     nifilter.append(nifilt)
     istarfl.append(strfl)
     wnindices.append(wnind)
@@ -322,7 +268,7 @@ def main(comm):
 
     # If the temperature goes out of bounds:
     if np.any(tprofile < Tmin) or np.any(tprofile > Tmax):
-      print("Out of bounds")
+      #print("Out of bounds")
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
 

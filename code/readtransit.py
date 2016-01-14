@@ -1,10 +1,11 @@
+# Copyright (C) 2015-2016 University of Central Florida. All rights reserved.
+# BART is under an open-source, reproducible-research license (see LICENSE).
+
 # This wonderful piece of code reads the output modulation spectrum
 # of a transit run and plots it.
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-tfile = 'atmredo01_outp0.dat'
 
 def readplot(tfile, wn=True, fid=0):
   """
