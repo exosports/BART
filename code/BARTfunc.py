@@ -256,8 +256,10 @@ def main(comm):
     niter -= 1
     # Receive parameters from MCMC:
     mu.comm_scatter(comm, params)
-    #mu.msg(verb, "ICON FLAG 71: incon pars: {:s}".
-    #             format(str(params).replace("\n", "")))
+
+    # Check for the MCMC-end flag:
+    if params[0] == np.inf:
+      break
 
     # Input converter calculate the profiles:
     try:
@@ -272,8 +274,6 @@ def main(comm):
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
 
-    #mu.msg(verb, "T pars: \n{}\n".format(PTargs))
-    mu.msg(verb-20, "Temperature profile: {}".format(tprofile))
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
@@ -283,8 +283,6 @@ def main(comm):
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
     aprofiles[iHe] =         q / (1.0 + ratio)
-    # print("qH2O: {}, Qmetals: {}, QH2: {}  p: {}".format(params[nPT],
-    #                               q[50], profiles[iH2+1,50], profiles[:,50]))
 
     # Set the 'surface' level:
     if solution == "transit":
