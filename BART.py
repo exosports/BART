@@ -10,7 +10,7 @@ import numpy as np
 # Directory of BART.py file:
 BARTdir = os.path.dirname(os.path.realpath(__file__))
 TEAdir     = BARTdir + "/modules/TEA/"
-MC3dir     = BARTdir + "/modules/MCcubed/src"
+MC3dir     = BARTdir + "/modules/MCcubed/"
 Transitdir = BARTdir + "/modules/transit/"
 
 # Add path to submodules and import:
@@ -23,7 +23,7 @@ import bestFit   as bf
 import cf        as cf
 
 sys.path.append(MC3dir)
-import mcutils   as mu
+import MCcubed.utils as mu
 
 def main():
   """
@@ -379,7 +379,7 @@ def main():
 
 
   # Run the MCMC:
-  MC3call = MC3dir + "/mccubed.py"
+  MC3call = MC3dir + "/MCcubed/mccubed.py"
   subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
                   shell=True, cwd=date_dir)
 

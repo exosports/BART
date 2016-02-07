@@ -16,8 +16,8 @@ import reader    as rd
 import constants as c
 
 BARTdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(BARTdir + "/../modules/MCcubed/src/")
-import mcutils as mu
+sys.path.append(BARTdir + "/../modules/MCcubed/")
+import MCcubed.utils as mu
 
 sys.path.append(BARTdir + "/../modules/transit/transit/python")
 import transit_module as trm
@@ -27,11 +27,6 @@ def main(comm):
   """
   This is a hacked version of MC3's func.py.
   This function directly call's the modeling function for the BART project.
-
-  Modification History:
-  ---------------------
-  2014-04-19  patricio  Initial implementation.  pcubillos@fulbrightmail.org
-  2014-06-25  patricio  Added support for inner-MPI loop.
   """
   # Parse arguments:
   cparser = argparse.ArgumentParser(description=__doc__, add_help=False,
