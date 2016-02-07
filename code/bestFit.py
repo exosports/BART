@@ -63,15 +63,14 @@ def read_MCMC_out(MCfile):
             break
 
     # Read data:
-    data = np.zeros((end-ini, 4))
+    bestP = np.zeros(end-ini+1, np.double)
+    uncer = np.zeros(end-ini+1, np.double)
     for i in np.arange(ini, end):
-        data[i-ini] = lines[i].split()
-    bestP = data[:, 0]
-    uncer = data[:, 1]
-    SN    = data[:, 2] 
-    mean  = data[:, 3] 
+        parvalues = lines[i].split()
+        bestP[i-ini] = parvalues[0]
+        uncer[i-ini] = parvalues[1]
 
-    return bestP, uncer, SN, mean
+    return bestP, uncer
 
 
 def get_params(bestP, stepsize, params):
@@ -292,11 +291,12 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     # get star data
     R_star, T_star, sma, gstar = get_starData(tepfile)
 
-    # get best parameters
-    bestP, uncer, SN, mean = read_MCMC_out(MCfile)
+    # Get best parameters
+    bestP, uncer = read_MCMC_out(MCfile)
 
     # get all params
-    allParams = get_params(bestP, stepsize, params)
+    #allParams = get_params(bestP, stepsize, params)
+    allParams = bestP
 
     # get PTparams and abundances factors
     nparams = len(allParams)

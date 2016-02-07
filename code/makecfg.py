@@ -10,8 +10,8 @@ import reader as rd
 import constants as c
 
 filedir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(filedir + "/../modules/MCcubed/src/")
-import mcutils as mu
+sys.path.append(filedir + "/../modules/MCcubed/")
+import MCcubed.utils as mu
 
 
 def makeTransit(cfile, tepfile, shareOpacity):
