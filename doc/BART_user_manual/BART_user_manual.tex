@@ -271,7 +271,7 @@ make
 
 \noindent Compile the {\tttm MCcubed} routines:
 \begin{verbatim}
-cd ../MCcubed/src/cfuncs/
+cd ../MCcubed/
 make
 \end{verbatim}
 
@@ -339,7 +339,12 @@ $topdir/BART/BART.py -c BART.cfg
 
 \section{Test Cases}
 \subsection{WASP-12b}
-The following commands will run a test case for BART, based on eclipse depths from Spitzer observations. This test is intended to be used to check that new additions to the BART code have not broken it. Keep in mind that the MCMC algorithm has an element of randomness and thus the output will not be identical every time, but with enough iterations and/or chains, differences should be small. 
+The following commands will run a test case for BART, based on eclipse
+depths from Spitzer observations. This test is intended to be used to
+check that new additions to the BART code have not broken it. Keep in
+mind that the MCMC algorithm has an element of randomness and thus the
+output will not be identical every time, but with enough iterations
+and/or chains, differences should be small.
 \newline
 
 \noindent Navigate to the correct directory:
@@ -370,7 +375,9 @@ cp $topdir/BART/tests/WASP-12b/wasp12b-fp03k2.pck ../BART/inputs/kurucz/wasp12b-
 \end{verbatim}}
 
 
-\noindent Copy the BART configuration file and run BART. This will first generate a table of opacities and then run the MCMC code to sample the posteriors:
+\noindent Copy the BART configuration file and run BART. This will
+first generate a table of opacities and then run the MCMC code to
+sample the posteriors:
 
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
@@ -386,12 +393,12 @@ $topdir/BART/BART.py -c BART.cfg
 \section{Walkthrough}
 \label{sec:walk}
 
-Lengthy and wordy, maybe boring too, explanation of what is BART, what
-it does, and how it does it.
+%% Lengthy and wordy, maybe boring too, explanation of what is BART, what
+%% it does, and how it does it.
 
-Talk about the initialization.  Running TEA, then the MCMC, and
-finally the best-fitting run.  Talk about what are the inputs, where
-to get them?, what are the outputs.
+%% Talk about the initialization.  Running TEA, then the MCMC, and
+%% finally the best-fitting run.  Talk about what are the inputs, where
+%% to get them?, what are the outputs.
 
 % \newpage
 \section{Program Inputs}
