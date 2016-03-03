@@ -337,7 +337,7 @@ cp $topdir/BART/examples/demo/BART.cfg .
 $topdir/BART/BART.py -c BART.cfg
 \end{verbatim}}
 
-\section{Test Cases}
+\section{Examples}
 \subsection{WASP-12b}
 The following commands will run a test case for BART, based on eclipse
 depths from Spitzer observations. This test is intended to be used to
@@ -353,12 +353,51 @@ and/or chains, differences should be small.
 cd $topdir/run/
 \end{verbatim}}
 
-\noindent Download the line-list .zip file and unzip:
-{\fontsize{9.8}{1em}\selectfont
-\begin{verbatim}
-\findme{command for download}
-unzip -j WASP12b_test_line-list.zip
-\end{verbatim}}
+\noindent Follow the instructions at https://www.cfa.harvard.edu/hitran/HITEMP.html to get the following line-list files:
+
+\begin{enumerate}
+\item pub/HITEMP-2010/H20\_line\_list/
+\begin{enumerate}
+  \item 01\_00900-01000\_HITEMP2010.zip
+  \item 01\_01000-01150\_HITEMP2010.zip
+  \item 01\_01150-01300\_HITEMP2010.zip
+  \item 01\_01300-01500\_HITEMP2010.zip
+  \item 01\_01500-01750\_HITEMP2010.zip
+  \item 01\_01750-02000\_HITEMP2010.zip
+  \item 01\_02000-02250\_HITEMP2010.zip
+  \item 01\_02250-02500\_HITEMP2010.zip
+  \item 01\_02500-02750\_HITEMP2010.zip
+  \item 01\_02750-03000\_HITEMP2010.zip
+  \item 01\_03000-03250\_HITEMP2010.zip
+  \item 01\_03250-03500\_HITEMP2010.zip
+\end{enumerate}
+\item pub/HITEMP-2010/CO2\_line\_list/
+\begin{enumerate}
+  \item 02\_00750-01000\_HITEMP2010.zip
+  \item 02\_01000-01500\_HITEMP2010.zip
+  \item 02\_01500-02000\_HITEMP2010.zip
+  \item 02\_02000-02125\_HITEMP2010.zip
+  \item 02\_02125-02250\_HITEMP2010.zip
+  \item 02\_02250-02500\_HITEMP2010.zip
+  \item 02\_02500-03000\_HITEMP2010.zip
+  \item 02\_03000-03250\_HITEMP2010.zip
+  \item 02\_03250-03500\_HITEMP2010.zip
+\end{enumerate}
+\item pub/HITEM-2010/CO\_line\_list
+\begin{enumerate}
+  \item 05\_HITEMP2010new.zip
+\end{enumerate}
+\end{enumerate}
+
+Unzip these files into the {\tt run} directory. You will also need the methane
+line list from the quick example above. If you do not have it yet, run
+the following commands from the {\tt run} directory:
+
+{\fontsize{9.8}{1em}\selectfont 
+\begin{lstlisting}[breaklines]
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip 
+unzip 06_hit08.zip
+\end{lstlisting}}
 
 \noindent Copy the pylineread configuration file and run pylineread to make a transition-line-information (TLI) file:
 {\fontsize{9.8}{1em}\selectfont
@@ -385,10 +424,15 @@ cp $topdir/BART/tests/WASP-12b/BART.cfg .
 $topdir/BART/BART.py -c BART.cfg
 \end{verbatim}}
 
-\noindent The output should be comparable to the following:
+\noindent This takes several hours on a 10-core machine, and
+considerably longer on machines with fewer than 10. The best-fit
+spectrum should look comparable to figure \ref{fig:wasp12}.
 
-\findme{Put stuff here}
-
+\begin{figure}[htb]
+\centerline{
+\includegraphics[width=0.9\textwidth, clip]{figs/WASP-12b-Spectrum}}
+\caption{\small \label{fig:wasp12} Best-fit spectrum of WASP-12b Spitzer data.}
+\end{figure}
 
 \section{Walkthrough}
 \label{sec:walk}
