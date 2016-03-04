@@ -361,7 +361,7 @@ molecular line-list files:
 
 {\fontsize{9.8}{1em}\selectfont
 \begin{lstlisting}[breaklines]
-cp ../BART/tests/WASP-12b/wget-list_HITEMP-H2O.txt
+cp ../BART/examples/WASP-12b/wget-list_HITEMP-H2O.txt
 wget --user=HITRAN --password=getdata -N -i wget-list_HITEMP-H2O.txt
 unzip '01_*HITEMP2010.zip'
 \end{lstlisting}}
@@ -371,7 +371,7 @@ unzip '01_*HITEMP2010.zip'
 
 {\fontsize{9.8}{1em}\selectfont
 \begin{lstlisting}[breaklines]
-cp ../BART/tests/WASP-12b/wget-list_HITEMP-CO2.txt
+cp ../BART/examples/WASP-12b/wget-list_HITEMP-CO2.txt
 wget --user=HITRAN --password=getdata -N -i wget-list_HITEMP-CO2.txt
 unzip '02_*HITEMP2010.zip'
 \end{lstlisting}}
@@ -398,15 +398,15 @@ unzip 06_hit08.zip
 \noindent Copy the pylineread configuration file and run pylineread to make a transition-line-information (TLI) file:
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
-cp $topdir/BART/tests/WASP-12b/pyline.cfg .
+cp $topdir/BART/examples/WASP-12b/pyline.cfg .
 $topdir/BART/modules/transit/pylineread/src/pylineread.py -c pyline.cfg
 \end{verbatim}}
 
-\noindent Copy the Transiting Exoplanet (TEP) file and Stellar Kurucz file from the tests directory:
+\noindent Copy the Transiting Exoplanet (TEP) file and Stellar Kurucz file from the examples directory:
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
-cp $topdir/BART/tests/WASP-12b/WASP-12b.tep ../BART/inputs/tep/WASP-12b.tep
-cp $topdir/BART/tests/WASP-12b/wasp12b-fp03k2.pck ../BART/inputs/kurucz/wasp12b-fp03k2.pck
+cp $topdir/BART/examples/WASP-12b/WASP-12b.tep ../BART/inputs/tep/WASP-12b.tep
+cp $topdir/BART/examples/WASP-12b/wasp12b-fp03k2.pck ../BART/inputs/kurucz/wasp12b-fp03k2.pck
 \end{verbatim}}
 
 
@@ -416,7 +416,7 @@ sample the posteriors:
 
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
-cp $topdir/BART/tests/WASP-12b/BART.cfg .
+cp $topdir/BART/examples/WASP-12b/BART.cfg .
 $topdir/BART/BART.py -c BART.cfg
 \end{verbatim}}
 
