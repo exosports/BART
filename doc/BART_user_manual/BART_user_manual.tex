@@ -402,14 +402,18 @@ cp $topdir/BART/examples/WASP-12b/pyline.cfg .
 $topdir/BART/modules/transit/pylineread/src/pylineread.py -c pyline.cfg
 \end{verbatim}}
 
-\noindent Copy the Transiting Exoplanet (TEP) file and Stellar Kurucz file from the examples directory:
+\noindent Copy the Transiting Exoplanet (TEP) file from the examples directory:
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
 cp $topdir/BART/examples/WASP-12b/WASP-12b.tep ../BART/inputs/tep/WASP-12b.tep
 cp $topdir/BART/examples/WASP-12b/wasp12b-fp03k2.pck ../BART/inputs/kurucz/wasp12b-fp03k2.pck
 \end{verbatim}}
 
-
+\noindent Download the stellar Kurucz file:
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+wget -N kurucz.harvard.edu/grids/gridp03/fp03k2.pck -O ../BART/inputs/kurucz/wasp12b-fp03k2.pck
+\end{verbatim}}
 \noindent Copy the BART configuration file and run BART. This will
 first generate a table of opacities and then run the MCMC code to
 sample the posteriors:
