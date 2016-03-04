@@ -353,51 +353,47 @@ and/or chains, differences should be small.
 cd $topdir/run/
 \end{verbatim}}
 
-\noindent Follow the instructions at https://www.cfa.harvard.edu/hitran/HITEMP.html to get the following line-list files:
+\noindent Run these scripts to download and unzip the following
+molecular line-list files:
 
 \begin{enumerate}
-\item pub/HITEMP-2010/H20\_line\_list/
-\begin{enumerate}
-  \item 01\_00900-01000\_HITEMP2010.zip
-  \item 01\_01000-01150\_HITEMP2010.zip
-  \item 01\_01150-01300\_HITEMP2010.zip
-  \item 01\_01300-01500\_HITEMP2010.zip
-  \item 01\_01500-01750\_HITEMP2010.zip
-  \item 01\_01750-02000\_HITEMP2010.zip
-  \item 01\_02000-02250\_HITEMP2010.zip
-  \item 01\_02250-02500\_HITEMP2010.zip
-  \item 01\_02500-02750\_HITEMP2010.zip
-  \item 01\_02750-03000\_HITEMP2010.zip
-  \item 01\_03000-03250\_HITEMP2010.zip
-  \item 01\_03250-03500\_HITEMP2010.zip
-\end{enumerate}
-\item pub/HITEMP-2010/CO2\_line\_list/
-\begin{enumerate}
-  \item 02\_00750-01000\_HITEMP2010.zip
-  \item 02\_01000-01500\_HITEMP2010.zip
-  \item 02\_01500-02000\_HITEMP2010.zip
-  \item 02\_02000-02125\_HITEMP2010.zip
-  \item 02\_02125-02250\_HITEMP2010.zip
-  \item 02\_02250-02500\_HITEMP2010.zip
-  \item 02\_02500-03000\_HITEMP2010.zip
-  \item 02\_03000-03250\_HITEMP2010.zip
-  \item 02\_03250-03500\_HITEMP2010.zip
-\end{enumerate}
-\item pub/HITEM-2010/CO\_line\_list
-\begin{enumerate}
-  \item 05\_HITEMP2010new.zip
-\end{enumerate}
-\end{enumerate}
+\item H$\sb{2}$O from HITEMP:
 
-Unzip these files into the {\tt run} directory. You will also need the methane
-line list from the quick example above. If you do not have it yet, run
-the following commands from the {\tt run} directory:
+{\fontsize{9.8}{1em}\selectfont
+\begin{lstlisting}[breaklines]
+cp ../BART/tests/WASP-12b/wget-list_HITEMP-H2O.txt
+wget --user=HITRAN --password=getdata -N -i wget-list_HITEMP-H2O.txt
+unzip '01_*HITEMP2010.zip'
+\end{lstlisting}}
 
-{\fontsize{9.8}{1em}\selectfont 
+
+\item CO$\sb{2}$ from HITEMP:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{lstlisting}[breaklines]
+cp ../BART/tests/WASP-12b/wget-list_HITEMP-CO2.txt
+wget --user=HITRAN --password=getdata -N -i wget-list_HITEMP-CO2.txt
+unzip '02_*HITEMP2010.zip'
+\end{lstlisting}}
+
+\item CO from HITEMP:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{lstlisting}[breaklines]
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITEMP-2010/CO_line_list/05_HITEMP2010.zip
+unzip 05_HITEMP2010.zip
+\end{lstlisting}}
+
+\item CH$\sb{4}$ from HITRAN:
+
+{\fontsize{9.8}{1em}\selectfont
 \begin{lstlisting}[breaklines]
 wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip 
 unzip 06_hit08.zip
 \end{lstlisting}}
+
+\end{enumerate}
+
 
 \noindent Copy the pylineread configuration file and run pylineread to make a transition-line-information (TLI) file:
 {\fontsize{9.8}{1em}\selectfont
@@ -430,7 +426,7 @@ spectrum should look comparable to figure \ref{fig:wasp12}.
 
 \begin{figure}[htb]
 \centerline{
-\includegraphics[width=0.9\textwidth, clip]{figs/WASP-12b-Spectrum}}
+\includegraphics[width=0.6\textwidth, clip]{figs/WASP-12b-Spectrum}}
 \caption{\small \label{fig:wasp12} Best-fit spectrum of WASP-12b Spitzer data.}
 \end{figure}
 
