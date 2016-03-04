@@ -57,7 +57,7 @@ make
 
 Compile the MCcubed routines:
 ```shell
-cd $topdir/BART/modules/MCcubed/src/cfuncs/
+cd $topdir/BART/modules/MCcubed/
 make
 ```
 

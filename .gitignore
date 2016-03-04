@@ -3,3 +3,12 @@
 *.o.d
 *.swp
 *.pyc
+
+# Latex output files:
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.log
+*.out
+*.toc
