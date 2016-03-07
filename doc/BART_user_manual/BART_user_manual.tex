@@ -271,7 +271,7 @@ make
 
 \noindent Compile the {\tttm MCcubed} routines:
 \begin{verbatim}
-cd ../MCcubed/src/cfuncs/
+cd ../MCcubed/
 make
 \end{verbatim}
 
@@ -337,9 +337,14 @@ cp $topdir/BART/examples/demo/BART.cfg .
 $topdir/BART/BART.py -c BART.cfg
 \end{verbatim}}
 
-\section{Test Cases}
+\section{Examples}
 \subsection{WASP-12b}
-The following commands will run a test case for BART, based on eclipse depths from Spitzer observations. This test is intended to be used to check that new additions to the BART code have not broken it. Keep in mind that the MCMC algorithm has an element of randomness and thus the output will not be identical every time, but with enough iterations and/or chains, differences should be small. 
+The following commands will run a test case for BART, based on eclipse
+depths from Spitzer observations. This test is intended to be used to
+check that new additions to the BART code have not broken it. Keep in
+mind that the MCMC algorithm has an element of randomness and thus the
+output will not be identical every time, but with enough iterations
+and/or chains, differences should be small.
 \newline
 
 \noindent Navigate to the correct directory:
@@ -348,50 +353,95 @@ The following commands will run a test case for BART, based on eclipse depths fr
 cd $topdir/run/
 \end{verbatim}}
 
-\noindent Download the line-list .zip file and unzip:
+\noindent Run these scripts to download and unzip the following
+molecular line-list files:
+
+\begin{enumerate}
+\item H$\sb{2}$O from HITEMP:
+
 {\fontsize{9.8}{1em}\selectfont
-\begin{verbatim}
-\findme{command for download}
-unzip -j WASP12b_test_line-list.zip
-\end{verbatim}}
+\begin{lstlisting}[breaklines]
+cp ../BART/examples/WASP-12b/wget-list_HITEMP-H2O.txt
+wget --user=HITRAN --password=getdata -N -i wget-list_HITEMP-H2O.txt
+unzip '01_*HITEMP2010.zip'
+\end{lstlisting}}
+
+
+\item CO$\sb{2}$ from HITEMP:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{lstlisting}[breaklines]
+cp ../BART/examples/WASP-12b/wget-list_HITEMP-CO2.txt
+wget --user=HITRAN --password=getdata -N -i wget-list_HITEMP-CO2.txt
+unzip '02_*HITEMP2010.zip'
+\end{lstlisting}}
+
+\item CO from HITEMP:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{lstlisting}[breaklines]
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITEMP-2010/CO_line_list/05_HITEMP2010.zip
+unzip 05_HITEMP2010.zip
+\end{lstlisting}}
+
+\item CH$\sb{4}$ from HITRAN:
+
+{\fontsize{9.8}{1em}\selectfont
+\begin{lstlisting}[breaklines]
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip 
+unzip 06_hit08.zip
+\end{lstlisting}}
+
+\end{enumerate}
+
 
 \noindent Copy the pylineread configuration file and run pylineread to make a transition-line-information (TLI) file:
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
-cp $topdir/BART/tests/WASP-12b/pyline.cfg .
+cp $topdir/BART/examples/WASP-12b/pyline.cfg .
 $topdir/BART/modules/transit/pylineread/src/pylineread.py -c pyline.cfg
 \end{verbatim}}
 
-\noindent Copy the Transiting Exoplanet (TEP) file and Stellar Kurucz file from the tests directory:
+\noindent Copy the Transiting Exoplanet (TEP) file from the examples directory:
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
-cp $topdir/BART/tests/WASP-12b/WASP-12b.tep ../BART/inputs/tep/WASP-12b.tep
-cp $topdir/BART/tests/WASP-12b/wasp12b-fp03k2.pck ../BART/inputs/kurucz/wasp12b-fp03k2.pck
+cp $topdir/BART/examples/WASP-12b/WASP-12b.tep ../BART/inputs/tep/WASP-12b.tep
 \end{verbatim}}
 
-
-\noindent Copy the BART configuration file and run BART. This will first generate a table of opacities and then run the MCMC code to sample the posteriors:
+\noindent Download the stellar Kurucz file:
+{\fontsize{9.8}{1em}\selectfont
+\begin{verbatim}
+wget -N kurucz.harvard.edu/grids/gridp03/fp03k2.pck -O ../BART/inputs/kurucz/wasp12b-fp03k2.pck
+\end{verbatim}}
+\noindent Copy the BART configuration file and run BART. This will
+first generate a table of opacities and then run the MCMC code to
+sample the posteriors:
 
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
-cp $topdir/BART/tests/WASP-12b/BART.cfg .
+cp $topdir/BART/examples/WASP-12b/BART.cfg .
 $topdir/BART/BART.py -c BART.cfg
 \end{verbatim}}
 
-\noindent The output should be comparable to the following:
+\noindent This takes several hours on a 10-core machine, and
+considerably longer on machines with fewer than 10. The best-fit
+spectrum should look comparable to figure \ref{fig:wasp12}.
 
-\findme{Put stuff here}
-
+\begin{figure}[htb]
+\centerline{
+\includegraphics[width=0.6\textwidth, clip]{figs/WASP-12b-Spectrum}}
+\caption{\small \label{fig:wasp12} Best-fit spectrum of WASP-12b Spitzer data.}
+\end{figure}
 
 \section{Walkthrough}
 \label{sec:walk}
 
-Lengthy and wordy, maybe boring too, explanation of what is BART, what
-it does, and how it does it.
+%% Lengthy and wordy, maybe boring too, explanation of what is BART, what
+%% it does, and how it does it.
 
-Talk about the initialization.  Running TEA, then the MCMC, and
-finally the best-fitting run.  Talk about what are the inputs, where
-to get them?, what are the outputs.
+%% Talk about the initialization.  Running TEA, then the MCMC, and
+%% finally the best-fitting run.  Talk about what are the inputs, where
+%% to get them?, what are the outputs.
 
 % \newpage
 \section{Program Inputs}
