@@ -197,12 +197,9 @@ def main():
   group.add_argument("--opacityfile", dest="opacityfile",
            help="Opacity table file [default: %(default)s]",
            type=str, action="store", default=None)
-  group.add_argument("--outflux", dest="outflux",
-           help="Output with flux values [default: %(default)s]",
-           type=str, action="store", default=None)
-  group.add_argument("--outmod", dest="outmod",
-           help="Output with modulation values [default: %(default)s]",
-           type=str, action="store", default=None)
+  group.add_argument("--outspec", dest="outspec",
+           help="Output spectrum filename [default: %(default)s]",
+           type=str, action="store", default="outspec.dat")
   group.add_argument("--shareOpacity", dest="shareOpacity",
            help="If True, use shared memory for the Transit opacity file "
                 "[default: %(default)s]",
@@ -402,38 +399,28 @@ def main():
                    shell=True, cwd=date_dir)
 
   # Plot best-fit eclipse or modulation spectrum, depending on solution:
-  if solution == 'eclipse':
-    # Plot best-fit eclipse spectrum
-    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outflux,
-                             data, uncert, date_dir)
-  elif solution == 'transit':
-    # Plot best-fit transit spectrum
-    bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outmod,
-                             data, uncert, date_dir)
-
+  bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outspec,
+                           data, uncert, date_dir)
 
   # Plot abundance profiles
   bf.plotabun(date_dir, 'bestFit.atm', molfit)
   
-  # Run Transit with unlimited 'toomuch' argument for contribution
-  # function calculation:
-  mu.msg(1, "\nTransit call for contribution functions calculation.")
 
-  # Make cf_tconfig
-  cf.cf_tconfig(date_dir)
-
-  # Contribution functions tconfig
-  cf_tconfig = date_dir + 'cf_tconfig.cfg'
-
-  # Call Transit with the cf_tconfig
-  Tcall = Transitdir + "/transit/transit"
-  subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
-                    shell=True, cwd=date_dir)
-
-  # Calculate contribution functions and plot them
-  mu.msg(1, "Calculating contribution functions ...", indent=2)
-  bestFit_atmfile = date_dir + 'bestFit.atm'
-  cf.cf(date_dir, bestFit_atmfile, filter)
+  # Compute contribution fucntions if this is a eclipse run:
+  if solution == "eclipse":
+    mu.msg(1, "\nTransit call for contribution functions calculation.")
+    # Run Transit with unlimited 'toomuch' argument for contribution
+    # function calculation:
+    cf.cf_tconfig(date_dir)
+    # Call Transit with the cf_tconfig
+    cf_tconfig = date_dir + 'cf_tconfig.cfg'
+    Tcall = Transitdir + "/transit/transit"
+    subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
+                      shell=True, cwd=date_dir)
+    # Calculate and plot contribution functions:
+    mu.msg(1, "Calculating contribution functions.", indent=2)
+    bestFit_atmfile = date_dir + 'bestFit.atm'
+    cf.cf(date_dir, bestFit_atmfile, filter)
 
   mu.msg(1, "~~ BART End ~~")
 

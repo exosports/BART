@@ -41,7 +41,7 @@ def makeTransit(cfile, tepfile, shareOpacity):
                 "cloudrad", "cloudfct", "cloudext",
                 "verb",
                 "savefiles",
-                "outtoomuch", "outsample", "outmod", "outflux", "outintens",
+                "outtoomuch", "outsample", "outspec", "outintens",
                 "linedb", "csfile", "orbpars", "orbparsfct"]
 
   # Name of the configuration-file section:
@@ -120,8 +120,8 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   input_args = ["tep_name", "kurucz", "molfile", "filter", "linedb",
                 "csfile", "loc_dir"]
   output_args = ["tconfig",    "atmfile",   "opacityfile", "press_file",
-                 "abun_basic", "abun_file", "preatm_file", "outflux",
-                 "outmod",     "savemodel", "logfile"]
+                 "abun_basic", "abun_file", "preatm_file", "outspec",
+                 "savemodel", "logfile"]
 
   # Set default logfile:
   if "logfile" not in args:
