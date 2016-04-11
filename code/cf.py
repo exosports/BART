@@ -13,12 +13,12 @@
     Planck:
           Calculate Planch function.
     cf_eq:
-	      Apply the contribution function equation as in Knutson et al 2008
+      Apply the contribution function equation as in Knutson et al 2008
           equation (2).
     filter_cf:
           Band-averaged (filters) contribution functions.
     cf:
-	      Call above functions to calculate cf and plot them
+      Call above functions to calculate cf and plot them
 
     Revisions
     ---------
@@ -40,34 +40,34 @@ import constants as c
 
 
 def cf_tconfig(date_dir):
-	'''
-	Write cf_tconfig file for cf Transit run
-	'''
-	# Open atmfile to read
-	f = open(date_dir + 'bestFit_tconfig.cfg', 'r')
-	lines = np.asarray(f.readlines())
-	f.close()
+  '''
+  Write cf_tconfig file for cf Transit run
+  '''
+  # Open atmfile to read
+  f = open(date_dir + 'bestFit_tconfig.cfg', 'r')
+  lines = np.asarray(f.readlines())
+  f.close()
 
-	# Find where toomuch argument is written and put 500.0
-	data = [[] for x in range(len(lines))]
-	for i in np.arange(len(lines)):
-		data[i] = lines[i].split()
-		if data[i][0] == 'toomuch':
-			lines[i] = 'toomuch 1e100\n'
-		elif data[i][0] == 'verb':
-			lines[i] = 'verb 0\n'
-		elif data[i][0] == 'outflux':
-			lines[i] = 'outflux ./cf-flux.dat\n'
-		elif data[i][0] == 'outintens':
-			lines[i] = 'outintens ./cf-intens.dat\n'
-		elif data[i][0] == 'outtoomuch':
-			lines[i] = 'outtoomuch ./cf-toom.dat\n'
+  # Find where toomuch argument is written and put 500.0
+  data = [[] for x in range(len(lines))]
+  for i in np.arange(len(lines)):
+    data[i] = lines[i].split()
+    if data[i][0] == 'toomuch':
+      lines[i] = 'toomuch 1e100\n'
+    elif data[i][0] == 'verb':
+      lines[i] = 'verb 0\n'
+    elif data[i][0] == 'outspec':
+      lines[i] = 'outspec ./cf-flux.dat\n'
+    elif data[i][0] == 'outintens':
+      lines[i] = 'outintens ./cf-intens.dat\n'
+    elif data[i][0] == 'outtoomuch':
+      lines[i] = 'outtoomuch ./cf-toom.dat\n'
 
-	# Write lines into the bestFit config file
-	f = open(date_dir + 'cf_tconfig.cfg', 'w')
-	f.writelines(lines)
-	f.writelines('savefiles yes')
-	f.close()
+  # Write lines into the bestFit config file
+  f = open(date_dir + 'cf_tconfig.cfg', 'w')
+  f.writelines(lines)
+  f.writelines('savefiles yes')
+  f.close()
 
 
 def readTauDat(file, nlayers):
@@ -100,44 +100,44 @@ def readTauDat(file, nlayers):
 
 
 def Planck(T, wns):
-	"""
-	Calculate Planch function.
-	"""
-    # Number of layers
-	nlayers = len(T)
+  """
+  Calculate Planch function.
+  """
 
-	# Calculate black body function for every layer and every wavenumber
-	BB = np.zeros((nlayers, len(wns)))
-	for i in np.arange(nlayers):
-		for j in np.arange(len(wns)):
-			BB[i, j] = (2. * c.H * wns[j]**3 * c.LS **(2)) / \
-						(np.exp((c.H * wns[j] * c.LS) / (c.KB * T[i])) - 1)
+  # Number of layers
+  nlayers = len(T)
 
-	return BB
+  # Calculate black body function for every layer and every wavenumber
+  BB = np.zeros((nlayers, len(wns)))
+  for i in np.arange(nlayers):
+    for j in np.arange(len(wns)):
+      BB[i, j] = (2.0 * c.H * wns[j]**3.0 * c.LS **2.0) / \
+                  (np.exp((c.H * wns[j] * c.LS) / (c.KB * T[i])) - 1.0)
+
+  return BB
 
 
 def cf_eq(BB, p, tau, nlayers, wns):
-	"""
-	Apply the contribution function equation as in Knutson et al 2008
-	equation (2).
-	"""
-	# Calculate change in exp(-tau) and log(p), and cf 
-	de_tau = np.zeros((nlayers, len(wns)))
-	d_logp = np.zeros(nlayers)
-	cf = np.zeros((nlayers, len(wns)))
-	for i in np.arange(nlayers):
+  """
+  Apply the contribution function equation as in Knutson et al. (2008)
+  equation (2).
+  """
+  # Calculate change in exp(-tau) and log(p), and cf 
+  de_tau = np.zeros((nlayers, len(wns)))
+  d_logp = np.zeros(nlayers)
+  cf = np.zeros((nlayers, len(wns)))
+  for i in np.arange(nlayers):
+    # Outermost layer
+    if i==0:
+      de_tau[i, :] = 0.0
+      d_logp[i]    = 0.0
+      cf[i]        = 0.0
+    else:
+      de_tau[i, :] = np.exp(-tau[i-1, :]) - np.exp(-tau[i, :])
+      d_logp[i] = np.log(p[i]*1e6) - np.log(p[i-1]*1e6)
+      cf[i] = BB[i, :] * de_tau[i, :]/d_logp[i]
 
-        # Outermost layer
-		if i==0:
-			de_tau[i, :] = 0.0
-			d_logp[i]    = 0.0
-			cf[i]        = 0.0
-		else:
-			de_tau[i, :] = np.exp(-tau[i-1, :]) - np.exp(-tau[i, :])
-			d_logp[i] = np.log(p[i]*1e6) - np.log(p[i-1]*1e6)
-			cf[i] = BB[i, :] * de_tau[i, :]/d_logp[i]
-
-	return cf
+  return cf
 
 
 def filter_cf(filters, nlayers, wns, cf):
