@@ -63,8 +63,8 @@ def read_MCMC_out(MCfile):
             break
 
     # Read data:
-    bestP = np.zeros(end-ini+1, np.double)
-    uncer = np.zeros(end-ini+1, np.double)
+    bestP = np.zeros(end-ini, np.double)
+    uncer = np.zeros(end-ini, np.double)
     for i in np.arange(ini, end):
         parvalues = lines[i].split()
         bestP[i-ini] = parvalues[0]
