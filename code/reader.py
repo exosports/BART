@@ -102,7 +102,7 @@ class File:
     If not, returns NaN.
     '''
     try:
-      id = np.where(self.params == par)[0]
+      id = np.where(self.params == par)[0][0]
       value = self.values[id]
       return value[0] if value.size == 1 else value
     except:
