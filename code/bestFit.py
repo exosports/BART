@@ -171,7 +171,7 @@ def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
 
     # recognize which columns to take from the atmospheric file
     headers = lines[start-1].split()
-    columns = np.zeros(len(molfit))
+    columns = np.zeros(len(molfit), dtype=int)
     for i in np.arange(len(molfit)):
         for j in np.arange(len(headers)):
             if molfit[i] == headers[j]:
@@ -282,6 +282,9 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
        Elemental abundances file.
     """
 
+    # make sure burnin is an integer
+    burnin = int(burnin)
+    
     # read atmfile
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
 
