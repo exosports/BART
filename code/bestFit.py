@@ -282,6 +282,9 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
        Elemental abundances file.
     """
 
+    # make sure burnin is an integer
+    burnin = int(burnin)
+    
     # read atmfile
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
 
