@@ -74,7 +74,6 @@ def main(comm):
   group.add_argument("--PTtype",            action="store",
                      help="PT profile type.",
                      dest="PTtype",  type=str,    default="none")
-                     #choices=('line', 'madhu'))
   group.add_argument("--tint",              action="store",
                      help="Internal temperature of the planet [default: "
                      "%(default)s].",
@@ -187,13 +186,6 @@ def main(comm):
   # # transit configuration file:
   transitcfile = args2.tconfig
  
-  # FINDME: Find a way to set verb to the transit subprocesses.
-  # Silence all threads except rank 0:
-  # if verb == 0:
-  #   rargs = ["--quiet"]
-  # else:
-  #   rargs = []
-
   # Initialize the transit python module:
   transit_args = ["transit", "-c", transitcfile]
   trm.transit_init(len(transit_args), transit_args)
@@ -300,21 +292,14 @@ def main(comm):
                                       nifilter[i], wnindices[i])
 
     # Send resutls back to MCMC:
-    #mu.msg(verb, "OCON FLAG 95: Flux band integrated ({})".format(bandflux))
-    #mu.msg(verb, "{}".format(params[nPT:]))
     mu.comm_gather(comm, bandflux, MPI.DOUBLE)
-    #mu.msg(verb, "OCON FLAG 97: Sent results back to MCMC")
 
   # ::::::  End main Loop  :::::::::::::::::::::::::::::::::::::::::::
   # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
   # Close communications and disconnect:
   mu.comm_disconnect(comm)
-  mu.msg(verb, "FUNC FLAG 99: func out")
-
-  # Close the transit communicators:
   trm.free_memory()
-  mu.msg(verb, "FUNC FLAG OUT ~~ 100 ~~")
 
 
 if __name__ == "__main__":
