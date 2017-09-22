@@ -177,7 +177,7 @@ def filter_cf(filters, nlayers, wns, cf):
   return filt_cf, filt_cf_norm
 
 
-def cf(date_dir, atmfile, filters):
+def cf(date_dir, atmfile, filters, plot=True):
   """
   Call above functions to calculate cf and plot them
   """
@@ -200,37 +200,40 @@ def cf(date_dir, atmfile, filters):
   # Call filter_cf() to calculate cf
   filt_cf, filt_cf_norm = filter_cf(filters, nlayers, wns, cf)
 
-  print("  Plotting contribution functions.\n")
-  # Not normalized cf
-  plt.figure(4)
-  plt.clf()
-  gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
-  ax0 = plt.subplot(gs[0])
-  for i in np.arange(len(filt_cf)):
-    (head, tail) = os.path.split(filters[i])
-    lbl = tail[:-4]
-    ax0.semilogy(filt_cf[i], p, '-', linewidth = 1, label=lbl)
-  ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':8})
-  ax0.set_ylim(max(p), min(p))
-  ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-  ax0.set_xlabel('Contribution functions', fontsize=14)
-  ax0.set_ylabel('Pressure [bar]' , fontsize=14)
-  plt.savefig(date_dir + 'ContrFuncs.png')
+  if plot:
+    print("  Plotting contribution functions.\n")
+    # Not normalized cf
+    plt.figure(4)
+    plt.clf()
+    gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
+    ax0 = plt.subplot(gs[0])
+    for i in np.arange(len(filt_cf)):
+      (head, tail) = os.path.split(filters[i])
+      lbl = tail[:-4]
+      ax0.semilogy(filt_cf[i], p, '-', linewidth = 1, label=lbl)
+    ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':8})
+    ax0.set_ylim(max(p), min(p))
+    ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    ax0.set_xlabel('Contribution functions', fontsize=14)
+    ax0.set_ylabel('Pressure [bar]' , fontsize=14)
+    plt.savefig(date_dir + 'ContrFuncs.png')
 
-  # Normalized cf
-  plt.figure(5)
-  plt.clf()
-  gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
-  ax0 = plt.subplot(gs[0])
-  for i in np.arange(len(filt_cf_norm)):
-    (head, tail) = os.path.split(filters[i])
-    lbl = tail[:-4]
-    ax0.semilogy(filt_cf_norm[i], p, '--', linewidth = 1, label=lbl)
+    # Normalized cf
+    plt.figure(5)
+    plt.clf()
+    gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
+    ax0 = plt.subplot(gs[0])
+    for i in np.arange(len(filt_cf_norm)):
+      (head, tail) = os.path.split(filters[i])
+      lbl = tail[:-4]
+      ax0.semilogy(filt_cf_norm[i], p, '--', linewidth = 1, label=lbl)
 
-  ax0.legend(loc='center left', bbox_to_anchor=(1,0.5), prop={'size':8})
-  ax0.set_ylim(max(p), min(p))
-  ax0.set_xlim(0, 1.0)
-  ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-  ax0.set_xlabel('Normalized contribution functions', fontsize=14)
-  ax0.set_ylabel('Pressure [bar]' , fontsize=14)
-  plt.savefig(date_dir + 'NormContrFuncs.png')
+    ax0.legend(loc='center left', bbox_to_anchor=(1,0.5), prop={'size':8})
+    ax0.set_ylim(max(p), min(p))
+    ax0.set_xlim(0, 1.0)
+    ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    ax0.set_xlabel('Normalized contribution functions', fontsize=14)
+    ax0.set_ylabel('Pressure [bar]' , fontsize=14)
+    plt.savefig(date_dir + 'NormContrFuncs.png')
+
+  return filt_cf[:,::-1], filt_cf_norm[:,::-1]
