@@ -3,7 +3,7 @@
 
 """
     This code runs and processes best-fit Transit run outputs.
-    
+
     Functions
     ---------
     read_MCMC_out:
@@ -50,7 +50,7 @@ def read_MCMC_out(MCfile):
     # Open file to read
     f = open(MCfile, 'r')
     lines = np.asarray(f.readlines())
-    f.close() 
+    f.close()
 
     # Find where the data starts and ends:
     for ini in np.arange(len(lines)):
@@ -85,7 +85,7 @@ def get_params(bestP, stepsize, params):
             j +=1
         else:
             allParams[i] = params[i]
-            
+
     return allParams
 
 
@@ -140,7 +140,7 @@ def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
     molecules = lines[imol].split()
 
     # Find the line where the layers info begins
-    start = np.where(lines == "#TEADATA\n")[0][0] + 2 
+    start = np.where(lines == "#TEADATA\n")[0][0] + 2
     headers = lines[start-1].split()
     datalines = lines[start:]
 
@@ -148,13 +148,13 @@ def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
     ncol = len(lines[start].split())
 
     # Number of layers
-    ndata = len(datalines)  
+    ndata = len(datalines)
 
     # Allocate space for pressure:
-    pressure = np.zeros(ndata, np.double) 
+    pressure = np.zeros(ndata, np.double)
 
-    # Number of abundances (elements per line except Radius, Press and T) 
-    nabun = len(lines[start].split()) - 3  
+    # Number of abundances (elements per line except Radius, Press and T)
+    nabun = len(lines[start].split()) - 3
 
     data = np.zeros((ndata, len(headers)))
     for i in np.arange(ndata):
@@ -208,7 +208,7 @@ def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
     fout.writelines(lines[:start])
 
     # Write atm file for each run
-    for i in np.arange(ndata): 
+    for i in np.arange(ndata):
         # Radius, pressure, and temp for the current line
         radi = str('%10.3f'%rad[i])
         presi = str('%10.4e'%pressure[i])
@@ -284,7 +284,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
 
     # make sure burnin is an integer
     burnin = int(burnin)
-    
+
     # read atmfile
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
 
@@ -325,7 +325,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     plt.xlabel('T [K]'     , fontsize=14)
     plt.ylabel('logP [bar]', fontsize=14)
     # Save plot to current directory
-    plt.savefig(date_dir + 'Best_PT.png') 
+    plt.savefig(date_dir + 'Best_PT.png')
 
     # Update R0, if needed:
     if nradfit:
@@ -401,7 +401,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     plt.ylabel("Pressure  (bar)",  size=15)
 
     # save figure
-    savefile = date_dir + "MCMC_PTprofiles.png" 
+    savefile = date_dir + "MCMC_PTprofiles.png"
     plt.savefig(savefile)
 
 
@@ -422,7 +422,7 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
 
     # ratio planet to star
     rprs = Rp/R_star
-  
+
     # read kurucz file
     starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, T_star, gstar)
 
@@ -503,7 +503,7 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     leg.get_frame().set_alpha(0.5)
     ax = plt.subplot(111)
     ax.set_xscale('log')
-    plt.xlabel(r"${\rm Wavelength\ \ (um)}$", fontsize=12)  
+    plt.xlabel(r"${\rm Wavelength\ \ (um)}$", fontsize=12)
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
     ax.set_xticks(np.arange(round(min(specwl)),max(specwl),1))
     plt.xlim(min(specwl),max(specwl))
@@ -517,7 +517,7 @@ def plotabun(date_dir, atmfile, molfit):
     -----
     date_dir: string
       Path to BART output directory
-    
+
     atmfile: string
       Name of best fit atmospheric file
 
@@ -528,7 +528,7 @@ def plotabun(date_dir, atmfile, molfit):
     # Import best fit atmosphere results
     species, pressure, temp, abundances = mat.readatm(date_dir + atmfile)
 
-    # Create array of indices for species to plot 
+    # Create array of indices for species to plot
     molfitindex = np.zeros(len(molfit), dtype='int')
 
     k = 0
@@ -552,9 +552,9 @@ def plotabun(date_dir, atmfile, molfit):
     plt.title('Best Fit Abundance Profiles')
 
     plt.gca().invert_yaxis()
-    
+
     plt.savefig(date_dir + 'abun_profiles.png')
-    
-                
-    
+
+
+
 
