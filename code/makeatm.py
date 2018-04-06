@@ -325,7 +325,7 @@ def makeAbun(solar_abun, abun_file, solar_times=1, COswap=False):
 
 
 # calculates species stoichiometric values
-def stoich(specie):
+def stoich(species):
     '''
     Species counting function. Counts the number of each element in a chemical
     species. Takes in a string of a chemical species (i.e., "H2O") and returns
@@ -334,7 +334,7 @@ def stoich(specie):
 
     Parameters
     ----------
-    specie : string
+    species : string
              Chemical species name. MUST include elemental species listed in
              the order they appear in the 'abundances.txt'.
 
@@ -367,22 +367,22 @@ def stoich(specie):
 
     # Allocate string length and array of booleans to indicate if characters
     #          are capitals or digits
-    chars   = len(specie)
+    chars   = len(species)
     iscaps  = np.empty(chars, dtype=np.bool)
     isdigit = np.empty(chars, dtype=np.bool)
 
     # Check each character in string to fill in boolean arrays for capitals
     #       or digits;
-    for i in np.arange(len(specie)):
-        iscaps[i] = (re.findall('[A-Z]', specie[i]) != [])
-        isdigit[i] = specie[i].isdigit()
+    for i in np.arange(len(species)):
+        iscaps[i] = (re.findall('[A-Z]', species[i]) != [])
+        isdigit[i] = species[i].isdigit()
 
     # Indicator for ending each count and blank stoich_info array
     endele = True
-    stoich_info = [[]]
+    stoich_info = []
 
     # Loop over all characters in species string
-    for i in np.arange(len(specie)):
+    for i in np.arange(len(species)):
         # Start tracking new element
         if endele == True:
             ele = ''
@@ -391,11 +391,11 @@ def stoich(specie):
 
         # Check if character is a letter, if so add to element name
         if (isdigit[i] == False):
-            ele += specie[i]
+            ele += species[i]
 
         # Check if character is a digit, if so, make this the element's weight
         if isdigit[i] == True:
-            weight = np.int(specie[i])
+            weight = np.int(species[i])
 
         # Check if element name ends (next capital is reached)
         #       and if no weight (count) is found, set it to 1
@@ -411,12 +411,7 @@ def stoich(specie):
         # End of element has been reached, so output weights of element
         #     into elemental array
         if endele == True:
-
-            # Create array containing only the elements used in this run
-            if stoich_info == [[]]:
-                stoich_info = np.append(stoich_info, [[ele, weight]], axis=1)
-            else:
-                stoich_info = np.append(stoich_info, [[ele, weight]], axis=0)
+            stoich_info.append([ele,weight])
 
     # Return full array of elements and stoichiometry
     return stoich_info
