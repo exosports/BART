@@ -388,7 +388,7 @@ def main():
   
   # Call bestFit submodule and make new bestFit_tconfig.cfg
   bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, solution,
-                 refpress, tconfig, date_dir, params, burnin, abun_basic)
+                 refpress, tconfig, date_dir, params, abun_basic)
 
   # Best-fit tconfig
   bestFit_tconfig = date_dir + 'bestFit_tconfig.cfg'

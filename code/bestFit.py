@@ -34,7 +34,6 @@ import scipy.special   as sp
 import scipy.interpolate as si
 from scipy.ndimage.filters import gaussian_filter1d as gaussf
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import makeatm as mat
@@ -42,6 +41,7 @@ import PT as pt
 import wine as w
 import readtransit as rt
 import constants as c
+
 
 def read_MCMC_out(MCfile):
     """
@@ -111,7 +111,8 @@ def get_starData(tepfile):
     return Rstar, Tstar, sma, gstar
 
 
-def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
+def write_atmfile(atmfile, abun_file, molfit, T_line, abun_fact, date_dir,
+                  p0, Rp, grav):
     """
     Write best-fit atm file with scaled H2 and He to abundances sum of 1.
 
@@ -125,7 +126,7 @@ def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
       Modified radius of the atmospheric layers.
     T_line: 1D float ndarray
       Modified temperature of the atmospheric layers.
-    allParams: 1D float ndarray
+    abun_fact: 1D float ndarray
       List of scaling factors to modify the abundances of molfit molecules.
     date_dir: String
       Directory where to store the best-fit atmospheric file.
@@ -179,11 +180,10 @@ def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
 
     # number of molecules to fit:
     nfit = len(molfit)
-    abun_fact = allParams
 
     # multiply the abundances of molfit molecules
     for i in np.arange(len(columns)):
-       abundances[columns[i]-3] = abundances[columns[i]-3] * 10**abun_fact[i]
+       abundances[columns[i]-3] *= 10**abun_fact[i]
 
     # ===== Scale H2 and He if sum abundances > 1 ===== #
     # Find index for Hydrogen and Helium
@@ -202,6 +202,14 @@ def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
     #    if q[i]>0:
             abundances[iH2, i] -= ratio[i] * q[i] / (1.0 + ratio[i])
             abundances[iHe, i] -=            q[i] / (1.0 + ratio[i])
+
+    # Re-calculate the layers' radii using the Hydrostatic-equilibrium calc:
+    # (Has to be in reversed order since the interpolation requires the
+    #  pressure array in increasing order)
+    mu = mat.mean_molar_mass(abun_file, spec=molecules, pressure=pressure,
+                             temp=T_line, abundances=abundances.T)
+    rad = mat.radpress(pressure[::-1], T_line[::-1], mu[::-1], p0, Rp, grav)
+    rad = rad[::-1]
 
     # open best fit atmospheric file
     fout = open(date_dir + 'bestFit.atm', 'w')
@@ -230,7 +238,7 @@ def write_atmfile(atmfile, molfit, rad, T_line, allParams, date_dir):
     fout.close()
 
 
-def bestFit_tconfig(tconfig, date_dir):
+def bestFit_tconfig(tconfig, date_dir, radius=None):
   '''
   Write best-fit config file for best-fit Transit run
   '''
@@ -239,9 +247,13 @@ def bestFit_tconfig(tconfig, date_dir):
   lines = np.asarray(f.readlines())
   f.close()
 
-  # Change name to the atmfile in line zero
-  atm_line = 'atm ' + date_dir + 'bestFit.atm' + '\n'
-  lines[0] = atm_line
+  for i in np.arange(len(lines)):
+    # Change name to the atmfile in line zero
+    if lines[i].startswith("atm "):
+      lines[i] = 'atm ' + date_dir + 'bestFit.atm' + '\n'
+    # Change refradius:
+    if lines[i].startswith("refradius ") and radius is not None:
+      lines[i] = 'refradius {}\n'.format(str(radius))
 
   # Write lines into the bestFit config file
   f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
@@ -251,7 +263,7 @@ def bestFit_tconfig(tconfig, date_dir):
 
 
 def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
-                p0, tconfig, date_dir, params, burnin, abun_file):
+                p0, tconfig, date_dir, burnin, abun_file):
     """
     Call Transit to produce best-fit outputs.
     Plot MCMC posterior PT plot.
@@ -276,29 +288,22 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
        Transit  configuration file.
     date_dir: String
        Directory where to store results.
-    params: 1D float ndarray
     burnin: Integer
     abun_file: String
        Elemental abundances file.
     """
-
     # make sure burnin is an integer
     burnin = int(burnin)
 
     # read atmfile
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
-
     # get surface gravity
     grav, Rp = mat.get_g(tepfile)
-
     # get star data
     R_star, T_star, sma, gstar = get_starData(tepfile)
 
     # Get best parameters
     bestP, uncer = read_MCMC_out(MCfile)
-
-    # get all params
-    #allParams = get_params(bestP, stepsize, params)
     allParams = bestP
 
     # get PTparams and abundances factors
@@ -306,8 +311,8 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     nmol = len(molfit)
     nradfit = int(solution == 'transit')
     nPTparams = nparams - nmol - nradfit
-    PTparams  = allParams[:nPTparams]
 
+    PTparams  = allParams[:nPTparams]
     # FINDME: Hardcoded value:
     T_int = 100  # K
 
@@ -330,29 +335,25 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     # Update R0, if needed:
     if nradfit:
       Rp = allParams[nPTparams]
-    # Mean molecular mass:
-    mu  = mat.mean_molar_mass(abun_file, atmfile)
-    # Re-calculate the layers' radii using the Hydrostatic-equilibrium calc:
-    # (Has to be in reversed order since the interpolation requires the
-    #  pressure array in increasing order)
-    rad = mat.radpress(pressure[::-1], best_T[::-1], mu[::-1], p0, Rp, grav)
-    rad = rad[::-1]
 
     # write best-fit atmospheric file
-    write_atmfile(atmfile, molfit, rad, best_T, allParams[nPTparams+nradfit:],
-                  date_dir)
+    write_atmfile(atmfile, abun_file, molfit, best_T,
+                  allParams[nPTparams+nradfit:], date_dir, p0, Rp, grav)
 
     # bestFit atm file
     bestFit_atm = date_dir + 'bestFit.atm'
 
     # write new bestFit Transit config
-    bestFit_tconfig(tconfig, date_dir)
+    if solution == 'transit':
+      bestFit_tconfig(tconfig, date_dir, allParams[nPTparams])
+    else:
+      bestFit_tconfig(tconfig, date_dir)
 
     # ========== plot MCMC PT profiles ==========
-
     # get MCMC data:
-    MCMCdata = date_dir + "/output.npy"
-    data = np.load(MCMCdata)
+    MCMCdata = date_dir + "/output.npz"
+    d = np.load(MCMCdata)
+    data = d['Z']
     nchains, npars, niter = np.shape(data)
 
     # stuck chains:
@@ -405,9 +406,8 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     plt.savefig(savefile)
 
 
-
 def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
-                                                          uncert, date_dir):
+                          uncert, date_dir):
     '''
     Plot BART best-model spectrum
     '''
@@ -494,7 +494,6 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 2)
         plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best-fit")
-        # Check units!
         plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
         plt.plot(meanwl, bandmod, "ok", label="model", alpha=0.5)
         plt.ylabel(r"$(R_p/R_s)^2$", fontsize=12)
@@ -508,6 +507,7 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     ax.set_xticks(np.arange(round(min(specwl)),max(specwl),1))
     plt.xlim(min(specwl),max(specwl))
     plt.savefig(date_dir + "BART-bestFit-Spectrum.png")
+
 
 def plotabun(date_dir, atmfile, molfit):
     '''
