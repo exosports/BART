@@ -418,7 +418,8 @@ def stoich(species):
 
 
 # calculates mean molecular mass
-def mean_molar_mass(abun_file, atmfile):
+def mean_molar_mass(abun_file, atmfile=None, spec=None, pressure=None,
+                    temp=None, abundances=None):
     """
     This function calculates mean molar mass at each layer in the atmosphere.
     For input elements it trims the data from the abundances file, and
@@ -452,10 +453,11 @@ def mean_molar_mass(abun_file, atmfile):
     index, element, dex, name, weights = read_eabun(abun_file)
 
     # Read the atmospheric file:
-    out_spec, pressure, temp, abundances = readatm(atmfile)
+    if atmfile is not None:
+      spec, pressure, temp, abundances = readatm(atmfile)
 
     # Number of molecules:
-    nspec   = len(out_spec)
+    nspec   = len(spec)
     # Number of layers in the atmosphere:
     nLayers = len(abundances)
 
@@ -464,13 +466,13 @@ def mean_molar_mass(abun_file, atmfile):
     for i in np.arange(nspec):
       # Remove the JANAF extension from species name and get the
       #  stoichiometric data:
-      spec_stoich = stoich(out_spec[i].partition('_')[0])
+      spec_stoich = stoich(spec[i].partition('_')[0])
       # Add the mass from each element in this species:
       for j in np.arange(len(spec_stoich)):
         # Find the element:
-        elem_idx = np.where(element == spec_stoich[j,0])
+        elem_idx = np.where(element == spec_stoich[j][0])
         # Add the weighted mass:
-        spec_weight[i] += weights[elem_idx][0] * float(spec_stoich[j,1])
+        spec_weight[i] += weights[elem_idx][0] * float(spec_stoich[j][1])
 
     # Allocate array (for each layer) of mean molar mass:
     mu = np.zeros(nLayers)
