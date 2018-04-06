@@ -239,7 +239,7 @@ def main(comm):
   # ::::::  Main MCMC Loop  ::::::::::::::::::::::::::::::::::::::::::
   # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-  while niter >= 0:
+  while niter > 0:
     niter -= 1
     # Receive parameters from MCMC:
     mu.comm_scatter(comm, params)
@@ -260,12 +260,12 @@ def main(comm):
       #print("Out of bounds")
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
-
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
       # Use variable as the log10:
       aprofiles[m] = abundances[:, m] * 10.0**params[nPT+nradfit+i]
+
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
