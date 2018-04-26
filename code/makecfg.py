@@ -121,7 +121,7 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
                 "csfile", "loc_dir"]
   output_args = ["tconfig",    "atmfile",   "opacityfile", "press_file",
                  "abun_basic", "abun_file", "preatm_file", "outspec",
-                 "logfile"]
+                 "savemodel", "logfile"]
 
   # Set default logfile:
   if "logfile" not in args:

@@ -239,7 +239,7 @@ def main(comm):
   # ::::::  Main MCMC Loop  ::::::::::::::::::::::::::::::::::::::::::
   # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-  while niter > 0:
+  while niter >= 0:
     niter -= 1
     # Receive parameters from MCMC:
     mu.comm_scatter(comm, params)

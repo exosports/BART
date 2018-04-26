@@ -351,9 +351,8 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
 
     # ========== plot MCMC PT profiles ==========
     # get MCMC data:
-    MCMCdata = date_dir + "/output.npz"
-    d = np.load(MCMCdata)
-    data = d['Z']
+    MCMCdata = date_dir + "/output.npy"
+    data = np.load(MCMCdata)
     nchains, npars, niter = np.shape(data)
 
     # stuck chains:
@@ -524,7 +523,6 @@ def plotabun(date_dir, atmfile, molfit):
     molfit:  1D string array
       Molecules to plot
     '''
-
     # Import best fit atmosphere results
     species, pressure, temp, abundances = mat.readatm(date_dir + atmfile)
 
@@ -532,7 +530,6 @@ def plotabun(date_dir, atmfile, molfit):
     molfitindex = np.zeros(len(molfit), dtype='int')
 
     k = 0
-
     # Find the index of each species within the atmosphere file
     for i in range(len(species)):
         for j in range(len(molfit)):
@@ -544,17 +541,13 @@ def plotabun(date_dir, atmfile, molfit):
 
     # Plot the abundance profile of each species
     for i in range(len(molfit)):
-        plt.loglog(abundances[:,molfitindex[i]], pressure, label=species[molfitindex[i]], linewidth=4)
+        plt.loglog(abundances[:,molfitindex[i]], pressure,
+                   label=species[molfitindex[i]], linewidth=4)
 
     plt.legend(loc='upper left')
     plt.xlabel('Molar Mixing Fraction')
     plt.ylabel('Pressure (bars)')
     plt.title('Best Fit Abundance Profiles')
-
     plt.gca().invert_yaxis()
-
     plt.savefig(date_dir + 'abun_profiles.png')
-
-
-
 
