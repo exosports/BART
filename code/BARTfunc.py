@@ -257,7 +257,6 @@ def main(comm):
 
     # If the temperature goes out of bounds:
     if np.any(tprofile < Tmin) or np.any(tprofile > Tmax):
-      #print("Out of bounds")
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
     # Scale abundance profiles:
@@ -268,6 +267,9 @@ def main(comm):
 
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
+    if np.any(q < 0.0):
+      mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
+      continue
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
     aprofiles[iHe] =         q / (1.0 + ratio)
 
