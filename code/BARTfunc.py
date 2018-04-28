@@ -277,12 +277,9 @@ def main(comm):
     if solution == "transit":
       trm.set_radius(params[nPT])
 
-    if rank == 1:
-      print("Iteration: {:05}".format(niter))
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
 
-    # Output converter band-integrate the spectrum:
     # Calculate the band-integrated intensity per filter:
     for i in np.arange(nfilters):
       if   solution == "eclipse":
