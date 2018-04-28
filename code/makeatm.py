@@ -325,31 +325,31 @@ def makeAbun(solar_abun, abun_file, solar_times=1, COswap=False):
 
 
 # calculates species stoichiometric values
-def stoich(specie):
+def stoich(species):
     '''
     Species counting function. Counts the number of each element in a chemical
     species. Takes in a string of a chemical species (i.e., "H2O") and returns
     an array containing every element with corresponding counts found in that
-    species. 
+    species.
 
     Parameters
     ----------
-    specie : string
+    species : string
              Chemical species name. MUST include elemental species listed in
              the order they appear in the 'abundances.txt'.
- 
+
     Returns
     -------
     stoich_info : 2D array
-               Array containing two columns of equal length: the first 
+               Array containing two columns of equal length: the first
                column is a list of atomic symbols of the elements present
-               in a species and the second column counts of each of the 
+               in a species and the second column counts of each of the
                elements found in the species.
 
     Notes
     ------
-    "Weight" in the code is the count of each element occurrence in the 
-    species, and the sum of all weights for that element is the stoichiometric 
+    "Weight" in the code is the count of each element occurrence in the
+    species, and the sum of all weights for that element is the stoichiometric
     coefficient (i.e., ClSSCl that appears in JANAF tables has weight 1 for
     first occurrence of Cl, weight 1 for first occurrence of S, and the final
     stoichiometric values of Cl is 2, and for S is 2).
@@ -362,68 +362,64 @@ def stoich(specie):
     ---------
     2014-06-01  Oliver/Jasmina Written by.
     2014-09-16  Jasmina        Modified for BART project to return only data
-                               of interest. 
+                               of interest.
     '''
 
     # Allocate string length and array of booleans to indicate if characters
     #          are capitals or digits
-    chars   = len(specie)
+    chars   = len(species)
     iscaps  = np.empty(chars, dtype=np.bool)
     isdigit = np.empty(chars, dtype=np.bool)
-    
+
     # Check each character in string to fill in boolean arrays for capitals
-    #       or digits; 
-    for i in np.arange(len(specie)):
-        iscaps[i] = (re.findall('[A-Z]', specie[i]) != [])
-        isdigit[i] = specie[i].isdigit()
-    
+    #       or digits;
+    for i in np.arange(len(species)):
+        iscaps[i] = (re.findall('[A-Z]', species[i]) != [])
+        isdigit[i] = species[i].isdigit()
+
     # Indicator for ending each count and blank stoich_info array
     endele = True
-    stoich_info = [[]]
-    
+    stoich_info = []
+
     # Loop over all characters in species string
-    for i in np.arange(len(specie)):  
+    for i in np.arange(len(species)):
         # Start tracking new element
         if endele == True:
             ele = ''
             weight = 0
             endele = False
-        
+
         # Check if character is a letter, if so add to element name
-        if (isdigit[i] == False): 
-            ele += specie[i]
-        
+        if (isdigit[i] == False):
+            ele += species[i]
+
         # Check if character is a digit, if so, make this the element's weight
         if isdigit[i] == True:
-            weight = np.int(specie[i])
-        
-        # Check if element name ends (next capital is reached) 
+            weight = np.int(species[i])
+
+        # Check if element name ends (next capital is reached)
         #       and if no weight (count) is found, set it to 1
         if (isdigit[i] == False and                \
            (iscaps[i+1:i+2] == True or i == chars-1)):
             weight = 1
-        
-        # If next element is found or if end of species name is reached 
+
+        # If next element is found or if end of species name is reached
         #    (end of string), stop tracking
-        if (iscaps[i+1:i+2] == True or i == chars-1): 
+        if (iscaps[i+1:i+2] == True or i == chars-1):
             endele = True
-        
-        # End of element has been reached, so output weights of element 
+
+        # End of element has been reached, so output weights of element
         #     into elemental array
         if endele == True:
+            stoich_info.append([ele,weight])
 
-            # Create array containing only the elements used in this run 
-            if stoich_info == [[]]:
-                stoich_info = np.append(stoich_info, [[ele, weight]], axis=1)
-            else:
-                stoich_info = np.append(stoich_info, [[ele, weight]], axis=0)
-    
     # Return full array of elements and stoichiometry
     return stoich_info
 
 
 # calculates mean molecular mass
-def mean_molar_mass(abun_file, atmfile):
+def mean_molar_mass(abun_file, atmfile=None, spec=None, pressure=None,
+                    temp=None, abundances=None):
     """
     This function calculates mean molar mass at each layer in the atmosphere.
     For input elements it trims the data from the abundances file, and
@@ -434,7 +430,7 @@ def mean_molar_mass(abun_file, atmfile):
     stoichiometric values, multiplies elemental weights with each element
     number in a species and sum them for all output species at each layer
     in the atmosphere. It stores the values in the mu array for every layer.
- 
+
     Parameters
     ----------
     abun_file: string
@@ -457,10 +453,11 @@ def mean_molar_mass(abun_file, atmfile):
     index, element, dex, name, weights = read_eabun(abun_file)
 
     # Read the atmospheric file:
-    out_spec, pressure, temp, abundances = readatm(atmfile)
+    if atmfile is not None:
+      spec, pressure, temp, abundances = readatm(atmfile)
 
     # Number of molecules:
-    nspec   = len(out_spec)
+    nspec   = len(spec)
     # Number of layers in the atmosphere:
     nLayers = len(abundances)
 
@@ -469,13 +466,13 @@ def mean_molar_mass(abun_file, atmfile):
     for i in np.arange(nspec):
       # Remove the JANAF extension from species name and get the
       #  stoichiometric data:
-      spec_stoich = stoich(out_spec[i].partition('_')[0])
+      spec_stoich = stoich(spec[i].partition('_')[0])
       # Add the mass from each element in this species:
       for j in np.arange(len(spec_stoich)):
         # Find the element:
-        elem_idx = np.where(element == spec_stoich[j,0])
+        elem_idx = np.where(element == spec_stoich[j][0])
         # Add the weighted mass:
-        spec_weight[i] += weights[elem_idx][0] * float(spec_stoich[j,1])
+        spec_weight[i] += weights[elem_idx][0] * float(spec_stoich[j][1])
 
     # Allocate array (for each layer) of mean molar mass:
     mu = np.zeros(nLayers)
@@ -491,11 +488,11 @@ def makeRadius(out_spec, atmfile, abun_file, tepfile, p0):
   """
   Add radius array into the final TEA output atmospheric file.
   It opens a new file to write, adds headers, reads the final TEA output
-  atmospheric file to take the species, pressure, temperature, and abundances, 
+  atmospheric file to take the species, pressure, temperature, and abundances,
   calls the mean_molar_mass() function to calculate mu, calls radpress() to
   calculate radius, and then write all the data into a new file. Radius array
   is added as the first column in the file, the rest of the TEA format is
-  preserved. 
+  preserved.
 
   Parameters
   ----------
@@ -531,7 +528,7 @@ def makeRadius(out_spec, atmfile, abun_file, tepfile, p0):
   "# This is a final TEA output file with calculated abundances (mixing fractions) for all listed species.\n"
   "# Units: pressure (bar), temperature (K), abundance (unitless).")
   fout.write(header + '\n\n')
-  
+
   # Retrieve planet name and surface radius
   g, Rp = get_g(tepfile)
 
@@ -560,7 +557,7 @@ def makeRadius(out_spec, atmfile, abun_file, tepfile, p0):
   fout.write(label + '\n')
 
   # Write atm file for each run
-  for i in np.arange(nLayers): 
+  for i in np.arange(nLayers):
       # Radius, pressure, and temp for the current line
       radi = str('%10.3f'%rad[i])
       presi = str('%10.4e'%pressure[i])
@@ -750,7 +747,7 @@ def readatm(atmfile):
     temp: 1D float array
                Array of pressures listed in the atmospheric file (in K)
     abundances: 2D float array
-               Array containing abundances (mixing fractions) for 
+               Array containing abundances (mixing fractions) for
                each species at each atmospheric layer (unitelss).
 
     Notes
@@ -762,7 +759,7 @@ def readatm(atmfile):
     2013-11-17  Jasmina   Written by.
     2014-09-05  Patricio  Modified from getpressure.
     2014-09-12  Jasmina   Added new markers, excluded radii, returned
-                          temperature, added documentation. 
+                          temperature, added documentation.
     2014-10-02  Jasmina   Added option to read atmfile with or without
                           radius array in it.
     """
@@ -777,41 +774,41 @@ def readatm(atmfile):
     molecules = lines[imol].split()
 
     # Find the line where the layers info begins
-    start = np.where(lines == "#TEADATA\n")[0][0] + 2 
+    start = np.where(lines == "#TEADATA\n")[0][0] + 2
 
     # Number of columns
     ncol = len(lines[start].split())
 
     # Number of layers
-    ndata = len(lines) - start  
+    ndata = len(lines) - start
 
     # Read atmfile without radius array in it or with it
     pressure = np.zeros(ndata, np.double)
-    temp     = np.zeros(ndata, np.double) 
+    temp     = np.zeros(ndata, np.double)
     if ncol == len(molecules) + 2:
-        # Number of abundances (elements per line except Press and T) 
-        nabun = len(lines[start].split()) - 2  
+        # Number of abundances (elements per line except Press and T)
+        nabun = len(lines[start].split()) - 2
         abundances = np.zeros((ndata, nabun), np.double)
 
         # Extract pressure, temperature, and abundance data
         for i in np.arange(ndata):
-            line = lines[start+i].strip().split()  
+            line = lines[start+i].strip().split()
             pressure[i]   = line[0]
-            temp[i]       = line[1]   
-            abundances[i] = line[2:] 
+            temp[i]       = line[1]
+            abundances[i] = line[2:]
     else:
-        # Number of abundances (elements per line except Radius, Press and T) 
-        nabun = len(lines[start].split()) - 3  
+        # Number of abundances (elements per line except Radius, Press and T)
+        nabun = len(lines[start].split()) - 3
         abundances = np.zeros((ndata, nabun), np.double)
 
         # Extract pressure, temperature, and abundance data
         for i in np.arange(ndata):
-            line = lines[start+i].strip().split()  
+            line = lines[start+i].strip().split()
             pressure[i]   = line[1]
-            temp[i]       = line[2]   
-            abundances[i] = line[3:] 
+            temp[i]       = line[2]
+            abundances[i] = line[3:]
 
-    return molecules, pressure, temp, abundances   
+    return molecules, pressure, temp, abundances
 
 
 # reformats final TEA atmospheric file for Transit
@@ -833,7 +830,7 @@ def reformat(atmfile):
     # Open the atmospheric file to read and write
     f = open(atmfile, 'r')
     lines = np.asarray(f.readlines())
-    f.close() 
+    f.close()
 
     # Find the Molecule names and remove their suffix
     imol = np.where(lines == "#SPECIES\n")[0][0] + 1
@@ -846,7 +843,7 @@ def reformat(atmfile):
     start = np.where(lines == "#TEADATA\n")[0][0] + 1
     molecules = lines[start].split()
     for m in np.arange(len(molecules) - 1):
-        molecules[m] = "{:10s}".format(molecules[m].partition('_')[0]) 
+        molecules[m] = "{:10s}".format(molecules[m].partition('_')[0])
     molecules[len(molecules) - 1] = molecules[len(molecules) - 1].partition('_')[0]
     lines[start] = " ".join(molecules) + "\n"
 

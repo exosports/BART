@@ -257,17 +257,19 @@ def main(comm):
 
     # If the temperature goes out of bounds:
     if np.any(tprofile < Tmin) or np.any(tprofile > Tmax):
-      #print("Out of bounds")
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
-
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
       # Use variable as the log10:
       aprofiles[m] = abundances[:, m] * 10.0**params[nPT+nradfit+i]
+
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
+    if np.any(q < 0.0):
+      mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
+      continue
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
     aprofiles[iHe] =         q / (1.0 + ratio)
 
@@ -275,12 +277,9 @@ def main(comm):
     if solution == "transit":
       trm.set_radius(params[nPT])
 
-    if rank == 1:
-      print("Iteration: {:05}".format(niter))
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
 
-    # Output converter band-integrate the spectrum:
     # Calculate the band-integrated intensity per filter:
     for i in np.arange(nfilters):
       if   solution == "eclipse":
