@@ -193,7 +193,8 @@ def transmittance(date_dir, atmfile, filters, plot=True):
   # Transmittance:
   transmit = np.exp(-tau)
   # Band intgrate it:
-  filt_tr = filter_cf(filters, nlayers, wns, transmit)
+  filt_tr  = filter_cf(filters, nlayers, wns, transmit)
+  nfilters = len(filters)
 
   colors = plt.cm.rainbow(np.asarray(np.linspace(0, 255, nfilters), np.int))
   if plot:
