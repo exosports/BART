@@ -204,7 +204,7 @@ def transmittance(date_dir, atmfile, filters, plot=True):
     plt.clf()
     gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
     ax0 = plt.subplot(gs[0])
-    for i in np.arange(len(filt_cf)):
+    for i in np.arange(len(filt_tr)):
       (head, tail) = os.path.split(filters[i])
       lbl = tail[:-4]
       ax0.semilogy(filt_tr[i], p, '-', linewidth = 1.5, label=lbl,
