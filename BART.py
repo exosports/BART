@@ -405,22 +405,24 @@ def main():
   # Plot abundance profiles
   bf.plotabun(date_dir, 'bestFit.atm', molfit)
   
-
-  # Compute contribution fucntions if this is a eclipse run:
+  mu.msg(1, "\nTransit call for contribution functions/transmittance.")
+  # Run Transit with unlimited 'toomuch' argument:
+  cf.cf_tconfig(date_dir)
+  # Call Transit with the cf_tconfig
+  cf_tconfig = date_dir + 'cf_tconfig.cfg'
+  Tcall = Transitdir + "/transit/transit"
+  subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
+                    shell=True, cwd=date_dir)
+  bestFit_atmfile = date_dir + 'bestFit.atm'
+  # Calculate and plot contribution functions:
   if solution == "eclipse":
-    mu.msg(1, "\nTransit call for contribution functions calculation.")
-    # Run Transit with unlimited 'toomuch' argument for contribution
-    # function calculation:
-    cf.cf_tconfig(date_dir)
-    # Call Transit with the cf_tconfig
-    cf_tconfig = date_dir + 'cf_tconfig.cfg'
-    Tcall = Transitdir + "/transit/transit"
-    subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
-                      shell=True, cwd=date_dir)
-    # Calculate and plot contribution functions:
+    # Compute contribution fucntions if this is a eclipse run:
     mu.msg(1, "Calculating contribution functions.", indent=2)
-    bestFit_atmfile = date_dir + 'bestFit.atm'
     cf.cf(date_dir, bestFit_atmfile, filter)
+  else:
+    # Compute transmittance if this is a transmission run:
+    mu.msg(1, "Calculating transmittance.", indent=2)
+    cf.transmittance(date_dir, bestFit_atmfile, filter)
 
   mu.msg(1, "~~ BART End ~~")
 

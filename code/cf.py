@@ -134,22 +134,21 @@ def cf_eq(BB, p, tau, nlayers, wns):
   return cf
 
 
-def filter_cf(filters, nlayers, wns, cf):
+def filter_cf(filters, nlayers, wns, cf, normalize=False):
   """
   Band-averaged (filters) contribution functions.
   """
-  # Allocate arrays for filter cf and normalize cf
-  filt_cf      = np.zeros((len(filters), nlayers))
-  filt_cf_norm = np.zeros((len(filters), nlayers))
-
   # Number of filters
   nfilters = len(filters)
-  for i in np.arange(nfilters):
+  # Allocate arrays for filter cf and normalize cf
+  filt_cf = np.zeros((nfilters, nlayers))
+  filt_cf_norm = np.zeros((len(filters), nlayers))
 
+  for i in np.arange(nfilters):
     # Read filter
     wn, response = w.readfilter(filters[i])
 
-        # Find where filters starts and ends
+    # Find where filters starts and ends
     wn_filt = np.asarray(filter(lambda x: x>min(wn) and x<max(wn), wns))
     start_filt, stop_filt = np.where(wns==min(wn_filt))[0][0], \
                             np.where(wns==max(wn_filt))[0][0]
@@ -161,20 +160,63 @@ def filter_cf(filters, nlayers, wns, cf):
     # Extract filter contribution functions
     cf_filt = cf[:, start_filt:stop_filt+1]
 
-        # Extract filter response functions
+    # Extract filter response functions
     cf_filt_resp = np.zeros((nlayers, len(wn_filt)))
     for j in np.arange(len(wn_filt)):
-      cf_filt_resp[:, j] = cf_filt[:, j]*resp_filt[j]
+      cf_filt_resp[:,j] = cf_filt[:,j] * resp_filt[j]
 
-        # Integrate cf across bandpass (filter)
+    # Integrate cf across bandpass (filter)
     for k in np.arange(nlayers):
-      filt_cf[i, k] = np.trapz(cf_filt_resp[k, :])
+      filt_cf[i,k] = np.trapz(cf_filt_resp[k,:]) / np.trapz(resp_filt)
 
-    # Normalize to 1
-    filt_cf_norm[i] = (filt_cf[i] - min(filt_cf[i])) / \
-                      (max(filt_cf[i]) - min(filt_cf[i]))
+    if normalize:
+      # Normalize to 1
+      filt_cf_norm[i] = (filt_cf[i] - min(filt_cf[i])) / \
+                        (max(filt_cf[i]) - min(filt_cf[i]))
 
-  return filt_cf, filt_cf_norm
+  if normalize:
+    return filt_cf, filt_cf_norm
+
+  return filt_cf
+
+
+def transmittance(date_dir, atmfile, filters, plot=True):
+  """
+  """
+  # Read atmfile
+  molecules, p, T, abundances = mat.readatm(atmfile)
+  nlayers = len(p)
+  p = p[::-1]  # top to bottom of the atmosphere
+  # Read tau.dat
+  file = date_dir + 'tau.dat'
+  tau, wns = readTauDat(file, nlayers)
+  # Transmittance:
+  transmit = np.exp(-tau)
+  # Band intgrate it:
+  filt_tr  = filter_cf(filters, nlayers, wns, transmit)
+  nfilters = len(filters)
+
+  colors = plt.cm.rainbow(np.asarray(np.linspace(0, 255, nfilters), np.int))
+  if plot:
+    print("  Plotting contribution functions.\n")
+    # Not normalized cf
+    plt.figure(4)
+    plt.clf()
+    gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
+    ax0 = plt.subplot(gs[0])
+    for i in np.arange(len(filt_tr)):
+      (head, tail) = os.path.split(filters[i])
+      lbl = tail[:-4]
+      ax0.semilogy(filt_tr[i], p, '-', linewidth = 1.5, label=lbl,
+                   color=colors[i])
+    ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':8})
+    ax0.set_ylim(max(p), min(p))
+    ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    ax0.set_xlabel('Transmittance', fontsize=14)
+    ax0.set_ylabel('Pressure (bar)' , fontsize=14)
+    plt.savefig(date_dir + 'Transmittance.png')
+
+  return filt_tr[:,::-1]
 
 
 def cf(date_dir, atmfile, filters, plot=True):
@@ -198,7 +240,7 @@ def cf(date_dir, atmfile, filters, plot=True):
   cf = cf_eq(BB, p, tau, nlayers, wns)
 
   # Call filter_cf() to calculate cf
-  filt_cf, filt_cf_norm = filter_cf(filters, nlayers, wns, cf)
+  filt_cf, filt_cf_norm = filter_cf(filters, nlayers, wns, cf, normalize=True)
 
   if plot:
     print("  Plotting contribution functions.\n")
