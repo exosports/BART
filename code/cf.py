@@ -253,12 +253,14 @@ def cf(date_dir, atmfile, filters, plot=True):
       (head, tail) = os.path.split(filters[i])
       lbl = tail[:-4]
       ax0.semilogy(filt_cf[i], p, '-', linewidth = 1, label=lbl)
-    ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':8})
+    lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
+                     ncol=len(filt_cf)//30 + 1, prop={'size':8})
     ax0.set_ylim(max(p), min(p))
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    ax0.set_xlabel('Contribution functions', fontsize=14)
-    ax0.set_ylabel('Pressure [bar]' , fontsize=14)
-    plt.savefig(date_dir + 'ContrFuncs.png')
+    ax0.set_xlabel('Contribution Functions', fontsize=14)
+    ax0.set_ylabel('Pressure (bar)' , fontsize=14)
+    plt.savefig(date_dir + 'ContrFuncs.png', bbox_extra_artists=(lgd,), 
+                bbox_inches='tight')
 
     # Normalized cf
     plt.figure(5)
@@ -270,12 +272,14 @@ def cf(date_dir, atmfile, filters, plot=True):
       lbl = tail[:-4]
       ax0.semilogy(filt_cf_norm[i], p, '--', linewidth = 1, label=lbl)
 
-    ax0.legend(loc='center left', bbox_to_anchor=(1,0.5), prop={'size':8})
+    lgd = ax0.legend(loc='center left', bbox_to_anchor=(1,0.5), 
+                     ncol=len(filt_cf)//30 + 1, prop={'size':8})
     ax0.set_ylim(max(p), min(p))
     ax0.set_xlim(0, 1.0)
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    ax0.set_xlabel('Normalized contribution functions', fontsize=14)
-    ax0.set_ylabel('Pressure [bar]' , fontsize=14)
-    plt.savefig(date_dir + 'NormContrFuncs.png')
+    ax0.set_xlabel('Normalized Contribution Functions', fontsize=14)
+    ax0.set_ylabel('Pressure (bar)' , fontsize=14)
+    plt.savefig(date_dir + 'NormContrFuncs.png', bbox_extra_artists=(lgd,), 
+                bbox_inches='tight')
 
   return filt_cf[:,::-1], filt_cf_norm[:,::-1]

@@ -327,8 +327,8 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     plt.xlim(0.9*min(best_T), 1.1*max(best_T))
     plt.ylim(max(pressure), min(pressure))
     plt.title('Best PT', fontsize=14)
-    plt.xlabel('T [K]'     , fontsize=14)
-    plt.ylabel('logP [bar]', fontsize=14)
+    plt.xlabel('T (K)'     , fontsize=14)
+    plt.ylabel('logP (bar)', fontsize=14)
     # Save plot to current directory
     plt.savefig(date_dir + 'Best_PT.png')
 
@@ -503,7 +503,12 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     ax.set_xscale('log')
     plt.xlabel(r"${\rm Wavelength\ \ (um)}$", fontsize=12)
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    ax.set_xticks(np.arange(round(min(specwl)),max(specwl),1))
+    if   max(specwl) - min(specwl) > 30:
+        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),4))
+    elif max(specwl) - min(specwl) > 15:
+        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),2))
+    else:
+        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),1))
     plt.xlim(min(specwl),max(specwl))
     plt.savefig(date_dir + "BART-bestFit-Spectrum.png")
 
