@@ -86,8 +86,8 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
   plt.semilogy(PT[2], PT[3], '.', color = 'b'     )
   plt.semilogy(PT[4], PT[5], '.', color = 'orange')
   plt.title('Initial PT', fontsize=14)
-  plt.xlabel('T [K]', fontsize=14)
-  plt.ylabel('logP [bar]', fontsize=14)
+  plt.xlabel('T (K)', fontsize=14)
+  plt.ylabel('logP (bar)', fontsize=14)
   plt.xlim(0.9*T0, 1.1*T3)
   plt.ylim(max(p), min(p))
 
@@ -99,8 +99,8 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
   plt.clf()
   plt.semilogy(T_smooth, p, '-', color = 'b', linewidth=1)
   plt.title('Initial PT Smoothed', fontsize=14)
-  plt.xlabel('T [K]'     , fontsize=14)
-  plt.ylabel('logP [bar]', fontsize=14)
+  plt.xlabel('T (K)'     , fontsize=14)
+  plt.ylabel('logP (bar)', fontsize=14)
   plt.ylim(max(p), min(p))
   plt.xlim(0.9*T0, 1.1*T3)
 
@@ -160,8 +160,8 @@ def initialPT2(date_dir, params, pressfile, mode, tepfile, tint=100.0):
   plt.xlim(0.9*min(Temp), 1.1*max(Temp))
   plt.ylim(max(pressure), min(pressure))
   plt.title('Initial PT Line', fontsize=14)
-  plt.xlabel('T [K]'     , fontsize=14)
-  plt.ylabel('logP [bar]', fontsize=14)
+  plt.xlabel('T (K)'     , fontsize=14)
+  plt.ylabel('logP (bar)', fontsize=14)
 
   # Save plot to current directory
   plt.savefig(date_dir + 'InitialPT.png') 

@@ -503,7 +503,9 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     ax.set_xscale('log')
     plt.xlabel(r"${\rm Wavelength\ \ (um)}$", fontsize=12)
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    if max(specwl) - min(specwl) > 15:
+    if   max(specwl) - min(specwl) > 30:
+        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),4))
+    elif max(specwl) - min(specwl) > 15:
         ax.set_xticks(np.arange(round(min(specwl)),max(specwl),2))
     else:
         ax.set_xticks(np.arange(round(min(specwl)),max(specwl),1))
