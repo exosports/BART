@@ -204,6 +204,8 @@ def transmittance(date_dir, atmfile, filters, plot=True):
     plt.clf()
     gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
     ax0 = plt.subplot(gs[0])
+    colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
+    ax0.set_prop_cycle(plt.cycler('color', colormap))
     for i in np.arange(len(filt_tr)):
       (head, tail) = os.path.split(filters[i])
       lbl = tail[:-4]
