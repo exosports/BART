@@ -211,7 +211,8 @@ def transmittance(date_dir, atmfile, filters, plot=True):
       lbl = tail[:-4]
       ax0.semilogy(filt_tr[i], p, '-', linewidth = 1.5, label=lbl,
                    color=colors[i])
-    ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':8})
+    lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
+                     ncol=len(filt_cf)//30 + 1, prop={'size':8})
     ax0.set_ylim(max(p), min(p))
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     ax0.set_xlabel('Transmittance', fontsize=14)
