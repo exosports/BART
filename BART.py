@@ -254,6 +254,7 @@ def main():
       else:
         print('out_spec has ' + str(-1*diffuniout) + 'extra entries.')
     print('Please correct this and run again.')
+    sys.exit()
 
   # Make output directory:
   # Make a subdirectory with the date and time
