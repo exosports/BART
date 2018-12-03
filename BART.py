@@ -240,9 +240,9 @@ def main():
       exec("{:s} = args.{:s}".format(var, var))
 
   # Check that out_spec and uniform are valid specifications
-  if uniform != None and len(uniform) != len(out_spec):
+  if uniform != None and len(uniform) != len(out_spec.split(' ')):
     print('The inputs for out_spec and uniform are not compatible.')
-    diffuniout = len(uniform) - len(out_spec)
+    diffuniout = len(uniform) - len(out_spec.split(' '))
     if diffuniout > 0:
       if diffuniout == 1:
         print('uniform has ' + str(diffuniout) + 'extra entry.')
