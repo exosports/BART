@@ -363,19 +363,25 @@ def stoich(species):
     2014-06-01  Oliver/Jasmina Written by.
     2014-09-16  Jasmina        Modified for BART project to return only data
                                of interest.
+
+    2018-10-22  Michael        Modified to work for ions
     '''
 
     # Allocate string length and array of booleans to indicate if characters
-    #          are capitals or digits
+    #          are capitals, digits, or +/-
     chars   = len(species)
     iscaps  = np.empty(chars, dtype=np.bool)
     isdigit = np.empty(chars, dtype=np.bool)
+    isplus  = np.empty(chars, dtype=np.bool)
+    isminus = np.empty(chars, dtype=np.bool)
 
-    # Check each character in string to fill in boolean arrays for capitals
-    #       or digits;
+    # Check each character in string to fill in boolean arrays for capitals,
+    #       digits, and +/-
     for i in np.arange(len(species)):
-        iscaps[i] = (re.findall('[A-Z]', species[i]) != [])
+        iscaps[i]  = (re.findall('[A-Z]', species[i]) != [])
         isdigit[i] = species[i].isdigit()
+        isplus[i]  = species[i] == '+'
+        isminus[i] = species[i] == '-'
 
     # Indicator for ending each count and blank stoich_info array
     endele = True
@@ -390,12 +396,23 @@ def stoich(species):
             endele = False
 
         # Check if character is a letter, if so add to element name
-        if (isdigit[i] == False):
+        if (isdigit[i] == False and isplus[i] == False and isminus[i] == False):
             ele += species[i]
 
         # Check if character is a digit, if so, make this the element's weight
         if isdigit[i] == True:
             weight = np.int(species[i])
+
+        # Check if charcater is a + or -, if so, make it an electron
+        if isplus[i] == True:
+            ele    += 'e'
+            weight  = -1
+            endele  = True
+
+        if isminus[i] == True:
+            ele    += 'e'
+            weight  = 1
+            endele  = True
 
         # Check if element name ends (next capital is reached)
         #       and if no weight (count) is found, set it to 1
@@ -405,7 +422,8 @@ def stoich(species):
 
         # If next element is found or if end of species name is reached
         #    (end of string), stop tracking
-        if (iscaps[i+1:i+2] == True or i == chars-1):
+        if (iscaps [i+1:i+2] == True or isplus[i+1:i+2] == True or 
+            isminus[i+1:i+2] == True or i == chars-1):
             endele = True
 
         # End of element has been reached, so output weights of element
@@ -550,7 +568,7 @@ def makeRadius(out_spec, atmfile, abun_file, tepfile, p0):
   # Make a list of labels
   label = ['#Radius'.ljust(11)] + ['Pressure'.ljust(11)] + ['Temp'.ljust(8)]
   for i in np.arange(nspec):
-       label = label + [molecules[i].ljust(11)]
+       label = label + [molecules[i].ljust(14)]
   label = ''.join(label)
 
   # Write new label
@@ -693,6 +711,8 @@ def uniform(atmfile, press_file, abun_file, tepfile, species, abundances, temp, 
   Modification History:
   ---------------------
   2015-03-04  patricio  Initial implementation.
+  2018-10-22  mhimes    Altered header writing to have wider fields to avoid 
+                        bugs with longer ion names
   """
 
   # Read pressure array:
@@ -825,6 +845,7 @@ def reformat(atmfile):
     ---------
     2014-08-25  Patricio  Written by.
     2014-09-20  Jasmina   Fixed issue with the line break.
+    2018-10-22  Michael   Added support for ions
     """
 
     # Open the atmospheric file to read and write
@@ -836,6 +857,8 @@ def reformat(atmfile):
     imol = np.where(lines == "#SPECIES\n")[0][0] + 1
     molecules = lines[imol].split()
     for m in np.arange(len(molecules)):
+        molecules[m] = molecules[m].replace('_ion_p', '+')
+        molecules[m] = molecules[m].replace('_ion_n', '-')
         molecules[m] = molecules[m].partition('_')[0]
     lines[imol] = " ".join(molecules) + "\n"
 
@@ -843,8 +866,8 @@ def reformat(atmfile):
     start = np.where(lines == "#TEADATA\n")[0][0] + 1
     molecules = lines[start].split()
     for m in np.arange(len(molecules) - 1):
-        molecules[m] = "{:10s}".format(molecules[m].partition('_')[0])
-    molecules[len(molecules) - 1] = molecules[len(molecules) - 1].partition('_')[0]
+        molecules[m] = "{:10s}".format(molecules[m].replace('_ion_p', '+').replace('_ion_n', '-').partition('_')[0])
+    molecules[len(molecules) - 1] = molecules[len(molecules) - 1].replace('_ion_p', '+').replace('_ion_n', '-').partition('_')[0]
     lines[start] = " ".join(molecules) + "\n"
 
     lines = list(lines)

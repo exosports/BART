@@ -156,12 +156,13 @@ def main(comm):
   # Get H2/He abundance ratio:
   ratio = (abundances[:,iH2] / abundances[:,iHe]).squeeze()
   # Find indices for the metals:
-  imetals = np.where((species != "He") & (species != "H2"))[0]
+  imetals = np.where((species != "He") & (species != "H2") & \
+                     (species != "H-") & (species != 'e-'))[0]
   # Index of molecular abundances being modified:
   imol = np.zeros(nmolfit, dtype='i')
   for i in np.arange(nmolfit):
     imol[i] = np.where(np.asarray(species) == molfit[i])[0]
-
+  
   # Pressure-Temperature profile:
   PTargs = [PTtype]
   if PTtype == "line":

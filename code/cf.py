@@ -184,12 +184,12 @@ def transmittance(date_dir, atmfile, filters, plot=True):
   """
   """
   # Read atmfile
-  molecules, p, T, abundances = mat.readatm(atmfile)
+  molecules, p, T, abundances = mat.readatm(date_dir + atmfile)
   nlayers = len(p)
   p = p[::-1]  # top to bottom of the atmosphere
   # Read tau.dat
-  file = date_dir + 'tau.dat'
-  tau, wns = readTauDat(file, nlayers)
+  foo      = date_dir + 'tau.dat'
+  tau, wns = readTauDat(foo, nlayers)
   # Transmittance:
   transmit = np.exp(-tau)
   # Band intgrate it:
@@ -202,13 +202,13 @@ def transmittance(date_dir, atmfile, filters, plot=True):
     # Not normalized cf
     plt.figure(4)
     plt.clf()
-    gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
-    ax0 = plt.subplot(gs[0])
+    gs       = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
+    ax0      = plt.subplot(gs[0])
     colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
     ax0.set_prop_cycle(plt.cycler('color', colormap))
     for i in np.arange(len(filt_tr)):
       (head, tail) = os.path.split(filters[i])
-      lbl = tail[:-4]
+      lbl         = tail[:-4]
       ax0.semilogy(filt_tr[i], p, '-', linewidth = 1.5, label=lbl,
                    color=colors[i])
     lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
@@ -227,12 +227,12 @@ def cf(date_dir, atmfile, filters, plot=True):
   Call above functions to calculate cf and plot them
   """
   # Read atmfile
-  molecules, p, T, abundances = mat.readatm(atmfile)
+  molecules, p, T, abundances = mat.readatm(date_dir + atmfile)
   nlayers = len(p)
 
   # Read tau.dat
-  file = date_dir + 'tau.dat'
-  tau, wns = readTauDat(file, nlayers)
+  foo      = date_dir + 'tau.dat'
+  tau, wns = readTauDat(foo, nlayers)
 
   # Calculate BB, reverse the order of p and T
   p = p[::-1]
@@ -250,13 +250,13 @@ def cf(date_dir, atmfile, filters, plot=True):
     # Not normalized cf
     plt.figure(4)
     plt.clf()
-    gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
-    ax0 = plt.subplot(gs[0])
+    gs       = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
+    ax0      = plt.subplot(gs[0])
     colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
     ax0.set_prop_cycle(plt.cycler('color', colormap))
     for i in np.arange(len(filt_cf)):
       (head, tail) = os.path.split(filters[i])
-      lbl = tail[:-4]
+      lbl          = tail[:-4]
       ax0.semilogy(filt_cf[i], p, '-', linewidth = 1, label=lbl)
     lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
                      ncol=len(filt_cf)//30 + 1, prop={'size':8})
@@ -270,13 +270,13 @@ def cf(date_dir, atmfile, filters, plot=True):
     # Normalized cf
     plt.figure(5)
     plt.clf()
-    gs = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
-    ax0 = plt.subplot(gs[0])
+    gs       = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
+    ax0      = plt.subplot(gs[0])
     colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
     ax0.set_prop_cycle(plt.cycler('color', colormap))
     for i in np.arange(len(filt_cf_norm)):
       (head, tail) = os.path.split(filters[i])
-      lbl = tail[:-4]
+      lbl          = tail[:-4]
       ax0.semilogy(filt_cf_norm[i], p, '--', linewidth = 1, label=lbl)
 
     lgd = ax0.legend(loc='center left', bbox_to_anchor=(1,0.5), 

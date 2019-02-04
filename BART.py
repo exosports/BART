@@ -21,6 +21,7 @@ import makeatm   as mat
 import makecfg   as mc
 import bestFit   as bf
 import cf        as cf
+import mcplots   as mcp
 
 sys.path.append(MC3dir)
 import MCcubed.utils as mu
@@ -56,6 +57,8 @@ def main():
                        help="Run only TEA.")
   parser.add_argument("--justOpacity",           action='store_true',
                        help="Run only Transit to generate the Opacity table.")
+  parser.add_argument("--justPlots",             action='store_true',
+                       help="Remakes plots of BART output.")
   parser.add_argument("--resume",                action='store_true',
                        help="Resume a previous run.")
   # Directories and files options:
@@ -137,13 +140,16 @@ def main():
            type=mu.parray, action="store", default=None)
   group.add_argument("--refpress", dest="refpress",
            help="Reference pressure level (bar) corresponding to the pressure"
-                "at the planet radius [default: %(default)s]",
+                " at the planet radius [default: %(default)s]",
            type=float, action="store", default=0.1)
 
   # MCMC options:
   group = parser.add_argument_group("MCMC")
   group.add_argument("--params",  dest="params",
            help="Model-fitting parameters [default: %(default)s]",
+           type=mu.parray, action="store", default=None)
+  group.add_argument("--parnames", dest="parnames", 
+           help="Labels for model-fitting parameters [default: %(default)s]", 
            type=mu.parray, action="store", default=None)
   group.add_argument("--molfit",  dest="molfit", 
            help="Molecules fit [default: %(default)s]",
@@ -157,12 +163,19 @@ def main():
   group.add_argument("--quiet",   dest="quiet",
            help="Set verbosity level to minimum",
            action="store_true")
+  group.add_argument("--nchains",  dest="nchains", 
+           help="Number of parallel chains for MCMC", 
+           type=int,       action="store", default=10)
   group.add_argument("--stepsize", dest="stepsize",
            help="Parameters stepsize",
            type=mu.parray, action="store", default=None)
   group.add_argument("--burnin", dest="burnin",
            help="Number of burn-in iterations per chain",
-           type=mu.parray, action="store", default=None)
+           type=int,       action="store", default=None)
+  group.add_argument("--thinning", dest="thinning",
+           help="Thinning factor of the chains (use every thinning-th "
+                 "iteration) used in the GR test and plots", 
+           type=int,       action="store", default=1)
   group.add_argument("--data", dest="data",
            help="Transit or eclipse depths",
            type=mu.parray, action="store", default=None)
@@ -178,9 +191,9 @@ def main():
 
   # Output-Converter Options:
   group = parser.add_argument_group("Output Converter Options")
-  group.add_argument("--filter",                 action="store",
-           help="Waveband filter name [default: %(default)s]",
-           dest="filter",   type=mu.parray, default=None)
+  group.add_argument("--filters",                action="store",
+           help="Waveband filter names [default: %(default)s]",
+           dest="filters",   type=mu.parray, default=None)
   group.add_argument("--kurucz_file",           action="store",
            help="Stellar Kurucz file [default: %(default)s]",
            dest="kurucz",   type=str,       default=None)
@@ -240,9 +253,9 @@ def main():
       exec("{:s} = args.{:s}".format(var, var))
 
   # Check that out_spec and uniform are valid specifications
-  if uniform != None and len(uniform) != len(out_spec):
+  if uniform != None and len(uniform) != len(out_spec.split(' ')):
     print('The inputs for out_spec and uniform are not compatible.')
-    diffuniout = len(uniform) - len(out_spec)
+    diffuniout = len(uniform) - len(out_spec.split(' '))
     if diffuniout > 0:
       if diffuniout == 1:
         print('uniform has ' + str(diffuniout) + 'extra entry.')
@@ -284,6 +297,9 @@ def main():
 
   # Check if files already exist:
   runMCMC = 0  # Flag that indicate which steps to run
+  if justPlots:
+    mu.msg(1, "Re-making output plots.", indent=2)
+    runMCMC |= 16
   # Atmospheric file:
   if os.path.isfile(atmfile):
     atmfile = os.path.realpath(atmfile)
@@ -371,21 +387,22 @@ def main():
     return
 
   # Make the MC3 configuration file:
-  MCMC_cfile = os.path.realpath(loc_dir) + "/MCMC_" + os.path.basename(cfile)
-  mc.makeMCMC(cfile, MCMC_cfile, logfile)
-  # Make transit configuration file:
-  mc.makeTransit(MCMC_cfile, tep_name, shareOpacity)
+  if runMCMC < 16: # MCMC
+    MCMC_cfile = os.path.realpath(loc_dir) + "/MCMC_" + os.path.basename(cfile)
+    mc.makeMCMC(cfile, MCMC_cfile, logfile)
+    # Make transit configuration file:
+    mc.makeTransit(MCMC_cfile, tep_name, shareOpacity)
 
-  # Generate the opacity file if it doesn't exist:
-  if not os.path.isfile(opacityfile):
-    mu.msg(1, "Transit call to generate the Opacity grid table.")
-    Tcall = Transitdir + "/transit/transit"
-    subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
-                    shell=True, cwd=date_dir)
-  else:
-    mu.msg(1, "\nTransit copies the existing opacity file from:\n '{:s}'.".
-                 format(opacityfile), indent=2)
-    shutil.copy2(opacityfile, date_dir + os.path.basename(opacityfile))
+    # Generate the opacity file if it doesn't exist:
+    if not os.path.isfile(opacityfile):
+      mu.msg(1, "Transit call to generate the Opacity grid table.")
+      Tcall = Transitdir + "/transit/transit"
+      subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
+                      shell=True, cwd=date_dir)
+    else:
+      mu.msg(1, "\nTransit copies the existing opacity file from:\n '{:s}'.".
+                   format(opacityfile), indent=2)
+      shutil.copy2(opacityfile, date_dir + os.path.basename(opacityfile))
 
   if justOpacity:
     mu.msg(1, "~~ BART End (after Transit opacity calculation) ~~")
@@ -393,19 +410,38 @@ def main():
 
 
   # Run the MCMC:
-  MC3call = MC3dir + "/MCcubed/mccubed.py"
-  subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
-                  shell=True, cwd=date_dir)
+  if runMCMC < 16:
+    MC3call = MC3dir + "/MCcubed/mccubed.py"
+    subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
+                    shell=True, cwd=date_dir)
+
+  # Re-plot MCMC results in prettier format
+  mcp.mcplots('output.npy', burnin, thinning, nchains, uniform, molfit, 
+              out_spec, parnames, date_dir, 
+              ["output_trace.png", "output_pairwise.png", 
+               "output_posterior.png"])
 
   # Run best-fit Transit call
   mu.msg(1, "\nTransit call with the best-fitting values.")
- 
+
+  bestFit_atmfile = 'bestFit.atm'
+  # Calculate and plot contribution functions:
+  if solution == "eclipse":
+    # Compute contribution fucntions if this is a eclipse run:
+    mu.msg(1, "Calculating contribution functions.", indent=2)
+    ctfraw, ctf = cf.cf(date_dir, bestFit_atmfile, filters)
+  else:
+    # Compute transmittance if this is a transmission run:
+    mu.msg(1, "Calculating transmittance.", indent=2)
+    ctf = cf.transmittance(date_dir, bestFit_atmfile, filters)
+
   # MCcubed output file
   MCfile = date_dir + logfile
   
   # Call bestFit submodule and make new bestFit_tconfig.cfg
-  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, solution,
-                 refpress, tconfig, date_dir, burnin, abun_basic)
+  bf.callTransit(date_dir+atmfile, tep_name, MCfile,  stepsize, molfit, 
+                 solution,         refpress, tconfig, date_dir, burnin, 
+                 abun_basic,       ctf,      filters)
 
   # Best-fit tconfig
   bestFit_tconfig = date_dir + 'bestFit_tconfig.cfg'
@@ -416,11 +452,11 @@ def main():
                    shell=True, cwd=date_dir)
 
   # Plot best-fit eclipse or modulation spectrum, depending on solution:
-  bf.plot_bestFit_Spectrum(filter, kurucz, tep_name, solution, outspec,
+  bf.plot_bestFit_Spectrum(filters, kurucz, tep_name, solution, outspec,
                            data, uncert, date_dir)
 
   # Plot abundance profiles
-  bf.plotabun(date_dir, 'bestFit.atm', molfit)
+  bf.plotabun(date_dir, bestFit_atmfile, molfit)
   
   mu.msg(1, "\nTransit call for contribution functions/transmittance.")
   # Run Transit with unlimited 'toomuch' argument:
@@ -430,16 +466,6 @@ def main():
   Tcall = Transitdir + "/transit/transit"
   subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
                     shell=True, cwd=date_dir)
-  bestFit_atmfile = date_dir + 'bestFit.atm'
-  # Calculate and plot contribution functions:
-  if solution == "eclipse":
-    # Compute contribution fucntions if this is a eclipse run:
-    mu.msg(1, "Calculating contribution functions.", indent=2)
-    cf.cf(date_dir, bestFit_atmfile, filter)
-  else:
-    # Compute transmittance if this is a transmission run:
-    mu.msg(1, "Calculating transmittance.", indent=2)
-    cf.transmittance(date_dir, bestFit_atmfile, filter)
 
   mu.msg(1, "~~ BART End ~~")
 

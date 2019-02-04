@@ -20,13 +20,17 @@
           Call Transit to produce best-fit outputs. Plot MCMC posterior PT plot.
     plot_bestFit_Spectrum:
           Plot BART best-model spectrum
+    plot_abun:
+          Plot abundance profiles from best-fit run
 
     Revisions
     ---------
     2015-05-03  Jasmina  Original implementation
     2015-07-12  Jasmina  Added documentation.
+    2018-12-21  Michael  Updated documentation, improved code readability.
 """
 
+import os
 import numpy as np
 import reader as rd
 import scipy.constants as sc
@@ -38,6 +42,7 @@ import matplotlib.pyplot as plt
 
 import makeatm as mat
 import PT as pt
+import cf
 import wine as w
 import readtransit as rt
 import constants as c
@@ -46,6 +51,15 @@ import constants as c
 def read_MCMC_out(MCfile):
     """
     Read the MCMC output log file. Extract the best fitting parameters.
+
+    Parameters
+    ----------
+    MCfile: string. Path to MCMC output log file.
+
+    Returns
+    -------
+    bestP: 1D array. Best-fit parameters.
+    uncer: 1D array. Uncertainties for each parameter.
     """
     # Open file to read
     f = open(MCfile, 'r')
@@ -57,7 +71,7 @@ def read_MCMC_out(MCfile):
         if lines[ini].startswith(' Best-fit params'):
             break
     ini += 1
-    end = ini
+    end  = ini
     for end in np.arange(ini, len(lines)):
         if lines[end].strip() == "":
             break
@@ -66,7 +80,7 @@ def read_MCMC_out(MCfile):
     bestP = np.zeros(end-ini, np.double)
     uncer = np.zeros(end-ini, np.double)
     for i in np.arange(ini, end):
-        parvalues = lines[i].split()
+        parvalues    = lines[i].split()
         bestP[i-ini] = parvalues[0]
         uncer[i-ini] = parvalues[1]
 
@@ -92,11 +106,22 @@ def get_params(bestP, stepsize, params):
 def get_starData(tepfile):
     """
     Extract the Stellar temperature, radius, and mass from a TEP file.
+
+    Parameters
+    ----------
+    tepfile: string. Path to Transiting ExoPlanet (TEP) file.
+
+    Returns
+    -------
+    Rstar: float. Radius of the star in meters.
+    Tstar: float. Temperature of the star in Kelvin.
+    sma  : float. Semimajor axis in meters.
+    gstar: float. Logarithm of the star's surface gravity in cgs units.
     """
     # Open tepfile to read and get data:
     tep = rd.File(tepfile)
 
-    # Get star mass in Mjup:
+    # Get star temperature in Kelvin:
     Tstar = np.float(tep.getvalue('Ts')[0])
 
     # Get star radius in MKS units:
@@ -137,12 +162,12 @@ def write_atmfile(atmfile, abun_file, molfit, T_line, abun_fact, date_dir,
     f.close()
 
     # Get the molecules
-    imol = np.where(lines == "#SPECIES\n")[0][0] + 1
+    imol      = np.where(lines == "#SPECIES\n")[0][0] + 1
     molecules = lines[imol].split()
 
     # Find the line where the layers info begins
-    start = np.where(lines == "#TEADATA\n")[0][0] + 2
-    headers = lines[start-1].split()
+    start     = np.where(lines == "#TEADATA\n")[0][0] + 2
+    headers   = lines[start-1].split()
     datalines = lines[start:]
 
     # Number of columns
@@ -188,8 +213,8 @@ def write_atmfile(atmfile, abun_file, molfit, T_line, abun_fact, date_dir,
     # ===== Scale H2 and He if sum abundances > 1 ===== #
     # Find index for Hydrogen and Helium
     molecules = np.asarray(molecules)
-    iH2     = np.where(molecules=="H2")[0][0]
-    iHe     = np.where(molecules=="He")[0][0]
+    iH2       = np.where(molecules=="H2")[0][0]
+    iHe       = np.where(molecules=="He")[0][0]
 
     # Get H2/He abundance ratio:
     ratio = (abundances[iH2,:] / abundances[iHe,:])
@@ -218,7 +243,7 @@ def write_atmfile(atmfile, abun_file, molfit, T_line, abun_fact, date_dir,
     # Write atm file for each run
     for i in np.arange(ndata):
         # Radius, pressure, and temp for the current line
-        radi = str('%10.3f'%rad[i])
+        radi  = str('%10.3f'%rad[i])
         presi = str('%10.4e'%pressure[i])
         tempi = str('%7.2f'%T_line[i])
 
@@ -243,17 +268,17 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
   Write best-fit config file for best-fit Transit run
   '''
   # Open atmfile to read
-  f = open(date_dir + tconfig, 'r')
+  f     = open(date_dir + tconfig, 'r')
   lines = np.asarray(f.readlines())
   f.close()
 
   for i in np.arange(len(lines)):
-    # Change name to the atmfile in line zero
-    if lines[i].startswith("atm "):
-      lines[i] = 'atm ' + date_dir + 'bestFit.atm' + '\n'
-    # Change refradius:
-    if lines[i].startswith("refradius ") and radius is not None:
-      lines[i] = 'refradius {}\n'.format(str(radius))
+      # Change name to the atmfile in line zero
+      if  lines[i].startswith("atm "):
+          lines[i] = 'atm ' + date_dir + 'bestFit.atm' + '\n'
+      # Change refradius:
+      if  lines[i].startswith("refradius ") and radius is not None:
+          lines[i] = 'refradius {}\n'.format(str(radius))
 
   # Write lines into the bestFit config file
   f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
@@ -263,7 +288,7 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
 
 
 def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
-                p0, tconfig, date_dir, burnin, abun_file):
+                p0, tconfig, date_dir, burnin, abun_file, ctf, filters):
     """
     Call Transit to produce best-fit outputs.
     Plot MCMC posterior PT plot.
@@ -277,7 +302,7 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     MCfile: String
        File with MCMC log and best-fitting results.
     stepsize: 1D float ndarray
-       FINDME
+       Specified step sizes for each parameter.
     molfit: 1D String ndarray
        List of molecule names to modify their abundances.
     solution: String
@@ -291,6 +316,10 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     burnin: Integer
     abun_file: String
        Elemental abundances file.
+    ctf: 2D array.
+       Contribution or transmittance functions corresponding to `filters`
+    filters: list, strings.
+       Filter files associated with the eclipse/transit depths
     """
     # make sure burnin is an integer
     burnin = int(burnin)
@@ -304,12 +333,12 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
 
     # Get best parameters
     bestP, uncer = read_MCMC_out(MCfile)
-    allParams = bestP
+    allParams    = bestP
 
     # get PTparams and abundances factors
-    nparams = len(allParams)
-    nmol = len(molfit)
-    nradfit = int(solution == 'transit')
+    nparams   = len(allParams)
+    nmol      = len(molfit)
+    nradfit   = int(solution == 'transit')
     nPTparams = nparams - nmol - nradfit
 
     PTparams  = allParams[:nPTparams]
@@ -380,35 +409,67 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
                                    T_int, sma, grav*1e2)
 
     # get percentiles (for 1,2-sigma boundaries):
-    low1 = np.percentile(PTprofiles, 16.0, axis=0)
-    hi1  = np.percentile(PTprofiles, 84.0, axis=0)
-    low2 = np.percentile(PTprofiles,  2.5, axis=0)
-    hi2  = np.percentile(PTprofiles, 97.5, axis=0)
-    median = np.median(PTprofiles, axis=0)
+    low1   = np.percentile(PTprofiles, 16.0, axis=0)
+    hi1    = np.percentile(PTprofiles, 84.0, axis=0)
+    low2   = np.percentile(PTprofiles,  2.5, axis=0)
+    hi2    = np.percentile(PTprofiles, 97.5, axis=0)
+    median = np.median(    PTprofiles,       axis=0)
 
     # plot figure
-    plt.figure(2)
+    plt.figure(2, figsize=(13,6), dpi=300)
+    plt.subplots_adjust(wspace=0.1)
     plt.clf()
-    ax=plt.subplot(111)
-    ax.fill_betweenx(pressure, low2, hi2, facecolor="#62B1FF", edgecolor="0.5")
-    ax.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC",
-                                                           edgecolor="#1873CC")
+    ax1=plt.subplot(121)
+    ax1.fill_betweenx(pressure, low2, hi2, facecolor="#62B1FF", 
+                      edgecolor="0.5")
+    ax1.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC",
+                      edgecolor="#1873CC")
     plt.semilogy(median, pressure, "-", lw=2, label='Median',color="k")
     plt.semilogy(best_T, pressure, "-", lw=2, label="Best fit", color="r")
     plt.ylim(pressure[0], pressure[-1])
     plt.legend(loc="best")
     plt.xlabel("Temperature  (K)", size=15)
     plt.ylabel("Pressure  (bar)",  size=15)
+    # Add contribution or transmittance functions
+    ax2=plt.subplot(122, sharey=ax1)
+    colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
+    ax2.set_prop_cycle(plt.cycler('color', colormap))
+    # Plot with filter labels
+    for i in np.arange(len(filters)):
+        (head, tail) = os.path.split(filters[i])
+        lbl          = tail[:-4]
+        ax2.semilogy(ctf[i], pressure, '--',  linewidth = 1, label=lbl)
+    # Hide y axis tick labels
+    plt.setp(ax2.get_yticklabels(), visible=False)
+    # Place legend off figure in case there are many filters
+    lgd = ax2.legend(loc='center left', bbox_to_anchor=(1,0.5), 
+                     ncol=len(filters)//30 + 1, prop={'size':8})
+    if solution == 'eclipse':
+        ax2.set_xlabel('Contribution Functions',  fontsize=15)
+    else:
+        ax2.set_xlabel('Transmittance', fontsize=15)
+    
 
     # save figure
     savefile = date_dir + "MCMC_PTprofiles.png"
-    plt.savefig(savefile)
+    plt.savefig(savefile, bbox_extra_artists=(lgd,), bbox_inches='tight')
 
 
 def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
                           uncert, date_dir):
     '''
     Plot BART best-model spectrum
+
+    Parameters
+    ----------
+    filters : list, strings. Paths to filter files corresponding to data.
+    kurucz  : string. Path to Kurucz stellar model file.
+    tepfile : string. Path to Transiting ExoPlanet (TEP) file.
+    solution: string. Observing geometry. 'eclipse' or 'transit'.
+    output  : string. Best-fit spectrum output file name.
+    data    : 1D array. Eclipse or transit depths.
+    uncert  : 1D array. Uncertainties for data values.
+    date_dir: string. Path to directory where the plot will be saved.
     '''
     # get star data
     R_star, T_star, sma, gstar = get_starData(tepfile)
@@ -452,9 +513,9 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
         meanwn.append(np.sum(filtwaven*filttransm)/sum(filttransm))
         # resample filter and stellar spectrum:
         nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
-                                            starwn,    starfl)
-        nifilter.append(nifilt)
-        istarfl.append(strfl)
+                                          starwn, starfl               )
+        nifilter .append(nifilt)
+        istarfl  .append(strfl)
         wnindices.append(wnind)
 
     # convert mean wn to mean wl
@@ -472,8 +533,8 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
 
     # stellar spectrum on specwn:
     sinterp = si.interp1d(starwn, starfl)
-    sflux = sinterp(specwn)
-    frat = bestspectrum/sflux * rprs * rprs
+    sflux   = sinterp(specwn)
+    frat    = bestspectrum/sflux * rprs * rprs
 
     # plot figure
     plt.rcParams["mathtext.default"] = 'rm'
@@ -501,7 +562,6 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     leg.get_frame().set_alpha(0.5)
     ax = plt.subplot(111)
     ax.set_xscale('log')
-    #plt.xlabel(r"${\rm Wavelength\ \ (um)}$", fontsize=12)
     plt.xlabel(ur"${\rm Wavelength}$  (\u00b5m)", fontsize=12)
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
     if   max(specwl) - min(specwl) > 30:
