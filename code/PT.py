@@ -25,9 +25,15 @@ import reader as rd
   planet_Teff:
      Calculate planet effective temperate to constrain the T3 parameter.
   PT_Inversion:
-     Generate an inverted PT profile.
+     Generate an inverted PT profile using the method of 
+     Madhusudhan & Seager 2009.
   PT_NoInversion:
-     Generate a non-inverted PT profile.
+     Generate a non-inverted PT profile using the method of 
+     Madhusudhan & Seager 2009.
+  PT_line:
+     Generate a PT profile using the method of Line et al. 2013
+  PT_iso:
+     Generate an isothermal PT profile.
   PT_generator:
      Wrapper that calls either inverted or non-inverted generator.
   plot_PT:
@@ -146,7 +152,7 @@ def planet_Teff(tepfile):
 
 
 # generates PT profile for inverted atmosphere
-def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
+def PT_Inversion(p, a1, a2, p1, p2, p3, T3, verb=False):
      '''
      Calculates PT profile for inversion case based on Equation (2) from
      Madhusudhan & Seager 2009.
@@ -168,7 +174,7 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
          range (0.04, 0.5) 
      p1: Float
      p2: Float
-         Pressure boundary betwwn Layer 1 and 1 (in bars).
+         Pressure boundary between Layers 1 and 2 (in bars).
      p3: Float
          Pressure boundary between Layers 2 and 3 (in bars).
      T3: float
@@ -305,7 +311,8 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
 
      # Set top of the atmosphere to p0 to have easy understandable equations:
      p0 = np.amin(p)
-     print(p0)
+     if verb:
+          print(p0)
 
      # Temperature at point 2
      # Calculated from boundary condition between layer 2 and 3
@@ -319,9 +326,10 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
      T1 = T0 + (np.log(p1/p0) / a1)**2
 
      # Error message when temperatures ar point 1, 2 or 3 are < 0
-     if T0<0 or T1<0 or T2<0 or T3<0:
-          print 'T0, T1, T2 and T3 temperatures are: ', T0, T1, T2, T3
-          raise ValueError('Input parameters give non-physical profile. Try again.')
+     if verb:
+          if T0<0 or T1<0 or T2<0 or T3<0:
+               print('T0, T1, T2 and T3 temperatures are: ', T0, T1, T2, T3)
+               raise ValueError('Input parameters give non-physical profile. Try again.')
 
      # Defining arrays of pressures for every part of the PT profile
      p_l1     = p[(np.where((p >= min(p)) & (p < p1)))]
@@ -331,15 +339,16 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
 
      # Sanity check for total number of levels
      check = len(p_l1) + len(p_l2_pos) + len(p_l2_neg) + len(p_l3)
-     print  'Total number of levels in p: ', len(p)
-     print  '\nLevels per levels in inversion case (l1, l2_pos, l2_neg, l3) are respectively: ', len(p_l1), len(p_l2_pos), len(p_l2_neg), len(p_l3)
-     print  'Checking total number of levels in inversion case: ', check
+     if verb:
+          print('Total number of levels in p: ', len(p))
+          print('\nLevels per levels in inversion case (l1, l2_pos, l2_neg, l3) are respectively: ', len(p_l1), len(p_l2_pos), len(p_l2_neg), len(p_l3))
+          print('Checking total number of levels in inversion case: ', check)
 
      # The following set of equations derived using Equation 2
      # Madhusudhan and Seager 2009
 
      # Layer 1 temperatures
-     T_l1 = (np.log(p_l1/p0) / a1)**2 + T0  
+     T_l1      = (np.log(p_l1/p0) / a1)**2 + T0  
  
      # Layer 2 temperatures (inversion part)
      T_l2_pos = (np.log(p_l2_pos/p2) / -a2)**2 + T2
@@ -351,13 +360,14 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3):
      T_l3     = np.linspace(T3, T3, len(p_l3))
       
      # Concatenating all temperature arrays
-     T_conc = np.concatenate((T_l1, T_l2_pos, T_l2_neg, T_l3))
+     T_conc   = np.concatenate((T_l1, T_l2_pos, T_l2_neg, T_l3))
 
      # PT profile
-     PT_Inver = (T_l1, p_l1, T_l2_pos, p_l2_pos, T_l2_neg, p_l2_neg, T_l3, p_l3, T_conc, T0, T1, T2, T3)
+     PT_Inver = (T_l1, p_l1, T_l2_pos, p_l2_pos, T_l2_neg, p_l2_neg, 
+                 T_l3, p_l3, T_conc, T0, T1, T2, T3)
 
      # Smoothing with Gaussian_filter1d
-     sigma = 4
+     sigma    = 4
      T_smooth = gaussian_filter1d(T_conc, sigma, mode='nearest')
     
      return PT_Inver, T_smooth
@@ -386,7 +396,7 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
          range (0.04, 0.5) 
      p1: Float
      p2: Float
-         Pressure boundary betwwn Layer 1 and 1 (in bars).
+         Pressure boundary between Layers 1 and 2 (in bars).
      p3: Float
          Pressure boundary between Layers 2 and 3 (in bars).
      T3: float
@@ -545,22 +555,23 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
          print('Sum of levels per layer: {:d}'.format(check))
 
      # Layer 1 temperatures 
-     T_l1 = (np.log(p_l1/p0) / a1)**2 + T0
+     T_l1     = (np.log(p_l1/p0) / a1)**2 + T0
 
      # Layer 2 temperatures decreasing part
      T_l2_neg = (np.log(p_l2_neg/p1) / a2)**2 + T1
 
      # Layer 3 temperatures
-     T_l3 = np.linspace(T3, T3, len(p_l3))
+     T_l3     = np.linspace(T3, T3, len(p_l3))
 
      # Concatenate all temperature arrays:
-     T_conc = np.concatenate((T_l1, T_l2_neg, T_l3))
+     T_conc   = np.concatenate((T_l1, T_l2_neg, T_l3))
 
      # PT profile info:
-     PT_NoInver = (T_l1, p_l1, T_l2_neg, p_l2_neg, T_l3, p_l3, T_conc, T0, T1, T3)
+     PT_NoInver = (T_l1, p_l1, T_l2_neg, p_l2_neg, T_l3, p_l3, 
+                   T_conc, T0, T1, T3)
 
      # Smoothed PT profile:
-     sigma = 4
+     sigma    = 4
      T_smooth = gaussian_filter1d(T_conc, sigma, mode='nearest')
 
      return PT_NoInver, T_smooth
@@ -672,6 +683,22 @@ def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
   return temperature
 
 
+def PT_iso(p, T):
+  """
+  Returns an isothermal atmosphere at given pressures.
+
+  Parameters
+  ----------
+  pressure: 1D float ndarray
+     Array of pressure values in bars.
+
+  Returns
+  -------
+  1D temperature array
+  """
+  return np.ones(len(p)) * T
+
+
 def xi(gamma, tau):
   """
   Calculate Equation (14) of Line et al. (2013) Apj 775, 137
@@ -721,12 +748,14 @@ def PT_generator(p, free_params, args):
   '''
   # args[0] indicate the type of temperature profile:
   if   args[0] == "line":
-    Temp = PT_line(p, free_params, *args[1:])
+    Temp       = PT_line(p, free_params, *args[1:])
   elif args[0] == "madhu":
     if   len(free_params) == 5: # Non-inversion layer
       PT, Temp = PT_NoInversion(p, *free_params)
     elif len(free_params) == 6: # With inversion layer
       PT, Temp = PT_Inversion(p,   *free_params)
+  elif args[0] == "iso":
+    Temp       = PT_iso(p, *free_params)
   else:
     print("Unknown T profile type: '{:s}'".format(args[0]))
     # FINDME: throw error and stop.

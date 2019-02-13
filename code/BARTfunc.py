@@ -85,9 +85,9 @@ def main(comm):
                      dest="config", type=str,    default=None)
   # Output-Converter Options:
   group = parser.add_argument_group("Output Converter Options")
-  group.add_argument("--filter",                 action="store",
+  group.add_argument("--filters",                action="store",
                      help="Waveband filter name [default: %(default)s]",
-                     dest="filter",   type=mu.parray, default=None)
+                     dest="filters",  type=mu.parray, default=None)
   group.add_argument("--tep_name",          action="store",
                      help="A TEP file [default: %(default)s]",
                      dest="tep_name", type=str,    default=None)
@@ -196,8 +196,8 @@ def main(comm):
   specwn = trm.get_waveno_arr(nwave)
 
   # :::::::  Output Converter  :::::::::::::::::::::::::::::::::::::::
-  ffile    = args2.filter    # Filter files
-  kurucz   = args2.kurucz    # Kurucz file
+  ffile    = args2.filters    # Filter files
+  kurucz   = args2.kurucz     # Kurucz file
 
   # Log10(stellar gravity)
   gstar = float(tep.getvalue('loggstar')[0])

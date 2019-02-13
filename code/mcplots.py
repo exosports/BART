@@ -46,7 +46,7 @@ import binarray as ba
 __all__ = ["mcplots", "trace", "pairwise", "histogram", "RMS", "modelfit"]
 
 def mcplots(output,   burnin,   thinning, nchains, uniform, molfit, 
-            out_spec, parnames, date_dir, fnames):
+            stepsize, out_spec, parnames, date_dir, fnames):
   """
   Reformats the MC3 output file so that the log(abundance) factor is with 
   respect to molar fraction, rather than the initial values (as MC3 does). 
@@ -60,6 +60,8 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
                  iteration) used for plotting.
   uniform : array-like. If not None, set uniform abundances with the 
                         specified values for each species.
+  molfit  : array, strings. Molecules being fit by the MCMC.
+  stepsize: array, floats.  Initial stepsizes of MCMC parameters.
   nchains : int. Number of parallel chains in MCMC.
   molfit  : list, strings. Molecules to be fit by the MCMC.
   date_dir: string. Path to directory where plots are to be saved.
@@ -75,9 +77,9 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
   # Subtract initial abundances if uniform, so that plots are log(abundance)
   if uniform is not None:
     molind = []
-    for mol in molfit:
-      for j in range(len(out_spec.split(' '))):
-        if mol+'_' in out_spec.split(' ')[j]:
+    for imol in range(len(molfit)):
+      for j  in range(len(out_spec.split(' '))):
+        if molfit[imol]+'_' in out_spec.split(' ')[j] and stepsize[imol] > 0:
           molind.append(j)
     allstack[-len(molfit):, :] += \
                                np.log10(uniform[molind]).reshape(len(molind),1)
@@ -175,6 +177,8 @@ def trace(allparams, title=None, parname=None, thinning=1,
         plt.xlabel('MCMC iteration', size=fs+4)
     else:
       plt.xticks(visible=False)
+    # Align labels
+    a.yaxis.set_label_coords(-0.1, 0.5)
 
   if savefile is not None:
     plt.savefig(savefile, bbox_inches='tight')
@@ -239,8 +243,8 @@ def pairwise(allparams, title=None, parname=None, thinning=1,
     plt.suptitle(title, size=16)
 
   h = 1 # Subplot index
-  plt.subplots_adjust(left=0.15,   right=0.85, bottom=0.15, top=0.85,
-                      hspace=0.3, wspace=0.3)
+  plt.subplots_adjust(left  =0.15, right =0.85, bottom=0.15, top=0.85,
+                      hspace=0.3,  wspace=0.3)
 
   for   j in np.arange(npars): # Rows
     for i in np.arange(npars):  # Columns
@@ -298,9 +302,9 @@ def pairwise(allparams, title=None, parname=None, thinning=1,
             ss = ax.get_subplotspec()
             nrows, ncols, start, stop = ss.get_geometry()
             if start//nrows == nrows-1:
-              ax.xaxis.set_label_coords(0.5, -1.4)
+              ax.xaxis.set_label_coords(0.5, -1.4 * npars/9.)
             if start%ncols == 0:
-              ax.yaxis.set_label_coords(-1.3, 0.5)
+              ax.yaxis.set_label_coords(-1.3 * npars/9., 0.5)
     
       h += 1
   # The colorbar:

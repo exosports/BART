@@ -117,7 +117,7 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   args = Bconfig.options(section)
 
   # Known arguments that may have a path:
-  input_args = ["tep_name", "kurucz", "molfile", "filter", "linedb",
+  input_args = ["tep_name", "kurucz", "molfile", "filters", "linedb",
                 "csfile", "loc_dir"]
   output_args = ["tconfig",    "atmfile",   "opacityfile", "press_file",
                  "abun_basic", "abun_file", "preatm_file", "outspec",
