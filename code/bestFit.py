@@ -287,9 +287,9 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
   f.close()
 
 
-def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
-                p0, tconfig, date_dir, burnin, abun_file, PTtype, 
-                filters):
+def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
+                p0,      tconfig, date_dir, burnin,   abun_file, 
+                PTtype,  PTfunc,  filters):
     """
     Call Transit to produce best-fit outputs.
     Plot MCMC posterior PT plot.
@@ -319,7 +319,10 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
        Elemental abundances file.
     PTtype: String
        Pressure-temperature profile type ('line' for Line et al. 2013, 
-       'madhu' for Madhusudhan & Seager 2009, 'iso' for isothermal)
+       'madhu_noinv' or 'madhu_inv'for Madhusudhan & Seager 2009, 
+       'iso' for isothermal)
+    PTfunc: pointer to function
+       Determines the method of evaluating the PT profile's temperature
     filters: list, strings.
        Filter files associated with the eclipse/transit depths
     """
@@ -330,8 +333,14 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     molecules, pressure, temp, abundances = mat.readatm(atmfile)
     # get surface gravity
     grav, Rp = mat.get_g(tepfile)
-    # get star data
-    R_star, T_star, sma, gstar = get_starData(tepfile)
+    # get star data if needed
+    if PTtype == 'line':
+      R_star, T_star, sma, gstar = get_starData(tepfile)
+      # FINDME: Hardcoded value:
+      T_int  = 100  # K
+      PTargs = [R_star, T_star, T_int, sma, grav]
+    else:
+      PTargs = None # For non-Line profiles
 
     # Get best parameters
     bestP, uncer = read_MCMC_out(MCfile)
@@ -344,27 +353,10 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     nPTparams = nparams - nmol - nradfit
 
     PTparams  = allParams[:nPTparams]
-    # FINDME: Hardcoded value:
-    T_int = 100  # K
+
 
     # call PT line profile to calculate temperature
-    if   PTtype == 'line':
-        best_T = pt.PT_line(pressure, PTparams, R_star, T_star, T_int,
-                            sma, grav*1e2)
-    elif PTtype == 'madhu':
-        if   len(PTparams) == 6:
-            other, best_T = pt.PT_Inversion(pressure, *PTparams)
-        elif len(PTparams) == 5:
-            other, best_T = pt.PT_NoInversion(pressure, *PTparams)
-        else:
-            print("Invalid number of PT profile parameters for " + \
-                  "PT type 'madhu'")
-            return
-    elif PTtype == 'iso':
-        best_T = pt.PT_iso(pressure, PTparams)
-    else:
-        print("Best-fit PT profile type not implemented in plotting.")
-        return
+    best_T = pt.PT_generator(pressure, PTparams, PTfunc, PTargs)
 
     # Plot best PT profile
     plt.figure(1)
@@ -414,11 +406,11 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
     # Calculate contribution or transmittance functions
     if solution == "eclipse":
       # Compute contribution fucntions if this is a eclipse run:
-      print("Calculating contribution functions.")
+      print("  Calculating contribution functions.")
       ctfraw, ctf = cf.cf(date_dir, bestFit_atm, filters)
     else:
       # Compute transmittance if this is a transmission run:
-      print("Calculating transmittance.")
+      print("  Calculating transmittance.")
       ctf = cf.transmittance(date_dir, bestFit_atm, filters)    
 
     # ========== plot MCMC PT profiles ==========
@@ -448,25 +440,8 @@ def callTransit(atmfile, tepfile, MCfile, stepsize, molfit, solution,
                 j +=1
             else:
                 pass
-        if   PTtype == 'line':
-            PTprofiles[k] = pt.PT_line(pressure, curr_PTparams, R_star, T_star,
-                                       T_int, sma, grav*1e2)
-        elif PTtype == 'madhu':
-            if   len(PTparams) == 6:
-                other, PTprofiles[k] = pt.PT_Inversion(pressure, 
-                                                       *curr_PTparams)
-            elif len(PTparams) == 5:
-                other, PTprofiles[k] = pt.PT_NoInversion(pressure, 
-                                                         *curr_PTparams)
-            else:
-                print("Invalid number of PT profile parameters for " + \
-                      "PT type 'madhu'")
-                return
-        elif PTtype == 'iso':
-            PTprofiles[k] = pt.PT_iso(pressure, curr_PTparams)
-        else:
-            print("Invalid PT profile type specified.")
-            return
+        PTprofiles[k] = pt.PT_generator(pressure, curr_PTparams, 
+                                        PTfunc, PTargs)
 
     # get percentiles (for 1,2-sigma boundaries):
     low1   = np.percentile(PTprofiles, 16.0, axis=0)

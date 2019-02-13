@@ -17,6 +17,7 @@ Transitdir = BARTdir + "/modules/transit/"
 sys.path.append(BARTdir + "/code")
 import makeP     as mp
 import InitialPT as ipt
+import PT        as pt
 import makeatm   as mat
 import makecfg   as mc
 import bestFit   as bf
@@ -113,7 +114,7 @@ def main():
   group.add_argument("--PTtype", dest="PTtype",
            help="Temperature profile model [default: %(default)s]",
            type=str, action="store", default="line", 
-           choices=("line","madhu","iso"))
+           choices=("line","madhu_noinv","madhu_inv","iso"))
   group.add_argument("--PTinit", dest="PTinit",
            help="Temperature profile model parameters",
            type=mu.parray, action="store", default=None)
@@ -253,6 +254,18 @@ def main():
     if not var.startswith("_"):
       exec("{:s} = args.{:s}".format(var, var))
 
+  # Dictionary of functions to calculate temperature for PTtype
+  PTfunc = {'iso'         : pt.PT_iso,
+            'line'        : pt.PT_line, 
+            'madhu_noinv' : pt.PT_NoInversion,
+            'madhu_inv'   : pt.PT_Inversion}
+
+  # Check that the user gave a valid PTtype:
+  if PTtype not in PTfunc.keys():
+    print("The specified 'PTtype' is not valid. Options are 'line', " + \
+          "'madhu_noinv', 'madhu_inv', or 'iso'. Please try again.")
+    sys.exit()
+
   # Check that out_spec and uniform are valid specifications
   if uniform != None and len(uniform) != len(out_spec.split(' ')):
     print('The inputs for out_spec and uniform are not compatible.')
@@ -336,7 +349,8 @@ def main():
   # Make uniform-abundance profiles if requested:
   if uniform is not None and runMCMC < 8:
     # Calculate the temperature profile:
-    temp = ipt.initialPT2(date_dir, PTinit, press_file, PTtype, tep_name)
+    temp = ipt.initialPT2(date_dir, PTinit, press_file, 
+                          PTtype, PTfunc[PTtype], tep_name)
     # Generate the uniform-abundance profiles file:
     mat.uniform(date_dir + atmfile, press_file, abun_basic, tep_name,
                out_spec, uniform, temp, refpress)
@@ -352,7 +366,8 @@ def main():
 
   if runMCMC < 4:  # Pre-atmospheric file
     # Calculate the temperature profile:
-    temp = ipt.initialPT2(date_dir, PTinit, press_file, PTtype, tep_name)
+    temp = ipt.initialPT2(date_dir, PTinit, press_file, 
+                          PTtype, PTfunc[PTtype], tep_name)
     # Choose a pressure-temperature profile
     mu.msg(1, "\nChoose temperature and pressure profile:", indent=2)
     raw_input("  open Initial PT profile figure and\n" 
@@ -434,7 +449,7 @@ def main():
   # Also makes contribution/transmittance functions
   bf.callTransit(atmfile,    tep_name, MCfile,  stepsize, molfit, 
                  solution,   refpress, tconfig, date_dir, burnin, 
-                 abun_basic, PTtype,   filters)
+                 abun_basic, PTtype,   PTfunc[PTtype],    filters)
 
   # Plot best-fit eclipse or modulation spectrum, depending on solution:
   bf.plot_bestFit_Spectrum(filters, kurucz, tep_name, solution, outspec,

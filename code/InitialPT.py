@@ -109,7 +109,7 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
 
   return T_smooth
 
-def initialPT2(date_dir, params, pressfile, mode, tepfile, tint=100.0):
+def initialPT2(date_dir, params, pressfile, mode, PTfunc, tepfile, tint=100.0):
   """
   Compute a Temperature profile.
 
@@ -129,8 +129,8 @@ def initialPT2(date_dir, params, pressfile, mode, tepfile, tint=100.0):
   # Read pressures from file:
   pressure = pt.read_press_file(pressfile)
 
-  # PT arguments:
-  PTargs = [mode]
+  # For extra PT arguments:
+  PTargs = None
 
   # Read the TEP file:
   tep = rd.File(tepfile)
@@ -148,11 +148,11 @@ def initialPT2(date_dir, params, pressfile, mode, tepfile, tint=100.0):
   if mode == "line":
     # Planetary surface gravity (in cm s-2):
     gplanet = 100.0 * sc.G * mplanet / rplanet**2
-    # Additional PT arguments:
-    PTargs += [rstar, tstar, tint, sma, gplanet]
+    # Additional PT arguments for Line case:
+    PTargs  = [rstar, tstar, tint, sma, gplanet]
 
   # Calculate temperature
-  Temp =  pt.PT_generator(pressure, params, PTargs)
+  Temp =  pt.PT_generator(pressure, params, PTfunc, PTargs)
 
   # Plot PT profile
   plt.figure(1)

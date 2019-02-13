@@ -75,7 +75,7 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
     allstack = np.hstack((allstack, allparams[c, :, burnin:]))
 
   # Subtract initial abundances if uniform, so that plots are log(abundance)
-  if uniform is not None:
+  if uniform is not None and np.all(stepsize > 0):
     molind = []
     for imol in range(len(molfit)):
       for j  in range(len(out_spec.split(' '))):

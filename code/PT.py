@@ -304,6 +304,7 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3, verb=False):
                      added T3 as free parameter instead of T0
                      changed boundary condition equations accordingly
      2014-09-24  Jasmina  Updated documentation.
+     2019-02-13  mhimes   Added verb argument.
      '''
 
      # The following set of equations derived using Equation 2
@@ -577,7 +578,8 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
      return PT_NoInver, T_smooth
 
 
-def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
+def PT_line(pressure, kappa,  gamma1, gamma2, alpha, beta, 
+            R_star,   T_star, T_int,  sma,    grav):
   '''
   Generats a PT profile based on input free parameters and pressure array.
   If no inputs are provided, it will run in demo mode, using free
@@ -588,14 +590,12 @@ def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
   ------
   pressure: 1D float ndarray
      Array of pressure values in bars.
-  params: 1D float ndarray
-     Array of free parameters:
-       - log10(kappa):  Planck thermal IR opacity in units cm^2/gr
-       - log10(gamma1): Visible-to-thermal stream Planck mean opacity ratio.
-       - log10(gamma2): Visible-to-thermal stream Planck mean opacity ratio.
-       - alpha:         Visible-stream partition (0.0--1.0).
-       - beta:          A 'catch-all' for albedo, emissivity, and day-night
-                      redistribution (on the order of unity).
+  kappa : float, in log10. Planck thermal IR opacity in units cm^2/gr
+  gamma1: float, in log10. Visible-to-thermal stream Planck mean opacity ratio.
+  gamma2: float, in log10. Visible-to-thermal stream Planck mean opacity ratio.
+  alpha : float.           Visible-stream partition (0.0--1.0).
+  beta  : float.           A 'catch-all' for albedo, emissivity, and day-night
+                           redistribution (on the order of unity)
   R_star: Float
      Stellar radius (in meters).
   T_star: Float
@@ -637,7 +637,7 @@ def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
   >>> alpha  = 0.5
   >>> beta   = 1.0
   >>> params = [kappa, gamma1, gamma2, alpha, beta]
-  >>> T0 = pt.PT(p, params, Rs, Ts, Ti, a, g)
+  >>> T0 = pt.PT(p, *params, Rs, Ts, Ti, a, g)
 
   >>> plt.figure(1)
   >>> plt.clf()
@@ -658,13 +658,14 @@ def PT_line(pressure, params, R_star, T_star, T_int, sma, grav):
                         in Line et al. (2013), Apj, 775, 137.
   2014-12-10  patricio  Reviewed and updated code.
   2015-01-22  patricio  Receive log10 of free parameters now.
+  2019-02-13  mhimes    Replaced `params` arg with each parameter for 
+                        consistency with other PT models
   '''
 
-  # Unpack free parameters:
-  kappa  = 10**(params[0])
-  gamma1 = 10**(params[1])
-  gamma2 = 10**(params[2])
-  alpha, beta = params[3], params[4]
+  # Convert kappa, gamma1, gamma2 from log10
+  kappa  = 10**(kappa )
+  gamma1 = 10**(gamma1)
+  gamma2 = 10**(gamma2)
 
   # Stellar input temperature (at top of atmosphere):
   T_irr = beta * (R_star / (2.0*sma))**0.5 * T_star
@@ -714,11 +715,12 @@ def xi(gamma, tau):
   ---------------------
   2014-12-10  patricio  Initial implemetation.
   """
-  return (2.0/3) * (1 + (1/gamma) * (1 + (0.5*gamma*tau-1)*np.exp(-gamma*tau)) +
-                    gamma*(1 - 0.5*tau**2) * sp.expn(2, gamma*tau)             )
+  return (2.0/3) * \
+         (1 + (1./gamma) * (1 + (0.5*gamma*tau-1)*np.exp(-gamma*tau)) +
+          gamma*(1 - 0.5*tau**2) * sp.expn(2, gamma*tau)              )
 
 
-def PT_generator(p, free_params, args):
+def PT_generator(p, free_params, PTfunc, PTargs=None):
   '''
   Wrapper to generate an inverted or non-inverted temperature and pressure
   profile.
@@ -730,9 +732,10 @@ def PT_generator(p, free_params, args):
   free_params: 1D array of floats
      Set of 6 PT parameters (a1, a2, p1, p2, p3, T3) as
      in Madhusudhan & Seager (2009).
-  args: List
-     Boolean that determines inversion (True) or non-inversion (False)
-     temperature profile case.
+  PTfunc: pointer to function
+     Determines the method of evaluating the PT profile's temperature
+  PTargs: list
+     If not None, passed to `PTfunc`
 
   Returns
   -------
@@ -745,20 +748,18 @@ def PT_generator(p, free_params, args):
   2014-04-05  Jasmina   Set T3 as free parameter instead of T0.
   2014-04-11  Patricio  Modified to work with the BART code.
   2014-12-27  Patricio  Added profile from Line et al. (2013).
+  2019-02-13  mhimes    Refactored to take a pointer to a function.
   '''
-  # args[0] indicate the type of temperature profile:
-  if   args[0] == "line":
-    Temp       = PT_line(p, free_params, *args[1:])
-  elif args[0] == "madhu":
-    if   len(free_params) == 5: # Non-inversion layer
-      PT, Temp = PT_NoInversion(p, *free_params)
-    elif len(free_params) == 6: # With inversion layer
-      PT, Temp = PT_Inversion(p,   *free_params)
-  elif args[0] == "iso":
-    Temp       = PT_iso(p, *free_params)
+  # Pass extra args if given
+  if PTargs == None:
+    Temp = PTfunc(p, *free_params)
   else:
-    print("Unknown T profile type: '{:s}'".format(args[0]))
-    # FINDME: throw error and stop.
+    Temp = PTfunc(p, *np.concatenate((free_params, PTargs)))
+
+  # madhu profiles have 2 returns, the params and the temps
+  if type(Temp) == tuple:
+    Temp = Temp[-1] # only take the temps
+
   return Temp
 
 

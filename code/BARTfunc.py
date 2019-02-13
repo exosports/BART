@@ -122,6 +122,12 @@ def main(comm):
   Tmax     = args2.Tmax
   solution = args2.solution  # Solution type
 
+  # Dictionary of functions to calculate temperature for PTtype
+  PTfunc = {'iso'         : pt.PT_iso,
+            'line'        : pt.PT_line, 
+            'madhu_noinv' : pt.PT_NoInversion,
+            'madhu_inv'   : pt.PT_Inversion}
+
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)
   # Stellar temperature in K:
@@ -164,12 +170,13 @@ def main(comm):
     imol[i] = np.where(np.asarray(species) == molfit[i])[0]
   
   # Pressure-Temperature profile:
-  PTargs = [PTtype]
   if PTtype == "line":
     # Planetary surface gravity (in cm s-2):
     gplanet = 100.0 * sc.G * mplanet / rplanet**2
     # Additional PT arguments:
-    PTargs += [rstar, tstar, tint, sma, gplanet]
+    PTargs  = [rstar, tstar, tint, sma, gplanet]
+  else:
+    PTargs  = None
 
   # Allocate arrays for receiving and sending data to master:
   freepars = np.zeros(nfree,                 dtype='d')
@@ -251,7 +258,8 @@ def main(comm):
 
     # Input converter calculate the profiles:
     try:
-      tprofile[:] = pt.PT_generator(pressure, params[0:nPT], PTargs)[::-1]
+      tprofile[:] = pt.PT_generator(pressure,       params[0:nPT], 
+                                    PTfunc[PTtype], PTargs       )[::-1]
     except ValueError:
       mu.msg(verb, 'Input parameters give non-physical profile.')
       # FINDME: what to do here?
