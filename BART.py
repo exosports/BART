@@ -431,17 +431,10 @@ def main():
   MCfile = date_dir + logfile
   
   # Call bestFit submodule and make new bestFit_tconfig.cfg
+  # Also makes contribution/transmittance functions
   bf.callTransit(atmfile,    tep_name, MCfile,  stepsize, molfit, 
                  solution,   refpress, tconfig, date_dir, burnin, 
                  abun_basic, PTtype,   filters)
-
-  # Best-fit tconfig
-  '''bestFit_tconfig = date_dir + 'bestFit_tconfig.cfg'
-
-  # Call Transit with the best-fit tconfig
-  Tcall = Transitdir + "/transit/transit"
-  subprocess.call(["{:s} -c {:s}".format(Tcall, bestFit_tconfig)],
-                   shell=True, cwd=date_dir)'''
 
   # Plot best-fit eclipse or modulation spectrum, depending on solution:
   bf.plot_bestFit_Spectrum(filters, kurucz, tep_name, solution, outspec,
@@ -449,25 +442,6 @@ def main():
 
   # Plot abundance profiles
   bf.plotabun(date_dir, bestFit_atmfile, molfit)
-  
-  mu.msg(1, "\nTransit call for contribution functions/transmittance.")
-  # Run Transit with unlimited 'toomuch' argument:
-  '''cf.cf_tconfig(date_dir)
-  # Call Transit with the cf_tconfig
-  cf_tconfig = date_dir + 'cf_tconfig.cfg'
-  Tcall = Transitdir + "/transit/transit"
-  subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
-                    shell=True, cwd=date_dir)'''
-
-  # Calculate and plot contribution functions by itself:
-  '''if solution == "eclipse":
-    # Compute contribution fucntions if this is a eclipse run:
-    mu.msg(1, "Calculating contribution functions.", indent=2)
-    ctfraw, ctf = cf.cf(date_dir, bestFit_atmfile, filters)
-  else:
-    # Compute transmittance if this is a transmission run:
-    mu.msg(1, "Calculating transmittance.", indent=2)
-    ctf = cf.transmittance(date_dir, bestFit_atmfile, filters)'''
 
   mu.msg(1, "~~ BART End ~~")
 
