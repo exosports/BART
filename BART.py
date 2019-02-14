@@ -432,8 +432,8 @@ def main():
                     shell=True, cwd=date_dir)
 
   # Re-plot MCMC results in prettier format
-  mcp.mcplots('output.npy', burnin, thinning, nchains, uniform, molfit, 
-              stepsize[-len(molfit):], out_spec, parnames, date_dir, 
+  mcp.mcplots('output.npy', burnin,   thinning, nchains, uniform, molfit, 
+              stepsize,     out_spec, parnames, date_dir, 
               ["output_trace.png", "output_pairwise.png", 
                "output_posterior.png"])
 

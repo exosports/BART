@@ -43,7 +43,9 @@ import matplotlib.ticker as tck
 sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/../modules/MCcubed/MCcubed/lib")
 import binarray as ba
 
+
 __all__ = ["mcplots", "trace", "pairwise", "histogram", "RMS", "modelfit"]
+
 
 def mcplots(output,   burnin,   thinning, nchains, uniform, molfit, 
             stepsize, out_spec, parnames, date_dir, fnames):
@@ -79,10 +81,16 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
     molind = []
     for imol in range(len(molfit)):
       for j  in range(len(out_spec.split(' '))):
-        if molfit[imol]+'_' in out_spec.split(' ')[j] and stepsize[imol] > 0:
+        if molfit[imol]+'_' in out_spec.split(' ')[j] and \
+           stepsize[-len(molfit):][imol] > 0:
           molind.append(j)
     allstack[-len(molfit):, :] += \
                                np.log10(uniform[molind]).reshape(len(molind),1)
+
+  # Slice only params that are varied (remove static params)
+  ipar     = stepsize != 0
+  # Note 'parnames' is a list, so cannot index using an array/list
+  parnames = [parnames[i] for i in range(len(parnames)) if ipar[i]]
 
   # Trace plot:
   trace(    allstack, parname=parnames, thinning=thinning,
