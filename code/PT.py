@@ -57,6 +57,8 @@ import reader as rd
                        BART use.
   2014-08-15  Patricio Cleaned up.
   2014-09-24  Jasmina  Updated documentation.
+  2018-05-24  Ryan     Added PT_iso
+  2019-02-13  mhimes   Refactored PT_generator
 """
 
 
@@ -696,6 +698,10 @@ def PT_iso(p, T):
   Returns
   -------
   1D temperature array
+
+  Revisions
+  ---------
+  2018-05-24    Ryan        Initial implementation
   """
   return np.ones(len(p)) * T
 
