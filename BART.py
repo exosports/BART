@@ -447,9 +447,9 @@ def main():
   
   # Call bestFit submodule and make new bestFit_tconfig.cfg
   # Also makes contribution/transmittance functions
-  bf.callTransit(atmfile,    tep_name, MCfile,  stepsize, molfit, 
-                 solution,   refpress, tconfig, date_dir, burnin, 
-                 abun_basic, PTtype,   PTfunc[PTtype],    filters)
+  bf.callTransit(bestFit_atmfile, tep_name, MCfile,  stepsize, molfit, 
+                 solution,        refpress, tconfig, date_dir, burnin, 
+                 abun_basic,      PTtype,   PTfunc[PTtype],    filters)
 
   # Plot best-fit eclipse or modulation spectrum, depending on solution:
   bf.plot_bestFit_Spectrum(filters, kurucz, tep_name, solution, outspec,
