@@ -331,7 +331,7 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
     burnin = int(burnin)
 
     # read atmfile
-    molecules, pressure, temp, abundances = mat.readatm(atmfile)
+    molecules, pressure, temp, abundances = mat.readatm(date_dir + atmfile)
     # get surface gravity
     grav, Rp = mat.get_g(tepfile)
     # get star data if needed
@@ -376,7 +376,7 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
       Rp = allParams[nPTparams]
 
     # write best-fit atmospheric file
-    write_atmfile(atmfile, abun_file, molfit, best_T,
+    write_atmfile(date_dir + atmfile, abun_file, molfit, best_T,
                   allParams[nPTparams+nradfit:], date_dir, p0, Rp, grav)
 
     # bestFit atm file
