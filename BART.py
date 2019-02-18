@@ -440,7 +440,7 @@ def main():
   # Run best-fit Transit call
   mu.msg(1, "\nTransit call with the best-fitting values.")
 
-  bestFit_atmfile = 'bestFit.atm'
+  bestFit_atmfile = date_dir + 'bestFit.atm'
 
   # MCcubed output file
   MCfile = date_dir + logfile
