@@ -17,7 +17,7 @@ Transitdir = BARTdir + "/modules/transit/"
 sys.path.append(BARTdir + "/code")
 import makeP     as mp
 import InitialPT as ipt
-import PT        as pt
+import        PT as  pt
 import makeatm   as mat
 import makecfg   as mc
 import bestFit   as bf
@@ -267,7 +267,7 @@ def main():
     sys.exit()
 
   # Check that out_spec and uniform are valid specifications
-  if uniform != None and len(uniform) != len(out_spec.split(' ')):
+  if np.all(uniform != None) and len(uniform) != len(out_spec.split(' ')):
     print('The inputs for out_spec and uniform are not compatible.')
     diffuniout = len(uniform) - len(out_spec.split(' '))
     if diffuniout > 0:
@@ -312,7 +312,7 @@ def main():
   # Check if files already exist:
   runMCMC = 0  # Flag that indicate which steps to run
   if justPlots:
-    mu.msg(1, "Re-making output plots.", indent=2)
+    mu.msg(1, "\nRe-making output plots.", indent=0)
     runMCMC |= 16
   # Atmospheric file:
   if os.path.isfile(atmfile):
@@ -349,12 +349,11 @@ def main():
   # Make uniform-abundance profiles if requested:
   if uniform is not None and runMCMC < 8:
     # Calculate the temperature profile:
-    temp = ipt.initialPT2(date_dir, PTinit, press_file, 
-                          PTtype, PTfunc[PTtype], tep_name)
+    temp = ipt.initialPT2(date_dir, PTinit,         press_file, 
+                          PTtype,   PTfunc[PTtype], tep_name)
     # Generate the uniform-abundance profiles file:
-    mat.uniform(date_dir + atmfile, press_file, abun_basic, tep_name,
+    mat.uniform(date_dir+atmfile, press_file, abun_basic, tep_name,
                out_spec, uniform, temp, refpress)
-    atmfile = date_dir + atmfile
     # Update the runMCMC flag to skip upcoming steps:
     runMCMC |= 8
 
@@ -366,8 +365,8 @@ def main():
 
   if runMCMC < 4:  # Pre-atmospheric file
     # Calculate the temperature profile:
-    temp = ipt.initialPT2(date_dir, PTinit, press_file, 
-                          PTtype, PTfunc[PTtype], tep_name)
+    temp = ipt.initialPT2(date_dir, PTinit,         press_file, 
+                          PTtype,   PTfunc[PTtype], tep_name)
     # Choose a pressure-temperature profile
     mu.msg(1, "\nChoose temperature and pressure profile:", indent=2)
     raw_input("  open Initial PT profile figure and\n" 
@@ -390,9 +389,8 @@ def main():
     proc.communicate()
 
     shutil.copy2(date_dir+"TEA/results/TEA.tea", date_dir+atmfile) 
-    atmfile = date_dir + atmfile
     # Add radius array:
-    mat.makeRadius(out_spec, atmfile, abun_file, tep_name, refpress)
+    mat.makeRadius(out_spec, date_dir+atmfile, abun_file, tep_name, refpress)
     mu.msg(1, "Added radius column to TEA atmospheric file.", indent=2)
     # Re-format file for use with transit:
     mat.reformat(atmfile)
@@ -433,30 +431,53 @@ def main():
 
   # Re-plot MCMC results in prettier format
   mcp.mcplots('output.npy', burnin,   thinning, nchains, uniform, molfit, 
-              stepsize,     out_spec, parnames, date_dir, 
+              out_spec,     parnames, stepsize, date_dir, 
               ["output_trace.png", "output_pairwise.png", 
                "output_posterior.png"])
 
   # Run best-fit Transit call
   mu.msg(1, "\nTransit call with the best-fitting values.")
 
-  bestFit_atmfile = 'bestFit.atm'
-
   # MCcubed output file
   MCfile = date_dir + logfile
   
-  # Call bestFit submodule and make new bestFit_tconfig.cfg
-  # Also makes contribution/transmittance functions
-  bf.callTransit(bestFit_atmfile, tep_name, MCfile,  stepsize, molfit, 
-                 solution,        refpress, tconfig, date_dir, burnin, 
-                 abun_basic,      PTtype,   PTfunc[PTtype],    filters)
+  # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
+  bf.callTransit(date_dir+atmfile, tep_name, MCfile,  stepsize, molfit, 
+                 solution,         refpress, tconfig, date_dir, burnin, 
+                 abun_basic,       PTtype,   PTfunc[PTtype],    filters)
 
   # Plot best-fit eclipse or modulation spectrum, depending on solution:
   bf.plot_bestFit_Spectrum(filters, kurucz, tep_name, solution, outspec,
                            data, uncert, date_dir)
 
+  bestFit_atmfile = 'bestFit.atm'
+
   # Plot abundance profiles
   bf.plotabun(date_dir, bestFit_atmfile, molfit)
+  
+  mu.msg(1, "\nTransit call for contribution functions/transmittance.")
+  # Run Transit with unlimited 'toomuch' argument:
+  cf.cf_tconfig(date_dir)
+  # Call Transit with the cf_tconfig
+  cf_tconfig = date_dir + 'cf_tconfig.cfg'
+  Tcall = Transitdir + "/transit/transit"
+  subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
+                    shell=True, cwd=date_dir)
+
+  # Calculate and plot contribution functions:
+  if solution == "eclipse":
+    # Compute contribution fucntions if this is a eclipse run:
+    mu.msg(1, "Calculating contribution functions.", indent=2)
+    ctfraw, ctf = cf.cf(date_dir, bestFit_atmfile, filters)
+  else:
+    # Compute transmittance if this is a transmission run:
+    mu.msg(1, "Calculating transmittance.", indent=2)
+    ctf = cf.transmittance(date_dir, bestFit_atmfile, filters)
+
+  # Make a plot of MCMC profiles with contribution functions/transmittance
+  bf.callTransit(date_dir+atmfile, tep_name, MCfile,   stepsize, molfit, 
+                 solution,         refpress, tconfig,  date_dir, burnin, 
+                 abun_basic,       PTtype,   PTfunc[PTtype],     filters,  ctf)
 
   mu.msg(1, "~~ BART End ~~")
 

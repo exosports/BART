@@ -43,12 +43,10 @@ import matplotlib.ticker as tck
 sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/../modules/MCcubed/MCcubed/lib")
 import binarray as ba
 
-
 __all__ = ["mcplots", "trace", "pairwise", "histogram", "RMS", "modelfit"]
 
-
 def mcplots(output,   burnin,   thinning, nchains, uniform, molfit, 
-            stepsize, out_spec, parnames, date_dir, fnames):
+            out_spec, parnames, stepsize, date_dir, fnames):
   """
   Reformats the MC3 output file so that the log(abundance) factor is with 
   respect to molar fraction, rather than the initial values (as MC3 does). 
@@ -62,10 +60,11 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
                  iteration) used for plotting.
   uniform : array-like. If not None, set uniform abundances with the 
                         specified values for each species.
-  molfit  : array, strings. Molecules being fit by the MCMC.
-  stepsize: array, floats.  Initial stepsizes of MCMC parameters.
   nchains : int. Number of parallel chains in MCMC.
   molfit  : list, strings. Molecules to be fit by the MCMC.
+  out_spec: list, strings. Molecules included in atmospheric file.
+  parnames: list, strings. Parameter names.
+  stepsize: array, floats.  Initial stepsizes of MCMC parameters.
   date_dir: string. Path to directory where plots are to be saved.
   fnames  : list, strings. File names for the trace, pairwise, and histogram 
                            plots, in that order.
@@ -310,9 +309,9 @@ def pairwise(allparams, title=None, parname=None, thinning=1,
             ss = ax.get_subplotspec()
             nrows, ncols, start, stop = ss.get_geometry()
             if start//nrows == nrows-1:
-              ax.xaxis.set_label_coords(0.5, -1.4 * npars/9.)
+              ax.xaxis.set_label_coords(0.5, -0.155 * npars)
             if start%ncols == 0:
-              ax.yaxis.set_label_coords(-1.3 * npars/9., 0.5)
+              ax.yaxis.set_label_coords(-0.155 * npars, 0.5)
     
       h += 1
   # The colorbar:
@@ -594,15 +593,17 @@ def reformatparname(parname):
   # Reformat parameter names for special cases when plotting
   reformatpar = []
   for i in range(len(parname)):
-    # Gamma1, gamma2, alpha, beta, kappa params for Line PT profile
-    if parname[i][0] == 'g' and (parname[i][1] == '1' or parname[i][1] == '2'):
-      reformatpar.append('$\gamma_{'+parname[i][1]+'}$')
+    # kappa, gamma1, gamma2, alpha, beta params for Line PT profile
+    if   'kappa' in parname[i]:
+      reformatpar.append(parname[i].replace('kappa', '$\kappa$'))
+    elif 'g1' in parname[i]:
+      reformatpar.append(parname[i].replace('g1', '$\gamma_1$'))
+    elif 'g2' in parname[i]:
+      reformatpar.append(parname[i].replace('g2', '$\gamma_2$'))
     elif parname[i] == 'alpha':
       reformatpar.append('$\\alpha$')
     elif parname[i] == 'beta':
       reformatpar.append('$\\beta$')
-    elif parname[i] == 'kappa':
-      reformatpar.append('$\kappa$')
     # Radius of the planet, for transit geometry cases
     elif parname[i] == 'Rp' or parname[i] == 'R_p':
       reformatpar.append('R$_\mathrm{p}$')

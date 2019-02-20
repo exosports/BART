@@ -28,7 +28,8 @@
     2015-05-03  Jasmina  Original implementation
     2015-07-12  Jasmina  Added documentation.
     2018-12-21  Michael  Updated documentation, improved code readability.
-    2019-02-13  Michael  Refactored callTransit. Enabled plotting for PT madhu
+    2019-02-13  Michael  Refactored callTransit. Enabled plotting for madhu 
+                         PT profiles.
 """
 
 import os, sys, subprocess
@@ -288,9 +289,9 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
   f.close()
 
 
-def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
-                p0,      tconfig, date_dir, burnin,   abun_file, 
-                PTtype,  PTfunc,  filters):
+def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0, 
+                tconfig, date_dir, burnin, abun_file, PTtype,  PTfunc, 
+                filters, ctf=None):
     """
     Call Transit to produce best-fit outputs.
     Plot MCMC posterior PT plot.
@@ -320,18 +321,20 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
        Elemental abundances file.
     PTtype: String
        Pressure-temperature profile type ('line' for Line et al. 2013, 
-       'madhu_noinv' or 'madhu_inv'for Madhusudhan & Seager 2009, 
+       'madhu_noinv' or 'madhu_inv' for Madhusudhan & Seager 2009, 
        'iso' for isothermal)
     PTfunc: pointer to function
        Determines the method of evaluating the PT profile's temperature
     filters: list, strings.
        Filter files associated with the eclipse/transit depths
+    ctf: 2D array.
+       Contribution or transmittance functions corresponding to `filters`
     """
     # make sure burnin is an integer
     burnin = int(burnin)
 
     # read atmfile
-    molecules, pressure, temp, abundances = mat.readatm(date_dir + atmfile)
+    molecules, pressure, temp, abundances = mat.readatm(atmfile)
     # get surface gravity
     grav, Rp = mat.get_g(tepfile)
     # get star data if needed
@@ -339,7 +342,7 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
       R_star, T_star, sma, gstar = get_starData(tepfile)
       # FINDME: Hardcoded value:
       T_int  = 100  # K
-      PTargs = [R_star, T_star, T_int, sma, grav]
+      PTargs = [R_star, T_star, T_int, sma, grav*1e2]
     else:
       PTargs = None # For non-Line profiles
 
@@ -355,8 +358,7 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
 
     PTparams  = allParams[:nPTparams]
 
-
-    # call PT line profile to calculate temperature
+    # call PT profile generator to calculate temperature
     best_T = pt.PT_generator(pressure, PTparams, PTfunc, PTargs)
 
     # Plot best PT profile
@@ -376,11 +378,8 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
       Rp = allParams[nPTparams]
 
     # write best-fit atmospheric file
-    write_atmfile(date_dir + atmfile, abun_file, molfit, best_T,
+    write_atmfile(atmfile, abun_file, molfit, best_T,
                   allParams[nPTparams+nradfit:], date_dir, p0, Rp, grav)
-
-    # bestFit atm file
-    bestFit_atm = 'bestFit.atm'
 
     # write new bestFit Transit config
     if solution == 'transit':
@@ -391,28 +390,10 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
     # Call Transit with the best-fit tconfig
     Transitdir      = os.path.dirname(os.path.realpath(__file__)) + \
                       "/../modules/transit/"
-    bf_tconfig = date_dir   + 'bestFit_tconfig.cfg'
+    bf_tconfig      = date_dir   + 'bestFit_tconfig.cfg'
     Tcall           = Transitdir + "/transit/transit"
     subprocess.call(["{:s} -c {:s}".format(Tcall, bf_tconfig)],
-                     shell=True, cwd=date_dir)
-
-    # Run Transit with unlimited 'toomuch' argument:
-    cf.cf_tconfig(date_dir)
-    # Call Transit with the cf_tconfig
-    cf_tconfig = date_dir + 'cf_tconfig.cfg'
-    Tcall      = Transitdir + "/transit/transit"
-    subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
-                    shell=True, cwd=date_dir)
-
-    # Calculate contribution or transmittance functions
-    if solution == "eclipse":
-      # Compute contribution fucntions if this is a eclipse run:
-      print("  Calculating contribution functions.")
-      ctfraw, ctf = cf.cf(date_dir, bestFit_atm, filters)
-    else:
-      # Compute transmittance if this is a transmission run:
-      print("  Calculating transmittance.")
-      ctf = cf.transmittance(date_dir, bestFit_atm, filters)    
+shell=True, cwd=date_dir)
 
     # ========== plot MCMC PT profiles ==========
     # get MCMC data:
@@ -432,7 +413,8 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
     curr_PTparams = PTparams
 
     # fill-in PT profiles array
-    print("  Plotting MCMC PT profile figure.")
+    if ctf == None:
+        print("  Plotting MCMC PT profile figure.")
     for k in np.arange(0, np.shape(data_stack)[1]):
         j = 0
         for i in np.arange(len(PTparams)):
@@ -452,10 +434,15 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
     median = np.median(    PTprofiles,       axis=0)
 
     # plot figure
-    plt.figure(2, figsize=(13,6), dpi=300)
-    plt.subplots_adjust(wspace=0.1)
-    plt.clf()
-    ax1=plt.subplot(121)
+    if np.all(ctf != None):
+        plt.figure(2, figsize=(13,6), dpi=300)
+        plt.subplots_adjust(wspace=0.15)
+        plt.clf()
+        ax1=plt.subplot(121)
+    else:
+        plt.figure(2)
+        plt.clf()
+        ax1=plt.subplot(111)
     ax1.fill_betweenx(pressure, low2, hi2, facecolor="#62B1FF", 
                       edgecolor="0.5")
     ax1.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC",
@@ -466,29 +453,34 @@ def callTransit(atmfile, tepfile, MCfile,   stepsize, molfit, solution,
     plt.legend(loc="best")
     plt.xlabel("Temperature  (K)", size=15)
     plt.ylabel("Pressure  (bar)",  size=15)
-    # Add contribution or transmittance functions
-    ax2=plt.subplot(122, sharey=ax1)
-    colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
-    ax2.set_prop_cycle(plt.cycler('color', colormap))
-    # Plot with filter labels
-    for i in np.arange(len(filters)):
-        (head, tail) = os.path.split(filters[i])
-        lbl          = tail[:-4]
-        ax2.semilogy(ctf[i], pressure, '--',  linewidth = 1, label=lbl)
-    # Hide y axis tick labels
-    plt.setp(ax2.get_yticklabels(), visible=False)
-    # Place legend off figure in case there are many filters
-    lgd = ax2.legend(loc='center left', bbox_to_anchor=(1,0.5), 
-                     ncol=len(filters)//30 + 1, prop={'size':8})
-    if solution == 'eclipse':
-        ax2.set_xlabel('Contribution Functions',  fontsize=15)
-    else:
-        ax2.set_xlabel('Transmittance', fontsize=15)
+    if np.all(ctf != None):
+        # Add contribution or transmittance functions
+        ax2=plt.subplot(122, sharey=ax1)
+        colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
+        ax2.set_prop_cycle(plt.cycler('color', colormap))
+        # Plot with filter labels
+        for i in np.arange(len(filters)):
+            (head, tail) = os.path.split(filters[i])
+            lbl          = tail[:-4]
+            ax2.semilogy(ctf[i], pressure, '--',  linewidth = 1, label=lbl)
+        # Hide y axis tick labels
+        plt.setp(ax2.get_yticklabels(), visible=False)
+        # Place legend off figure in case there are many filters
+        lgd = ax2.legend(loc='center left', bbox_to_anchor=(1,0.5), 
+                         ncol=len(filters)//30 + 1, prop={'size':8})
+        if solution == 'eclipse':
+            ax2.set_xlabel('Normalized Contribution\nFunctions',  fontsize=15)
+        else:
+            ax2.set_xlabel('Transmittance', fontsize=15)
     
 
     # save figure
-    savefile = date_dir + "MCMC_PTprofiles.png"
-    plt.savefig(savefile, bbox_extra_artists=(lgd,), bbox_inches='tight')
+    if np.all(ctf != None):
+        savefile = date_dir + "MCMC_PTprofiles_cf.png"
+        plt.savefig(savefile, bbox_extra_artists=(lgd,), bbox_inches='tight')
+    else:
+        savefile = date_dir + "MCMC_PTprofiles.png"
+        plt.savefig(savefile)
 
 
 def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
@@ -585,7 +577,7 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
         plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best-fit")
         plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="data")
         plt.plot(meanwl, bandflux*1e3, "ok", label="model", alpha=1.0)
-        plt.ylabel(r"$F_p/F_s$ (10$^{3}$)", fontsize=12)
+        plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=12)
 
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 2)

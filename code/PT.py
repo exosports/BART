@@ -176,7 +176,7 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3, verb=False):
          range (0.04, 0.5) 
      p1: Float
      p2: Float
-         Pressure boundary between Layers 1 and 2 (in bars).
+         Pressure boundary between Layer  1 and 2 (in bars).
      p3: Float
          Pressure boundary between Layers 2 and 3 (in bars).
      T3: float
@@ -329,10 +329,10 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3, verb=False):
      T1 = T0 + (np.log(p1/p0) / a1)**2
 
      # Error message when temperatures ar point 1, 2 or 3 are < 0
-     if verb:
-          if T0<0 or T1<0 or T2<0 or T3<0:
+     if T0<0 or T1<0 or T2<0 or T3<0:
+          if verb:
                print('T0, T1, T2 and T3 temperatures are: ', T0, T1, T2, T3)
-               raise ValueError('Input parameters give non-physical profile. Try again.')
+          raise ValueError('Input parameters give non-physical profile. Try again.')
 
      # Defining arrays of pressures for every part of the PT profile
      p_l1     = p[(np.where((p >= min(p)) & (p < p1)))]
@@ -351,7 +351,7 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3, verb=False):
      # Madhusudhan and Seager 2009
 
      # Layer 1 temperatures
-     T_l1      = (np.log(p_l1/p0) / a1)**2 + T0  
+     T_l1     = (np.log(p_l1/p0) / a1)**2 + T0  
  
      # Layer 2 temperatures (inversion part)
      T_l2_pos = (np.log(p_l2_pos/p2) / -a2)**2 + T2
@@ -399,7 +399,7 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
          range (0.04, 0.5) 
      p1: Float
      p2: Float
-         Pressure boundary between Layers 1 and 2 (in bars).
+         Pressure boundary between Layer  1 and 2 (in bars).
      p3: Float
          Pressure boundary between Layers 2 and 3 (in bars).
      T3: float
@@ -638,8 +638,7 @@ def PT_line(pressure, kappa,  gamma1, gamma2, alpha, beta,
   >>> gamma2 = -0.8   # log10(0.158)
   >>> alpha  = 0.5
   >>> beta   = 1.0
-  >>> params = [kappa, gamma1, gamma2, alpha, beta]
-  >>> T0 = pt.PT(p, *params, Rs, Ts, Ti, a, g)
+  >>> T0 = pt.PT(p, kappa, gamma1, gamma2, alpha, beta, Rs, Ts, Ti, a, g)
 
   >>> plt.figure(1)
   >>> plt.clf()
@@ -689,12 +688,10 @@ def PT_line(pressure, kappa,  gamma1, gamma2, alpha, beta,
 def PT_iso(p, T):
   """
   Returns an isothermal atmosphere at given pressures.
-
   Parameters
   ----------
   pressure: 1D float ndarray
      Array of pressure values in bars.
-
   Returns
   -------
   1D temperature array
