@@ -413,7 +413,7 @@ shell=True, cwd=date_dir)
     curr_PTparams = PTparams
 
     # fill-in PT profiles array
-    if type(ctf) == type(None):
+    if ctf is None:
         print("  Plotting MCMC PT profile figure.")
     for k in np.arange(0, np.shape(data_stack)[1]):
         j = 0
@@ -436,7 +436,7 @@ shell=True, cwd=date_dir)
     # plot figure
     plt.figure(2, dpi=300)
     plt.clf()
-    if type(ctf) != type(None):
+    if ctf is not None:
         plt.subplots_adjust(wspace=0.15)
         ax1=plt.subplot(121)
     else:
@@ -451,7 +451,7 @@ shell=True, cwd=date_dir)
     plt.legend(loc="best")
     plt.xlabel("Temperature  (K)", size=15)
     plt.ylabel("Pressure  (bar)",  size=15)
-    if type(ctf) != type(None):
+    if ctf is not None:
         # Add contribution or transmittance functions
         ax2=plt.subplot(122, sharey=ax1)
         colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
@@ -473,7 +473,7 @@ shell=True, cwd=date_dir)
     
 
     # save figure
-    if type(ctf) != type(None):
+    if ctf is not None:
         savefile = date_dir + "MCMC_PTprofiles_cf.png"
         plt.savefig(savefile, bbox_extra_artists=(lgd,), bbox_inches='tight')
     else:
