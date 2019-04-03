@@ -130,12 +130,15 @@ def main(comm):
 
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)
-  # Stellar temperature in K:
-  tstar = float(tep.getvalue('Ts')[0])
-  # Stellar radius (in meters):
-  rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
-  # Semi-major axis (in meters):
-  sma   = float(tep.getvalue( 'a')[0]) * sc.au
+  
+  if solution == 'transit' or solution == 'eclipse':
+    # Stellar temperature in K:
+    tstar = float(tep.getvalue('Ts')[0])
+    # Stellar radius (in meters):
+    rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
+    # Semi-major axis (in meters):
+    sma   = float(tep.getvalue( 'a')[0]) * sc.au
+    
   # Planetary radius (in meters):
   rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
   # Planetary mass (in kg):
@@ -206,36 +209,59 @@ def main(comm):
   ffile    = args2.filters    # Filter files
   kurucz   = args2.kurucz     # Kurucz file
 
-  # Log10(stellar gravity)
-  gstar = float(tep.getvalue('loggstar')[0])
-  # Planet-to-star radius ratio:
-  rprs  = rplanet / rstar
-
   nfilters = len(ffile)  # Number of filters:
 
   # FINDME: Separate filter/stellar interpolation?
   # Get stellar model:
-  starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, tstar, gstar)
-  # Read and resample the filters:
-  nifilter  = [] # Normalized interpolated filter
-  istarfl   = [] # interpolated stellar flux
-  wnindices = [] # wavenumber indices used in interpolation
-  for i in np.arange(nfilters):
-    # Read filter:
-    filtwaven, filttransm = w.readfilter(ffile[i])
-    # Check that filter boundaries lie within the spectrum wn range:
-    if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
-      mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
-              "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
-              "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
-                                                        filtwaven[-1]))
+  if solution == 'eclipse' or solution == 'transit':
+    # Log10(stellar gravity)
+    gstar = float(tep.getvalue('loggstar')[0])
+    # Planet-to-star radius ratio:
+    rprs  = rplanet / rstar
+    
+    starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, tstar, gstar)
+    # Read and resample the filters:
+    nifilter  = [] # Normalized interpolated filter
+    istarfl   = [] # interpolated stellar flux
+    wnindices = [] # wavenumber indices used in interpolation
+    for i in np.arange(nfilters):
+      # Read filter:
+      filtwaven, filttransm = w.readfilter(ffile[i])
+      # Check that filter boundaries lie within the spectrum wn range:
+      if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
+        mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
+                "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
+                "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
+                                filtwaven[-1]))
 
-    # Resample filter and stellar spectrum:
-    nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
-                                              starwn,    starfl)
-    nifilter.append(nifilt)
-    istarfl.append(strfl)
-    wnindices.append(wnind)
+      # Resample filter and stellar spectrum:
+      nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
+                                        starwn,    starfl)
+      nifilter.append(nifilt)
+      istarfl.append(strfl)
+      wnindices.append(wnind)
+
+  # If direct observation, don't need stellar spectrum
+  else:
+    # Read and resample the filters:
+    nifilter  = [] # Normalized interpolated filter
+    istarfl   = [] # interpolated stellar flux
+    wnindices = [] # wavenumber indices used in interpolation
+    for i in np.arange(nfilters):
+      # Read filter:
+      filtwaven, filttransm = w.readfilter(ffile[i])
+      # Check that filter boundaries lie within the spectrum wn range:
+      if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
+        mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
+                "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
+                "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
+                                filtwaven[-1]))
+
+      # Resample filter (slightly inefficiently)
+      nifilt, dummy, wnind = w.resample(specwn, filtwaven, filttransm,
+                                        filtwaven, filttransm)
+      nifilter.append(nifilt)
+      wnindices.append(wnind)
 
   # Allocate arrays for receiving and sending data to master:
   spectrum = np.zeros(nwave,    dtype='d')
@@ -298,8 +324,11 @@ def main(comm):
       elif solution == "transit":
         bandflux[i] = w.bandintegrate(spectrum[wnindices[i]], specwn,
                                       nifilter[i], wnindices[i])
+      elif solution == "direct":
+        bandflux[i] = w.bandintegrate(spectrum[wnindices[i]], specwn,
+                                      nifilter[i], wnindices[i])
 
-    # Send resutls back to MCMC:
+    # Send results back to MCMC:
     mu.comm_gather(comm, bandflux, MPI.DOUBLE)
 
   # ::::::  End main Loop  :::::::::::::::::::::::::::::::::::::::::::

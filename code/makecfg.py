@@ -85,7 +85,12 @@ def makeTransit(cfile, tepfile, shareOpacity):
     # FINDME: Why am I splitting?
     values = Bconfig.get(section, key).split("\n")
     for val in values:
-      tcfile.write("{:s} {:s}\n".format(key, val))
+      # Run transit like eclipse for direct emission
+      # (differences are handled in the BART Python)
+      if key == 'solution' and val == 'direct':
+        tcfile.write("{:s} {:s}\n".format(key, 'eclipse'))
+      else:
+        tcfile.write("{:s} {:s}\n".format(key, val))
 
   if shareOpacity:
     tcfile.write("shareOpacity \n")

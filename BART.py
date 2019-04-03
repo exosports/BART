@@ -202,7 +202,7 @@ def main():
   group.add_argument("--solution",                    action="store",
            help="Solution geometry [default: %(default)s]",
            dest="solution", type=str,       default="None",
-           choices=('transit', 'eclipse'))
+           choices=('transit', 'eclipse','direct'))
 
   # Transit options:
   group = parser.add_argument_group("Transit variables")
@@ -267,19 +267,19 @@ def main():
     sys.exit()
 
   # Check that out_spec and uniform are valid specifications
-  if uniform is not None and len(uniform) != len(out_spec.split(' ')):
+  if uniform is not None and len(uniform) != len(out_spec.split()):
     print('The inputs for out_spec and uniform are not compatible.')
     diffuniout = len(uniform) - len(out_spec.split(' '))
     if diffuniout > 0:
       if diffuniout == 1:
-        print('uniform has ' + str(diffuniout) + 'extra entry.')
+        print('uniform has ' + str(diffuniout) + ' extra entry.')
       else:
-        print('uniform has ' + str(diffuniout) + 'extra entries.')
+        print('uniform has ' + str(diffuniout) + ' extra entries.')
     else:
       if diffuniout == -1:
-        print('out_spec has ' + str(-1*diffuniout) + 'extra entry.')
+        print('out_spec has ' + str(-1*diffuniout) + ' extra entry.')
       else:
-        print('out_spec has ' + str(-1*diffuniout) + 'extra entries.')
+        print('out_spec has ' + str(-1*diffuniout) + ' extra entries.')
     print('Please correct this and run again.')
     sys.exit()
 

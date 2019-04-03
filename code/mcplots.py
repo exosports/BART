@@ -79,8 +79,8 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
   if uniform is not None and np.all(stepsize > 0):
     molind = []
     for imol in range(len(molfit)):
-      for j  in range(len(out_spec.split(' '))):
-        if molfit[imol]+'_' in out_spec.split(' ')[j] and \
+      for j  in range(len(out_spec.split())):
+        if molfit[imol]+'_' in out_spec.split()[j] and \
            stepsize[-len(molfit):][imol] > 0:
           molind.append(j)
     allstack[-len(molfit):, :] += \
