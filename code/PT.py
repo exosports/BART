@@ -190,7 +190,7 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3, verb=False):
               - concatenated array of temperatures, 
               - temperatures at point 1, 2 and 3 (see Figure 1, Madhusudhan & 
                 Seager 2009)
-          T_conc:   1D array of floats, temperatures concatenated for all levels 
+          T_out:    1D array of floats, temperatures concatenated for all levels
           T_l1:     1D array of floats, temperatures for layer 1
           T_l2_pos: 1D array of floats, temperatures for layer 2 inversion part 
                     (pos-increase in temperatures)
@@ -361,17 +361,21 @@ def PT_Inversion(p, a1, a2, p1, p2, p3, T3, verb=False):
 
      # Layer 3 temperatures
      T_l3     = np.linspace(T3, T3, len(p_l3))
-      
-     # Concatenating all temperature arrays
-     T_conc   = np.concatenate((T_l1, T_l2_pos, T_l2_neg, T_l3))
+
+     # The output temperatures
+     T_out = np.zeros(len(p))
+     T_out[np.where((p >= p0) & (p < p1))]          = T_l1
+     T_out[np.where((p >= p1) & (p < p2))]          = T_l2_pos
+     T_out[np.where((p >= p2) & (p < p3))]          = T_l2_neg
+     T_out[np.where((p >= p3) & (p <= np.amax(p)))] = T_l3
 
      # PT profile
      PT_Inver = (T_l1, p_l1, T_l2_pos, p_l2_pos, T_l2_neg, p_l2_neg, 
-                 T_l3, p_l3, T_conc, T0, T1, T2, T3)
+                 T_l3, p_l3, T_out, T0, T1, T2, T3)
 
      # Smoothing with Gaussian_filter1d
      sigma    = 4
-     T_smooth = gaussian_filter1d(T_conc, sigma, mode='nearest')
+     T_smooth = gaussian_filter1d(T_out, sigma, mode='nearest')
     
      return PT_Inver, T_smooth
 
@@ -415,7 +419,7 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
            - concatenated array of temperatures, 
            - temperatures at point 1 and 3 (see Figure 1, Madhusudhan & 
              Seager 2009)
-       T_conc:   1D array of floats, temperatures concatenated for all levels
+       T_out:    1D array of floats, temperatures concatenated for all levels
        T_l1:     1D array of floats, temperatures for layer 1
        T_l2_neg: 1D array of floats, temperatures for layer 2
        T_l3:     1D array of floats, temperatures for layer 3 (isothermal part)  
@@ -523,7 +527,6 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
      2014-08-15  Patricio  Cleaned-up the code. Added verb argument.
      2014-09-24  Jasmina   Updated documentation.
      '''
-
      if verb:
        print("Pressure range: {} -- {} bar\n"
              "PT params: {} {} {} {} {}\n".format(p[0], p[-1],
@@ -566,16 +569,19 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
      # Layer 3 temperatures
      T_l3     = np.linspace(T3, T3, len(p_l3))
 
-     # Concatenate all temperature arrays:
-     T_conc   = np.concatenate((T_l1, T_l2_neg, T_l3))
+     # The output temperatures
+     T_out = np.zeros(len(p))
+     T_out[np.where((p >= p0) & (p < p1))]          = T_l1
+     T_out[np.where((p >= p1) & (p < p3))]          = T_l2_neg
+     T_out[np.where((p >= p3) & (p <= np.amax(p)))] = T_l3
 
      # PT profile info:
      PT_NoInver = (T_l1, p_l1, T_l2_neg, p_l2_neg, T_l3, p_l3, 
-                   T_conc, T0, T1, T3)
+                   T_out, T0, T1, T3)
 
      # Smoothed PT profile:
      sigma    = 4
-     T_smooth = gaussian_filter1d(T_conc, sigma, mode='nearest')
+     T_smooth = gaussian_filter1d(T_out, sigma, mode='nearest')
 
      return PT_NoInver, T_smooth
 
@@ -762,7 +768,7 @@ def PT_generator(p, free_params, PTfunc, PTargs=None):
   # madhu profiles have 2 returns, the params and the temps
   if type(Temp) == tuple:
     Temp = Temp[-1] # only take the temps
-
+    
   return Temp
 
 

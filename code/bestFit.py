@@ -412,10 +412,6 @@ shell=True, cwd=date_dir)
     # current PT parameters for each chain, iteration
     curr_PTparams = PTparams
 
-    print(PTfunc)
-    print(PTargs)
-    print(curr_PTparams)
-
     # fill-in PT profiles array
     if ctf is None:
         print("  Plotting MCMC PT profile figure.")
