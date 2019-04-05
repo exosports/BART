@@ -138,6 +138,17 @@ def main(comm):
     rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
     # Semi-major axis (in meters):
     sma   = float(tep.getvalue( 'a')[0]) * sc.au
+
+  # Line profiles require an irradiation source. Direct obs
+  # of exoplanets have that source (host star), so line profiles
+  # can be used for direct exoplanet obs
+  if solution == 'direct' and PTtype == 'line':
+    # Stellar temperature in K:
+    tstar = float(tep.getvalue('Ts')[0])
+    # Stellar radius (in meters):
+    rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
+    # Semi-major axis (in meters):
+    sma   = float(tep.getvalue( 'a')[0]) * sc.au    
     
   # Planetary radius (in meters):
   rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup

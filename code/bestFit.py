@@ -291,7 +291,7 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
 
 def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0, 
                 tconfig, date_dir, burnin, abun_file, PTtype,  PTfunc, 
-                filters, ctf=None):
+                filters, tint, ctf=None):
     """
     Call Transit to produce best-fit outputs.
     Plot MCMC posterior PT plot.
@@ -340,9 +340,7 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
     # get star data if needed
     if PTtype == 'line':
       R_star, T_star, sma, gstar = get_starData(tepfile)
-      # FINDME: Hardcoded value:
-      T_int  = 100  # K
-      PTargs = [R_star, T_star, T_int, sma, grav*1e2]
+      PTargs = [R_star, T_star, tint, sma, grav*1e2]
     else:
       PTargs = None # For non-Line profiles
 
