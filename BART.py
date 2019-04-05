@@ -466,7 +466,7 @@ def main():
                     shell=True, cwd=date_dir)
 
   # Calculate and plot contribution functions:
-  if solution == "eclipse":
+  if solution == "eclipse" or solution == "direct":
     # Compute contribution fucntions if this is a eclipse run:
     mu.msg(1, "Calculating contribution functions.", indent=2)
     ctfraw, ctf = cf.cf(date_dir, bestFit_atmfile, filters)
