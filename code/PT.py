@@ -728,6 +728,16 @@ def xi(gamma, tau):
          (1 + (1./gamma) * (1 + (0.5*gamma*tau-1)*np.exp(-gamma*tau)) +
           gamma*(1 - 0.5*tau**2) * sp.expn(2, gamma*tau)              )
 
+def PT_adiabatic(p, T0, gamma, logp0):
+     '''
+     Calculates an adiabatic temperature profile. Currently
+     makes naive assumptions about temperature, molecular mass,
+     and gravity variations with altitude.
+     '''
+     p0 = 10**logp0
+     T = T0 / (1 + (gamma - 1) / gamma * np.log(p0 / p))
+     return T
+
 
 def PT_generator(p, free_params, PTfunc, PTargs=None):
   '''

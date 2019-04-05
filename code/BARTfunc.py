@@ -126,7 +126,8 @@ def main(comm):
   PTfunc = {'iso'         : pt.PT_iso,
             'line'        : pt.PT_line, 
             'madhu_noinv' : pt.PT_NoInversion,
-            'madhu_inv'   : pt.PT_Inversion}
+            'madhu_inv'   : pt.PT_Inversion,
+            'adiabatic'   : pt.PT_adiabatic}
 
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)

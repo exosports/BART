@@ -114,7 +114,7 @@ def main():
   group.add_argument("--PTtype", dest="PTtype",
            help="Temperature profile model [default: %(default)s]",
            type=str, action="store", default="line", 
-           choices=("line","madhu_noinv","madhu_inv","iso"))
+           choices=("line","madhu_noinv","madhu_inv","iso","adiabatic"))
   group.add_argument("--PTinit", dest="PTinit",
            help="Temperature profile model parameters",
            type=mu.parray, action="store", default=None)
@@ -258,12 +258,13 @@ def main():
   PTfunc = {'iso'         : pt.PT_iso,
             'line'        : pt.PT_line, 
             'madhu_noinv' : pt.PT_NoInversion,
-            'madhu_inv'   : pt.PT_Inversion}
+            'madhu_inv'   : pt.PT_Inversion,
+            'adiabatic'   : pt.PT_adiabatic}
 
   # Check that the user gave a valid PTtype:
   if PTtype not in PTfunc.keys():
     print("The specified 'PTtype' is not valid. Options are 'line', " + \
-          "'madhu_noinv', 'madhu_inv', or 'iso'. Please try again.")
+          "'madhu_noinv', 'madhu_inv', 'iso', or 'adiabatic. Please try again.")
     sys.exit()
 
   # Check that out_spec and uniform are valid specifications
