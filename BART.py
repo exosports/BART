@@ -441,11 +441,16 @@ def main():
 
   # MCcubed output file
   MCfile = date_dir + logfile
-  
+
+  if atmfile[0] == '/':
+    atmpath = atmfile
+  else:
+    atmpath = date_dir + atmfile
+    
   # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
-  bf.callTransit(date_dir+atmfile, tep_name, MCfile,  stepsize, molfit, 
-                 solution,         refpress, tconfig, date_dir, burnin, 
-                 abun_basic,       PTtype,   PTfunc[PTtype],    filters,
+  bf.callTransit(atmpath,    tep_name, MCfile,  stepsize, molfit, 
+                 solution,   refpress, tconfig, date_dir, burnin, 
+                 abun_basic, PTtype,   PTfunc[PTtype],    filters,
                  tint)
 
   # Plot best-fit eclipse or modulation spectrum, depending on solution:
@@ -477,10 +482,10 @@ def main():
     ctf = cf.transmittance(date_dir, bestFit_atmfile, filters)
 
   # Make a plot of MCMC profiles with contribution functions/transmittance
-  bf.callTransit(date_dir+atmfile, tep_name, MCfile,   stepsize, molfit, 
-                 solution,         refpress, tconfig,  date_dir, burnin, 
-                 abun_basic,       PTtype,   PTfunc[PTtype],     filters,
-                 tint,             ctf)
+  bf.callTransit(atmpath,    tep_name, MCfile,   stepsize, molfit, 
+                 solution,   refpress, tconfig,  date_dir, burnin, 
+                 abun_basic, PTtype,   PTfunc[PTtype],     filters,
+                 tint,       ctf)
 
   mu.msg(1, "~~ BART End ~~")
 
