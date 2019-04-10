@@ -434,11 +434,13 @@ shell=True, cwd=date_dir)
     # plot figure
     plt.figure(2, dpi=300)
     plt.clf()
-    if ctf is not None:
-        plt.subplots_adjust(wspace=0.15)
-        ax1=plt.subplot(121)
+    if type(ctf) != type(None):
+        gs = matplotlib.gridspec.GridSpec(1, 3, width_ratios=[5,5,1])
     else:
-        ax1=plt.subplot(111)
+        gs = matplotlib.gridspec.GridSpec(1, 1)
+        
+    ax1 = plt.subplot(gs[0])
+
     ax1.fill_betweenx(pressure, low2, hi2, facecolor="#62B1FF", 
                       edgecolor="0.5")
     ax1.fill_betweenx(pressure, low1, hi1, facecolor="#1873CC",
@@ -450,20 +452,43 @@ shell=True, cwd=date_dir)
     plt.xlabel("Temperature  (K)", size=15)
     plt.ylabel("Pressure  (bar)",  size=15)
     if ctf is not None:
+        nfilt = len(filters)
         # Add contribution or transmittance functions
-        ax2=plt.subplot(122, sharey=ax1)
-        colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
-        ax2.set_prop_cycle(plt.cycler('color', colormap))
+        ax2 = plt.subplot(gs[1], sharey=ax1)
+            
+        meanwl = np.zeros(nfilt)
+        for i in range(nfilt):
+            filtwaven, filttransm = w.readfilter(filters[i])
+            meanwn = np.sum(filtwaven*filttransm)/np.sum(filttransm)
+            meanwl[i] = 1e4/meanwn
+
+        maxmeanwl = np.max(meanwl)
+        minmeanwl = np.min(meanwl)
+        colors = (meanwl-minmeanwl)/(maxmeanwl-minmeanwl)
+
         # Plot with filter labels
         for i in np.arange(len(filters)):
             (head, tail) = os.path.split(filters[i])
             lbl          = tail[:-4]
-            ax2.semilogy(ctf[i], pressure, '--',  linewidth = 1, label=lbl)
+            ax2.semilogy(ctf[i], pressure, '--',
+                         color=plt.cm.rainbow(colors[i]),
+                         linewidth = 1, label=lbl)
         # Hide y axis tick labels
-        plt.setp(ax2.get_yticklabels(), visible=False)
-        # Place legend off figure in case there are many filters
-        lgd = ax2.legend(loc='center left', bbox_to_anchor=(1,0.5), 
-                         ncol=len(filters)//30 + 1, prop={'size':8})
+        #plt.setp(ax2.get_yticklabels(), visible=False)
+
+        # Only plot legend if it's readable
+        if nfilt < 30:           
+            # Place legend off figure in case there are many filters
+            lgd = ax2.legend(loc='center left', bbox_to_anchor=(1,0.5), 
+                             ncol=len(filters)//30 + 1, prop={'size':8})
+        else:
+            ax3 = plt.subplot(gs[2])
+            norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
+            cbar = matplotlib.colorbar.ColorbarBase(ax3, cmap=plt.cm.rainbow,
+                                                    norm=norm,
+                                                    orientation='vertical')
+            cbar.set_label("Mean Wavelength (um)")
+            
         if solution == 'eclipse':
             ax2.set_xlabel('Normalized Contribution\nFunctions',  fontsize=15)
         else:
@@ -473,7 +498,12 @@ shell=True, cwd=date_dir)
     # save figure
     if ctf is not None:
         savefile = date_dir + "MCMC_PTprofiles_cf.png"
-        plt.savefig(savefile, bbox_extra_artists=(lgd,), bbox_inches='tight')
+        if nfilt < 30:    
+            plt.savefig(savefile, bbox_extra_artists=(lgd,),
+                        bbox_inches='tight')
+        else:
+            plt.savefig(savefile, bbox_inches='tight')
+            
     else:
         savefile = date_dir + "MCMC_PTprofiles.png"
         plt.savefig(savefile)

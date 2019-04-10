@@ -249,48 +249,88 @@ def cf(date_dir, atmfile, filters, plot=True):
   # Call filter_cf() to calculate cf
   filt_cf, filt_cf_norm = filter_cf(filters, nlayers, wns, cf, normalize=True)
 
+  # Number of filters
+  nfilt = len(filt_cf)
+  
   if plot:
     print("  Plotting contribution functions.\n")
     # Not normalized cf
     plt.figure(4)
     plt.clf()
-    gs       = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
+    gs       = gridspec.GridSpec(1, 2, width_ratios=[10, 1])
     ax0      = plt.subplot(gs[0])
-    colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
-    ax0.set_prop_cycle(plt.cycler('color', colormap))
-    for i in np.arange(len(filt_cf)):
+    ax1      = plt.subplot(gs[1])
+    meanwl = np.zeros(nfilt)
+    for i in np.arange(nfilt):
+      filtwaven, filttransm = w.readfilter(filters[i])
+      meanwn = np.sum(filtwaven*filttransm)/np.sum(filttransm)
+      meanwl[i] = 1e4/meanwn
+
+    maxmeanwl = np.max(meanwl)
+    minmeanwl = np.min(meanwl)
+    colors = (meanwl-minmeanwl)/(maxmeanwl-minmeanwl)
+
+    for i in np.arange(nfilt):
       (head, tail) = os.path.split(filters[i])
       lbl          = tail[:-4]
-      ax0.semilogy(filt_cf[i], p, '-', linewidth = 1, label=lbl)
-    lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
-                     ncol=len(filt_cf)//30 + 1, prop={'size':8})
+      ax0.semilogy(filt_cf[i], p, '-', color=plt.cm.rainbow(colors[i]),
+                   linewidth = 1, label=lbl)
+
+    # Only plot legend if it's readable
+    if nfilt < 30:
+      lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
+                       ncol=nfilt//30 + 1, prop={'size':8})
+    else:
+      norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
+      cbar = matplotlib.colorbar.ColorbarBase(ax1, cmap=plt.cm.rainbow,
+                                              norm=norm,
+                                              orientation='vertical')
+      cbar.set_label("Mean Wavelength (um)")
+      
     ax0.set_ylim(max(p), min(p))
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     ax0.set_xlabel('Contribution Functions', fontsize=14)
     ax0.set_ylabel('Pressure (bar)' , fontsize=14)
-    plt.savefig(date_dir + 'ContrFuncs.png', bbox_extra_artists=(lgd,), 
-                bbox_inches='tight')
+
+    if nfilt < 30:
+      plt.savefig(date_dir + 'ContrFuncs.png', bbox_extra_artists=(lgd,), 
+                  bbox_inches='tight')
+    else:
+      plt.savefig(date_dir + 'ContrFuncs.png', bbox_inches='tight')
 
     # Normalized cf
     plt.figure(5)
     plt.clf()
     gs       = gridspec.GridSpec(1, 2, width_ratios=[5, 1])
     ax0      = plt.subplot(gs[0])
-    colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
-    ax0.set_prop_cycle(plt.cycler('color', colormap))
-    for i in np.arange(len(filt_cf_norm)):
+    ax1      = plt.subplot(gs[1])
+    for i in np.arange(nfilt):
       (head, tail) = os.path.split(filters[i])
       lbl          = tail[:-4]
-      ax0.semilogy(filt_cf_norm[i], p, '--', linewidth = 1, label=lbl)
+      ax0.semilogy(filt_cf_norm[i], p, '--', color=plt.cm.rainbow(colors[i]),
+                   linewidth = 1, label=lbl)
 
-    lgd = ax0.legend(loc='center left', bbox_to_anchor=(1,0.5), 
-                     ncol=len(filt_cf)//30 + 1, prop={'size':8})
+    # Only plot legend if it's readable
+    if nfilt < 30:
+      lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
+                       ncol=nfilt//30 + 1, prop={'size':8})
+    else:
+      norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
+      cbar = matplotlib.colorbar.ColorbarBase(ax1, cmap=plt.cm.rainbow,
+                                              norm=norm,
+                                              orientation='vertical')
+      cbar.set_label("Mean Wavelength (um)")
+
     ax0.set_ylim(max(p), min(p))
     ax0.set_xlim(0, 1.0)
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     ax0.set_xlabel('Normalized Contribution Functions', fontsize=14)
     ax0.set_ylabel('Pressure (bar)' , fontsize=14)
-    plt.savefig(date_dir + 'NormContrFuncs.png', bbox_extra_artists=(lgd,), 
-                bbox_inches='tight')
+    
+    if nfilt < 30:
+      plt.savefig(date_dir + 'NormContrFuncs.png', bbox_extra_artists=(lgd,), 
+                  bbox_inches='tight')
+    else:
+      plt.savefig(date_dir + 'NormContrFuncs.png', bbox_inches='tight')    
 
   return filt_cf[:,::-1], filt_cf_norm[:,::-1]
