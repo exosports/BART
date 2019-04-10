@@ -171,8 +171,12 @@ def filter_cf(filters, nlayers, wns, cf, normalize=False):
 
     if normalize:
       # Normalize to 1
-      filt_cf_norm[i] = (filt_cf[i] - min(filt_cf[i])) / \
-                        (max(filt_cf[i]) - min(filt_cf[i]))
+      if max(filt_cf[i]) != min(filt_cf[i]):
+        filt_cf_norm[i] = (filt_cf[i] - min(filt_cf[i])) / \
+                          (max(filt_cf[i]) - min(filt_cf[i]))
+      else:
+        print("Warning: contribution from filter {} is 0.".format(i))
+        filt_cf_norm[i] = filt_cf[i]
 
   if normalize:
     return filt_cf, filt_cf_norm
