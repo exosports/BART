@@ -13,4 +13,7 @@ Rsun = 6.96e+08       # Solar radius in m:
 # Source: transit module, transit/include/constrants_tr.h
 H  = 6.6260755e-27    # Planck's constant (erg * s)
 LS = 2.99792458e10    # Light Speed (cm / s)
-KB = 1.380658e-16     # Boltzmann constant (erg / K) 
+KB = 1.380658e-16     # Boltzmann constant (erg / K)
+
+# Source: https://physics.nist.gov/cgi-bin/cuu/Value?sigma
+sig = 5.670367e-8     # Stefan-Boltzmann constant (W / m2 / K4)

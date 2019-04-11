@@ -203,6 +203,9 @@ def main():
            help="Solution geometry [default: %(default)s]",
            dest="solution", type=str,       default="None",
            choices=('transit', 'eclipse','direct'))
+  group.add_argument("--ebalance",                    action="store",
+           help="Energy balance flag",
+           dest="ebalance", type=bool, default=True)
 
   # Transit options:
   group = parser.add_argument_group("Transit variables")

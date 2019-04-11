@@ -97,7 +97,10 @@ def main(comm):
   group.add_argument("--solution",                    action="store",
                      help="Solution geometry [default: %(default)s]",
                      dest="solution", type=str,       default="None",
-                     choices=('transit', 'eclipse'))
+                     choices=('transit', 'eclipse', 'direct'))
+  group.add_argument("--ebalance",                    action="store",
+                     help="Energy balance flag",
+                     dest="ebalance", type=bool, default=True)
 
   parser.set_defaults(**defaults)
   args2, unknown = parser.parse_known_args(remaining_argv)
@@ -121,6 +124,7 @@ def main(comm):
   Tmin     = args2.Tmin
   Tmax     = args2.Tmax
   solution = args2.solution  # Solution type
+  ebalance = args2.ebalance
 
   # Dictionary of functions to calculate temperature for PTtype
   PTfunc = {'iso'         : pt.PT_iso,
@@ -319,13 +323,32 @@ def main(comm):
       continue
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
     aprofiles[iHe] =         q / (1.0 + ratio)
-
+    
     # Set the 'surface' level:
     if solution == "transit":
       trm.set_radius(params[nPT])
 
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
+
+    # Check for energy balance (read tep in case not read prior)
+    if ebalance:
+      # Stellar temperature in K:
+      tstar = float(tep.getvalue('Ts')[0])
+      # Stellar radius (in meters):
+      rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
+      # Semi-major axis (in meters):
+      sma   = float(tep.getvalue( 'a')[0]) * sc.au
+
+      # Calculate energy in and energy out, in cgs
+      j2erg = 1e7
+      e_in  = c.sig*tstar**4 * rstar**2 * np.pi*rplanet**2 / sma**2 * j2erg
+      e_out = np.trapz(spectrum, specwn) * 4 * (rplanet*100)**2     
+      if e_out > e_in:
+        print("Warning: Energy balance condition failed. \n" +
+              "E_in = {}, E_out = {}.".format(e_in, e_out))
+        mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
+        continue
 
     # Calculate the band-integrated intensity per filter:
     for i in np.arange(nfilters):
