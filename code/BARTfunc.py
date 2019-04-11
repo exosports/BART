@@ -100,7 +100,7 @@ def main(comm):
                      choices=('transit', 'eclipse', 'direct'))
   group.add_argument("--ebalance",                    action="store",
                      help="Energy balance flag",
-                     dest="ebalance", type=bool, default=True)
+                     dest="ebalance", type=eval, default=True)
 
   parser.set_defaults(**defaults)
   args2, unknown = parser.parse_known_args(remaining_argv)

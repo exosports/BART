@@ -205,7 +205,7 @@ def main():
            choices=('transit', 'eclipse','direct'))
   group.add_argument("--ebalance",                    action="store",
            help="Energy balance flag",
-           dest="ebalance", type=bool, default=True)
+           dest="ebalance", type=eval, default=True)
 
   # Transit options:
   group = parser.add_argument_group("Transit variables")
