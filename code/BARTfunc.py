@@ -289,6 +289,11 @@ def main(comm):
   # ::::::  Main MCMC Loop  ::::::::::::::::::::::::::::::::::::::::::
   # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+  # Count non-physical iterations
+  nbadtemp = 0
+  nbadabun = 0
+  nbadengy = 0
+  
   while niter >= 0:
     niter -= 1
     # Receive parameters from MCMC:
@@ -308,8 +313,10 @@ def main(comm):
 
     # If the temperature goes out of bounds:
     if np.any(tprofile < Tmin) or np.any(tprofile > Tmax):
+      nbadtemp += 1
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
+    
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
@@ -319,8 +326,10 @@ def main(comm):
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
     if np.any(q < 0.0):
+      nbadabun += 1
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
+    
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
     aprofiles[iHe] =         q / (1.0 + ratio)
     
@@ -345,6 +354,7 @@ def main(comm):
       e_in  = c.sig*tstar**4 * rstar**2 * np.pi*rplanet**2 / sma**2 * j2erg
       e_out = np.trapz(spectrum, specwn) * 4 * (rplanet*100)**2     
       if e_out > e_in:
+        nbadengy += 1
         print("Warning: Energy balance condition failed. \n" +
               "E_in = {}, E_out = {}.".format(e_in, e_out))
         mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
@@ -372,6 +382,11 @@ def main(comm):
   # Close communications and disconnect:
   mu.comm_disconnect(comm)
   trm.free_memory()
+
+  mu.msg(verb, "Bad iterations of chain 0 due to:")
+  mu.msg(verb, "  Temperature: {}".format(nbadtemp))
+  mu.msg(verb, "  Abundance:   {}".format(nbadabun))
+  mu.msg(verb, "  Energy:      {}".format(nbadengy))
 
 
 if __name__ == "__main__":
