@@ -393,7 +393,7 @@ def main():
     mat.makeRadius(out_spec, date_dir+atmfile, abun_file, tep_name, refpress)
     mu.msg(1, "Added radius column to TEA atmospheric file.", indent=2)
     # Re-format file for use with transit:
-    mat.reformat(atmfile)
+    mat.reformat(date_dir+atmfile)
     mu.msg(1, "Atmospheric file reformatted for Transit.", indent=2)
 
   if justTEA:
