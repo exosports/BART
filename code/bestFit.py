@@ -30,6 +30,8 @@
     2018-12-21  Michael  Updated documentation, improved code readability.
     2019-02-13  Michael  Refactored callTransit. Enabled plotting for madhu 
                          PT profiles.
+    2019-09-20  Michael  Updated callTransit to take T_int and a type, instead 
+                         of a hard-coded value
 """
 
 import os, sys, subprocess
@@ -290,8 +292,8 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
 
 
 def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0, 
-                tconfig, date_dir, burnin, abun_file, PTtype,  PTfunc, 
-                filters, ctf=None):
+                tconfig, date_dir, burnin, abun_file, PTtype,  PTfunc, T_int, 
+                T_int_type, filters, ctf=None):
     """
     Call Transit to produce best-fit outputs.
     Plot MCMC posterior PT plot.
@@ -325,6 +327,11 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
        'iso' for isothermal)
     PTfunc: pointer to function
        Determines the method of evaluating the PT profile's temperature
+    T_int: float
+       Internal temperature of the planet.
+    T_int_type: string
+       Method for determining `tint`: 'const' for the value of `tint`, 
+                                      'thorngren' to use Thorngren et al. (2019)
     filters: list, strings.
        Filter files associated with the eclipse/transit depths
     ctf: 2D array.
@@ -339,12 +346,10 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
     grav, Rp = mat.get_g(tepfile)
     # get star data if needed
     if PTtype == 'line':
-      R_star, T_star, sma, gstar = get_starData(tepfile)
-      # FINDME: Hardcoded value:
-      T_int  = 100  # K
-      PTargs = [R_star, T_star, T_int, sma, grav*1e2]
+        R_star, T_star, sma, gstar = get_starData(tepfile)
+        PTargs = [R_star, T_star, T_int, sma, grav*1e2, T_int_type]
     else:
-      PTargs = None # For non-Line profiles
+        PTargs = None # For non-Line profiles
 
     # Get best parameters
     bestP, uncer = read_MCMC_out(MCfile)
@@ -565,8 +570,8 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     # plot figure
     plt.rcParams["mathtext.default"] = 'rm'
     matplotlib.rcParams.update({'mathtext.default':'rm'})
-    matplotlib.rcParams.update({'font.size':10})
-    plt.figure(3, (8.5, 5))
+    matplotlib.rcParams.update({'font.size':12})
+    plt.figure(3, (8.5, 6))
     plt.clf()
 
     # depending on solution plot eclipse or modulation spectrum
@@ -575,29 +580,31 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
         plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best-fit")
         plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="data")
         plt.plot(meanwl, bandflux*1e3, "ok", label="model", alpha=1.0)
-        plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=12)
+        plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=14)
 
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 2)
         plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best-fit")
         plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
         plt.plot(meanwl, bandmod, "ok", label="model", alpha=0.5)
-        plt.ylabel(r"$(R_p/R_s)^2$", fontsize=12)
+        plt.ylabel(r"$(R_p/R_s)^2$", fontsize=14)
 
-    leg = plt.legend(loc="lower right")
+    leg = plt.legend(loc="best")
     leg.get_frame().set_alpha(0.5)
-    ax = plt.subplot(111)
-    ax.set_xscale('log')
-    plt.xlabel(ur"${\rm Wavelength\ \ (\u03bcm)}$", fontsize=12)
+    ax = plt.gca()
+    plt.xlabel(ur"${\rm Wavelength\ \ (\u03bcm)}$", fontsize=16)
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    if   max(specwl) - min(specwl) > 30:
-        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),4))
-    elif max(specwl) - min(specwl) > 15:
-        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),2))
-    else:
-        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),1))
-    plt.xlim(min(specwl),max(specwl))
+    ax.get_xaxis().set_minor_formatter(matplotlib.ticker.ScalarFormatter())
+    plt.xlim(min(specwl), max(specwl))
+    #fig.canvas.draw()
+    #labels = [item.get_text() for item in ax.get_xticklabels()]
+    #labels = ax.get_xticks()
+    #locs, labels = plt.xticks()
+    #for item in range(len(labels)):
+    #    print(labels[item])
+    #sys.exit()
     plt.savefig(date_dir + "BART-bestFit-Spectrum.png")
+    plt.close()
 
 
 def plotabun(date_dir, atmfile, molfit):
@@ -637,8 +644,8 @@ def plotabun(date_dir, atmfile, molfit):
                    label=species[molfitindex[i]], linewidth=4)
 
     plt.legend(loc='upper left')
-    plt.xlabel('Molar Mixing Fraction')
-    plt.ylabel('Pressure (bars)')
+    plt.xlabel('Molar Mixing Fraction', fontsize=14)
+    plt.ylabel('Pressure (bar)', fontsize=14)
     plt.title('Best Fit Abundance Profiles')
     plt.gca().invert_yaxis()
     plt.savefig(date_dir + 'abun_profiles.png')

@@ -190,6 +190,9 @@ def main():
   group.add_argument("--tint", dest="tint",
            help="Internal temperature of the planet [default: %(default)s].",
            type=float, action="store", default=100.0)
+  group.add_argument("--tint_type", dest="tint_type",
+           help="Method to evaluate `tint` [default: %(default)s].",
+           type=str,   action="store", default='thorngren')
 
   # Output-Converter Options:
   group = parser.add_argument_group("Output Converter Options")
@@ -366,7 +369,8 @@ def main():
   if runMCMC < 4:  # Pre-atmospheric file
     # Calculate the temperature profile:
     temp = ipt.initialPT2(date_dir, PTinit,         press_file, 
-                          PTtype,   PTfunc[PTtype], tep_name)
+                          PTtype,   PTfunc[PTtype], tep_name, 
+                          tint_type=tint_type)
     # Choose a pressure-temperature profile
     mu.msg(1, "\nChoose temperature and pressure profile:", indent=2)
     raw_input("  open Initial PT profile figure and\n" 
@@ -442,9 +446,10 @@ def main():
   MCfile = date_dir + logfile
   
   # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
-  bf.callTransit(date_dir+atmfile, tep_name, MCfile,  stepsize, molfit, 
-                 solution,         refpress, tconfig, date_dir, burnin, 
-                 abun_basic,       PTtype,   PTfunc[PTtype],    filters)
+  bf.callTransit(date_dir+atmfile, tep_name, MCfile, stepsize, molfit, 
+                 solution, refpress, tconfig, date_dir, burnin, 
+                 abun_basic, PTtype, PTfunc[PTtype], 
+                 tint, tint_type, filters)
 
   # Plot best-fit eclipse or modulation spectrum, depending on solution:
   bf.plot_bestFit_Spectrum(filters, kurucz, tep_name, solution, outspec,
@@ -475,9 +480,10 @@ def main():
     ctf = cf.transmittance(date_dir, bestFit_atmfile, filters)
 
   # Make a plot of MCMC profiles with contribution functions/transmittance
-  bf.callTransit(date_dir+atmfile, tep_name, MCfile,   stepsize, molfit, 
-                 solution,         refpress, tconfig,  date_dir, burnin, 
-                 abun_basic,       PTtype,   PTfunc[PTtype],     filters,  ctf)
+  bf.callTransit(date_dir+atmfile, tep_name, MCfile, stepsize, molfit, 
+                 solution, refpress, tconfig, date_dir, burnin, 
+                 abun_basic, PTtype, PTfunc[PTtype],     
+                 tint, tint_type, filters, ctf)
 
   mu.msg(1, "~~ BART End ~~")
 

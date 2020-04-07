@@ -78,6 +78,9 @@ def main(comm):
                      help="Internal temperature of the planet [default: "
                      "%(default)s].",
                      dest="tint",    type=float,  default=100.0)
+  group.add_argument("--tint_type", dest="tint_type",
+           help="Method to evaluate `tint` [default: %(default)s].",
+           type=str,   action="store", default='thorngren')
   # transit Options:
   group = parser.add_argument_group("transit Options")
   group.add_argument("--config",  action="store",
@@ -112,15 +115,16 @@ def main(comm):
   npars, niter = array1
 
   # :::::::  Initialize the Input converter ::::::::::::::::::::::::::
-  atmfile  = args2.atmfile
-  molfit   = args2.molfit
-  PTtype   = args2.PTtype
-  params   = args2.params
-  tepfile  = args2.tep_name
-  tint     = args2.tint
-  Tmin     = args2.Tmin
-  Tmax     = args2.Tmax
-  solution = args2.solution  # Solution type
+  atmfile   = args2.atmfile
+  molfit    = args2.molfit
+  PTtype    = args2.PTtype
+  params    = args2.params
+  tepfile   = args2.tep_name
+  tint      = args2.tint
+  tint_type = args2.tint_type
+  Tmin      = args2.Tmin
+  Tmax      = args2.Tmax
+  solution  = args2.solution  # Solution type
 
   # Dictionary of functions to calculate temperature for PTtype
   PTfunc = {'iso'         : pt.PT_iso,
@@ -174,7 +178,7 @@ def main(comm):
     # Planetary surface gravity (in cm s-2):
     gplanet = 100.0 * sc.G * mplanet / rplanet**2
     # Additional PT arguments:
-    PTargs  = [rstar, tstar, tint, sma, gplanet]
+    PTargs  = [rstar, tstar, tint, sma, gplanet, tint_type]
   else:
     PTargs  = None
 

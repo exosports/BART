@@ -39,6 +39,7 @@ import matplotlib as mpl
 #mpl.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tck
+import matplotlib.cbook  as cbook
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/../modules/MCcubed/MCcubed/lib")
 import binarray as ba
@@ -83,8 +84,6 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
         if molfit[imol]+'_' in out_spec.split()[j] and \
            stepsize[-len(molfit):][imol] > 0:
           molind.append(j)
-    print(uniform[molind])
-    print(molind)
     allstack[-len(molfit):, :] += \
                                np.log10(uniform[molind]).reshape(len(molind),1)
 
@@ -155,13 +154,16 @@ def trace(allparams, title=None, parname=None, thinning=1,
     xsep = np.arange(sep/thinning, xmax, sep/thinning)
 
   # Make the trace plot:
-  plt.figure(fignum, figsize=(8,8))
+  fig = plt.figure(fignum, figsize=(8,8))
   plt.clf()
   if title is not None:
     plt.suptitle(title, size=16)
 
   plt.subplots_adjust(left=0.15, right=0.95, bottom=0.10, top=0.90,
                       hspace=0.3)
+
+  # For label alignment
+  yloc = np.inf
 
   for i in np.arange(npars):
     a = plt.subplot(npars, 1, i+1)
@@ -172,12 +174,15 @@ def trace(allparams, title=None, parname=None, thinning=1,
     plt.xlim(0, xmax)
     plt.ylim(yran)
     plt.ylabel(reformatpar[i], size=fs+4, multialignment='center')
+    plt.draw()
+    # Get label position
+    ylab = a.yaxis.get_label().get_position()
+    ylab = a.transAxes.inverted().transform(ylab)[0]
+    if ylab < yloc:
+      yloc = ylab
     plt.yticks(size=fs)
     # Make sure ticks are read-able
-    if   len(a.get_yticks()[::2]) > 5:
-      a.set_yticks(a.get_yticks()[::3])
-    elif len(a.get_yticks()[::2]) > 2:
-      a.set_yticks(a.get_yticks()[::2])
+    a.yaxis.set_major_locator(tck.MultipleLocator(np.round((yran[1]-yran[0])/3, 1)))
     if i == npars - 1:
       plt.xticks(size=fs)
       if thinning > 1:
@@ -186,8 +191,12 @@ def trace(allparams, title=None, parname=None, thinning=1,
         plt.xlabel('MCMC iteration', size=fs+4)
     else:
       plt.xticks(visible=False)
-    # Align labels
-    a.yaxis.set_label_coords(-0.1, 0.5)
+
+  # Align labels
+  for i in np.arange(npars):
+    axs = fig.get_axes()
+    for ax in axs:
+      ax.yaxis.set_label_coords(yloc, 0.5)      
 
   if savefile is not None:
     plt.savefig(savefile, bbox_inches='tight')
@@ -255,6 +264,10 @@ def pairwise(allparams, title=None, parname=None, thinning=1,
   plt.subplots_adjust(left  =0.15, right =0.85, bottom=0.15, top=0.85,
                       hspace=0.3,  wspace=0.3)
 
+  # For label alignment
+  xloc = np.inf
+  yloc = np.inf
+
   for   j in np.arange(npars): # Rows
     for i in np.arange(npars):  # Columns
       if j > i or j == i:
@@ -287,35 +300,54 @@ def pairwise(allparams, title=None, parname=None, thinning=1,
                            origin='lower', interpolation='bilinear')
           else:
             a = plt.hist(allparams[i,0::thinning], 20, normed=False)
-          a = plt.gca()
 
         elif style=="points":
           if j > i:
             a = plt.plot(allparams[i], allparams[j], ",")
           else:
             a = plt.hist(allparams[i,0::thinning], 20, normed=False)
-          a = plt.gca()
         # Make sure ticks are read-able
-        if   len(a.get_xticks()[::2]) > 4:
-          a.set_xticks(a.get_xticks()[::3])
-        elif len(a.get_xticks()[::2]) > 2:
-          a.set_xticks(a.get_xticks()[::2])
-        if   len(a.get_yticks()[::2]) > 4:
-          a.set_yticks(a.get_yticks()[::3])
-        elif len(a.get_yticks()[::2]) > 2:
-          a.set_yticks(a.get_yticks()[::2])
-        # Align labels
+        plt.draw()
+        a = plt.gca()
+        xlims = a.get_xlim()
+        ylims = a.get_ylim()
+        a.xaxis.set_major_locator(tck.MultipleLocator(                        \
+                                       np.round((xlims[1] - xlims[0]) / 3, 2)))
+        a.yaxis.set_major_locator(tck.MultipleLocator(                        \
+                                       np.round((ylims[1] - ylims[0]) / 3, 2)))
+        # Label positions
         if j == npars-1 and i == npars-1:
           axs = fig.get_axes()
           for ax in axs:
             ss = ax.get_subplotspec()
             nrows, ncols, start, stop = ss.get_geometry()
             if start//nrows == nrows-1:
-              ax.xaxis.set_label_coords(0.5, -0.155 * npars)
+              xlab = ax.xaxis.get_label().get_position()
+              xlab = ax.transAxes.inverted().transform(xlab)[1]
+              if xlab < xloc:
+                xloc = xlab - 0.2 # So text does not touch negative signs
+                                        # TRUST ME. Don't waste time on it.
             if start%ncols == 0:
-              ax.yaxis.set_label_coords(-0.155 * npars, 0.5)
+              ylab = ax.yaxis.get_label().get_position()
+              ylab = ax.transAxes.inverted().transform(ylab)[0]
+              if ylab < yloc:
+                yloc = ylab
     
       h += 1
+  # Align labels
+  for j in np.arange(npars):
+    for i in np.arange(npars):
+      if j > i or j == i:
+        if j == npars-1 and i == npars - 1:
+          axs = fig.get_axes()
+          for ax in axs:
+            ss = ax.get_subplotspec()
+            nrows, ncols, start, stop = ss.get_geometry()
+            if start//nrows == nrows-1:
+              ax.xaxis.set_label_coords(0.5, xloc)
+            if start%ncols == 0:
+              ax.yaxis.set_label_coords(yloc, 0.5)
+
   # The colorbar:
   if style == "hist":
     if npars > 2:
@@ -324,7 +356,7 @@ def pairwise(allparams, title=None, parname=None, thinning=1,
       a.xaxis.set_visible(False)
     bounds = np.linspace(0, 1.0, 64)
     norm = mpl.colors.BoundaryNorm(bounds, palette.N)
-    ax2 = fig.add_axes([0.85, 0.535, 0.025, 0.36])
+    ax2 = fig.add_axes([0.7, 0.45, 0.025, 0.36])
     cb = mpl.colorbar.ColorbarBase(ax2, cmap=palette, norm=norm,
           spacing='proportional', boundaries=bounds, format='%.1f')
     cb.set_label("Normalized Point Density", fontsize=fs)
@@ -377,9 +409,11 @@ def histogram(allparams, title=None, parname=None, thinning=1,
 
   # Set number of rows:
   if npars < 10:
-    nrows = (npars - 1)/3 + 1
+    nperrow = 3
+    nrows = (npars - 1)/nperrow + 1
   else:
-    nrows = (npars - 1)/4 + 1
+    nperrow = 4
+    nrows = (npars - 1)/nperrow + 1
   # Set number of columns:
   if   npars > 9:
     ncolumns = 4
@@ -394,7 +428,7 @@ def histogram(allparams, title=None, parname=None, thinning=1,
   else:
     bottom = 0.15
 
-  plt.figure(fignum, figsize=(8, histheight))
+  fig = plt.figure(fignum, figsize=(8, histheight))
   plt.clf()
   plt.subplots_adjust(left=0.1, right=0.95, bottom=bottom, top=0.9,
                       hspace=0.1, wspace=0.1)
@@ -403,6 +437,7 @@ def histogram(allparams, title=None, parname=None, thinning=1,
     a = plt.suptitle(title, size=16)
 
   maxylim = 0  # Max Y limit
+  xloc = np.ones(nrows) * np.inf # To align labels
   for i in np.arange(npars):
     ax = plt.subplot(nrows, ncolumns, i+1)
     a  = plt.xticks(size=fs, rotation=90)
@@ -413,14 +448,23 @@ def histogram(allparams, title=None, parname=None, thinning=1,
     plt.xlabel(reformatpar[i], size=fs)
     a = plt.hist(allparams[i,0::thinning], 20, normed=False)
     maxylim = np.amax((maxylim, ax.get_ylim()[1]))
+    # Get label position
+    a = plt.gca()
+    plt.draw()
+    xlab = a.xaxis.get_label().get_position()
+    xlab = a.transAxes.inverted().transform(xlab)[1]
+    if xlab < xloc[i//nperrow]:
+      xloc[i//nperrow] = xlab - 0.2 # Trust me
 
-  # Set uniform height:
+  # Set uniform height & align labels:
   for i in np.arange(npars):
     ax = plt.subplot(nrows, ncolumns, i+1)
     ax.set_ylim(0, maxylim)
+    ax.xaxis.set_label_coords(0.5, xloc[i//nperrow])
+
 
   if savefile is not None:
-    plt.tight_layout()
+    plt.tight_layout(1.0)
     plt.savefig(savefile)
 
 
