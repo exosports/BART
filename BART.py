@@ -15,16 +15,18 @@ Transitdir = BARTdir + "/modules/transit/"
 
 # Add path to submodules and import:
 sys.path.append(BARTdir + "/code")
-import makeP     as mp
-import InitialPT as ipt
-import        PT as  pt
-import makeatm   as mat
-import makecfg   as mc
-import bestFit   as bf
-import cf        as cf
-import mcplots   as mcp
+import makeP      as mp
+import InitialPT  as ipt
+import        PT  as  pt
+import makeatm    as mat
+import makecfg    as mc
+import bestFit    as bf
+import cf         as cf
+import mcplots    as mcp
+import credregion as cr
 
 sys.path.append(MC3dir)
+import MCcubed       as mc3
 import MCcubed.utils as mu
 
 def main():
@@ -432,9 +434,11 @@ def main():
     MC3call = MC3dir + "/MCcubed/mccubed.py"
     subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
                     shell=True, cwd=date_dir)
+    mu.msg(1, "Calculating SPEIS/ESS/credible regions.")
+    cr.driver('output.npy', date_dir, burnin, parnames, stepsize)    
 
   # Re-plot MCMC results in prettier format
-  mcp.mcplots('output.npy', burnin,   thinning, nchains, uniform, molfit, 
+  mcp.mcplots('output.npy', burnin,   thinning, uniform, molfit, 
               out_spec,     parnames, stepsize, date_dir, 
               ["output_trace.png", "output_pairwise.png", 
                "output_posterior.png"])

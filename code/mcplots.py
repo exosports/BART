@@ -31,6 +31,7 @@
     2018-12-21  Michael  Adapted from MC3 code. Added mcplots() and 
                          reformatparname() functions. Added/updated 
                          documentation.
+    2020-04-07  Michael  Updated plotting to be prettier and more consistent.
 """
 
 import sys, os
@@ -41,17 +42,20 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as tck
 import matplotlib.cbook  as cbook
 
+import credregion as cr
+
 sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/../modules/MCcubed/MCcubed/lib")
 import binarray as ba
 
 __all__ = ["mcplots", "trace", "pairwise", "histogram", "RMS", "modelfit"]
 
-def mcplots(output,   burnin,   thinning, nchains, uniform, molfit, 
+def mcplots(output,   burnin,   thinning, uniform, molfit, 
             out_spec, parnames, stepsize, date_dir, fnames):
   """
   Reformats the MC3 output file so that the log(abundance) factor is with 
   respect to molar fraction, rather than the initial values (as MC3 does). 
   Calls trace(), pairwise(), and histogram() using these values.
+  Calculates the 68, 95, and 99% credible regions and effective sample sizes.
 
   Parameters
   ----------
@@ -61,7 +65,6 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
                  iteration) used for plotting.
   uniform : array-like. If not None, set uniform abundances with the 
                         specified values for each species.
-  nchains : int. Number of parallel chains in MCMC.
   molfit  : list, strings. Molecules to be fit by the MCMC.
   out_spec: list, strings. Molecules included in atmospheric file.
   parnames: list, strings. Parameter names.
@@ -72,8 +75,9 @@ def mcplots(output,   burnin,   thinning, nchains, uniform, molfit,
   """
   # Load and stack results, excluding burn-in
   allparams = np.load(date_dir + output)
+  nchains   = allparams.shape[0]
   allstack  = allparams[0, :, burnin:]
-  for c in np.arange(1, allparams.shape[0]):
+  for c in np.arange(1, nchains):
     allstack = np.hstack((allstack, allparams[c, :, burnin:]))
 
   # Subtract initial abundances if uniform, so that plots are log(abundance)
@@ -667,3 +671,5 @@ def reformatparname(parname):
       reformatpar.append(parname[i])
 
   return reformatpar
+
+
