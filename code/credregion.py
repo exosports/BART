@@ -209,7 +209,13 @@ def ess(allparams):
 
     Inputs
     ------
-    allparams: 2D array. Posterior distribution of shape (num_params, num_iter)
+    allparams: 3D array. Posterior distribution of shape 
+                         (num_chains, num_params, num_iter)
+
+    Outputs
+    -------
+    speis: int.   Number of steps per effective independent sample (SPEIS).
+    ess  : float. Effective sample size.
 
     Notes
     -----
@@ -264,9 +270,8 @@ def driver(output, date_dir, burnin, parnames, stepsize):
     # Load results
     allparams = np.load(date_dir + output)
     # ESS, credible region uncertainties
-    speis, totiter = ess(allparams[:, :, burnin:])
-    ess_val        = totiter//speis
-    p_est, p_unc   = sig(totiter/speis)
+    speis, ess_val = ess(allparams[:, :, burnin:])
+    p_est, p_unc   = sig(ess_val)
 
     allstack = allparams[0, :, burnin:]
     for c in np.arange(1, allparams.shape[0]):
