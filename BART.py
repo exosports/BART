@@ -24,6 +24,8 @@ import bestFit    as bf
 import cf         as cf
 import mcplots    as mcp
 import credregion as cr
+import reader     as rd
+import wine       as w
 
 sys.path.append(MC3dir)
 import MCcubed       as mc3
@@ -193,8 +195,9 @@ def main():
            help="Internal temperature of the planet [default: %(default)s].",
            type=float, action="store", default=100.0)
   group.add_argument("--tint_type", dest="tint_type",
-           help="Method to evaluate `tint` [default: %(default)s].",
-           type=str,   action="store", default='thorngren')
+           help="Method to evaluate `tint`. Options: const or thorngren. " + \
+                "[default: %(default)s].",
+           type=str,   action="store", default='const')
 
   # Output-Converter Options:
   group = parser.add_argument_group("Output Converter Options")
@@ -224,7 +227,27 @@ def main():
            help="If True, use shared memory for the Transit opacity file "
                 "[default: %(default)s]",
            type=eval, action="store", default=True)
-
+  group.add_argument("--wndelt", dest="wndelt",
+           help="Wavenumber grid step size [default: %(default)s]",
+           type=float, action="store", default=1.0)
+  group.add_argument("--wnfct", dest="wnfct",
+           help="Wavenumber unit conversion to cm-1 [default: %(default)s]",
+           type=float, action="store", default=1.0)
+  group.add_argument("--wnlow", dest="wnlow",
+           help="Wavenumber lower boundary [default: %(default)s]",
+           type=float, action="store", default=None)
+  group.add_argument("--wnhigh", dest="wnhigh",
+           help="Wavenumber upper boundary [default: %(default)s]",
+           type=float, action="store", default=None)
+  group.add_argument("--wllow", dest="wllow",
+           help="Wavelength lower boundary [default: %(default)s]",
+           type=float, action="store", default=None)
+  group.add_argument("--wlhigh", dest="wlhigh",
+           help="Wavelength upper boundary [default: %(default)s]",
+           type=float, action="store", default=None)
+  group.add_argument("--wlfct", dest="wlfct",
+           help="Wavelength unit conversion to cm [default: %(default)s]",
+           type=float, action="store", default=1e-4)
 
   # Remaining_argv contains all other command-line-arguments:
   cargs, remaining_argv = cparser.parse_known_args()
@@ -431,13 +454,75 @@ def main():
 
   # Run the MCMC:
   if runMCMC < 16:
+    # Pre-process filters and stellar spectrum for efficiency
+    # Make wavenumber grid
+    if wnlow is not None and wnhigh is not None:
+      wnlow  *= wnfct
+      wnhigh *= wnfct
+    elif wllow is not None and wlhigh is not None:
+      wnlow  = 1. / (wllow *wlfct)
+      wnhigh = 1. / (wlhigh*wlfct)
+    else:
+      print("BART requires one of the following groups of paramters to be set:")
+      print("  (1) wnlow, wnhigh")
+      print("  (2) wllow, wlhigh")
+      print("Additionally, if (1) is not in cm-1 or (2) is not in cm, wnfct")
+      print("(default: 1.0) or wlfct (default: 1e-4) must be set to the proper")
+      print("conversion factor. Please update the config file and try again.")
+      sys.exit()
+    # Make wavenumber grid, inclusive
+    specwn = np.arange(wnlow, wnhigh + wndelt/2, wndelt)
+    # Make directory for the files
+    preproc_dir = os.path.join(date_dir, 'preprocessed', '')
+    try:
+      os.mkdir(preproc_dir)
+    except OSError as e:
+      if e.errno == 17: # Already exists
+        pass
+      else:
+        print("Cannot create folder '{:s}'. {:s}.".format(model_dir,
+                                              os.strerror(e.errno)))
+        sys.exit()
+    # Get values
+    # Extract necessary values from the TEP file:
+    tep = rd.File(tep_name)
+    # Stellar temperature in K:
+    tstar = float(tep.getvalue('Ts')[0])
+    gstar = float(tep.getvalue('loggstar')[0])
+    # Stellar model
+    starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, tstar, gstar)
+    # Read and resample the filters:
+    nifilter  = [] # Normalized interpolated filter
+    istarfl   = [] # interpolated stellar flux
+    wnindices = [] # wavenumber indices used in interpolation
+    for i in np.arange(len(filters)):
+      # Read filter:
+      filtwaven, filttransm = w.readfilter(filters[i])
+      # Check that filter boundaries lie within the spectrum wn range:
+      if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
+        mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
+                "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
+                "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
+                                                          filtwaven[-1]))
+
+      # Resample filter and stellar spectrum:
+      nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
+                                                starwn,    starfl)
+      nifilter.append(nifilt)
+      istarfl.append(strfl)
+      wnindices.append(wnind[0])
+    # Save it out to be used in BARTfunc.py
+    np.save(preproc_dir + 'nifilter.npy', nifilter)
+    np.save(preproc_dir + 'istarfl.npy', istarfl)
+    np.save(preproc_dir + 'wnindices.npy', wnindices)
+    # Call MC3
     MC3call = MC3dir + "/MCcubed/mccubed.py"
     subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
                     shell=True, cwd=date_dir)
-    mu.msg(1, "Calculating SPEIS/ESS/credible regions.")
+    mu.msg(1, "\nCalculating SPEIS/ESS/credible regions.")
     cr.driver('output.npy', date_dir, burnin, parnames, stepsize)    
 
-  # Re-plot MCMC results in prettier format
+  # Plot MCMC results in prettier format
   mcp.mcplots('output.npy', burnin,   thinning, uniform, molfit, 
               out_spec,     parnames, stepsize, date_dir, 
               ["output_trace.png", "output_pairwise.png", 
@@ -448,9 +533,11 @@ def main():
 
   # MCcubed output file
   MCfile = date_dir + logfile
+  if not os.path.abspath(atmfile):
+    atmfile = date_dir + atmfile
   
   # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
-  bf.callTransit(date_dir+atmfile, tep_name, MCfile, stepsize, molfit, 
+  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, 
                  solution, refpress, tconfig, date_dir, burnin, 
                  abun_basic, PTtype, PTfunc[PTtype], 
                  tint, tint_type, filters)
@@ -484,7 +571,7 @@ def main():
     ctf = cf.transmittance(date_dir, bestFit_atmfile, filters)
 
   # Make a plot of MCMC profiles with contribution functions/transmittance
-  bf.callTransit(date_dir+atmfile, tep_name, MCfile, stepsize, molfit, 
+  bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, 
                  solution, refpress, tconfig, date_dir, burnin, 
                  abun_basic, PTtype, PTfunc[PTtype],     
                  tint, tint_type, filters, ctf)

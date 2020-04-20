@@ -186,7 +186,9 @@ def trace(allparams, title=None, parname=None, thinning=1,
       yloc = ylab
     plt.yticks(size=fs)
     # Make sure ticks are read-able
-    a.yaxis.set_major_locator(tck.MultipleLocator(np.round((yran[1]-yran[0])/3, 1)))
+    tckstep = (yran[1]-yran[0])/3 # Bad style but matplotlib is goofy. Trust me
+    ndec    = int(np.ceil(-np.log10(tckstep))) # Number of decimals to round to
+    a.yaxis.set_major_locator(tck.MultipleLocator(np.round(tckstep, ndec)))
     if i == npars - 1:
       plt.xticks(size=fs)
       if thinning > 1:
@@ -315,10 +317,13 @@ def pairwise(allparams, title=None, parname=None, thinning=1,
         a = plt.gca()
         xlims = a.get_xlim()
         ylims = a.get_ylim()
-        a.xaxis.set_major_locator(tck.MultipleLocator(                        \
-                                       np.round((xlims[1] - xlims[0]) / 3, 2)))
-        a.yaxis.set_major_locator(tck.MultipleLocator(                        \
-                                       np.round((ylims[1] - ylims[0]) / 3, 2)))
+
+        xtckstep = (xlims[1]-xlims[0])/3 # See trace(). Trust me
+        xdec     = int(np.ceil(-np.log10(xtckstep))) # See trace()
+        ytckstep = (ylims[1]-ylims[0])/3 # See trace(). Trust me
+        ydec     = int(np.ceil(-np.log10(ytckstep))) # See trace()
+        a.xaxis.set_major_locator(tck.MultipleLocator(np.round(xtckstep, xdec)))
+        a.yaxis.set_major_locator(tck.MultipleLocator(np.round(ytckstep, ydec)))
         # Label positions
         if j == npars-1 and i == npars-1:
           axs = fig.get_axes()
