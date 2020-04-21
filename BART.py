@@ -348,6 +348,7 @@ def main():
     shutil.copy2(atmfile, date_dir + os.path.basename(atmfile))
     mu.msg(1, "Atmospheric file copied from: '{:s}'.".format(atmfile),indent=2)
     runMCMC |= 8
+  atmfile = date_dir + os.path.basename(atmfile)
   # Pre-atmospheric file:
   if os.path.isfile(preatm_file):
     preatm_file = os.path.realpath(preatm_file)
@@ -380,7 +381,7 @@ def main():
     temp = ipt.initialPT2(date_dir, PTinit,         press_file, 
                           PTtype,   PTfunc[PTtype], tep_name)
     # Generate the uniform-abundance profiles file:
-    mat.uniform(date_dir+atmfile, press_file, abun_basic, tep_name,
+    mat.uniform(atmfile, press_file, abun_basic, tep_name,
                out_spec, uniform, temp, refpress)
     # Update the runMCMC flag to skip upcoming steps:
     runMCMC |= 8
@@ -417,12 +418,12 @@ def main():
     proc = subprocess.Popen([TEAcall, preatm_file, 'TEA'])
     proc.communicate()
 
-    shutil.copy2(date_dir+"TEA/results/TEA.tea", date_dir+atmfile) 
+    shutil.copy2(date_dir+"TEA/results/TEA.tea", atmfile) 
     # Add radius array:
-    mat.makeRadius(out_spec, date_dir+atmfile, abun_file, tep_name, refpress)
+    mat.makeRadius(out_spec, atmfile, abun_file, tep_name, refpress)
     mu.msg(1, "Added radius column to TEA atmospheric file.", indent=2)
     # Re-format file for use with transit:
-    mat.reformat(date_dir+atmfile)
+    mat.reformat(atmfile)
     mu.msg(1, "Atmospheric file reformatted for Transit.", indent=2)
 
   if justTEA:
@@ -533,8 +534,6 @@ def main():
 
   # MCcubed output file
   MCfile = date_dir + logfile
-  if not os.path.abspath(atmfile):
-    atmfile = date_dir + atmfile
   
   # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
   bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, 
