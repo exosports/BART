@@ -455,72 +455,12 @@ def main():
 
   # Run the MCMC:
   if runMCMC < 16:
-    # Pre-process filters and stellar spectrum for efficiency
-    # Make wavenumber grid
-    if wnlow is not None and wnhigh is not None:
-      wnlow  *= wnfct
-      wnhigh *= wnfct
-    elif wllow is not None and wlhigh is not None:
-      wnlow  = 1. / (wllow *wlfct)
-      wnhigh = 1. / (wlhigh*wlfct)
-    else:
-      print("BART requires one of the following groups of paramters to be set:")
-      print("  (1) wnlow, wnhigh")
-      print("  (2) wllow, wlhigh")
-      print("Additionally, if (1) is not in cm-1 or (2) is not in cm, wnfct")
-      print("(default: 1.0) or wlfct (default: 1e-4) must be set to the proper")
-      print("conversion factor. Please update the config file and try again.")
-      sys.exit()
-    # Make wavenumber grid, inclusive
-    specwn = np.arange(wnlow, wnhigh + wndelt/2, wndelt)
-    # Make directory for the files
-    preproc_dir = os.path.join(date_dir, 'preprocessed', '')
-    try:
-      os.mkdir(preproc_dir)
-    except OSError as e:
-      if e.errno == 17: # Already exists
-        pass
-      else:
-        print("Cannot create folder '{:s}'. {:s}.".format(model_dir,
-                                              os.strerror(e.errno)))
-        sys.exit()
-    # Get values
-    # Extract necessary values from the TEP file:
-    tep = rd.File(tep_name)
-    # Stellar temperature in K:
-    tstar = float(tep.getvalue('Ts')[0])
-    gstar = float(tep.getvalue('loggstar')[0])
-    # Stellar model
-    starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, tstar, gstar)
-    # Read and resample the filters:
-    nifilter  = [] # Normalized interpolated filter
-    istarfl   = [] # interpolated stellar flux
-    wnindices = [] # wavenumber indices used in interpolation
-    for i in np.arange(len(filters)):
-      # Read filter:
-      filtwaven, filttransm = w.readfilter(filters[i])
-      # Check that filter boundaries lie within the spectrum wn range:
-      if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
-        mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
-                "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
-                "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
-                                                          filtwaven[-1]))
-
-      # Resample filter and stellar spectrum:
-      nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
-                                                starwn,    starfl)
-      nifilter.append(nifilt)
-      istarfl.append(strfl)
-      wnindices.append(wnind[0])
-    # Save it out to be used in BARTfunc.py
-    np.save(preproc_dir + 'nifilter.npy', nifilter)
-    np.save(preproc_dir + 'istarfl.npy', istarfl)
-    np.save(preproc_dir + 'wnindices.npy', wnindices)
     # Call MC3
     MC3call = MC3dir + "/MCcubed/mccubed.py"
     subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
                     shell=True, cwd=date_dir)
     mu.msg(1, "\nCalculating SPEIS/ESS/credible regions.")
+    # Calculate credible regions
     cr.driver('output.npy', date_dir, burnin, parnames, stepsize)    
 
   # Plot MCMC results in prettier format
