@@ -432,10 +432,10 @@ shell=True, cwd=date_dir)
                                         PTfunc, PTargs)
 
     # get percentiles (for 1,2-sigma boundaries):
-    low1   = np.percentile(PTprofiles, 16.0, axis=0)
-    hi1    = np.percentile(PTprofiles, 84.0, axis=0)
-    low2   = np.percentile(PTprofiles,  2.5, axis=0)
-    hi2    = np.percentile(PTprofiles, 97.5, axis=0)
+    low1   = np.percentile(PTprofiles, 15.87, axis=0)
+    hi1    = np.percentile(PTprofiles, 84.13, axis=0)
+    low2   = np.percentile(PTprofiles,  2.28, axis=0)
+    hi2    = np.percentile(PTprofiles, 97.72, axis=0)
     median = np.median(    PTprofiles,       axis=0)
 
     # plot figure
