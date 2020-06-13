@@ -4,7 +4,13 @@
 # BART is under an open-source, reproducible-research license (see LICENSE).
 
 import sys, os
-import argparse, ConfigParser
+import argparse
+from six.moves import configparser
+import six
+if six.PY2:
+    ConfigParser = configparser.SafeConfigParser
+else:
+    ConfigParser = configparser.ConfigParser
 import numpy as np
 import scipy.constants as sc
 from mpi4py import MPI
@@ -40,7 +46,7 @@ def main(comm):
   # Get parameters from configuration file:
   cfile = args.config_file
   if cfile:
-    config = ConfigParser.SafeConfigParser()
+    config = ConfigParser()
     config.optionxform = str
     config.read([cfile])
     defaults = dict(config.items("MCMC"))
@@ -79,8 +85,9 @@ def main(comm):
                      "%(default)s].",
                      dest="tint",    type=float,  default=100.0)
   group.add_argument("--tint_type", dest="tint_type",
-           help="Method to evaluate `tint` [default: %(default)s].",
-           type=str,   action="store", default='thorngren')
+                     help="Method to evaluate `tint`, const or thorngren " +\
+                          "[default: %(default)s].",
+                     type=str, action="store", default='const')
   # transit Options:
   group = parser.add_argument_group("transit Options")
   group.add_argument("--config",  action="store",
@@ -282,6 +289,7 @@ def main(comm):
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
     if np.any(q < 0.0):
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
+      #mu.comm_gather(comm, -np.ones(nwave), MPI.DOUBLE)
       continue
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
     aprofiles[iHe] =         q / (1.0 + ratio)

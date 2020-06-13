@@ -23,7 +23,7 @@ cf:
 
 import numpy as np
 from scipy.interpolate import interp1d
-import os
+import sys, os
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -149,7 +149,7 @@ def filter_cf(filters, nlayers, wns, cf, normalize=False):
     wn, response = w.readfilter(filters[i])
 
     # Find where filters starts and ends
-    wn_filt = np.asarray(filter(lambda x: x>min(wn) and x<max(wn), wns))
+    wn_filt = wns[(wns>min(wn)) * (wns<max(wn))]
     start_filt, stop_filt = np.where(wns==min(wn_filt))[0][0], \
                             np.where(wns==max(wn_filt))[0][0]
 
@@ -194,11 +194,10 @@ def transmittance(date_dir, atmfile, filters, plot=True):
   transmit = np.exp(-tau)
   # Band intgrate it:
   filt_tr  = filter_cf(filters, nlayers, wns, transmit)
-  nfilt    = len(filters)
+  nfilters = len(filters)
 
-  ### FINDME delete later, grabbed from Ryan's bdwarf branch ###
-  meanwl = np.zeros(nfilt)
-  for i in np.arange(nfilt):
+  meanwl = np.zeros(nfilters)
+  for i in np.arange(nfilters):
     filtwaven, filttransm = w.readfilter(filters[i])
     meanwn    = np.sum(filtwaven*filttransm)/np.sum(filttransm)
     meanwl[i] = 1e4/meanwn
@@ -206,7 +205,6 @@ def transmittance(date_dir, atmfile, filters, plot=True):
   minmeanwl   = np.min(meanwl)
   colors      = (meanwl-minmeanwl) / (maxmeanwl-minmeanwl)
 
-  #colors = plt.cm.rainbow(np.asarray(np.linspace(0, 255, nfilters), np.int))
   if plot:
     print("  Plotting contribution functions.\n")
     # Not normalized cf
@@ -215,31 +213,26 @@ def transmittance(date_dir, atmfile, filters, plot=True):
     gs       = gridspec.GridSpec(1, 2, width_ratios=[20, 1], wspace=0.05)
     ax0      = plt.subplot(gs[0])
     ax1      = plt.subplot(gs[1])
-    #colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
-    #ax0.set_prop_cycle(plt.cycler('color', colormap))
-    meanwl = np.zeros(nfilt)
-    for i in np.arange(nfilt):
+    for i in np.arange(nfilters):
       (head, tail) = os.path.split(filters[i])
-      lbl          = tail[:-4]
+      lbl         = tail[:-4]
       ax0.semilogy(filt_tr[i], p, '-', color=plt.cm.rainbow(colors[i]), 
                    linewidth = 1, label=lbl)
-    #lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
-    #                 ncol=len(filt_cf)//30 + 1, prop={'size':8})
     norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
     cbar = matplotlib.colorbar.ColorbarBase(ax1, cmap=plt.cm.rainbow,
                                             norm=norm,
                                             orientation='vertical')
-    cbar.set_label(u"Mean Wavelength (\u00b5m)", fontsize=14)
+    cbar.set_label("Mean Wavelength (\u00b5m)", fontsize=14)
     ax0.set_ylim(max(p), min(p))
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     ax0.set_xlabel('Transmittance', fontsize=14)
-    ax0.set_ylabel('Pressure (bars)' , fontsize=14)
+    ax0.set_ylabel('Pressure (bar)' , fontsize=14)
     plt.savefig(date_dir + 'Transmittance.png')
 
   return filt_tr[:,::-1]
 
 
-def cf(date_dir, atmfile, filters, plot=True):
+def cf(date_dir, atmfile, filters, plot=True, fs=15):
   """
   Call above functions to calculate cf and plot them
   """
@@ -261,11 +254,10 @@ def cf(date_dir, atmfile, filters, plot=True):
 
   # Call filter_cf() to calculate cf
   filt_cf, filt_cf_norm = filter_cf(filters, nlayers, wns, cf, normalize=True)
+  nfilters = len(filters)
 
-  ### FINDME delete later, grabbed from Ryan's bdwarf branch ###
-  nfilt = len(filt_cf)
-  meanwl = np.zeros(nfilt)
-  for i in np.arange(nfilt):
+  meanwl = np.zeros(nfilters)
+  for i in np.arange(nfilters):
     filtwaven, filttransm = w.readfilter(filters[i])
     meanwn    = np.sum(filtwaven*filttransm)/np.sum(filttransm)
     meanwl[i] = 1e4/meanwn
@@ -276,29 +268,28 @@ def cf(date_dir, atmfile, filters, plot=True):
   if plot:
     print("  Plotting contribution functions.\n")
     # Not normalized cf
-    plt.figure(4, figsize=(8,6.5))
+    plt.figure(4)
     plt.clf()
     gs       = gridspec.GridSpec(1, 2, width_ratios=[20, 1], wspace=0.05)
     ax0      = plt.subplot(gs[0])
     ax1      = plt.subplot(gs[1])
-    #colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
-    #ax0.set_prop_cycle(plt.cycler('color', colormap))
-    for i in np.arange(nfilt):
+    for i in np.arange(len(filt_cf)):
       (head, tail) = os.path.split(filters[i])
       lbl          = tail[:-4]
       ax0.semilogy(filt_cf[i], p, '-', color=plt.cm.rainbow(colors[i]), 
                    linewidth = 1, label=lbl)
-    #lgd = ax0.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), 
-    #                 ncol=len(filt_cf)//30 + 1, prop={'size':8})
     norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
     cbar = matplotlib.colorbar.ColorbarBase(ax1, cmap=plt.cm.rainbow,
                                             norm=norm,
                                             orientation='vertical')
-    cbar.set_label(u"Mean Wavelength (\u00b5m)", fontsize=14)
+    cbar.set_label("Mean Wavelength (\u00b5m)", fontsize=fs)
+    cbar.ax.tick_params(labelsize=fs-4)
     ax0.set_ylim(max(p), min(p))
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    ax0.set_xlabel('Contribution Functions', fontsize=14)
-    ax0.set_ylabel('Pressure (bar)' , fontsize=14)
+    ax0.set_xlabel('Contribution Functions', fontsize=fs)
+    ax0.set_ylabel('Pressure (bar)' , fontsize=fs)
+    plt.xticks(size=fs-4)
+    plt.yticks(size=fs-4)
     plt.savefig(date_dir + 'ContrFuncs.png', 
                 bbox_inches='tight')
 
@@ -308,26 +299,27 @@ def cf(date_dir, atmfile, filters, plot=True):
     gs       = gridspec.GridSpec(1, 2, width_ratios=[20, 1], wspace=0.05)
     ax0      = plt.subplot(gs[0])
     ax1      = plt.subplot(gs[1])
-    #colormap = plt.cm.rainbow(np.linspace(0, 1, len(filters)))
-    #ax0.set_prop_cycle(plt.cycler('color', colormap))
     for i in np.arange(len(filt_cf_norm)):
       (head, tail) = os.path.split(filters[i])
       lbl          = tail[:-4]
       ax0.semilogy(filt_cf_norm[i], p, '--', color=plt.cm.rainbow(colors[i]), 
                    linewidth = 1, label=lbl)
-    #lgd = ax0.legend(loc='center left', bbox_to_anchor=(1,0.5), 
-    #                 ncol=len(filt_cf)//30 + 1, prop={'size':8})
     norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
     cbar = matplotlib.colorbar.ColorbarBase(ax1, cmap=plt.cm.rainbow,
                                             norm=norm,
                                             orientation='vertical')
-    cbar.set_label(u"Mean Wavelength (\u00b5m)", fontsize=14)
+    cbar.set_label("Mean Wavelength (\u00b5m)", fontsize=fs)
+    cbar.ax.tick_params(labelsize=fs-4)
     ax0.set_ylim(max(p), min(p))
     ax0.set_xlim(0, 1.0)
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    ax0.set_xlabel('Normalized Contribution Functions', fontsize=14)
-    ax0.set_ylabel('Pressure (bar)' , fontsize=14)
+    ax0.set_xlabel('Normalized Contribution Functions', fontsize=fs)
+    ax0.set_ylabel('Pressure (bar)' , fontsize=fs)
+    plt.xticks(size=fs-4)
+    plt.yticks(size=fs-4)
     plt.savefig(date_dir + 'NormContrFuncs.png', 
                 bbox_inches='tight')
 
   return filt_cf[:,::-1], filt_cf_norm[:,::-1]
+
+

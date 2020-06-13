@@ -64,6 +64,7 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
   2014-09-24  Jasmina   Updated documentation.
   2019-09-20  Michael   Updated initialPT2() to take `tint_type` to allow for 
                         the Thorngren et al. (2019) method of calculating T_int
+
   """
 
   # Calculate the planetary effective temperature from the TEP file

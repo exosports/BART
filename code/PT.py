@@ -666,14 +666,10 @@ def PT_line(pressure, kappa,  gamma1, gamma2, alpha, beta,
                         consistency with other PT models
   2019-09-10  mhimes    Added T_int calculation from Thorngren et al. (2019)
   '''
-
   # Convert kappa, gamma1, gamma2 from log10
   kappa  = 10**(kappa )
   gamma1 = 10**(gamma1)
   gamma2 = 10**(gamma2)
-
-  # Stellar input temperature (at top of atmosphere):
-  T_irr = beta * (R_star / (2.0*sma))**0.5 * T_star
 
   if T_int_type == 'thorngren':
       # Planetary internal temperature (Thorngren et al. 2019)
@@ -681,6 +677,9 @@ def PT_line(pressure, kappa,  gamma1, gamma2, alpha, beta,
       T_eq  = (R_star/(2.0*sma))**0.5 * T_star
       F     = 4.0 * sc.Stefan_Boltzmann * T_eq**4
       T_int = 1.24 * T_eq * np.exp(-(np.log(F) - 0.14)**2 / 2.96)
+
+  # Stellar input temperature (at top of atmosphere):
+  T_irr = beta * (R_star / (2.0*sma))**0.5 * T_star
 
   # Gray IR optical depth:
   tau = kappa * (pressure*1e6) / grav # Convert bars to barye (CGS)

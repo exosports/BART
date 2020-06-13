@@ -2,6 +2,7 @@
 # BART is under an open-source, reproducible-research license (see LICENSE).
 
 import os
+import six
 import shutil
 import re
 import numpy as np
@@ -125,9 +126,9 @@ def read_eabun(solabun):
 
   # Allocate arrays to put information:
   index  = np.zeros(nelements, int)
-  symbol = np.zeros(nelements, '|S2')
+  symbol = np.zeros(nelements, '|S2' if six.PY2 else 'U2')
   dex    = np.zeros(nelements, np.double)
-  name   = np.zeros(nelements, '|S20')
+  name   = np.zeros(nelements, '|S20' if six.PY2 else 'U20')
   mass   = np.zeros(nelements, np.double)
 
   # Store data into the arrays:
@@ -179,7 +180,7 @@ def get_g(tepfile):
   return g, Rp
 
 
-def radpress(pressure, temperature, mu, p0, R0, g):
+def radpress(pressure, temperature, mu, p0, R0, g0):
   """
   Calculate the radii for the atmospheric layers applying the
   hidrostatic-equilibrium equation with the constraint that:
@@ -197,7 +198,7 @@ def radpress(pressure, temperature, mu, p0, R0, g):
      Reference pressure level, i.e. R(p0) = R0, in bars.
   R0: Float
      Reference radius level in km.
-  g: Float
+  g0: Float
      Atmospheric gravity in m s-2.
   """
   # Number of layers in the atmosphere:
@@ -205,6 +206,7 @@ def radpress(pressure, temperature, mu, p0, R0, g):
 
   # Allocate array of radii:
   rad = np.zeros(n)
+  g   = np.zeros(n)
 
   # Interpolate temp and mu in lin-log space (1bar)
   interPT = interp1d(np.log10(pressure), temperature)
@@ -212,8 +214,8 @@ def radpress(pressure, temperature, mu, p0, R0, g):
 
   # Get temp and mu at surface pressure (1bar)
   try:
-    temp_1bar = interPT(np.log10(p0))
-    mu_1bar   = intermu(np.log10(p0))
+    temp0 = interPT(np.log10(p0))
+    mu0   = intermu(np.log10(p0))
   except IOError:
     print("Referenced surface pressure of {:.3e} bar is not in the "
           "range of pressures: [{}, {}] bar.".
@@ -231,24 +233,28 @@ def radpress(pressure, temperature, mu, p0, R0, g):
   if press[idx] != p0:
       # If the point is above p0:
       if press[idx] > p0:
-          rad[idx] = R0 + 0.5 * (temp[idx] / mu[idx] + temp_1bar / mu_1bar) *\
-                     (sc.Avogadro * sc.k * np.log(p0/press[idx]) / g)
+          rad[idx] = R0 + 0.5 * (temp[idx] / mu[idx] + temp0 / mu0)    \
+                     * (sc.Avogadro * sc.k * np.log(p0/press[idx]) / g0)
       # If the point is below p0:
       else:
-          rad[idx] = R0 - 0.5 * (temp[idx] / mu[idx] + temp_1bar / mu_1bar) *\
-                     (sc.Avogadro * sc.k * np.log(press[idx]/p0) / g)
+          rad[idx] = R0 - 0.5 * (temp[idx] / mu[idx] + temp0 / mu0)    \
+                     * (sc.Avogadro * sc.k * np.log(press[idx]/p0) / g0)
+      g[idx] = g0 * R0**2 / rad[idx]**2
 
   else:
       rad[idx] = R0
+      g[idx]   = g0
 
   # Calculate radius below p0:
   for i in reversed(np.arange(idx)):
       rad[i] = rad[i+1] - 0.5 * (temp[i] / mu[i] + temp[i+1] / mu[i+1]) * \
-               (sc.Avogadro * sc.k * np.log(press[i]/press[i+1]) / g)
+               (sc.Avogadro * sc.k * np.log(press[i]/press[i+1]) / g[i+1])
+      g[i] = g[i+1] * rad[i+1]**2 / rad[i]**2
   # Calculate radius above p0:
   for i in np.arange(idx+1, n):
       rad[i] = rad[i-1] + 0.5 * (temp[i] / mu[i] + temp[i-1] / mu[i-1]) * \
-               (sc.Avogadro * sc.k * np.log(press[i-1]/press[i]) / g)
+               (sc.Avogadro * sc.k * np.log(press[i-1]/press[i]) / g[i-1])
+      g[i] = g[i-1] * rad[i-1]**2 / rad[i]**2
 
   # Reverse the order of calculated radii to write them in the right order
   # in pre-atm file:

@@ -2,7 +2,13 @@
 # BART is under an open-source, reproducible-research license (see LICENSE).
 
 import os, sys
-import argparse, ConfigParser
+import argparse
+from six.moves import configparser
+import six
+if six.PY2:
+    ConfigParser = configparser.SafeConfigParser
+else:
+    ConfigParser = configparser.ConfigParser
 import numpy as np
 import scipy.constants as sc
 
@@ -47,7 +53,7 @@ def makeTransit(cfile, tepfile, shareOpacity):
   # Name of the configuration-file section:
   section = "MCMC"
   # Read BART configuration file:
-  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig = ConfigParser()
   Bconfig.read([cfile])
 
   # Keyword names of the arguments in the BART configuration file:
@@ -84,8 +90,10 @@ def makeTransit(cfile, tepfile, shareOpacity):
   for key in np.intersect1d(args, known_args):
     # FINDME: Why am I splitting?
     values = Bconfig.get(section, key).split("\n")
-    for val in values:
-      tcfile.write("{:s} {:s}\n".format(key, val))
+    # Allow for no CIA file to be specified
+    if not (key=='csfile' and len(values)==1 and values[0]==''):
+      for val in values:
+        tcfile.write("{:s} {:s}\n".format(key, val))
 
   if shareOpacity:
     tcfile.write("shareOpacity \n")
@@ -110,7 +118,7 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   # Name of the configuration-file section:
   section = "MCMC"
   # Open input BART configuration file:
-  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig = ConfigParser()
   Bconfig.optionxform = str
   Bconfig.read([cfile])
   # Keyword names of the arguments in the BART configuration file:
@@ -130,6 +138,9 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
 
   # Inputs should always exist:
   for arg in np.intersect1d(args, input_args):
+    if arg == "csfile" and Bconfig.get(section, arg) == '':
+      print(Bconfig.get(section, arg))
+      continue
     # Split multiple values (if more than one), get full path, join back:
     values = Bconfig.get(section, arg).split("\n")
     for v in np.arange(len(values)):
@@ -171,11 +182,11 @@ def makeTEA(cfile, TEAdir):
      Default TEA directory.
   """
   # Open New ConfigParser:
-  config = ConfigParser.SafeConfigParser()
+  config = ConfigParser()
   config.add_section('TEA')
 
   # Open BART ConfigParser:
-  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig = ConfigParser()
   Bconfig.read([cfile])
 
   # List of known TEA arguments:
