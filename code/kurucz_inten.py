@@ -277,10 +277,10 @@ def read(filename, freq=False):
   grav   = grav  [np.where(grav   != -1)]
   header = header[np.where(header !=  0)]
   nmod   = header.size
-  nline  = (header[2] - header[1] - 1) / 2  # Omit the header line itself
+  nline  = (header[2] - header[1] - 1) // 2  # Omit the header line itself
 
   # Read and count wavelengths:
-  wave = np.zeros(header[0]*len(filetxt[startwave])/10)
+  wave = np.zeros(header[0]*len(filetxt[startwave])//10)
   k = 0
   string = ''.join(filetxt[startwave:header[0]])
   for j in np.arange(0, len(string), 10):
@@ -297,8 +297,8 @@ def read(filename, freq=False):
   #LOOP OVER MODELS
   for i in range(0, nmod):
     k = 0
-    string1 = ''.join(filetxt[header[i]+1      :header[i]+nline+1  ])
-    string2 = ''.join(filetxt[header[i]+nline+1:header[i]+2*nline+1])
+    string1 = ''.join(filetxt[header[i]+1      :header[i]+1+nline  ])
+    string2 = ''.join(filetxt[header[i]+1+nline:header[i]+1+nline*2])
     for j in range(0,len(string1),10):
       inten[i,k]   = float(string1[j:j+10])
       nainten[i,k] = float(string2[j:j+10])
