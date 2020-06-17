@@ -228,18 +228,18 @@ Thank you for using BART! \newline
 \label{sec:requirements}
 
 BART was developed on a Unix/Linux machine using Python 2.7.6, Numpy
-1.8.2, and mpi4py 1.3.1.
+1.8.2, Matplotlib 3.0.2, and mpi4py 1.3.1.
 
 \noindent -- Python 2.7.6+. \\
 \noindent -- \href{http://www.numpy.org/}{NumPy} 1.8.2+. \\
-\noindent -- \href{http://matplotlib.org/index.html}{matplotlib}. \\
+\noindent -- \href{http://matplotlib.org/index.html}{matplotlib} 3.0.2+. \\
 \noindent -- \href{https://github.com/sympy/sympy/releases/tag/sympy/0.7.1.rc1}
                   {SymPy} (version 0.7.1.rc1 to ensure better performance) \\
 \noindent -- \href{http://mpi4py.scipy.org/docs/usrman/install.html}
                   {mpi4py} 1.3.1+. \\
 \noindent -- An MPI distribution (MPICH preferred). \\
-\noindent -- A C \findme{which?} compiler. \\
-\noindent -- A Fortran \findme{which?} compiler. \\
+\noindent -- A C compiler (e.g., gcc). \\
+\noindent -- A Fortran compiler (e.g., gfortran). \\
 
 \subsection{Install and Compile}
 \label{sec:install}
@@ -281,8 +281,13 @@ directories):
 make clean
 \end{verbatim}
 
-\noindent Note that there will be warnings. \\
+\noindent Note that there may be warnings. \\
 %\findme{Nate says pypy is a great thing to use. Investigate.} \newline
+
+\noident To build a conda environment from the supplied file:
+\begin{verbatim}
+conda env create -f environment.yml
+\end{verbatim}
 
 \section{Quick Example}
 \label{sec:quick-example}

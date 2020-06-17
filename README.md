@@ -23,6 +23,8 @@ planetary atmospheres.
 * Oliver Bowman (UCF)
 * Madison Stemm (UCF)
 * Andrew Foster (UCF)
+* Ryan Challener (UCF)
+* Michael Himes (UCF)
 
 With support from:
 * Thomas J. Loredo (Cornell)
@@ -65,6 +67,11 @@ To remove the program binaries, execute (in the respective
 directories):
 ```shell
 make clean
+```
+
+To build the conda environment:
+```shell
+conda env create -f environment.yml
 ```
 
 ### Quick Example:
