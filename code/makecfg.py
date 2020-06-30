@@ -139,7 +139,6 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   # Inputs should always exist:
   for arg in np.intersect1d(args, input_args):
     if arg == "csfile" and Bconfig.get(section, arg) == '':
-      print(Bconfig.get(section, arg))
       continue
     # Split multiple values (if more than one), get full path, join back:
     values = Bconfig.get(section, arg).split("\n")
@@ -158,6 +157,22 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
 
   # Add func:
   Bconfig.set(section, "func", "hack BARTfunc {:s}".format(filedir))
+
+  # Using uniform sampler: no data/uncert necessary
+  if Bconfig.get(section, "walk") == "unif":
+    wndelt = float(Bconfig.get(section, "wndelt"))
+    try:
+        wnhigh = float(Bconfig.get(section, "wnhigh"))
+        wnlow  = float(Bconfig.get(section, "wnlow"))
+    except:
+        wnhigh = 1. / (float(Bconfig.get(section, "wlfct")) * \
+                       float(Bconfig.get(section, "wllow")))
+        wnlow  = 1. / (float(Bconfig.get(section, "wlfct")) * \
+                       float(Bconfig.get(section, "wlhigh")))
+    ndata = int(np.floor((wnhigh - wnlow) / wndelt + 1))
+    Bconfig.set(section, "data",   "0 " * ndata)
+    Bconfig.set(section, "uncert", "1 " * ndata)
+
 
   # Params is a special case:
   params = Bconfig.get(section, "params")
