@@ -156,7 +156,11 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   Bconfig.set(section, "mpi", "True")
 
   # Add func:
-  Bconfig.set(section, "func", "hack BARTfunc {:s}".format(filedir))
+  func = Bconfig.get(section, "func").split()
+  if type(func) in [list, tuple, np.ndarray]:
+    func[-1] = os.path.join(os.path.dirname(os.path.realpath(cfile)), func[-1])
+  Bconfig.set(section, "func", " ".join(func))
+  
 
   # Using uniform sampler: no data/uncert necessary
   if Bconfig.get(section, "walk") == "unif":
