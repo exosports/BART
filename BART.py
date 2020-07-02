@@ -195,6 +195,9 @@ def main():
   group.add_argument("--uncert", dest="uncert",
            help="Uncertanties on transit or eclipse depths",
            type=mu.parray, action="store", default=None)
+  group.add_argument("--savemodel", dest="savemodel", 
+           help="Filename to save out models.",
+           type=str, action="store", default=None)
   group.add_argument("--modelper", dest="modelper", 
            help="Determines how to split MC3's `savemodel`. " + \
                 "0 makes no split, >0 sets the # of iterations per split. " + \
@@ -303,21 +306,22 @@ def main():
   uniform     = args.uniform
   refpress    = args.refpress
 
-  params   = args.params
-  parnames = args.parnames
-  molfit   = args.molfit
-  Tmin     = args.Tmin
-  Tmax     = args.Tmax
-  quiet    = args.quiet
-  nchains  = args.nchains
-  walk     = args.walk
-  stepsize = args.stepsize
-  burnin   = args.burnin
-  thinning = args.thinning
-  data     = args.data
-  uncert   = args.uncert
-  modelper = args.modelper
-  plots    = args.plots
+  params    = args.params
+  parnames  = args.parnames
+  molfit    = args.molfit
+  Tmin      = args.Tmin
+  Tmax      = args.Tmax
+  quiet     = args.quiet
+  nchains   = args.nchains
+  walk      = args.walk
+  stepsize  = args.stepsize
+  burnin    = args.burnin
+  thinning  = args.thinning
+  data      = args.data
+  uncert    = args.uncert
+  savemodel = args.savemodel
+  modelper  = args.modelper
+  plots     = args.plots
 
   tint      = args.tint
   tint_type = args.tint_type
@@ -540,7 +544,7 @@ def main():
                                            model_dir)                     ], 
                     shell=True, cwd=date_dir)
 
-  if plots:
+  if plots and walk != 'unif':
     # Re-plot MCMC results in prettier format
     mcp.mc3plots('output.npy', burnin,   thinning, nchains, uniform, molfit, 
                  out_spec,     parnames, stepsize, date_dir, 
@@ -556,7 +560,7 @@ def main():
     # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
     bf.callTransit(atmfile, tep_name, MCfile,  stepsize, molfit, 
                    solution, refpress, tconfig, date_dir, burnin, 
-                   abun_basic, PTtype,   PTfunc[PTtype], 
+                   abun_basic, PTtype, PTfunc[PTtype], 
                    tint, tint_type, filters)
     # Plot best-fit eclipse or modulation spectrum, depending on solution:
     bf.plot_bestFit_Spectrum(filters, kurucz, tep_name, solution, outspec,
