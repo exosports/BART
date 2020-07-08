@@ -7,8 +7,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + \
-                '/../modules/MCcubed/MCcubed/plots/')
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                '..', 'modules', 'MCcubed', 'MCcubed', 'plots', ''))
 from mcplots import trace, pairwise, histogram
 
 __all__ = ["mc3plots"]
