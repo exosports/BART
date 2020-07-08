@@ -16,7 +16,7 @@ import reader as rd
 import constants as c
 
 filedir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(filedir + "/../modules/MCcubed/")
+sys.path.append(os.path.join(filedir, "..", "modules", "MCcubed", "")
 import MCcubed.utils as mu
 
 
@@ -68,7 +68,8 @@ def makeTransit(cfile, tepfile, shareOpacity):
   # Default molfile path:
   if "molfile" not in args:
     tcfile.write("molfile {:s}\n".format(
-      os.path.realpath(filedir + "/../modules/transit/inputs/molecules.dat")))
+      os.path.realpath(os.path.join(filedir, "..", "modules", "transit", 
+                                    "inputs", "molecules.dat"))))
 
   # Calculate gsurf and refradius from the tepfile:
   tep = rd.File(tepfile)
@@ -149,7 +150,7 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   # Outputs are stored/copied into loc_dir:
   for arg in np.intersect1d(args, output_args):
     Bconfig.set(section, arg,
-                Bconfig.get(section, "loc_dir") + "/" +
+                Bconfig.get(section, "loc_dir") + os.sep +
                 os.path.basename(Bconfig.get(section, arg)))
 
   # Add mpi:

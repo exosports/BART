@@ -15,12 +15,12 @@ import numpy as np
 
 # Directory of BART.py file:
 BARTdir = os.path.dirname(os.path.realpath(__file__))
-TEAdir     = BARTdir + "/modules/TEA/"
-MC3dir     = BARTdir + "/modules/MCcubed/"
-Transitdir = BARTdir + "/modules/transit/"
+TEAdir     = os.path.join(BARTdir, "modules", "TEA", "")
+MC3dir     = os.path.join(BARTdir, "modules", "MCcubed", "")
+Transitdir = os.path.join(BARTdir, "modules", "transit", "")
 
 # Add path to submodules and import:
-sys.path.append(BARTdir + "/code")
+sys.path.append(os.path.join(BARTdir, "code"))
 import makeP       as mp
 import InitialPT   as ipt
 import        PT   as  pt
@@ -258,7 +258,7 @@ def main():
   cfile = cargs.config_file
   # Default:
   if cfile is None:
-    cfile = "./BART.cfg"
+    cfile = os.path.join(os.getcwd(), "BART.cfg")
   # Always require a configuration file:
   if not os.path.isfile(cfile):
     mu.error("Configuration file: '{:s}' not found.".format(cfile))
@@ -385,9 +385,9 @@ def main():
   dirfmt = loc_dir + "%4d-%02d-%02d_%02d:%02d:%02d"
   date_dir = dirfmt % time.localtime()[0:6]
   # FINDME: Temporary hack (temporary?):
-  date_dir = os.path.normpath(loc_dir) + "/"
+  date_dir = os.path.join(os.path.normpath(loc_dir), "")
   if not os.path.isabs(date_dir):
-    date_dir = os.getcwd() + "/" + date_dir
+    date_dir = os.path.join(os.getcwd(), date_dir)
   mu.msg(1, "Output folder: '{:s}'".format(date_dir), indent=2)
   try:
     os.mkdir(date_dir)
@@ -479,14 +479,15 @@ def main():
     # Generate the TEA configuration file:
     mc.makeTEA(cfile, TEAdir)
     # Call TEA to calculate the atmospheric file:
-    TEAcall = TEAdir + "tea/runatm.py"
+    TEAcall = os.path.join(TEAdir, "tea", "runatm.py")
     TEAout  = os.path.splitext(atmfile)[0]  # Remove extension
     # Execute TEA:
     mu.msg(1, "\nExecute TEA:")
     proc = subprocess.Popen([TEAcall, preatm_file, 'TEA'])
     proc.communicate()
 
-    shutil.copy2(date_dir+"TEA/results/TEA.tea", atmfile) 
+    TEAres = os.path.join("TEA", "results", "TEA.tea")
+    shutil.copy2(os.path.join(date_dir, TEAres), atmfile) 
     # Add radius array:
     mat.makeRadius(out_spec, atmfile, abun_file, tep_name, refpress)
     mu.msg(1, "Added radius column to TEA atmospheric file.", indent=2)
@@ -500,7 +501,8 @@ def main():
 
   # Make the MC3 configuration file:
   if runMCMC < 16: # MCMC
-    MCMC_cfile = os.path.realpath(loc_dir) + "/MCMC_" + os.path.basename(cfile)
+    MCMC_cfile = os.path.join(os.path.realpath(loc_dir), 
+                              "MCMC_" + os.path.basename(cfile))
     mc.makeMCMC(cfile, MCMC_cfile, logfile)
     # Make transit configuration file:
     mc.makeTransit(MCMC_cfile, tep_name, shareOpacity)
@@ -508,7 +510,7 @@ def main():
     # Generate the opacity file if it doesn't exist:
     if not os.path.isfile(opacityfile):
       mu.msg(1, "Transit call to generate the Opacity grid table.")
-      Tcall = Transitdir + "/transit/transit"
+      Tcall = os.path.join(Transitdir, "transit", "transit")
       subprocess.call(["{:s} -c {:s} --justOpacity".format(Tcall, tconfig)],
                       shell=True, cwd=date_dir)
     else:
@@ -523,13 +525,13 @@ def main():
 
   # Run the MCMC:
   if runMCMC < 16:
-    MC3call = MC3dir + "/MCcubed/mccubed.py"
+    MC3call = os.path.join(MC3dir, "MCcubed", "mccubed.py")
     subprocess.call(["mpiexec {:s} -c {:s}".format(MC3call, MCMC_cfile)],
                     shell=True, cwd=date_dir)
 
   if walk=='unif' and modelper > 0:
     # Clean up the output directory
-    model_dir = date_dir + savemodel.replace('.npy', '') + '/'
+    model_dir = os.path.join(date_dir, savemodel.replace('.npy', ''), '')
     # Make directory
     try:
       os.mkdir(model_dir)
@@ -576,7 +578,7 @@ def main():
     cf.cf_tconfig(date_dir)
     # Call Transit with the cf_tconfig
     cf_tconfig = date_dir + 'cf_tconfig.cfg'
-    Tcall = Transitdir + "/transit/transit"
+    Tcall = os.path.join(Transitdir, "transit", "transit")
     subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
                     shell=True, cwd=date_dir)
 

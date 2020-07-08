@@ -396,16 +396,16 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
         bestFit_tconfig(tconfig, date_dir)
 
     # Call Transit with the best-fit tconfig
-    Transitdir      = os.path.dirname(os.path.realpath(__file__)) + \
-                      "/../modules/transit/"
-    bf_tconfig      = date_dir   + 'bestFit_tconfig.cfg'
-    Tcall           = Transitdir + "/transit/transit"
+    Transitdir      = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                                   "..", "modules", "transit", "")
+    bf_tconfig      = os.path.join(date_dir, 'bestFit_tconfig.cfg')
+    Tcall           = os.path.join(Transitdir, "transit", "transit")
     subprocess.call(["{:s} -c {:s}".format(Tcall, bf_tconfig)], 
                      shell=True, cwd=date_dir)
 
     # ========== plot MCMC PT profiles ==========
     # get MCMC data:
-    MCMCdata = date_dir + "/output.npy"
+    MCMCdata = os.path.join(date_dir, "output.npy")
     data = np.load(MCMCdata)
     nchains, npars, niter = np.shape(data)
 

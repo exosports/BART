@@ -95,7 +95,8 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
   plt.ylim(max(p), min(p))
 
   # Save plot to current directory
-  plt.savefig(date_dir + '/InitialPT.png') 
+  plt.savefig(os.path.join(date_dir, 'InitialPT.png'))
+  plt.close()
 
   # Plot Smoothed PT profile
   plt.figure(2)
@@ -108,7 +109,8 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
   plt.xlim(0.9*T0, 1.1*T3)
 
   # Save plot to output directory
-  plt.savefig(date_dir + '/InitialPTSmoothed.png') 
+  plt.savefig(os.path.join(date_dir, 'InitialPTSmoothed.png'))
+  plt.close()
 
   return T_smooth
 

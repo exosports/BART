@@ -22,10 +22,11 @@ import reader    as rd
 import constants as c
 
 BARTdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(BARTdir + "/../modules/MCcubed/")
+sys.path.append(os.path.join(BARTdir, "..", "modules", "MCcubed", "")
 import MCcubed.utils as mu
 
-sys.path.append(BARTdir + "/../modules/transit/transit/python")
+Tdir = os.path.join(BARTdir, "..", "modules", "transit", "transit", "python")
+sys.path.append(Tdir)
 import transit_module as trm
 
 
