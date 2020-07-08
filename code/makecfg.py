@@ -16,7 +16,7 @@ import reader as rd
 import constants as c
 
 filedir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(filedir, "..", "modules", "MCcubed", "")
+sys.path.append(os.path.join(filedir, "..", "modules", "MCcubed", ""))
 import MCcubed.utils as mu
 
 
