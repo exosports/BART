@@ -21,8 +21,8 @@ import wine      as w
 import reader    as rd
 import constants as c
 
-BARTdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(BARTdir, "..", "modules", "MCcubed", "")
+BARTdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+sys.path.append(os.path.join(BARTdir, "modules", "MCcubed", ""))
 import MCcubed.utils as mu
 
 Tdir = os.path.join(BARTdir, "..", "modules", "transit", "transit", "python")
