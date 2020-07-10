@@ -3,7 +3,7 @@
 % Please note this document will be automatically compiled and hosted online
 % after each commit to master. Because of this, renaming or moving the
 % document should be done carefully. To see the compiled document, go to
-% http://planets.ucf.edu/bart-docs/BART_user_manual.pdf
+% https://exosports.github.io/BART/doc/BART_User_Manual.html
 
 \documentclass[letterpaper, 12pt]{article}
 \input{top-BART_user_manual}
@@ -86,7 +86,9 @@ and the statistical package MCcubed.
 % and MCcubed compares the models with observations assessing the best one.
 
 The detailed BART documentation, The BART theory documents (FINDME),
-BART User Manual, and BART Code Documentation are provided with the
+BART User Manual\footnote{Most recent version of the manual available at 
+\href{https://exosports.github.io/BART/doc/BART_User_Manual.html}{https://exosports.github.io/BART/doc/BART\_User\_Manual.html}}, 
+and BART Code Documentation are provided with the
 package.
 
 This manual describes the BART program usage, inputs, and outputs.
@@ -94,8 +96,9 @@ Complementary, TEA, Transit, and MCcubed with its documentation.
 
 % and for development (Sections \herenote{Z} through \herenote{W})
 
-This manual makes many references to the Transit and TEA user manuals
-\findme{add urls}.
+This manual makes many references to the Transit\footnote{Most recent version of the manual available at 
+\href{https://exosports.github.io/transit/doc/Transit_User_Manual.html}{https://exosports.github.io/transit/doc/Transit\_User\_Manual.html}} and TEA user manuals
+\findme{add url}.
 
 Section \ref{sec:installation} indicates how to obtain the code.
 Section \ref{sec:inputs} blah.  Section \ref{sec:outputs} blah. blah
@@ -524,26 +527,26 @@ Run the pylineread module.
 \end{verbatim}
 
 \noindent
-This will produce the TLI file with the requested name. If unspecified, the file will be placed in the current working directory (/TLI). Otherwise, it will be place in the specified directory. A more in-depth description of the TLI files and the pylineread module can be found in the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}.
+This will produce the TLI file with the requested name. If unspecified, the file will be placed in the current working directory (/TLI). Otherwise, it will be place in the specified directory. A more in-depth description of the TLI files and the pylineread module can be found in the \href{https://exosports.github.io/transit/doc/Transit_User_Manual.html}{Transit User Manual}.
 
 
 \subsection{Cross-section (CS) File}
 \label{sec:CS}
 Cross-section (CS) files contain information for any opacity continuum. They must be in HITRAN cross-section format. Several Collision-Induced Absorption (CIA) files are included in the BART/modules/transit/inputs/ directory. These may be used as CS files and are named according to the molecular collisions they represent.
 
-CS files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}.
+CS files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://exosports.github.io/transit/doc/Transit_User_Manual.html}{Transit User Manual}.
 
 \subsection{Transiting Extrasolar Planet (TEP) File}
 \label{sec:TEP}
 Transiting Extrasolar Planet (TEP) files contain information about the particular exoplanet in question. The file includes many orbital geometry parameters necessary for spectral calculation. Some TEP files can be found in the BART/modules/transit/inputs/tep/ directory.
 
-TEP files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}.
+TEP files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://exosports.github.io/transit/doc/Transit_User_Manual.html}{Transit User Manual}.
 
 \subsection{Stellar Spectrum File}
 \label{sec:stellarSpec}
 The stellar spectrum is provided by a Kurucz stellar spectrum file. They are dependent on the star's metallicity and can be found on \href{http://kurucz.harvard.edu/grids.html}{Robert Kurucz's website}. Some Kurucz files are provided in the BARt/inputs/kurucz directory.
 
-Kurucz stellar spectrum files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}.
+Kurucz stellar spectrum files are handled by {\tt Transit} and thus a more in-depth description can be found in the \href{https://exosports.github.io/transit/doc/Transit_User_Manual.html}{Transit User Manual}.
 
 \subsection{Elemental Abundances File}
 \label{sec:elemAbund}
@@ -912,7 +915,7 @@ file.
 \subsubsection{TLI file}
 
 These are quick guidelines to generate a TLI file with the Transit's
-pylineread module.  For a detailed description see the \href{https://github.com/exosports/transit/blob/master/doc/transit_user_manual.pdf}{Transit User Manual}. The following lines are intended to be run from the terminal. \\
+pylineread module.  For a detailed description see the \href{https://exosports.github.io/transit/doc/Transit_User_Manual.html}{Transit User Manual}. The following lines are intended to be run from the terminal. \\
 
 \noindent
 From the BART directory, make a TLI directory and move into it:
