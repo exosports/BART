@@ -32,11 +32,11 @@ With support from:
 * Nikku Madhusudhan (Yale)
 
 ### Getting Started:
-You can find the BART User Manual [here](http://planets.ucf.edu/bart-docs/BART_user_manual.pdf). If you run into trouble while using BART, please feel free to use our [BART User Mailing List](https://physics.ucf.edu/mailman/listinfo/bart-user). You'll have to sign up to post (for spam reasons), but we encourage you to join. If you're a developer interested in contributing to BART, you may also be interested in our [BART Developer Mailing List](https://physics.ucf.edu/mailman/listinfo/bart-devel) (see CONTRIBUTING for more information).
+You can find the BART User Manual [here](https://exosports.github.io/BART/doc/BART_User_Manual.html). If you run into trouble while using BART, please feel free to use our [BART User Mailing List](https://physics.ucf.edu/mailman/listinfo/bart-user). You'll have to sign up to post (for spam reasons), but we encourage you to join. If you're a developer interested in contributing to BART, you may also be interested in our [BART Developer Mailing List](https://physics.ucf.edu/mailman/listinfo/bart-devel) (see CONTRIBUTING for more information).
 
 ### Install and Compile:
 Download the latest stable version from the BART
-[releases](https://github.com/joeharr4/BART/releases) page
+[releases](https://github.com/exosports/BART/releases) page
 (TBD).  Alternatively, clone the repository to your local
 machine with the following terminal commands.
 First create a working directory to place the code:
