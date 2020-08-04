@@ -319,8 +319,8 @@ cd run/
 
 {\fontsize{9.8}{1em}\selectfont 
 \begin{lstlisting}[breaklines]
-wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip 
-unzip 06_hit08.zip
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/06_hit12.zip 
+unzip 06_hit12.zip
 \end{lstlisting}}
 
 
@@ -342,13 +342,15 @@ cp $topdir/BART/examples/demo/transit_demo.cfg .
 $topdir/BART/modules/transit/transit/transit -c transit_demo.cfg --justOpacity
 \end{verbatim}}
 
-\noindent Copy the BART configuration file and run the MCMC code to sample the
+\noindent Copy the BART configuration files and run the MCMC code to sample the
 posteriors:
 
 {\fontsize{9.8}{1em}\selectfont
 \begin{verbatim}
-cp $topdir/BART/examples/demo/BART.cfg .
-$topdir/BART/BART.py -c BART.cfg
+cp $topdir/BART/examples/demo/BART_eclipse.cfg .
+$topdir/BART/BART.py -c BART_eclipse.cfg
+cp $topdir/BART/examples/demo/BART_transit.cfg .
+$topdir/BART/BART.py -c BART_transit.cfg
 \end{verbatim}}
 
 \section{Examples}
