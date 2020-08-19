@@ -70,8 +70,9 @@ def read_MCMC_out(MCfile):
     lines = np.asarray(f.readlines())
     f.close()
 
-    # Find where the data starts and ends:
-    for ini in np.arange(len(lines)):
+    # Find where the data starts and ends
+    # Go in reverse in case multiple runs have been appended to the same logfile
+    for ini in np.arange(len(lines)-1, 0, -1):
         if lines[ini].startswith(' Best-fit params'):
             break
     ini += 1
