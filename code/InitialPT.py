@@ -145,16 +145,16 @@ def initialPT2(date_dir, params, pressfile, mode, PTfunc, tepfile,
   tep = rd.File(tepfile)
   # Stellar radius (in meters):
   rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
-  # Stellar temperature in K:
-  tstar = float(tep.getvalue('Ts')[0])
-  # Semi-major axis (in meters):
-  sma   = float(tep.getvalue( 'a')[0]) * sc.au
   # Planetary radius (in meters):
   rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
   # Planetary mass (in kg):
   mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
 
   if mode == "line":
+    # Stellar temperature in K:
+    tstar = float(tep.getvalue('Ts')[0])
+    # Semi-major axis (in meters):
+    sma   = float(tep.getvalue( 'a')[0]) * sc.au
     # Planetary surface gravity (in cm s-2):
     gplanet = 100.0 * sc.G * mplanet / rplanet**2
     # Additional PT arguments for Line case:
