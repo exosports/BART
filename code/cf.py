@@ -180,7 +180,7 @@ def filter_cf(filters, nlayers, wns, cf, normalize=False):
   return filt_cf
 
 
-def transmittance(date_dir, atmfile, filters, plot=True):
+def transmittance(date_dir, atmfile, filters, fext='.png', plot=True):
   """
   """
   # Read atmfile
@@ -227,12 +227,13 @@ def transmittance(date_dir, atmfile, filters, plot=True):
     ax0.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     ax0.set_xlabel('Transmittance', fontsize=14)
     ax0.set_ylabel('Pressure (bar)' , fontsize=14)
-    plt.savefig(date_dir + 'Transmittance.png')
+    plt.savefig(date_dir + 'Transmittance' + fext, bbox_inches='tight')
+    plt.close()
 
   return filt_tr[:,::-1]
 
 
-def cf(date_dir, atmfile, filters, plot=True, fs=15):
+def cf(date_dir, atmfile, filters, fext='.png', plot=True, fs=15):
   """
   Call above functions to calculate cf and plot them
   """
@@ -290,8 +291,8 @@ def cf(date_dir, atmfile, filters, plot=True, fs=15):
     ax0.set_ylabel('Pressure (bar)' , fontsize=fs)
     plt.xticks(size=fs-4)
     plt.yticks(size=fs-4)
-    plt.savefig(date_dir + 'ContrFuncs.png', 
-                bbox_inches='tight')
+    plt.savefig(date_dir + 'ContrFuncs' + fext, bbox_inches='tight')
+    plt.close()
 
     # Normalized cf
     plt.figure(5, figsize=(8,6.5))
@@ -317,8 +318,8 @@ def cf(date_dir, atmfile, filters, plot=True, fs=15):
     ax0.set_ylabel('Pressure (bar)' , fontsize=fs)
     plt.xticks(size=fs-4)
     plt.yticks(size=fs-4)
-    plt.savefig(date_dir + 'NormContrFuncs.png', 
-                bbox_inches='tight')
+    plt.savefig(date_dir + 'NormContrFuncs' + fext, bbox_inches='tight')
+    plt.close()
 
   return filt_cf[:,::-1], filt_cf_norm[:,::-1]
 

@@ -294,7 +294,7 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
 
 def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0, 
                 tconfig, date_dir, burnin, abun_file, PTtype,  PTfunc, 
-                T_int, T_int_type, filters, ctf=None, fs=15):
+                T_int, T_int_type, filters, ctf=None, fext='.png', fs=15):
     """
     Call Transit to produce best-fit outputs.
     Plot MCMC posterior PT plot.
@@ -338,6 +338,10 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
        Filter files associated with the eclipse/transit depths
     ctf: 2D array.
        Contribution or transmittance functions corresponding to `filters`
+    fext: string.
+       File extension for saved plot.
+       Options: .png, .pdf
+       Default: .png
     fs: int
        Font size for plots.
     """
@@ -380,7 +384,8 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
     plt.xlabel('T (K)'     , fontsize=fs)
     plt.ylabel('logP (bar)', fontsize=fs)
     # Save plot to current directory
-    plt.savefig(date_dir + 'Best_PT.png')
+    plt.savefig(date_dir + 'Best_PT' + fext, bbox_inches='tight')
+    plt.close()
 
     # Update R0, if needed:
     if nradfit:
@@ -485,16 +490,16 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
 
     # save figure
     if ctf is not None:
-        savefile = date_dir + "MCMC_PTprofiles_cf.png"
+        savefile = date_dir + "MCMC_PTprofiles_cf" + fext
         plt.savefig(savefile, bbox_extra_artists=(lgd,), bbox_inches='tight')
     else:
-        savefile = date_dir + "MCMC_PTprofiles.png"
-        plt.savefig(savefile)
+        savefile = date_dir + "MCMC_PTprofiles" + fext
+        plt.savefig(savefile, bbox_inches='tight')
     plt.close()
 
 
 def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
-                          uncert, date_dir, fs=15):
+                          uncert, date_dir, fext='.png', fs=15):
     '''
     Plot BART best-model spectrum
 
@@ -508,6 +513,9 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     data    : 1D array. Eclipse or transit depths.
     uncert  : 1D array. Uncertainties for data values.
     date_dir: string. Path to directory where the plot will be saved.
+    fext    : string. File extension for the plots to be saved.
+                      Options: .png, .pdf
+                      Default: .png
     fs      : int.    Font size for plots.
     '''
     # get star data
@@ -585,16 +593,16 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     # depending on solution plot eclipse or modulation spectrum
     if solution == 'eclipse':
         gfrat = gaussf(frat, 2)
-        plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best-fit")
-        plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="data")
-        plt.plot(meanwl, bandflux*1e3, "ok", label="model", alpha=1.0)
+        plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best fit")
+        plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="Data")
+        plt.plot(meanwl, bandflux*1e3, "ok", label="Model", alpha=1.0)
         plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=fs)
 
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 2)
-        plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best-fit")
-        plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
-        plt.plot(meanwl, bandmod, "ok", label="model", alpha=0.5)
+        plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best fit")
+        plt.errorbar(meanwl, data, uncert, fmt="or", label="Data")
+        plt.plot(meanwl, bandmod, "ok", label="Model", alpha=0.5)
         plt.ylabel(r"$(R_p/R_s)^2$", fontsize=fs)
 
     leg = plt.legend(loc="best")
@@ -608,11 +616,11 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     ax.get_xaxis().set_major_formatter(formatter)
     ax.get_xaxis().set_minor_formatter(formatter)
     plt.xlim(min(specwl),max(specwl))
-    plt.savefig(date_dir + "BART-bestFit-Spectrum.png")
+    plt.savefig(date_dir + "BART-bestFit-Spectrum" + fext, bbox_inches='tight')
     plt.close()
 
 
-def plotabun(date_dir, atmfile, molfit, fs=15):
+def plotabun(date_dir, atmfile, molfit, fext='.png', fs=15):
     '''
     Plot abundance profiles from best fit run.
 
@@ -626,6 +634,11 @@ def plotabun(date_dir, atmfile, molfit, fs=15):
 
     molfit:  1D string array
       Molecules to plot
+
+    fext: string
+      File extension for the plots to be saved.
+      Options: .png, .pdf
+      Default: .png
 
     fs: int
        Font size for plots.
@@ -657,5 +670,5 @@ def plotabun(date_dir, atmfile, molfit, fs=15):
     plt.ylim(np.amin(pressure), np.amax(pressure))
     plt.title('Best Fit Abundance Profiles')
     plt.gca().invert_yaxis()
-    plt.savefig(date_dir + 'abun_profiles.png', bbox_inches='tight')
+    plt.savefig(date_dir + 'abun_profiles' + fext, bbox_inches='tight')
 

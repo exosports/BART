@@ -15,7 +15,7 @@ __all__ = ["mc3plots"]
 
 
 def mc3plots(output,   burnin,   thinning, nchains, uniform, molfit, 
-             out_spec, parnames, stepsize, date_dir, fnames):
+             out_spec, parnames, stepsize, date_dir, fnames, fext='.png'):
   """
   Reformats the MC3 output file so that the log(abundance) factor is with 
   respect to molar fraction, rather than the initial values (as MC3 does). 
@@ -37,6 +37,9 @@ def mc3plots(output,   burnin,   thinning, nchains, uniform, molfit,
   date_dir: string. Path to directory where plots are to be saved.
   fnames  : list, strings. File names for the trace, pairwise, and histogram 
                            plots, in that order.
+  fext    : string.        File extension for the plots to be saved.
+                           Options: .png, .pdf
+                           Default: .png
   """
   # Load and stack results, excluding burn-in
   allparams = np.load(date_dir + output)
@@ -62,13 +65,13 @@ def mc3plots(output,   burnin,   thinning, nchains, uniform, molfit,
 
   # Trace plot:
   trace(    allstack, parname=parnames, thinning=thinning,
-            savefile=date_dir + fnames[0],
+            savefile=date_dir + fnames[0] + fext,
             sep=np.size(allstack[0])/nchains)
   # Pairwise posteriors:
   pairwise( allstack, parname=parnames, thinning=thinning,
-            savefile=date_dir + fnames[1])
+            savefile=date_dir + fnames[1] + fext)
   # Histograms:
   histogram(allstack, parname=parnames, thinning=thinning,
-            savefile=date_dir + fnames[2])
+            savefile=date_dir + fnames[2] + fext)
 
 

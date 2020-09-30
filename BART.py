@@ -71,6 +71,9 @@ def main():
                       help="Resume a previous run.", default=False)
   # Directories and files options:
   group = parser.add_argument_group("Directories and files")
+  group.add_argument("--fext",    dest="fext", 
+           help="File extension for plots [default: %(default)s]", 
+           type=str, action="store", default=".png")
   group.add_argument("--loc_dir", dest="loc_dir",
            help="Output directory to store results [default: %(default)s]",
            type=str, action="store", default="outdir")
@@ -282,6 +285,7 @@ def main():
   resume      = args.resume
 
   loc_dir  = args.loc_dir
+  fext     = args.fext
   tep_name = args.tep_name
   logfile  = args.logfile
 
@@ -550,8 +554,8 @@ def main():
     # Re-plot MCMC results in prettier format
     mcp.mc3plots('output.npy', burnin,   thinning, nchains, uniform, molfit, 
                  out_spec,     parnames, stepsize, date_dir, 
-                 ["output_trace.png", "output_pairwise.png", 
-                  "output_posterior.png"])
+                 ["output_trace", "output_pairwise", 
+                  "output_posterior"], fext)
 
     # Run best-fit Transit call
     mu.msg(1, "\nTransit call with the best-fitting values.")
@@ -563,15 +567,15 @@ def main():
     bf.callTransit(atmfile, tep_name, MCfile,  stepsize, molfit, 
                    solution, refpress, tconfig, date_dir, burnin, 
                    abun_basic, PTtype, PTfunc[PTtype], 
-                   tint, tint_type, filters)
+                   tint, tint_type, filters, fext=fext)
     # Plot best-fit eclipse or modulation spectrum, depending on solution:
     bf.plot_bestFit_Spectrum(filters, kurucz, tep_name, solution, outspec,
-                             data, uncert, date_dir)
+                             data, uncert, date_dir, fext)
 
     bestFit_atmfile = 'bestFit.atm'
 
     # Plot abundance profiles
-    bf.plotabun(date_dir, bestFit_atmfile, molfit)
+    bf.plotabun(date_dir, bestFit_atmfile, molfit, fext)
   
     mu.msg(1, "\nTransit call for contribution functions/transmittance.")
     # Run Transit with unlimited 'toomuch' argument:
@@ -586,17 +590,17 @@ def main():
     if solution == "eclipse":
       # Compute contribution fucntions if this is a eclipse run:
       mu.msg(1, "Calculating contribution functions.", indent=2)
-      ctfraw, ctf = cf.cf(date_dir, bestFit_atmfile, filters)
+      ctfraw, ctf = cf.cf(date_dir, bestFit_atmfile, filters, fext)
     else:
       # Compute transmittance if this is a transmission run:
       mu.msg(1, "Calculating transmittance.", indent=2)
-      ctf = cf.transmittance(date_dir, bestFit_atmfile, filters)
+      ctf = cf.transmittance(date_dir, bestFit_atmfile, filters, fext)
 
     # Make a plot of MCMC profiles with contribution functions/transmittance
     bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, 
                    solution, refpress, tconfig, date_dir, burnin, 
                    abun_basic, PTtype, PTfunc[PTtype], 
-                   tint, tint_type, filters, ctf)
+                   tint, tint_type, filters, ctf, fext=fext)
 
   mu.msg(1, "~~ BART End ~~")
 
