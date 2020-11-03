@@ -45,6 +45,7 @@ def makeTransit(cfile, tepfile, shareOpacity):
                 "solution", "raygrid",
                 "gsurf", "refpress", "refradius",
                 "cloudrad", "cloudfct", "cloudext",
+                "cloudtop", "scattering",
                 "verb",
                 "savefiles",
                 "outtoomuch", "outsample", "outspec", "outintens",
