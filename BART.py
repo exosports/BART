@@ -154,6 +154,12 @@ def main():
            help="Reference pressure level (bar) corresponding to the pressure"
                 " at the planet radius [default: %(default)s]",
            type=float, action="store", default=0.1)
+  group.add_argument("--cloudtop",           action="store",
+           help="Cloud deck top pressure [default: %(default)s]",
+                     dest="cloudtop",   type=float, default=None)
+  group.add_argument("--scattering",           action="store",
+           help="Rayleigh scattering [default: %(default)s]",
+                     dest="scattering", type=float, default=None)
 
   # MCMC options:
   group = parser.add_argument_group("MCMC")
@@ -299,6 +305,8 @@ def main():
   abun_file   = args.abun_file
   solar_times = args.solar_times
   COswap      = args.COswap
+  cloud    = args.cloudtop
+  rayleigh = args.scattering
 
   PTtype = args.PTtype
   PTinit = args.PTinit
@@ -565,6 +573,7 @@ def main():
   
     # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
     bf.callTransit(atmfile, tep_name, MCfile,  stepsize, molfit, 
+                   cloud, rayleigh,
                    solution, refpress, tconfig, date_dir, burnin, 
                    abun_basic, PTtype, PTfunc[PTtype], 
                    tint, tint_type, filters, fext=fext)
@@ -598,6 +607,7 @@ def main():
 
     # Make a plot of MCMC profiles with contribution functions/transmittance
     bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, 
+                   cloud, rayleigh,
                    solution, refpress, tconfig, date_dir, burnin, 
                    abun_basic, PTtype, PTfunc[PTtype], 
                    tint, tint_type, filters, ctf, fext=fext)

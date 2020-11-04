@@ -105,6 +105,12 @@ def main(comm):
   group.add_argument("--kurucz_file",           action="store",
                      help="Stellar Kurucz file [default: %(default)s]",
                      dest="kurucz",   type=str,       default=None)
+  group.add_argument("--cloudtop",           action="store",
+                     help="Cloud deck top pressure [default: %(default)s]",
+                     dest="cloudtop",   type=float, default=None)
+  group.add_argument("--scattering",           action="store",
+                     help="Rayleigh scattering [default: %(default)s]",
+                     dest="scattering", type=float, default=None)
   group.add_argument("--solution",                    action="store",
                      help="Solution geometry [default: %(default)s]",
                      dest="solution", type=str,       default="None",
@@ -132,6 +138,8 @@ def main(comm):
   tint_type = args2.tint_type
   Tmin      = args2.Tmin
   Tmax      = args2.Tmax
+  cloudtop  = args2.cloudtop
+  scattering = args2.scattering
   solution  = args2.solution  # Solution type
 
   # Dictionary of functions to calculate temperature for PTtype
@@ -156,8 +164,10 @@ def main(comm):
   # Number of fitting parameters:
   nfree   = len(params)                 # Total number of free parameters
   nmolfit = len(molfit)                 # Number of molecular free parameters
+  ncloud  = int(cloudtop is not None)
+  nray    = int(scattering is not None)
   nradfit = int(solution == 'transit')  # 1 for transit, 0 for eclipse
-  nPT     = nfree - nmolfit - nradfit   # Number of PT free parameters
+  nPT     = nfree - nmolfit - ncloud - nray - nradfit   # Number of PT pars
 
   # Read atmospheric file to get data arrays:
   species, pressure, temp, abundances = mat.readatm(atmfile)
@@ -284,7 +294,7 @@ def main(comm):
     for i in np.arange(nmolfit):
       m = imol[i]
       # Use variable as the log10:
-      aprofiles[m] = abundances[:, m] * 10.0**params[nPT+nradfit+i]
+      aprofiles[m] = abundances[:, m] * 10.0**params[nPT+nradfit+ncloud+nray+i]
 
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
@@ -298,6 +308,12 @@ def main(comm):
     # Set the 'surface' level:
     if solution == "transit":
       trm.set_radius(params[nPT])
+
+    if ncloud == 1:
+      trm.set_cloudtop(params[nPT+nradfit])
+
+    if nray == 1:
+      trm.set_scattering(params[nPT+nradfit+ncloud])
 
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
