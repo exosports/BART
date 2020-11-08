@@ -1,6 +1,7 @@
 name: bart
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - python=3.7.2
   - matplotlib=3.0.2
