@@ -48,7 +48,14 @@ topdir=`pwd`
 
 Clone the repository with all its submodules:
 ```shell
-git clone --recursive https://github.com/exosports/BART BART/
+git clone --recursive https://github.com/exosports/BART $topdir/BART/
+```
+
+Enter the BART directory and build the conda environment:
+```shell
+cd $topdir/BART/
+conda env create -f environment.yml
+conda activate bart
 ```
 
 Compile the transit module programs:
@@ -69,11 +76,6 @@ directories):
 make clean
 ```
 
-To build the conda environment:
-```shell
-conda env create -f environment.yml
-```
-
 ### Quick Example:
 
 The following script lets you quickly fit a methane emission spectrum model to a set of 10 filters between 2 and 4 um.  These instructions are meant to be executed from the shell terminal.  To begin, follow the instructions in the previous Section to install and compile the code.  Now, create a working directory in your top directory to place the files and execute the programs:
@@ -85,8 +87,8 @@ cd run/
 
 Download the methane line-transition database from the HITRAN server:
 ```shell
-wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip  
-unzip 06_hit08.zip
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/06_hit12.zip 
+unzip 06_hit12.zip
 ```
 
 Copy the pylineread configuration file and run pylineread to make the transition-line-information (TLI) file:

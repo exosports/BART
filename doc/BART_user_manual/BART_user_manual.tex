@@ -264,7 +264,14 @@ topdir=`pwd`
 
 \noindent Clone the repository with all its sub-modules:
 \begin{verbatim}
-git clone --recursive https://github.com/exosports/BART BART/
+git clone --recursive https://github.com/exosports/BART $topdir/BART/
+\end{verbatim}
+
+\noindent Navigate to the directory, build, and activate the conda environment:
+\begin{verbatim}
+cd $topdir/BART/
+conda env create -f environment.yml
+conda activate bart
 \end{verbatim}
 
 \noindent Compile the transit module programs:
@@ -287,16 +294,6 @@ make clean
 
 \noindent Note that there may be warnings. \\
 %\findme{Nate says pypy is a great thing to use. Investigate.} \newline
-
-\noindent To build a conda environment from the supplied file:
-\begin{verbatim}
-conda env create -f environment.yml
-\end{verbatim}
-
-\noindent Then, activate it:
-\begin{verbatim}
-conda activate bart
-\end{verbatim}
 
 \section{Quick Example}
 \label{sec:quick-example}
