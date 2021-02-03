@@ -478,11 +478,6 @@ def main():
     temp = ipt.initialPT2(date_dir, PTinit,         press_file, 
                           PTtype,   PTfunc[PTtype], tep_name, 
                           tint_type=tint_type)
-    # Choose a pressure-temperature profile
-    mu.msg(1, "\nChoose temperature and pressure profile:", indent=2)
-    raw_input("  open Initial PT profile figure and\n" 
-              "  press enter to continue or quit and choose other initial "
-              "PT parameters.")
     mat.make_preatm(tep_name, press_file, abun_file, 
                     in_elem, out_spec, preatm_file, temp)
     mu.msg(1, "Created new pre-atmospheric file.", indent=2)
