@@ -312,11 +312,10 @@ mkdir run/
 cd run/
 \end{verbatim}}
 
-\noindent Download the methane line-transition database from the HITRAN server:
+\noindent Download the HITRAN 2012 methane line-transition database at https://hitran.org/lbl/. Extract it:
 
 {\fontsize{9.8}{1em}\selectfont 
 \begin{lstlisting}[breaklines]
-wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/06_hit12.zip 
 unzip 06_hit12.zip
 \end{lstlisting}}
 
@@ -366,46 +365,15 @@ and/or chains, differences should be small.
 cd $topdir/run/
 \end{verbatim}}
 
-\noindent Run these scripts to download and unzip the following
-molecular line-list files:
-
-\begin{enumerate}
-\item H$\sb{2}$O from HITEMP:
+\noindent Download the HITEMP lists for H$\sb{2}$O, CO$\sb{2}$, and CO and the HITRAN 2012 methane line-transition database at https://hitran.org/lbl/. Extract them:
 
 {\fontsize{9.8}{1em}\selectfont
 \begin{lstlisting}[breaklines]
-cp ../BART/examples/WASP-12b/wget-list_HITEMP-H2O.txt
-wget --user=HITRAN --password=getdata -N -i wget-list_HITEMP-H2O.txt
 unzip '01_*HITEMP2010.zip'
-\end{lstlisting}}
-
-
-\item CO$\sb{2}$ from HITEMP:
-
-{\fontsize{9.8}{1em}\selectfont
-\begin{lstlisting}[breaklines]
-cp ../BART/examples/WASP-12b/wget-list_HITEMP-CO2.txt
-wget --user=HITRAN --password=getdata -N -i wget-list_HITEMP-CO2.txt
 unzip '02_*HITEMP2010.zip'
-\end{lstlisting}}
-
-\item CO from HITEMP:
-
-{\fontsize{9.8}{1em}\selectfont
-\begin{lstlisting}[breaklines]
-wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITEMP-2010/CO_line_list/05_HITEMP2010.zip
 unzip 05_HITEMP2010.zip
+unzip 06_hit12.zip
 \end{lstlisting}}
-
-\item CH$\sb{4}$ from HITRAN:
-
-{\fontsize{9.8}{1em}\selectfont
-\begin{lstlisting}[breaklines]
-wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip 
-unzip 06_hit08.zip
-\end{lstlisting}}
-
-\end{enumerate}
 
 
 \noindent Copy the pylineread configuration file and run pylineread to make a transition-line-information (TLI) file:

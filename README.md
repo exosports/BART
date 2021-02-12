@@ -85,9 +85,8 @@ mkdir run/
 cd run/
 ```
 
-Download the methane line-transition database from the HITRAN server:
+Download the HITRAN 2012 methane line-transition database at https://hitran.org/lbl/. Extract it:
 ```shell
-wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/06_hit12.zip 
 unzip 06_hit12.zip
 ```
 
