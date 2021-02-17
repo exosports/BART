@@ -4,7 +4,13 @@
 # BART is under an open-source, reproducible-research license (see LICENSE).
 
 import sys, os
-import argparse, ConfigParser
+import argparse
+from six.moves import configparser
+import six
+if six.PY2:
+    ConfigParser = configparser.SafeConfigParser
+else:
+    ConfigParser = configparser.ConfigParser
 import numpy as np
 import scipy.constants as sc
 from mpi4py import MPI
@@ -15,11 +21,12 @@ import wine      as w
 import reader    as rd
 import constants as c
 
-BARTdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(BARTdir + "/../modules/MCcubed/")
+BARTdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+sys.path.append(os.path.join(BARTdir, "modules", "MCcubed", ""))
 import MCcubed.utils as mu
 
-sys.path.append(BARTdir + "/../modules/transit/transit/python")
+Tdir = os.path.join(BARTdir, "modules", "transit", "transit", "python")
+sys.path.append(Tdir)
 import transit_module as trm
 
 
@@ -40,7 +47,7 @@ def main(comm):
   # Get parameters from configuration file:
   cfile = args.config_file
   if cfile:
-    config = ConfigParser.SafeConfigParser()
+    config = ConfigParser()
     config.optionxform = str
     config.read([cfile])
     defaults = dict(config.items("MCMC"))
@@ -78,6 +85,10 @@ def main(comm):
                      help="Internal temperature of the planet [default: "
                      "%(default)s].",
                      dest="tint",    type=float,  default=100.0)
+  group.add_argument("--tint_type", dest="tint_type",
+                     help="Method to evaluate `tint`, const or thorngren " +\
+                          "[default: %(default)s].",
+                     type=str, action="store", default='const')
   # transit Options:
   group = parser.add_argument_group("transit Options")
   group.add_argument("--config",  action="store",
@@ -94,6 +105,12 @@ def main(comm):
   group.add_argument("--kurucz_file",           action="store",
                      help="Stellar Kurucz file [default: %(default)s]",
                      dest="kurucz",   type=str,       default=None)
+  group.add_argument("--cloudtop",           action="store",
+                     help="Cloud deck top pressure [default: %(default)s]",
+                     dest="cloudtop",   type=float, default=None)
+  group.add_argument("--scattering",           action="store",
+                     help="Rayleigh scattering [default: %(default)s]",
+                     dest="scattering", type=float, default=None)
   group.add_argument("--solution",                    action="store",
                      help="Solution geometry [default: %(default)s]",
                      dest="solution", type=str,       default="None",
@@ -115,16 +132,19 @@ def main(comm):
   npars, niter = array1
 
   # :::::::  Initialize the Input converter ::::::::::::::::::::::::::
-  atmfile  = args2.atmfile
-  molfit   = args2.molfit
-  PTtype   = args2.PTtype
-  params   = args2.params
-  tepfile  = args2.tep_name
-  tint     = args2.tint
-  Tmin     = args2.Tmin
-  Tmax     = args2.Tmax
-  solution = args2.solution  # Solution type
-  ebalance = args2.ebalance
+  atmfile    = args2.atmfile
+  molfit     = args2.molfit
+  PTtype     = args2.PTtype
+  params     = args2.params
+  tepfile    = args2.tep_name
+  tint       = args2.tint
+  tint_type  = args2.tint_type
+  Tmin       = args2.Tmin
+  Tmax       = args2.Tmax
+  cloudtop   = args2.cloudtop
+  scattering = args2.scattering
+  solution   = args2.solution  # Solution type
+  ebalance   = args2.ebalance
 
   # Dictionary of functions to calculate temperature for PTtype
   PTfunc = {'iso'         : pt.PT_iso,
@@ -163,8 +183,10 @@ def main(comm):
   # Number of fitting parameters:
   nfree   = len(params)                 # Total number of free parameters
   nmolfit = len(molfit)                 # Number of molecular free parameters
+  ncloud  = int(cloudtop is not None)
+  nray    = int(scattering is not None)
   nradfit = int(solution == 'transit')  # 1 for transit, 0 for eclipse
-  nPT     = nfree - nmolfit - nradfit   # Number of PT free parameters
+  nPT     = nfree - nmolfit - ncloud - nray - nradfit   # Number of PT pars
 
   # Read atmospheric file to get data arrays:
   species, pressure, temp, abundances = mat.readatm(atmfile)
@@ -193,7 +215,7 @@ def main(comm):
     # Planetary surface gravity (in cm s-2):
     gplanet = 100.0 * sc.G * mplanet / rplanet**2
     # Additional PT arguments:
-    PTargs  = [rstar, tstar, tint, sma, gplanet]
+    PTargs  = [rstar, tstar, tint, sma, gplanet, tint_type]
   else:
     PTargs  = None
 
@@ -321,13 +343,14 @@ def main(comm):
     for i in np.arange(nmolfit):
       m = imol[i]
       # Use variable as the log10:
-      aprofiles[m] = abundances[:, m] * 10.0**params[nPT+nradfit+i]
+      aprofiles[m] = abundances[:, m] * 10.0**params[nPT+nradfit+ncloud+nray+i]
 
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
     if np.any(q < 0.0):
       nbadabun += 1
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
+      #mu.comm_gather(comm, -np.ones(nwave), MPI.DOUBLE)
       continue
     
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
@@ -336,6 +359,12 @@ def main(comm):
     # Set the 'surface' level:
     if solution == "transit":
       trm.set_radius(params[nPT])
+
+    if ncloud == 1:
+      trm.set_cloudtop(params[nPT+nradfit])
+
+    if nray == 1:
+      trm.set_scattering(params[nPT+nradfit+ncloud])
 
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)

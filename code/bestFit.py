@@ -30,6 +30,8 @@
     2018-12-21  Michael  Updated documentation, improved code readability.
     2019-02-13  Michael  Refactored callTransit. Enabled plotting for madhu 
                          PT profiles.
+    2019-09-20  Michael  Updated callTransit to take T_int and a type, instead 
+                         of a hard-coded value
 """
 
 import os, sys, subprocess
@@ -68,8 +70,9 @@ def read_MCMC_out(MCfile):
     lines = np.asarray(f.readlines())
     f.close()
 
-    # Find where the data starts and ends:
-    for ini in np.arange(len(lines)):
+    # Find where the data starts and ends
+    # Go in reverse in case multiple runs have been appended to the same logfile
+    for ini in np.arange(len(lines)-1, 0, -1):
         if lines[ini].startswith(' Best-fit params'):
             break
     ini += 1
@@ -265,7 +268,7 @@ def write_atmfile(atmfile, abun_file, molfit, T_line, abun_fact, date_dir,
     fout.close()
 
 
-def bestFit_tconfig(tconfig, date_dir, radius=None):
+def bestFit_tconfig(tconfig, date_dir, radius=None, cloudtop=None, scattering=None):
   '''
   Write best-fit config file for best-fit Transit run
   '''
@@ -282,6 +285,11 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
       if  lines[i].startswith("refradius ") and radius is not None:
           lines[i] = 'refradius {}\n'.format(str(radius))
 
+      if  lines[i].startswith("cloudtop ") and cloudtop is not None:
+          lines[i] = 'cloudtop {}\n'.format(str(cloudtop))
+      if  lines[i].startswith("scattering ") and scattering is not None:
+          lines[i] = 'scattering {}\n'.format(str(scattering))
+
   # Write lines into the bestFit config file
   f = open(date_dir + 'bestFit_tconfig.cfg', 'w')
   f.writelines(lines)
@@ -289,9 +297,9 @@ def bestFit_tconfig(tconfig, date_dir, radius=None):
   f.close()
 
 
-def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0, 
+def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  cloud, rayleigh, solution, p0, 
                 tconfig, date_dir, burnin, abun_file, PTtype,  PTfunc, 
-                filters, tint, ctf=None):
+                T_int, T_int_type, filters, ctf=None, fext='.png', fs=15):
     """
     Call Transit to produce best-fit outputs.
     Plot MCMC posterior PT plot.
@@ -325,10 +333,22 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
        'iso' for isothermal)
     PTfunc: pointer to function
        Determines the method of evaluating the PT profile's temperature
+    T_int: float.
+       Internal temperature of the planet.
+    T_int_type: string.
+       Method to evaluate `T_int`. 
+       'const' for constant value of `T_int`, 
+       'thorngren' for Thorngren et al. (2019)
     filters: list, strings.
        Filter files associated with the eclipse/transit depths
     ctf: 2D array.
        Contribution or transmittance functions corresponding to `filters`
+    fext: string.
+       File extension for saved plot.
+       Options: .png, .pdf
+       Default: .png
+    fs: int
+       Font size for plots.
     """
     # make sure burnin is an integer
     burnin = int(burnin)
@@ -339,10 +359,10 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
     grav, Rp = mat.get_g(tepfile)
     # get star data if needed
     if PTtype == 'line':
-      R_star, T_star, sma, gstar = get_starData(tepfile)
-      PTargs = [R_star, T_star, tint, sma, grav*1e2]
+        R_star, T_star, sma, gstar = get_starData(tepfile)
+        PTargs = [R_star, T_star, T_int, sma, grav*1e2, T_int_type]
     else:
-      PTargs = None # For non-Line profiles
+        PTargs = None # For non-Line profiles
 
     # Get best parameters
     bestP, uncer = read_MCMC_out(MCfile)
@@ -351,8 +371,10 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
     # get PTparams and abundances factors
     nparams   = len(allParams)
     nmol      = len(molfit)
+    ncloud    = int(cloud is not None)
+    nray      = int(rayleigh is not None)
     nradfit   = int(solution == 'transit')
-    nPTparams = nparams - nmol - nradfit
+    nPTparams = nparams - nmol - nradfit - ncloud - nray
 
     PTparams  = allParams[:nPTparams]
 
@@ -365,37 +387,48 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  solution, p0,
     plt.semilogy(best_T, pressure, '-', color = 'r')
     plt.xlim(0.9*min(best_T), 1.1*max(best_T))
     plt.ylim(max(pressure), min(pressure))
-    plt.title('Best PT', fontsize=14)
-    plt.xlabel('T (K)'     , fontsize=14)
-    plt.ylabel('logP (bar)', fontsize=14)
+    plt.title('Best PT', fontsize=fs)
+    plt.xlabel('T (K)'     , fontsize=fs)
+    plt.ylabel('logP (bar)', fontsize=fs)
     # Save plot to current directory
-    plt.savefig(date_dir + 'Best_PT.png')
+    plt.savefig(date_dir + 'Best_PT' + fext, bbox_inches='tight')
+    plt.close()
 
     # Update R0, if needed:
     if nradfit:
-      Rp = allParams[nPTparams]
+        Rp = allParams[nPTparams]
+    if cloud is not None:
+        cloudtop = allParams[nPTparams+nradfit]
+    else:
+        cloudtop = None
+    if rayleigh is not None:
+        scattering = allParams[nPTparams+nradfit+ncloud]
+    else:
+        scattering = None
 
     # write best-fit atmospheric file
     write_atmfile(atmfile, abun_file, molfit, best_T,
-                  allParams[nPTparams+nradfit:], date_dir, p0, Rp, grav)
+                  allParams[nPTparams+nradfit+ncloud+nray:], date_dir, p0, Rp, grav)
 
     # write new bestFit Transit config
     if solution == 'transit':
-      bestFit_tconfig(tconfig, date_dir, allParams[nPTparams])
+        bestFit_tconfig(tconfig, date_dir, allParams[nPTparams],
+                        cloudtop=cloudtop, scattering=scattering)
     else:
-      bestFit_tconfig(tconfig, date_dir)
+        bestFit_tconfig(tconfig, date_dir, cloudtop=cloudtop,
+                        scattering=scattering)
 
     # Call Transit with the best-fit tconfig
-    Transitdir      = os.path.dirname(os.path.realpath(__file__)) + \
-                      "/../modules/transit/"
-    bf_tconfig      = date_dir   + 'bestFit_tconfig.cfg'
-    Tcall           = Transitdir + "/transit/transit"
-    subprocess.call(["{:s} -c {:s}".format(Tcall, bf_tconfig)],
-shell=True, cwd=date_dir)
+    Transitdir      = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                                   "..", "modules", "transit", "")
+    bf_tconfig      = os.path.join(date_dir, 'bestFit_tconfig.cfg')
+    Tcall           = os.path.join(Transitdir, "transit", "transit")
+    subprocess.call(["{:s} -c {:s}".format(Tcall, bf_tconfig)], 
+                     shell=True, cwd=date_dir)
 
     # ========== plot MCMC PT profiles ==========
     # get MCMC data:
-    MCMCdata = date_dir + "/output.npy"
+    MCMCdata = os.path.join(date_dir, "output.npy")
     data = np.load(MCMCdata)
     nchains, npars, niter = np.shape(data)
 
@@ -425,10 +458,10 @@ shell=True, cwd=date_dir)
                                         PTfunc, PTargs)
 
     # get percentiles (for 1,2-sigma boundaries):
-    low1   = np.percentile(PTprofiles, 16.0, axis=0)
-    hi1    = np.percentile(PTprofiles, 84.0, axis=0)
-    low2   = np.percentile(PTprofiles,  2.5, axis=0)
-    hi2    = np.percentile(PTprofiles, 97.5, axis=0)
+    low1   = np.percentile(PTprofiles, 15.87, axis=0)
+    hi1    = np.percentile(PTprofiles, 84.13, axis=0)
+    low2   = np.percentile(PTprofiles,  2.28, axis=0)
+    hi2    = np.percentile(PTprofiles, 97.72, axis=0)
     median = np.median(    PTprofiles,       axis=0)
 
     # plot figure
@@ -449,8 +482,8 @@ shell=True, cwd=date_dir)
     plt.semilogy(best_T, pressure, "-", lw=2, label="Best fit", color="r")
     plt.ylim(pressure[0], pressure[-1])
     plt.legend(loc="best")
-    plt.xlabel("Temperature  (K)", size=15)
-    plt.ylabel("Pressure  (bar)",  size=15)
+    plt.xlabel("Temperature  (K)", size=fs)
+    plt.ylabel("Pressure  (bar)",  size=fs)
     if ctf is not None:
         nfilt = len(filters)
         # Add contribution or transmittance functions
@@ -467,50 +500,36 @@ shell=True, cwd=date_dir)
         colors = (meanwl-minmeanwl)/(maxmeanwl-minmeanwl)
 
         # Plot with filter labels
-        for i in np.arange(len(filters)):
+        for i in np.arange(nfilt):
             (head, tail) = os.path.split(filters[i])
             lbl          = tail[:-4]
             ax2.semilogy(ctf[i], pressure, '--',
                          color=plt.cm.rainbow(colors[i]),
                          linewidth = 1, label=lbl)
-        # Hide y axis tick labels
-        #plt.setp(ax2.get_yticklabels(), visible=False)
 
-        # Only plot legend if it's readable
-        if nfilt < 30:           
-            # Place legend off figure in case there are many filters
-            lgd = ax2.legend(loc='center left', bbox_to_anchor=(1,0.5), 
-                             ncol=len(filters)//30 + 1, prop={'size':8})
+        ax3 = plt.subplot(gs[2])
+        norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
+        cbar = matplotlib.colorbar.ColorbarBase(ax3, cmap=plt.cm.rainbow,
+                                                norm=norm,
+                                                orientation='vertical')
+        cbar.set_label(ur"${\rm Mean Wavelength\ \ (\u03bcm)}$")
+        if solution == 'transit':
+            ax2.set_xlabel('Transmittance', fontsize=fs)
         else:
-            ax3 = plt.subplot(gs[2])
-            norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
-            cbar = matplotlib.colorbar.ColorbarBase(ax3, cmap=plt.cm.rainbow,
-                                                    norm=norm,
-                                                    orientation='vertical')
-            cbar.set_label("Mean Wavelength (um)")
-            
-        if solution == 'eclipse':
-            ax2.set_xlabel('Normalized Contribution\nFunctions',  fontsize=15)
-        else:
-            ax2.set_xlabel('Transmittance', fontsize=15)
-    
+            ax2.set_xlabel('Normalized Contribution\nFunctions',  fontsize=fs)
 
     # save figure
     if ctf is not None:
-        savefile = date_dir + "MCMC_PTprofiles_cf.png"
-        if nfilt < 30:    
-            plt.savefig(savefile, bbox_extra_artists=(lgd,),
-                        bbox_inches='tight')
-        else:
-            plt.savefig(savefile, bbox_inches='tight')
-            
+        savefile = date_dir + "MCMC_PTprofiles_cf" + fext
+        plt.savefig(savefile, bbox_inches='tight')
     else:
-        savefile = date_dir + "MCMC_PTprofiles.png"
-        plt.savefig(savefile)
+        savefile = date_dir + "MCMC_PTprofiles" + fext
+        plt.savefig(savefile, bbox_inches='tight')
+    plt.close()
 
 
 def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
-                          uncert, date_dir):
+                          uncert, date_dir, fext='.png', fs=15):
     '''
     Plot BART best-model spectrum
 
@@ -524,6 +543,10 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     data    : 1D array. Eclipse or transit depths.
     uncert  : 1D array. Uncertainties for data values.
     date_dir: string. Path to directory where the plot will be saved.
+    fext    : string. File extension for the plots to be saved.
+                      Options: .png, .pdf
+                      Default: .png
+    fs      : int.    Font size for plots.
     '''
     # If data and uncert were provided as a numpy binary file
     if os.path.isfile(data[0]) and data == uncert:
@@ -632,24 +655,24 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     # plot figure
     plt.rcParams["mathtext.default"] = 'rm'
     matplotlib.rcParams.update({'mathtext.default':'rm'})
-    matplotlib.rcParams.update({'font.size':10})
-    plt.figure(3, (8.5, 5))
+    matplotlib.rcParams.update({'font.size':fs-2})
+    plt.figure(3, (8.5, 6))
     plt.clf()
 
     # depending on solution plot eclipse or modulation spectrum
     if solution == 'eclipse':
         gfrat = gaussf(frat, 2)
-        plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best-fit")
-        plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="data")
-        plt.plot(meanwl, bandflux*1e3, "ok", label="model", alpha=1.0)
-        plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=12)
+        plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best fit")
+        plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="Data")
+        plt.plot(meanwl, bandflux*1e3, "ok", label="Model", alpha=1.0)
+        plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=fs)
 
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 2)
-        plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best-fit")
-        plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
-        plt.plot(meanwl, bandmod, "ok", label="model", alpha=0.5)
-        plt.ylabel(r"$(R_p/R_s)^2$", fontsize=12)
+        plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best fit")
+        plt.errorbar(meanwl, data, uncert, fmt="or", label="Data")
+        plt.plot(meanwl, bandmod, "ok", label="Model", alpha=0.5)
+        plt.ylabel(r"$(R_p/R_s)^2$", fontsize=fs)
 
     elif solution == 'direct':
         gmodel = gaussf(bestspectrum, 2)
@@ -658,23 +681,22 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
         plt.plot(meanwl, bandflux, "ok", label="model", alpha=0.5)
         plt.ylabel(r"Flux", fontsize=12)
 
-    leg = plt.legend(loc="lower right")
+    leg = plt.legend(loc="best")
     leg.get_frame().set_alpha(0.5)
     ax = plt.subplot(111)
     ax.set_xscale('log')
-    plt.xlabel(ur"${\rm Wavelength\ \ (\u03bcm)}$", fontsize=12)
-    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    if   max(specwl) - min(specwl) > 30:
-        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),4))
-    elif max(specwl) - min(specwl) > 15:
-        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),2))
-    else:
-        ax.set_xticks(np.arange(round(min(specwl)),max(specwl),1))
+    plt.xlabel("${\\rm Wavelength\ \ (\u03bcm)}$", fontsize=fs)
+    #plt.xticks(size=fs)
+    #plt.yticks(size=fs)
+    formatter = matplotlib.ticker.FuncFormatter(lambda y, _: '{:.8g}'.format(y))
+    ax.get_xaxis().set_major_formatter(formatter)
+    ax.get_xaxis().set_minor_formatter(formatter)
     plt.xlim(min(specwl),max(specwl))
-    plt.savefig(date_dir + "BART-bestFit-Spectrum.png")
+    plt.savefig(date_dir + "BART-bestFit-Spectrum" + fext, bbox_inches='tight')
+    plt.close()
 
 
-def plotabun(date_dir, atmfile, molfit):
+def plotabun(date_dir, atmfile, molfit, fext='.png', fs=15):
     '''
     Plot abundance profiles from best fit run.
 
@@ -688,6 +710,14 @@ def plotabun(date_dir, atmfile, molfit):
 
     molfit:  1D string array
       Molecules to plot
+
+    fext: string
+      File extension for the plots to be saved.
+      Options: .png, .pdf
+      Default: .png
+
+    fs: int
+       Font size for plots.
     '''
     # Import best fit atmosphere results
     species, pressure, temp, abundances = mat.readatm(date_dir + atmfile)
@@ -711,9 +741,10 @@ def plotabun(date_dir, atmfile, molfit):
                    label=species[molfitindex[i]], linewidth=4)
 
     plt.legend(loc='upper left')
-    plt.xlabel('Molar Mixing Fraction')
-    plt.ylabel('Pressure (bars)')
+    plt.xlabel('Molar Mixing Fraction', fontsize=fs)
+    plt.ylabel('Pressure (bar)', fontsize=fs)
+    plt.ylim(np.amin(pressure), np.amax(pressure))
     plt.title('Best Fit Abundance Profiles')
     plt.gca().invert_yaxis()
-    plt.savefig(date_dir + 'abun_profiles.png')
+    plt.savefig(date_dir + 'abun_profiles' + fext, bbox_inches='tight')
 

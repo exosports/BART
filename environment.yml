@@ -1,0 +1,12 @@
+name: bart
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.7.2
+  - matplotlib=3.0.2
+  - numpy=1.16.2
+  - scipy=1.2.1
+  - mpich=3.3.2
+  - mpi4py=3.0.3
+  - swig=4.0.2

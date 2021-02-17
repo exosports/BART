@@ -23,6 +23,8 @@ planetary atmospheres.
 * Oliver Bowman (UCF)
 * Madison Stemm (UCF)
 * Andrew Foster (UCF)
+* Ryan Challener (UCF)
+* Michael Himes (UCF)
 
 With support from:
 * Thomas J. Loredo (Cornell)
@@ -30,11 +32,11 @@ With support from:
 * Nikku Madhusudhan (Yale)
 
 ### Getting Started:
-You can find the BART User Manual [here](http://planets.ucf.edu/bart-docs/BART_user_manual.pdf). If you run into trouble while using BART, please feel free to use our [BART User Mailing List](https://physics.ucf.edu/mailman/listinfo/bart-user). You'll have to sign up to post (for spam reasons), but we encourage you to join. If you're a developer interested in contributing to BART, you may also be interested in our [BART Developer Mailing List](https://physics.ucf.edu/mailman/listinfo/bart-devel) (see CONTRIBUTING for more information).
+You can find the BART User Manual [here](https://exosports.github.io/BART/doc/BART_User_Manual.html). If you run into trouble while using BART, please feel free to use our [BART User Mailing List](https://physics.ucf.edu/mailman/listinfo/bart-user). You'll have to sign up to post (for spam reasons), but we encourage you to join. If you're a developer interested in contributing to BART, you may also be interested in our [BART Developer Mailing List](https://physics.ucf.edu/mailman/listinfo/bart-devel) (see CONTRIBUTING for more information).
 
 ### Install and Compile:
 Download the latest stable version from the BART
-[releases](https://github.com/joeharr4/BART/releases) page
+[releases](https://github.com/exosports/BART/releases) page
 (TBD).  Alternatively, clone the repository to your local
 machine with the following terminal commands.
 First create a working directory to place the code:
@@ -46,7 +48,14 @@ topdir=`pwd`
 
 Clone the repository with all its submodules:
 ```shell
-git clone --recursive https://github.com/exosports/BART BART/
+git clone --recursive https://github.com/exosports/BART $topdir/BART/
+```
+
+Enter the BART directory and build the conda environment:
+```shell
+cd $topdir/BART/
+conda env create -f environment.yml
+conda activate bart
 ```
 
 Compile the transit module programs:
@@ -76,10 +85,9 @@ mkdir run/
 cd run/
 ```
 
-Download the methane line-transition database from the HITRAN server:
+Download the HITRAN 2012 methane line-transition database at https://hitran.org/lbl/. Extract it:
 ```shell
-wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2008/HITRAN2008/By-Molecule/Compressed-files/06_hit08.zip  
-unzip 06_hit08.zip
+unzip 06_hit12.zip
 ```
 
 Copy the pylineread configuration file and run pylineread to make the transition-line-information (TLI) file:

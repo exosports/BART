@@ -106,7 +106,7 @@ def readkurucz(kfile, temperature, logg):
   tmodel = temp[np.argmin(np.abs(temp-temperature))]
   # Nearest sampled log(g):
   gmodel = grav[np.argmin(np.abs(grav-logg))]
-  imodel = np.where((temp == tmodel) & (grav > gmodel))[0][0]
+  imodel = np.where((temp == tmodel) & (grav >= gmodel))[0][0]
 
   # Get the stellar flux:
   starfl = inten[imodel]  # W m^-2 sr^-1 Hz^-1

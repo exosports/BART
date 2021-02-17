@@ -2,7 +2,13 @@
 # BART is under an open-source, reproducible-research license (see LICENSE).
 
 import os, sys
-import argparse, ConfigParser
+import argparse
+from six.moves import configparser
+import six
+if six.PY2:
+    ConfigParser = configparser.SafeConfigParser
+else:
+    ConfigParser = configparser.ConfigParser
 import numpy as np
 import scipy.constants as sc
 
@@ -10,7 +16,7 @@ import reader as rd
 import constants as c
 
 filedir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(filedir + "/../modules/MCcubed/")
+sys.path.append(os.path.join(filedir, "..", "modules", "MCcubed", ""))
 import MCcubed.utils as mu
 
 
@@ -39,6 +45,7 @@ def makeTransit(cfile, tepfile, shareOpacity):
                 "solution", "raygrid",
                 "gsurf", "refpress", "refradius",
                 "cloudrad", "cloudfct", "cloudext",
+                "cloudtop", "scattering",
                 "verb",
                 "savefiles",
                 "outtoomuch", "outsample", "outspec", "outintens",
@@ -47,7 +54,7 @@ def makeTransit(cfile, tepfile, shareOpacity):
   # Name of the configuration-file section:
   section = "MCMC"
   # Read BART configuration file:
-  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig = ConfigParser()
   Bconfig.read([cfile])
 
   # Keyword names of the arguments in the BART configuration file:
@@ -62,7 +69,8 @@ def makeTransit(cfile, tepfile, shareOpacity):
   # Default molfile path:
   if "molfile" not in args:
     tcfile.write("molfile {:s}\n".format(
-      os.path.realpath(filedir + "/../modules/transit/inputs/molecules.dat")))
+      os.path.realpath(os.path.join(filedir, "..", "modules", "transit", 
+                                    "inputs", "molecules.dat"))))
 
   # Calculate gsurf and refradius from the tepfile:
   tep = rd.File(tepfile)
@@ -84,13 +92,16 @@ def makeTransit(cfile, tepfile, shareOpacity):
   for key in np.intersect1d(args, known_args):
     # FINDME: Why am I splitting?
     values = Bconfig.get(section, key).split("\n")
-    for val in values:
-      # Run transit like eclipse for direct emission
-      # (differences are handled in the BART Python)
-      if key == 'solution' and val == 'direct':
-        tcfile.write("{:s} {:s}\n".format(key, 'eclipse'))
-      else:
-        tcfile.write("{:s} {:s}\n".format(key, val))
+
+    # Allow for no CIA file to be specified
+    if not (key=='csfile' and len(values)==1 and values[0]==''):
+      for val in values:
+        # Run transit like eclipse for direct emission
+        # (differences are handled in the BART Python)
+        if key == 'solution' and val == 'direct':
+          tcfile.write("{:s} {:s}\n".format(key, 'eclipse'))
+        else:
+          tcfile.write("{:s} {:s}\n".format(key, val))
 
   if shareOpacity:
     tcfile.write("shareOpacity \n")
@@ -115,7 +126,7 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   # Name of the configuration-file section:
   section = "MCMC"
   # Open input BART configuration file:
-  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig = ConfigParser()
   Bconfig.optionxform = str
   Bconfig.read([cfile])
   # Keyword names of the arguments in the BART configuration file:
@@ -135,6 +146,8 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
 
   # Inputs should always exist:
   for arg in np.intersect1d(args, input_args):
+    if arg == "csfile" and Bconfig.get(section, arg) == '':
+      continue
     # Split multiple values (if more than one), get full path, join back:
     values = Bconfig.get(section, arg).split("\n")
     for v in np.arange(len(values)):
@@ -144,14 +157,34 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   # Outputs are stored/copied into loc_dir:
   for arg in np.intersect1d(args, output_args):
     Bconfig.set(section, arg,
-                Bconfig.get(section, "loc_dir") + "/" +
+                Bconfig.get(section, "loc_dir") + os.sep +
                 os.path.basename(Bconfig.get(section, arg)))
 
   # Add mpi:
   Bconfig.set(section, "mpi", "True")
 
   # Add func:
-  Bconfig.set(section, "func", "hack BARTfunc {:s}".format(filedir))
+  func = Bconfig.get(section, "func").split()
+  if type(func) in [list, tuple, np.ndarray]:
+    func[-1] = os.path.join(os.path.dirname(os.path.realpath(cfile)), func[-1])
+  Bconfig.set(section, "func", " ".join(func))
+  
+
+  # Using uniform sampler: no data/uncert necessary
+  if Bconfig.get(section, "walk") == "unif":
+    wndelt = float(Bconfig.get(section, "wndelt"))
+    try:
+        wnhigh = float(Bconfig.get(section, "wnhigh"))
+        wnlow  = float(Bconfig.get(section, "wnlow"))
+    except:
+        wnhigh = 1. / (float(Bconfig.get(section, "wlfct")) * \
+                       float(Bconfig.get(section, "wllow")))
+        wnlow  = 1. / (float(Bconfig.get(section, "wlfct")) * \
+                       float(Bconfig.get(section, "wlhigh")))
+    ndata = int(np.floor((wnhigh - wnlow) / wndelt + 1))
+    Bconfig.set(section, "data",   "0 " * ndata)
+    Bconfig.set(section, "uncert", "1 " * ndata)
+
 
   # Params is a special case:
   params = Bconfig.get(section, "params")
@@ -176,11 +209,11 @@ def makeTEA(cfile, TEAdir):
      Default TEA directory.
   """
   # Open New ConfigParser:
-  config = ConfigParser.SafeConfigParser()
+  config = ConfigParser()
   config.add_section('TEA')
 
   # Open BART ConfigParser:
-  Bconfig = ConfigParser.SafeConfigParser()
+  Bconfig = ConfigParser()
   Bconfig.read([cfile])
 
   # List of known TEA arguments:

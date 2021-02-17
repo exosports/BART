@@ -587,9 +587,9 @@ def PT_NoInversion(p, a1, a2, p1, p3, T3, verb=False):
 
 
 def PT_line(pressure, kappa,  gamma1, gamma2, alpha, beta, 
-            R_star,   T_star, T_int,  sma,    grav):
+            R_star,   T_star, T_int,  sma,    grav,  T_int_type):
   '''
-  Generats a PT profile based on input free parameters and pressure array.
+  Generates a PT profile based on input free parameters and pressure array.
   If no inputs are provided, it will run in demo mode, using free
   parameters given by the Line 2013 paper and some dummy pressure
   parameters.
@@ -614,6 +614,9 @@ def PT_line(pressure, kappa,  gamma1, gamma2, alpha, beta,
      Semi-major axis (in meters).
   grav:   Float
      Planetary surface gravity (at 1 bar) in cm/second^2.
+  T_int_type: string.
+     Method for determining `T_int`: 'const' (for a supplied constant value)
+                                     'thorngren' (to use Thorngren et al. 2019)
 
   Returns
   -------
@@ -667,12 +670,19 @@ def PT_line(pressure, kappa,  gamma1, gamma2, alpha, beta,
   2015-01-22  patricio  Receive log10 of free parameters now.
   2019-02-13  mhimes    Replaced `params` arg with each parameter for 
                         consistency with other PT models
+  2019-09-10  mhimes    Added T_int calculation from Thorngren et al. (2019)
   '''
-
   # Convert kappa, gamma1, gamma2 from log10
   kappa  = 10**(kappa )
   gamma1 = 10**(gamma1)
   gamma2 = 10**(gamma2)
+
+  if T_int_type == 'thorngren':
+      # Planetary internal temperature (Thorngren et al. 2019)
+      # Hard-coded values are fitted parameters!
+      T_eq  = (R_star/(2.0*sma))**0.5 * T_star
+      F     = 4.0 * sc.Stefan_Boltzmann * T_eq**4
+      T_int = 1.24 * T_eq * np.exp(-(np.log(F) - 0.14)**2 / 2.96)
 
   # Stellar input temperature (at top of atmosphere):
   T_irr = beta * (R_star / (2.0*sma))**0.5 * T_star
@@ -770,10 +780,10 @@ def PT_generator(p, free_params, PTfunc, PTargs=None):
   2019-02-13  mhimes    Refactored to take a pointer to a function.
   '''
   # Pass extra args if given
-  if PTargs == None:
+  if PTargs is None:
     Temp = PTfunc(p, *free_params)
   else:
-    Temp = PTfunc(p, *np.concatenate((free_params, PTargs)))
+    Temp = PTfunc(p, *(list(free_params) + PTargs))
 
   # madhu profiles have 2 returns, the params and the temps
   if type(Temp) == tuple:
