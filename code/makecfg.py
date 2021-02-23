@@ -164,10 +164,14 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   Bconfig.set(section, "mpi", "True")
 
   # Add func:
-  func = Bconfig.get(section, "func").split()
-  if type(func) in [list, tuple, np.ndarray]:
-    func[-1] = os.path.join(os.path.dirname(os.path.realpath(cfile)), func[-1])
-  Bconfig.set(section, "func", " ".join(func))
+  if "func" in args:
+    func = Bconfig.get(section, "func").split()
+    if type(func) in [list, tuple, np.ndarray]:
+      func[-1] = os.path.join(os.path.dirname(os.path.realpath(cfile)), func[-1])
+    Bconfig.set(section, "func", " ".join(func))
+  else:
+    # Set the default: BARTfunc.py in this directory (BART/code)
+    Bconfig.set(section, "func", "hack BARTfunc " + filedir)
   
 
   # Using uniform sampler: no data/uncert necessary

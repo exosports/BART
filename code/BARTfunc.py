@@ -156,25 +156,12 @@ def main(comm):
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)
   
-  if solution == 'transit' or solution == 'eclipse':
-    # Stellar temperature in K:
-    tstar = float(tep.getvalue('Ts')[0])
-    # Stellar radius (in meters):
-    rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
-    # Semi-major axis (in meters):
-    sma   = float(tep.getvalue( 'a')[0]) * sc.au
-
-  # Line profiles require an irradiation source. Direct obs
-  # of exoplanets have that source (host star), so line profiles
-  # can be used for direct exoplanet obs
-  if solution == 'direct' and PTtype == 'line':
-    # Stellar temperature in K:
-    tstar = float(tep.getvalue('Ts')[0])
-    # Stellar radius (in meters):
-    rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
-    # Semi-major axis (in meters):
-    sma   = float(tep.getvalue( 'a')[0]) * sc.au    
-    
+  # Stellar temperature in K:
+  tstar = float(tep.getvalue('Ts')[0])
+  # Stellar radius (in meters):
+  rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
+  # Semi-major axis (in meters):
+  sma   = float(tep.getvalue( 'a')[0]) * sc.au   
   # Planetary radius (in meters):
   rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
   # Planetary mass (in kg):
@@ -204,7 +191,7 @@ def main(comm):
   ratio = (abundances[:,iH2] / abundances[:,iHe]).squeeze()
   # Find indices for the metals:
   imetals = np.where((species != "He") & (species != "H2") & \
-                     (species != "H-") & (species != 'e-'))[0]
+                     (species != "H-") & (species != "e-"))[0]
   # Index of molecular abundances being modified:
   imol = np.zeros(nmolfit, dtype='i')
   for i in np.arange(nmolfit):
@@ -415,7 +402,8 @@ def main(comm):
   mu.msg(verb, "Bad iterations of chain 0 due to:")
   mu.msg(verb, "  Temperature: {}".format(nbadtemp))
   mu.msg(verb, "  Abundance:   {}".format(nbadabun))
-  mu.msg(verb, "  Energy:      {}".format(nbadengy))
+  if ebalance:
+    mu.msg(verb, "  Energy:      {}".format(nbadengy))
 
 
 if __name__ == "__main__":

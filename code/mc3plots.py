@@ -2,6 +2,7 @@
 # MC3 is open-source software under the MIT license (see LICENSE).
 
 import sys, os
+import six
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -59,8 +60,13 @@ def mc3plots(output,   burnin,   thinning, nchains, uniform, molfit,
                                np.log10(uniform[molind]).reshape(len(molind),1)
 
   # Slice only params that are varied (remove static params)
-  ipar     = stepsize != 0
-  # Note 'parnames' is a list, so cannot index using an array/list
+  ipar = stepsize != 0
+  if parnames is None:
+    nparams  = stepsize.size
+    namelen  = int(2+np.log10(np.amax([nparams-1,1])))
+    parnames = np.zeros(nparams, "|S%d"%namelen if six.PY2 else "<U%d"%namelen)
+    for i in np.arange(nparams):
+      parnames[i] = "P" + str(i).zfill(namelen-1)
   parnames = [parnames[i] for i in range(len(parnames)) if ipar[i]]
 
   # Trace plot:
@@ -73,4 +79,5 @@ def mc3plots(output,   burnin,   thinning, nchains, uniform, molfit,
   # Histograms:
   histogram(allstack, parname=parnames, thinning=thinning,
             savefile=date_dir + fnames[2] + fext)
+
 

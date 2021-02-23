@@ -350,22 +350,6 @@ def main():
   outspec      = args.outspec
   shareOpacity = args.shareOpacity
 
-  # Unpack the variables from args:
-  '''
-  argd = {}
-  for key, val in vars(args).items():
-    if type(val) == str and val in ['True', 'False', 'None']:
-      if val == 'True':
-        argd.update({key:True})
-      elif val == 'False':
-        argd.update({key:False})
-      elif val == 'None':
-        argd.update({key:None})
-    else:
-      argd.update({key:val})
-  vars(sys.modules[__name__]).update(argd)
-  '''
-
   # Dictionary of functions to calculate temperature for PTtype
   PTfunc = {'iso'         : pt.PT_iso,
             'line'        : pt.PT_line, 
@@ -594,8 +578,8 @@ def main():
     subprocess.call(["{:s} -c {:s}".format(Tcall, cf_tconfig)],
                     shell=True, cwd=date_dir)
 
-  # Calculate and plot contribution functions:
-  if solution == "eclipse" or solution == "direct":
+    # Calculate and plot contribution functions:
+    if solution in ["eclipse", "direct"]:
       # Compute contribution fucntions if this is a eclipse run:
       mu.msg(1, "Calculating contribution functions.", indent=2)
       ctfraw, ctf = cf.cf(date_dir, bestFit_atmfile, filters, fext)

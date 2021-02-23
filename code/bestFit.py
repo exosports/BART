@@ -465,10 +465,10 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  cloud, rayleigh, 
     median = np.median(    PTprofiles,       axis=0)
 
     # plot figure
-    plt.figure(2, dpi=300)
+    plt.figure(2, dpi=600)
     plt.clf()
-    if type(ctf) != type(None):
-        gs = matplotlib.gridspec.GridSpec(1, 3, width_ratios=[5,5,1])
+    if ctf is not None:
+        gs = matplotlib.gridspec.GridSpec(1, 3, width_ratios=[5,5,0.5])
     else:
         gs = matplotlib.gridspec.GridSpec(1, 1)
         
@@ -488,43 +488,40 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  cloud, rayleigh, 
         nfilt = len(filters)
         # Add contribution or transmittance functions
         ax2 = plt.subplot(gs[1], sharey=ax1)
-            
+        # Colors based on mean wavelength for plotting
         meanwl = np.zeros(nfilt)
         for i in range(nfilt):
             filtwaven, filttransm = w.readfilter(filters[i])
             meanwn = np.sum(filtwaven*filttransm)/np.sum(filttransm)
             meanwl[i] = 1e4/meanwn
-
         maxmeanwl = np.max(meanwl)
         minmeanwl = np.min(meanwl)
         colors = (meanwl-minmeanwl)/(maxmeanwl-minmeanwl)
-
         # Plot with filter labels
         for i in np.arange(nfilt):
-            (head, tail) = os.path.split(filters[i])
-            lbl          = tail[:-4]
             ax2.semilogy(ctf[i], pressure, '--',
                          color=plt.cm.rainbow(colors[i]),
-                         linewidth = 1, label=lbl)
-
+                         linewidth = 1)
+        # Shared y-axis, hide tick labels
+        plt.setp(ax2.get_yticklabels(), visible=False)
+        # Colorbar
         ax3 = plt.subplot(gs[2])
         norm = matplotlib.colors.Normalize(vmin=minmeanwl, vmax=maxmeanwl)
         cbar = matplotlib.colorbar.ColorbarBase(ax3, cmap=plt.cm.rainbow,
                                                 norm=norm,
                                                 orientation='vertical')
-        cbar.set_label(ur"${\rm Mean Wavelength\ \ (\u03bcm)}$")
+        cbar.set_label("${\\rm Mean\ Wavelength\ (\u03bcm)}$")
         if solution == 'transit':
             ax2.set_xlabel('Transmittance', fontsize=fs)
         else:
             ax2.set_xlabel('Normalized Contribution\nFunctions',  fontsize=fs)
 
-    # save figure
+    # Save figure
     if ctf is not None:
         savefile = date_dir + "MCMC_PTprofiles_cf" + fext
-        plt.savefig(savefile, bbox_inches='tight')
     else:
         savefile = date_dir + "MCMC_PTprofiles" + fext
-        plt.savefig(savefile, bbox_inches='tight')
+    plt.savefig(savefile, bbox_inches='tight')
     plt.close()
 
 
@@ -549,13 +546,14 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     fs      : int.    Font size for plots.
     '''
     # If data and uncert were provided as a numpy binary file
+    # FINDME what if the files are separate?
     if os.path.isfile(data[0]) and data == uncert:
         dfile = np.load(data[0])
         data   = dfile['file0']
         uncert = dfile['file1']
     
     # get star data
-    if solution == 'transit' or solution == 'eclipse':
+    if solution in ['transit', 'eclipse']:
       R_star, T_star, sma, gstar = get_starData(tepfile)
 
     # get surface gravity
@@ -564,10 +562,9 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     # convert Rp to m
     Rp = Rp * 1000
 
-    if solution == 'eclipse' or solution == 'transit':
+    if solution in ['transit', 'eclipse']:
       # ratio planet to star
       rprs = Rp/R_star
-
       # read kurucz file
       starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, T_star, gstar)
 
@@ -591,67 +588,45 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     # number of filters
     nfilters = len(filters)
 
-    if solution == 'eclipse' or solution == 'transit':
-        # read and resample the filters:
-        nifilter  = [] # Normalized interpolated filter
-        istarfl   = [] # interpolated stellar flux
-        wnindices = [] # wavenumber indices used in interpolation
-        meanwn    = [] # Filter mean wavenumber
-        for i in np.arange(nfilters):
-            # read filter:
-            filtwaven, filttransm = w.readfilter(filters[i])
-            meanwn.append(np.sum(filtwaven*filttransm)/sum(filttransm))
-            # resample filter and stellar spectrum:
+    # read and resample the filters:
+    nifilter  = [] # Normalized interpolated filter
+    istarfl   = [] # interpolated stellar flux
+    wnindices = [] # wavenumber indices used in interpolation
+    meanwn    = [] # Filter mean wavenumber
+    for i in np.arange(nfilters):
+        # read filter:
+        filtwaven, filttransm = w.readfilter(filters[i])
+        meanwn.append(np.sum(filtwaven*filttransm)/sum(filttransm))
+        # resample filter and stellar spectrum:
+        if solution in ['transit', 'eclipse']:
             nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
-                                              starwn, starfl               )
-            nifilter .append(nifilt)
-            istarfl  .append(strfl)
-            wnindices.append(wnind)
+                                              starwn, starfl)
+            istarfl.append(strfl)
+        else:
+            # direct observations (slightly inefficient)
+            nifilt, wnind = w.resample(specwn, filtwaven, filttransm,
+                                               filtwaven, filttransm)[0,2]
+        nifilter .append(nifilt)
+        wnindices.append(wnind)
 
-        # convert mean wn to mean wl
-        meanwl = 1e4/np.asarray(meanwn)
+    # convert mean wn to mean wl
+    meanwl = 1e4/np.asarray(meanwn)
 
-        # band-integrate the flux-ratio or modulation:
-        bandflux = np.zeros(nfilters, dtype='d')
-        bandmod  = np.zeros(nfilters, dtype='d')
-        for i in np.arange(nfilters):
+    # band-integrate the flux-ratio or modulation:
+    bandint = np.zeros(nfilters, dtype='d')
+    for i in np.arange(nfilters):
+        if solution == 'eclipse':
             fluxrat = (bestspectrum[wnindices[i]]/istarfl[i]) * rprs*rprs
-            bandflux[i] = w.bandintegrate(fluxrat, specwn, nifilter[i],
+            bandint[i] = w.bandintegrate(fluxrat, specwn, nifilter[i],
                                           wnindices[i])
-            bandmod[i]  = w.bandintegrate(bestspectrum[wnindices[i]],
-                                          specwn, nifilter[i], wnindices[i])
-
-        # stellar spectrum on specwn:
-        sinterp = si.interp1d(starwn, starfl)
-        sflux   = sinterp(specwn)
-        frat    = bestspectrum/sflux * rprs * rprs
-    # Direct observation doesn't need stellar spectrum
-    else:
-        # read and resample the filters:
-        nifilter  = [] # Normalized interpolated filter
-        wnindices = [] # wavenumber indices used in interpolation
-        meanwn    = [] # Filter mean wavenumber
-        for i in np.arange(nfilters):
-            # read filter:
-            filtwaven, filttransm = w.readfilter(filters[i])
-            meanwn.append(np.sum(filtwaven*filttransm)/sum(filttransm))
-            
-            # resample filter (slightly inefficiently)
-            nifilt, dummy, wnind = w.resample(specwn, filtwaven, filttransm,
-                                              filtwaven, filttransm)
-            nifilter .append(nifilt)
-            wnindices.append(wnind)
-
-        # convert mean wn to mean wl
-        meanwl = 1e4/np.asarray(meanwn)
-
-        # band-integrate the flux
-        bandflux = np.zeros(nfilters, dtype='d')
-        for i in np.arange(nfilters):
-            bandflux[i] = w.bandintegrate(bestspectrum[wnindices[i]],
+        elif solution == 'transit':
+            bandint[i] = w.bandintegrate(bestspectrum[wnindices[i]],
+                                         specwn, nifilter[i], wnindices[i])
+        elif solution == 'direct':
+            bandint[i] = w.bandintegrate(bestspectrum[wnindices[i]],
                                           specwn, nifilter[i],
                                           wnindices[i])
-        
+
     # plot figure
     plt.rcParams["mathtext.default"] = 'rm'
     matplotlib.rcParams.update({'mathtext.default':'rm'})
@@ -661,33 +636,35 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
 
     # depending on solution plot eclipse or modulation spectrum
     if solution == 'eclipse':
+        # stellar spectrum on specwn:
+        sinterp = si.interp1d(starwn, starfl)
+        sflux   = sinterp(specwn)
+        frat    = bestspectrum/sflux * rprs * rprs
         gfrat = gaussf(frat, 2)
         plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best fit")
         plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="Data")
-        plt.plot(meanwl, bandflux*1e3, "ok", label="Model", alpha=1.0)
+        plt.plot(meanwl, bandint*1e3, "ok", label="Model", alpha=1.0)
         plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=fs)
 
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 2)
         plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best fit")
         plt.errorbar(meanwl, data, uncert, fmt="or", label="Data")
-        plt.plot(meanwl, bandmod, "ok", label="Model", alpha=0.5)
+        plt.plot(meanwl, bandint, "ok", label="Model", alpha=0.5)
         plt.ylabel(r"$(R_p/R_s)^2$", fontsize=fs)
 
     elif solution == 'direct':
         gmodel = gaussf(bestspectrum, 2)
         plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best-fit")
         plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
-        plt.plot(meanwl, bandflux, "ok", label="model", alpha=0.5)
+        plt.plot(meanwl, bandint, "ok", label="model", alpha=0.5)
         plt.ylabel(r"Flux", fontsize=12)
 
     leg = plt.legend(loc="best")
     leg.get_frame().set_alpha(0.5)
     ax = plt.subplot(111)
     ax.set_xscale('log')
-    plt.xlabel("${\\rm Wavelength\ \ (\u03bcm)}$", fontsize=fs)
-    #plt.xticks(size=fs)
-    #plt.yticks(size=fs)
+    plt.xlabel("${\\rm Wavelength\ (\u03bcm)}$", fontsize=fs)
     formatter = matplotlib.ticker.FuncFormatter(lambda y, _: '{:.8g}'.format(y))
     ax.get_xaxis().set_major_formatter(formatter)
     ax.get_xaxis().set_minor_formatter(formatter)
@@ -696,7 +673,7 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     plt.close()
 
 
-def plotabun(date_dir, atmfile, molfit, fext='.png', fs=15):
+def plotabun(date_dir, atmfile, molfit, fext='.png', fs=34, title=True):
     '''
     Plot abundance profiles from best fit run.
 
@@ -740,11 +717,15 @@ def plotabun(date_dir, atmfile, molfit, fext='.png', fs=15):
         plt.loglog(abundances[:,molfitindex[i]], pressure,
                    label=species[molfitindex[i]], linewidth=4)
 
-    plt.legend(loc='upper left')
+    plt.legend(loc='upper left', prop={'size':fs})
     plt.xlabel('Molar Mixing Fraction', fontsize=fs)
     plt.ylabel('Pressure (bar)', fontsize=fs)
     plt.ylim(np.amin(pressure), np.amax(pressure))
-    plt.title('Best Fit Abundance Profiles')
+    if title:
+        plt.title('Best Fit Abundance Profiles', fontsize=fs+4)
     plt.gca().invert_yaxis()
+    plt.xticks(fontsize=fs-4)
+    plt.yticks(fontsize=fs-4)
     plt.savefig(date_dir + 'abun_profiles' + fext, bbox_inches='tight')
+    plt.close()
 
