@@ -171,8 +171,12 @@ def filter_cf(filters, nlayers, wns, cf, normalize=False):
 
     if normalize:
       # Normalize to 1
-      filt_cf_norm[i] = (filt_cf[i] - min(filt_cf[i])) / \
-                        (max(filt_cf[i]) - min(filt_cf[i]))
+      if max(filt_cf[i]) != min(filt_cf[i]):
+        filt_cf_norm[i] = (filt_cf[i] - min(filt_cf[i])) / \
+                          (max(filt_cf[i]) - min(filt_cf[i]))
+      else:
+        print("Warning: contribution from filter {} is 0.".format(i))
+        filt_cf_norm[i] = filt_cf[i]
 
   if normalize:
     return filt_cf, filt_cf_norm
@@ -266,11 +270,15 @@ def cf(date_dir, atmfile, filters, fext='.png', plot=True, fs=15):
   minmeanwl   = np.min(meanwl)
   colors      = (meanwl-minmeanwl) / (maxmeanwl-minmeanwl)
 
+  # Number of filters
+  nfilt = len(filt_cf)
+  
   if plot:
     print("  Plotting contribution functions.\n")
     # Not normalized cf
     plt.figure(4)
     plt.clf()
+    
     gs       = gridspec.GridSpec(1, 2, width_ratios=[20, 1], wspace=0.05)
     ax0      = plt.subplot(gs[0])
     ax1      = plt.subplot(gs[1])

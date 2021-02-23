@@ -114,7 +114,10 @@ def main(comm):
   group.add_argument("--solution",                    action="store",
                      help="Solution geometry [default: %(default)s]",
                      dest="solution", type=str,       default="None",
-                     choices=('transit', 'eclipse'))
+                     choices=('transit', 'eclipse', 'direct'))
+  group.add_argument("--ebalance",                    action="store",
+                     help="Energy balance flag",
+                     dest="ebalance", type=eval, default=True)
 
   parser.set_defaults(**defaults)
   args2, unknown = parser.parse_known_args(remaining_argv)
@@ -129,33 +132,36 @@ def main(comm):
   npars, niter = array1
 
   # :::::::  Initialize the Input converter ::::::::::::::::::::::::::
-  atmfile   = args2.atmfile
-  molfit    = args2.molfit
-  PTtype    = args2.PTtype
-  params    = args2.params
-  tepfile   = args2.tep_name
-  tint      = args2.tint
-  tint_type = args2.tint_type
-  Tmin      = args2.Tmin
-  Tmax      = args2.Tmax
-  cloudtop  = args2.cloudtop
+  atmfile    = args2.atmfile
+  molfit     = args2.molfit
+  PTtype     = args2.PTtype
+  params     = args2.params
+  tepfile    = args2.tep_name
+  tint       = args2.tint
+  tint_type  = args2.tint_type
+  Tmin       = args2.Tmin
+  Tmax       = args2.Tmax
+  cloudtop   = args2.cloudtop
   scattering = args2.scattering
-  solution  = args2.solution  # Solution type
+  solution   = args2.solution  # Solution type
+  ebalance   = args2.ebalance
 
   # Dictionary of functions to calculate temperature for PTtype
   PTfunc = {'iso'         : pt.PT_iso,
             'line'        : pt.PT_line, 
             'madhu_noinv' : pt.PT_NoInversion,
-            'madhu_inv'   : pt.PT_Inversion}
+            'madhu_inv'   : pt.PT_Inversion,
+            'adiabatic'   : pt.PT_adiabatic}
 
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)
+  
   # Stellar temperature in K:
   tstar = float(tep.getvalue('Ts')[0])
   # Stellar radius (in meters):
   rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
   # Semi-major axis (in meters):
-  sma   = float(tep.getvalue( 'a')[0]) * sc.au
+  sma   = float(tep.getvalue( 'a')[0]) * sc.au   
   # Planetary radius (in meters):
   rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
   # Planetary mass (in kg):
@@ -185,7 +191,7 @@ def main(comm):
   ratio = (abundances[:,iH2] / abundances[:,iHe]).squeeze()
   # Find indices for the metals:
   imetals = np.where((species != "He") & (species != "H2") & \
-                     (species != "H-") & (species != 'e-'))[0]
+                     (species != "H-") & (species != "e-"))[0]
   # Index of molecular abundances being modified:
   imol = np.zeros(nmolfit, dtype='i')
   for i in np.arange(nmolfit):
@@ -228,36 +234,59 @@ def main(comm):
   ffile    = args2.filters    # Filter files
   kurucz   = args2.kurucz     # Kurucz file
 
-  # Log10(stellar gravity)
-  gstar = float(tep.getvalue('loggstar')[0])
-  # Planet-to-star radius ratio:
-  rprs  = rplanet / rstar
-
   nfilters = len(ffile)  # Number of filters:
 
   # FINDME: Separate filter/stellar interpolation?
   # Get stellar model:
-  starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, tstar, gstar)
-  # Read and resample the filters:
-  nifilter  = [] # Normalized interpolated filter
-  istarfl   = [] # interpolated stellar flux
-  wnindices = [] # wavenumber indices used in interpolation
-  for i in np.arange(nfilters):
-    # Read filter:
-    filtwaven, filttransm = w.readfilter(ffile[i])
-    # Check that filter boundaries lie within the spectrum wn range:
-    if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
-      mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
-              "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
-              "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
-                                                        filtwaven[-1]))
+  if solution == 'eclipse' or solution == 'transit':
+    # Log10(stellar gravity)
+    gstar = float(tep.getvalue('loggstar')[0])
+    # Planet-to-star radius ratio:
+    rprs  = rplanet / rstar
+    
+    starfl, starwn, tmodel, gmodel = w.readkurucz(kurucz, tstar, gstar)
+    # Read and resample the filters:
+    nifilter  = [] # Normalized interpolated filter
+    istarfl   = [] # interpolated stellar flux
+    wnindices = [] # wavenumber indices used in interpolation
+    for i in np.arange(nfilters):
+      # Read filter:
+      filtwaven, filttransm = w.readfilter(ffile[i])
+      # Check that filter boundaries lie within the spectrum wn range:
+      if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
+        mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
+                "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
+                "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
+                                filtwaven[-1]))
 
-    # Resample filter and stellar spectrum:
-    nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
-                                              starwn,    starfl)
-    nifilter.append(nifilt)
-    istarfl.append(strfl)
-    wnindices.append(wnind)
+      # Resample filter and stellar spectrum:
+      nifilt, strfl, wnind = w.resample(specwn, filtwaven, filttransm,
+                                        starwn,    starfl)
+      nifilter.append(nifilt)
+      istarfl.append(strfl)
+      wnindices.append(wnind)
+
+  # If direct observation, don't need stellar spectrum
+  else:
+    # Read and resample the filters:
+    nifilter  = [] # Normalized interpolated filter
+    istarfl   = [] # interpolated stellar flux
+    wnindices = [] # wavenumber indices used in interpolation
+    for i in np.arange(nfilters):
+      # Read filter:
+      filtwaven, filttransm = w.readfilter(ffile[i])
+      # Check that filter boundaries lie within the spectrum wn range:
+      if filtwaven[0] < specwn[0] or filtwaven[-1] > specwn[-1]:
+        mu.exit(message="Wavenumber array ({:.2f} - {:.2f} cm-1) does not "
+                "cover the filter[{:d}] wavenumber range ({:.2f} - {:.2f} "
+                "cm-1).".format(specwn[0], specwn[-1], i, filtwaven[0],
+                                filtwaven[-1]))
+
+      # Resample filter (slightly inefficiently)
+      nifilt, dummy, wnind = w.resample(specwn, filtwaven, filttransm,
+                                        filtwaven, filttransm)
+      nifilter.append(nifilt)
+      wnindices.append(wnind)
 
   # Allocate arrays for receiving and sending data to master:
   spectrum = np.zeros(nwave,    dtype='d')
@@ -269,6 +298,11 @@ def main(comm):
   # ::::::  Main MCMC Loop  ::::::::::::::::::::::::::::::::::::::::::
   # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+  # Count non-physical iterations
+  nbadtemp = 0
+  nbadabun = 0
+  nbadengy = 0
+  
   while niter >= 0:
     niter -= 1
     # Receive parameters from MCMC:
@@ -288,8 +322,10 @@ def main(comm):
 
     # If the temperature goes out of bounds:
     if np.any(tprofile < Tmin) or np.any(tprofile > Tmax):
+      nbadtemp += 1
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       continue
+    
     # Scale abundance profiles:
     for i in np.arange(nmolfit):
       m = imol[i]
@@ -299,12 +335,14 @@ def main(comm):
     # Update H2, He abundances so sum(abundances) = 1.0 in each layer:
     q = 1.0 - np.sum(aprofiles[imetals], axis=0)
     if np.any(q < 0.0):
+      nbadabun += 1
       mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
       #mu.comm_gather(comm, -np.ones(nwave), MPI.DOUBLE)
       continue
+    
     aprofiles[iH2] = ratio * q / (1.0 + ratio)
     aprofiles[iHe] =         q / (1.0 + ratio)
-
+    
     # Set the 'surface' level:
     if solution == "transit":
       trm.set_radius(params[nPT])
@@ -318,6 +356,26 @@ def main(comm):
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
 
+    # Check for energy balance (read tep in case not read prior)
+    if ebalance:
+      # Stellar temperature in K:
+      tstar = float(tep.getvalue('Ts')[0])
+      # Stellar radius (in meters):
+      rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
+      # Semi-major axis (in meters):
+      sma   = float(tep.getvalue( 'a')[0]) * sc.au
+
+      # Calculate energy in and energy out, in cgs
+      j2erg = 1e7
+      e_in  = c.sig*tstar**4 * rstar**2 * np.pi*rplanet**2 / sma**2 * j2erg
+      e_out = np.trapz(spectrum, specwn) * 4 * (rplanet*100)**2     
+      if e_out > e_in:
+        nbadengy += 1
+        print("Warning: Energy balance condition failed. \n" +
+              "E_in = {}, E_out = {}.".format(e_in, e_out))
+        mu.comm_gather(comm, -np.ones(nfilters), MPI.DOUBLE)
+        continue
+
     # Calculate the band-integrated intensity per filter:
     for i in np.arange(nfilters):
       if   solution == "eclipse":
@@ -327,8 +385,11 @@ def main(comm):
       elif solution == "transit":
         bandflux[i] = w.bandintegrate(spectrum[wnindices[i]], specwn,
                                       nifilter[i], wnindices[i])
+      elif solution == "direct":
+        bandflux[i] = w.bandintegrate(spectrum[wnindices[i]], specwn,
+                                      nifilter[i], wnindices[i])
 
-    # Send resutls back to MCMC:
+    # Send results back to MCMC:
     mu.comm_gather(comm, bandflux, MPI.DOUBLE)
 
   # ::::::  End main Loop  :::::::::::::::::::::::::::::::::::::::::::
@@ -337,6 +398,12 @@ def main(comm):
   # Close communications and disconnect:
   mu.comm_disconnect(comm)
   trm.free_memory()
+
+  mu.msg(verb, "Bad iterations of chain 0 due to:")
+  mu.msg(verb, "  Temperature: {}".format(nbadtemp))
+  mu.msg(verb, "  Abundance:   {}".format(nbadabun))
+  if ebalance:
+    mu.msg(verb, "  Energy:      {}".format(nbadengy))
 
 
 if __name__ == "__main__":

@@ -143,6 +143,7 @@ def initialPT2(date_dir, params, pressfile, mode, PTfunc, tepfile,
 
   # Read the TEP file:
   tep = rd.File(tepfile)
+
   # Stellar radius (in meters):
   rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
   # Planetary radius (in meters):

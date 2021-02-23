@@ -124,7 +124,7 @@ def main():
   group.add_argument("--PTtype", dest="PTtype",
            help="Temperature profile model [default: %(default)s]",
            type=str, action="store", default="line", 
-           choices=("line","madhu_noinv","madhu_inv","iso"))
+           choices=("line","madhu_noinv","madhu_inv","iso","adiabatic"))
   group.add_argument("--PTinit", dest="PTinit",
            help="Temperature profile model parameters",
            type=mu.parray, action="store", default=None)
@@ -239,7 +239,10 @@ def main():
   group.add_argument("--solution",                    action="store",
            help="Solution geometry [default: %(default)s]",
            dest="solution", type=str,       default="None",
-           choices=('transit', 'eclipse'))
+           choices=('transit', 'eclipse','direct'))
+  group.add_argument("--ebalance",                    action="store",
+           help="Energy balance flag",
+           dest="ebalance", type=eval, default=True)
 
   # Transit options:
   group = parser.add_argument_group("Transit variables")
@@ -347,48 +350,33 @@ def main():
   outspec      = args.outspec
   shareOpacity = args.shareOpacity
 
-  # Unpack the variables from args:
-  '''
-  argd = {}
-  for key, val in vars(args).items():
-    if type(val) == str and val in ['True', 'False', 'None']:
-      if val == 'True':
-        argd.update({key:True})
-      elif val == 'False':
-        argd.update({key:False})
-      elif val == 'None':
-        argd.update({key:None})
-    else:
-      argd.update({key:val})
-  vars(sys.modules[__name__]).update(argd)
-  '''
-
   # Dictionary of functions to calculate temperature for PTtype
   PTfunc = {'iso'         : pt.PT_iso,
             'line'        : pt.PT_line, 
             'madhu_noinv' : pt.PT_NoInversion,
-            'madhu_inv'   : pt.PT_Inversion}
+            'madhu_inv'   : pt.PT_Inversion,
+            'adiabatic'   : pt.PT_adiabatic}
 
   # Check that the user gave a valid PTtype:
   if PTtype not in PTfunc.keys():
     print("The specified 'PTtype' is not valid. Options are 'line', " + \
-          "'madhu_noinv', 'madhu_inv', or 'iso'. Please try again.")
+          "'madhu_noinv', 'madhu_inv', 'iso', or 'adiabatic. Please try again.")
     sys.exit()
 
   # Check that out_spec and uniform are valid specifications
-  if uniform is not None and len(uniform) != len(out_spec.split(' ')):
+  if uniform is not None and len(uniform) != len(out_spec.split()):
     print('The inputs for out_spec and uniform are not compatible.')
     diffuniout = len(uniform) - len(out_spec.split(' '))
     if diffuniout > 0:
       if diffuniout == 1:
-        print('uniform has ' + str(diffuniout) + 'extra entry.')
+        print('uniform has ' + str(diffuniout) + ' extra entry.')
       else:
-        print('uniform has ' + str(diffuniout) + 'extra entries.')
+        print('uniform has ' + str(diffuniout) + ' extra entries.')
     else:
       if diffuniout == -1:
-        print('out_spec has ' + str(-1*diffuniout) + 'extra entry.')
+        print('out_spec has ' + str(-1*diffuniout) + ' extra entry.')
       else:
-        print('out_spec has ' + str(-1*diffuniout) + 'extra entries.')
+        print('out_spec has ' + str(-1*diffuniout) + ' extra entries.')
     print('Please correct this and run again.')
     sys.exit()
 
@@ -459,7 +447,7 @@ def main():
   if uniform is not None and runMCMC < 8:
     # Calculate the temperature profile:
     temp = ipt.initialPT2(date_dir, PTinit,         press_file, 
-                          PTtype,   PTfunc[PTtype], tep_name)
+                          PTtype,   PTfunc[PTtype], tep_name, tint)
     # Generate the uniform-abundance profiles file:
     mat.uniform(atmfile,  press_file, abun_basic, tep_name,
                 out_spec, uniform,    temp,       refpress)
@@ -591,7 +579,7 @@ def main():
                     shell=True, cwd=date_dir)
 
     # Calculate and plot contribution functions:
-    if solution == "eclipse":
+    if solution in ["eclipse", "direct"]:
       # Compute contribution fucntions if this is a eclipse run:
       mu.msg(1, "Calculating contribution functions.", indent=2)
       ctfraw, ctf = cf.cf(date_dir, bestFit_atmfile, filters, fext)

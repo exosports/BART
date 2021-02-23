@@ -92,10 +92,16 @@ def makeTransit(cfile, tepfile, shareOpacity):
   for key in np.intersect1d(args, known_args):
     # FINDME: Why am I splitting?
     values = Bconfig.get(section, key).split("\n")
+
     # Allow for no CIA file to be specified
     if not (key=='csfile' and len(values)==1 and values[0]==''):
       for val in values:
-        tcfile.write("{:s} {:s}\n".format(key, val))
+        # Run transit like eclipse for direct emission
+        # (differences are handled in the BART Python)
+        if key == 'solution' and val == 'direct':
+          tcfile.write("{:s} {:s}\n".format(key, 'eclipse'))
+        else:
+          tcfile.write("{:s} {:s}\n".format(key, val))
 
   if shareOpacity:
     tcfile.write("shareOpacity \n")
@@ -158,10 +164,14 @@ def makeMCMC(cfile, MCMC_cfile, logfile):
   Bconfig.set(section, "mpi", "True")
 
   # Add func:
-  func = Bconfig.get(section, "func").split()
-  if type(func) in [list, tuple, np.ndarray]:
-    func[-1] = os.path.join(os.path.dirname(os.path.realpath(cfile)), func[-1])
-  Bconfig.set(section, "func", " ".join(func))
+  if "func" in args:
+    func = Bconfig.get(section, "func").split()
+    if type(func) in [list, tuple, np.ndarray]:
+      func[-1] = os.path.join(os.path.dirname(os.path.realpath(cfile)), func[-1])
+    Bconfig.set(section, "func", " ".join(func))
+  else:
+    # Set the default: BARTfunc.py in this directory (BART/code)
+    Bconfig.set(section, "func", "hack BARTfunc " + filedir)
   
 
   # Using uniform sampler: no data/uncert necessary
