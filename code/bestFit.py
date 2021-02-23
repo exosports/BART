@@ -545,13 +545,18 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
                       Default: .png
     fs      : int.    Font size for plots.
     '''
-    # If data and uncert were provided as a numpy binary file
-    # FINDME what if the files are separate?
+    # If data and uncert were provided as a numpy binary file(s)
     if os.path.isfile(data[0]) and data == uncert:
+        # NPZ file w/ data and uncert
         dfile = np.load(data[0])
         data   = dfile['file0']
         uncert = dfile['file1']
-    
+    elif os.path.isfile(data[0]):
+        # NPY file w/ only data
+        data = np.load(data[0])
+    if os.path.isfile(uncert[0]):
+        uncert = np.load(uncert[0])
+
     # get star data
     if solution in ['transit', 'eclipse']:
       R_star, T_star, sma, gstar = get_starData(tepfile)
