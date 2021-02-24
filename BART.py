@@ -14,7 +14,7 @@ else:
 import numpy as np
 
 # Directory of BART.py file:
-BARTdir = os.path.dirname(os.path.realpath(__file__))
+BARTdir    = os.path.dirname(os.path.realpath(__file__))
 TEAdir     = os.path.join(BARTdir, "modules", "TEA", "")
 MC3dir     = os.path.join(BARTdir, "modules", "MCcubed", "")
 Transitdir = os.path.join(BARTdir, "modules", "transit", "")
@@ -108,7 +108,8 @@ def main():
   group = parser.add_argument_group("Elemental abundances")
   group.add_argument("--abun_basic", dest="abun_basic",
            help="Input elemental abundances file [default: %(default)s]",
-           type=str, action="store", default="../BART/inputs/abundances_Asplund2009.txt")
+           type=str, action="store", 
+           default=os.path.join(BARTdir, "inputs/abundances_Asplund2009.txt"))
   group.add_argument("--abun_file", dest="abun_file",
            help="Input/Output modified elemental abundances file",
            type=str, action="store", default=None)
@@ -242,7 +243,7 @@ def main():
            choices=('transit', 'eclipse','direct'))
   group.add_argument("--ebalance",                    action="store",
            help="Energy balance flag",
-           dest="ebalance", type=eval, default=True)
+           dest="ebalance", type=eval, default=False)
 
   # Transit options:
   group = parser.add_argument_group("Transit variables")
@@ -380,6 +381,55 @@ def main():
     print('Please correct this and run again.')
     sys.exit()
 
+  # Check if data and/or uncert are given as files
+  if os.path.isfile(data[0]):
+    # Ensure absolute path
+    if not os.path.isabs(data[0]):
+        data[0] = os.path.join(os.path.dirname(cfile), data[0])
+  if os.path.isfile(uncert[0]):
+    if not os.path.isabs(uncert[0]):
+        uncert[0] = os.path.join(os.path.dirname(cfile), uncert[0])
+
+  if data == uncert:
+    # Single file w/ both
+    if '.npz' in data[0].lower():
+      # NPZ file
+      tvar   = np.load(data[0])
+      data   = tvar['data']
+      uncert = tvar['uncert']
+    else:
+      # NPY or text file
+      if '.npy' in data[0].lower():
+        tvar = np.load(data[0])
+      else:
+        try:
+          tvar = np.loadtxt(data[0])
+        except:
+          raise ValueError("File given for 'data' is not an NPZ, NPY, " + \
+                           "or properly formatted text file.")
+      iax = np.where(np.asarray(tvar.shape) == 2)[0][0]
+      if iax:
+        data   = tvar[:,0]
+        uncert = tvar[:,1]
+      else:
+        data   = tvar[0]
+        uncert = tvar[1]
+    del tvar
+  else:
+    # Separate files
+    if '.npy' in data[0].lower():
+      data = np.load(data[0])
+    elif '.npz' in data[0].lower():
+      data = np.load(data[0])['data']
+    else:
+      data = np.loadtxt(data[0])
+    if '.npy' in uncert[0].lower():
+      uncert = np.load(uncert[0])
+    elif '.npz' in uncert[0].lower():
+      uncert = np.load(uncert[0])['uncert']
+    else:
+      uncert = np.loadtxt(uncert[0])
+
   # Make output directory:
   # Make a subdirectory with the date and time
   dirfmt = loc_dir + "%4d-%02d-%02d_%02d:%02d:%02d"
@@ -446,8 +496,8 @@ def main():
   # Make uniform-abundance profiles if requested:
   if uniform is not None and runMCMC < 8:
     # Calculate the temperature profile:
-    temp = ipt.initialPT2(date_dir, PTinit,         press_file, 
-                          PTtype,   PTfunc[PTtype], tep_name, tint)
+    temp = ipt.initialPT2(date_dir, PTinit, press_file, solution, 
+                          PTtype, PTfunc[PTtype], tep_name, tint)
     # Generate the uniform-abundance profiles file:
     mat.uniform(atmfile,  press_file, abun_basic, tep_name,
                 out_spec, uniform,    temp,       refpress)

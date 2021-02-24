@@ -114,7 +114,8 @@ def initialPT(date_dir, tepfile, press_file, a1, a2, p1, p3, T3_fac):
 
   return T_smooth
 
-def initialPT2(date_dir, params, pressfile, mode, PTfunc, tepfile, 
+def initialPT2(date_dir, params, pressfile, solution, 
+               mode, PTfunc, tepfile, 
                tint=100.0, tint_type="const"):
   """
   Compute a Temperature profile.
@@ -125,6 +126,8 @@ def initialPT2(date_dir, params, pressfile, mode, PTfunc, tepfile,
     Array of fitting parameters.
   pressfile: String
     File name of the pressure array.
+  solution: String
+    Observation type. Options: transit, emission, or direct.
   mode: String
     Chose the PT model: 'madhu' or 'line'.
   tepfile: String
@@ -144,12 +147,14 @@ def initialPT2(date_dir, params, pressfile, mode, PTfunc, tepfile,
   # Read the TEP file:
   tep = rd.File(tepfile)
 
-  # Stellar radius (in meters):
-  rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
-  # Planetary radius (in meters):
-  rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
-  # Planetary mass (in kg):
-  mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
+  if solution in ['transit', 'eclipse'] or \
+    (solution == 'direct' and mode == 'line'):
+    # Stellar radius (in meters):
+    rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
+    # Planetary radius (in meters):
+    rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
+    # Planetary mass (in kg):
+    mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
 
   if mode == "line":
     # Stellar temperature in K:

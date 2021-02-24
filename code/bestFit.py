@@ -549,8 +549,8 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
     if os.path.isfile(data[0]) and data == uncert:
         # NPZ file w/ data and uncert
         dfile = np.load(data[0])
-        data   = dfile['file0']
-        uncert = dfile['file1']
+        data   = dfile['data']
+        uncert = dfile['unc']
     elif os.path.isfile(data[0]):
         # NPY file w/ only data
         data = np.load(data[0])
@@ -609,8 +609,8 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
             istarfl.append(strfl)
         else:
             # direct observations (slightly inefficient)
-            nifilt, wnind = w.resample(specwn, filtwaven, filttransm,
-                                               filtwaven, filttransm)[0,2]
+            nifilt, _, wnind = w.resample(specwn, filtwaven, filttransm,
+                                                  filtwaven, filttransm)
         nifilter .append(nifilt)
         wnindices.append(wnind)
 
@@ -646,34 +646,44 @@ def plot_bestFit_Spectrum(filters, kurucz, tepfile, solution, output, data,
         sflux   = sinterp(specwn)
         frat    = bestspectrum/sflux * rprs * rprs
         gfrat = gaussf(frat, 2)
-        plt.semilogx(specwl, gfrat*1e3, "b", lw=1.5, label="Best fit")
+        plt.plot(specwl, gfrat*1e3, "b", lw=1.5, label="Best fit")
         plt.errorbar(meanwl, data*1e3, uncert*1e3, fmt="or", label="Data")
         plt.plot(meanwl, bandint*1e3, "ok", label="Model", alpha=1.0)
         plt.ylabel(r"$F_p/F_s$ (10$^{-3}$)", fontsize=fs)
 
     elif solution == 'transit':
         gmodel = gaussf(bestspectrum, 2)
-        plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best fit")
+        plt.plot(specwl, gmodel, "b", lw=1.5, label="Best fit")
         plt.errorbar(meanwl, data, uncert, fmt="or", label="Data")
         plt.plot(meanwl, bandint, "ok", label="Model", alpha=0.5)
         plt.ylabel(r"$(R_p/R_s)^2$", fontsize=fs)
 
     elif solution == 'direct':
         gmodel = gaussf(bestspectrum, 2)
-        plt.semilogx(specwl, gmodel, "b", lw=1.5, label="Best-fit")
+        plt.plot(specwl, gmodel, "b", lw=1.5, label="Best-fit")
         plt.errorbar(meanwl, data, uncert, fmt="or", label="data")
         plt.plot(meanwl, bandint, "ok", label="model", alpha=0.5)
         plt.ylabel(r"Flux", fontsize=12)
 
+    plt.xlim(min(specwl),max(specwl))
     leg = plt.legend(loc="best")
     leg.get_frame().set_alpha(0.5)
-    ax = plt.subplot(111)
-    ax.set_xscale('log')
     plt.xlabel("${\\rm Wavelength\ (\u03bcm)}$", fontsize=fs)
+    ax = plt.subplot(111)
+    # FINDME fix this hacky solution?
+    # pyplot will not display tickmarks on a log-scaled axis if all of the 
+    # points occur within 1/10 of a decade
+    # the greatest difference between 3 tickmarks on a logscale 
+    # is < 0.35 (ticks for 9x10^(x-1), 10^x, 2x10^x)  
+    # we use this number as a cutoff to ensure that at least 2 tickmarks will 
+    # always show in log-log.  Otherwise, we keep linear scaling
+    if np.log10(max(specwl)) - np.log10(min(specwl)) > 0.35:
+        ax.set_xscale('log')
+    # Ensure tick marks are numbers, e.g., 20 instead of 2 x 10^1
+    # Round to 8 places to prevent displaying floating point weirdness
     formatter = matplotlib.ticker.FuncFormatter(lambda y, _: '{:.8g}'.format(y))
     ax.get_xaxis().set_major_formatter(formatter)
     ax.get_xaxis().set_minor_formatter(formatter)
-    plt.xlim(min(specwl),max(specwl))
     plt.savefig(date_dir + "BART-bestFit-Spectrum" + fext, bbox_inches='tight')
     plt.close()
 

@@ -117,7 +117,7 @@ def main(comm):
                      choices=('transit', 'eclipse', 'direct'))
   group.add_argument("--ebalance",                    action="store",
                      help="Energy balance flag",
-                     dest="ebalance", type=eval, default=True)
+                     dest="ebalance", type=eval, default=False)
 
   parser.set_defaults(**defaults)
   args2, unknown = parser.parse_known_args(remaining_argv)
@@ -155,17 +155,19 @@ def main(comm):
 
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)
-  
-  # Stellar temperature in K:
-  tstar = float(tep.getvalue('Ts')[0])
-  # Stellar radius (in meters):
-  rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
-  # Semi-major axis (in meters):
-  sma   = float(tep.getvalue( 'a')[0]) * sc.au   
-  # Planetary radius (in meters):
-  rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
-  # Planetary mass (in kg):
-  mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
+
+  if solution in ['transit', 'eclipse'] or \
+    (solution == 'direct' and PTtype == 'line'):
+    # Stellar temperature in K:
+    tstar = float(tep.getvalue('Ts')[0])
+    # Stellar radius (in meters):
+    rstar = float(tep.getvalue('Rs')[0]) * c.Rsun
+    # Semi-major axis (in meters):
+    sma   = float(tep.getvalue( 'a')[0]) * sc.au   
+    # Planetary radius (in meters):
+    rplanet = float(tep.getvalue('Rp')[0]) * c.Rjup
+    # Planetary mass (in kg):
+    mplanet = float(tep.getvalue('Mp')[0]) * c.Mjup
 
   # Number of fitting parameters:
   nfree   = len(params)                 # Total number of free parameters
