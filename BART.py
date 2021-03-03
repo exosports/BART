@@ -382,53 +382,51 @@ def main():
     sys.exit()
 
   # Check if data and/or uncert are given as files
-  if os.path.isfile(data[0]):
-    # Ensure absolute path
-    if not os.path.isabs(data[0]):
-        data[0] = os.path.join(os.path.dirname(cfile), data[0])
-  if os.path.isfile(uncert[0]):
-    if not os.path.isabs(uncert[0]):
-        uncert[0] = os.path.join(os.path.dirname(cfile), uncert[0])
-
-  if data == uncert:
-    # Single file w/ both
-    if '.npz' in data[0].lower():
-      # NPZ file
-      tvar   = np.load(data[0])
-      data   = tvar['data']
-      uncert = tvar['uncert']
+  if os.path.isfile(data[0]) or os.path.isfile(uncert[0]):
+    # Ensure absolute paths
+    if os.path.isfile(data[0]) and not os.path.isabs(data[0]):
+      data[0] = os.path.join(os.path.dirname(cfile), data[0])
+    if os.path.isfile(uncert[0]) and not os.path.isabs(uncert[0]):
+      uncert[0] = os.path.join(os.path.dirname(cfile), uncert[0])
+    if data == uncert:
+      # Single file w/ both
+      if '.npz' in data[0].lower():
+        # NPZ file
+        tvar   = np.load(data[0])
+        data   = tvar['data']
+        uncert = tvar['uncert']
+      else:
+        # NPY or text file
+        if '.npy' in data[0].lower():
+          tvar = np.load(data[0])
+        else:
+          try:
+            tvar = np.loadtxt(data[0])
+          except:
+            raise ValueError("File given for 'data' is not an NPZ, NPY, " + \
+                             "or properly formatted text file.")
+        iax = np.where(np.asarray(tvar.shape) == 2)[0][0]
+        if iax:
+          data   = tvar[:,0]
+          uncert = tvar[:,1]
+        else:
+          data   = tvar[0]
+          uncert = tvar[1]
+      del tvar
     else:
-      # NPY or text file
+      # Separate files
       if '.npy' in data[0].lower():
-        tvar = np.load(data[0])
+        data = np.load(data[0])
+      elif '.npz' in data[0].lower():
+        data = np.load(data[0])['data']
       else:
-        try:
-          tvar = np.loadtxt(data[0])
-        except:
-          raise ValueError("File given for 'data' is not an NPZ, NPY, " + \
-                           "or properly formatted text file.")
-      iax = np.where(np.asarray(tvar.shape) == 2)[0][0]
-      if iax:
-        data   = tvar[:,0]
-        uncert = tvar[:,1]
+        data = np.loadtxt(data[0])
+      if '.npy' in uncert[0].lower():
+        uncert = np.load(uncert[0])
+      elif '.npz' in uncert[0].lower():
+        uncert = np.load(uncert[0])['uncert']
       else:
-        data   = tvar[0]
-        uncert = tvar[1]
-    del tvar
-  else:
-    # Separate files
-    if '.npy' in data[0].lower():
-      data = np.load(data[0])
-    elif '.npz' in data[0].lower():
-      data = np.load(data[0])['data']
-    else:
-      data = np.loadtxt(data[0])
-    if '.npy' in uncert[0].lower():
-      uncert = np.load(uncert[0])
-    elif '.npz' in uncert[0].lower():
-      uncert = np.load(uncert[0])['uncert']
-    else:
-      uncert = np.loadtxt(uncert[0])
+        uncert = np.loadtxt(uncert[0])
 
   # Make output directory:
   # Make a subdirectory with the date and time
@@ -509,12 +507,12 @@ def main():
     mat.makeAbun(abun_basic, date_dir+abun_file, solar_times, COswap)
     mu.msg(1, "Created new elemental abundances file.", indent=2)
 
-  abun_file = date_dir + abun_file
+  abun_file = os.path.join(date_dir, abun_file)
 
   if runMCMC < 4:  # Pre-atmospheric file
     # Calculate the temperature profile:
-    temp = ipt.initialPT2(date_dir, PTinit,         press_file, 
-                          PTtype,   PTfunc[PTtype], tep_name, 
+    temp = ipt.initialPT2(date_dir, PTinit, press_file, solution, 
+                          PTtype, PTfunc[PTtype], tep_name, 
                           tint_type=tint_type)
     mat.make_preatm(tep_name, press_file, abun_file, 
                     in_elem, out_spec, preatm_file, temp)

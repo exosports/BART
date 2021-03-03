@@ -221,10 +221,10 @@ def makeTEA(cfile, TEAdir):
   Bconfig.read([cfile])
 
   # List of known TEA arguments:
-  keys = ["maxiter",      "save_headers", "save_outputs", "doprint", "times",
+  keys = ["maxiter",      "savefiles", "doprint", "times",
           "location_TEA", "abun_file",    "location_out"]
   # TEA default values:
-  defaults = ["100", "False", "False", "False", "False",
+  defaults = ["100", "True", "False", "False",
               "",    "None",  "None"]
 
   # Set TEA default arguments:
@@ -238,7 +238,7 @@ def makeTEA(cfile, TEAdir):
   if Bconfig.has_option("MCMC", "abun_basic"):
     config.set("TEA", "abun_file", Bconfig.get("MCMC", "abun_basic"))
   if Bconfig.has_option("MCMC", "loc_dir"):
-    config.set("TEA", "location_out", Bconfig.get("MCMC", "loc_dir"))
+    config.set("TEA", "location_out", os.path.abspath(Bconfig.get("MCMC", "loc_dir")))
   # Default TEA dir:
   if config.get("TEA", "location_TEA") == "":
     config.set("TEA", "location_TEA", TEAdir)
