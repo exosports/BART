@@ -381,46 +381,52 @@ def main():
     print('Please correct this and run again.')
     sys.exit()
 
-  # Check if data and/or uncert are given as files
-  if os.path.isfile(data[0]) or os.path.isfile(uncert[0]):
-    # Ensure absolute paths
+  # Check if data and/or uncert are given as files, ensuring absolute path
+  if isinstance(data[0], str):
     if os.path.isfile(data[0]) and not os.path.isabs(data[0]):
       data[0] = os.path.join(os.path.dirname(cfile), data[0])
+
+  if isinstance(uncert[0], str):
     if os.path.isfile(uncert[0]) and not os.path.isabs(uncert[0]):
       uncert[0] = os.path.join(os.path.dirname(cfile), uncert[0])
-    if data == uncert:
-      # Single file w/ both
-      if '.npz' in data[0].lower():
-        # NPZ file
-        tvar   = np.load(data[0])
-        data   = tvar['data']
-        uncert = tvar['uncert']
-      else:
-        # NPY or text file
-        if '.npy' in data[0].lower():
-          tvar = np.load(data[0])
-        else:
-          try:
-            tvar = np.loadtxt(data[0])
-          except:
-            raise ValueError("File given for 'data' is not an NPZ, NPY, " + \
-                             "or properly formatted text file.")
-        iax = np.where(np.asarray(tvar.shape) == 2)[0][0]
-        if iax:
-          data   = tvar[:,0]
-          uncert = tvar[:,1]
-        else:
-          data   = tvar[0]
-          uncert = tvar[1]
-      del tvar
+
+  # Single file w/ both
+  if isinstance(data[0], str) and isinstance(uncert[0], str) and \
+     np.all(data == uncert):
+    if '.npz' in data[0].lower():
+      # NPZ file
+      tvar   = np.load(data[0])
+      data   = tvar['data']
+      uncert = tvar['uncert']
     else:
-      # Separate files
+      # NPY or text file
+      if '.npy' in data[0].lower():
+        tvar = np.load(data[0])
+      else:
+        try:
+          tvar = np.loadtxt(data[0])
+        except:
+          raise ValueError("File given for 'data' is not an NPZ, NPY, " + \
+                           "or properly formatted text file.")
+      iax = np.where(np.asarray(tvar.shape) == 2)[0][0]
+      if iax:
+        data   = tvar[:,0]
+        uncert = tvar[:,1]
+      else:
+        data   = tvar[0]
+        uncert = tvar[1]
+    del tvar
+  else:
+    # Load the data
+    if isinstance(data[0], str):
       if '.npy' in data[0].lower():
         data = np.load(data[0])
       elif '.npz' in data[0].lower():
         data = np.load(data[0])['data']
       else:
         data = np.loadtxt(data[0])
+    # Load the uncertainties
+    if isinstance(uncert[0], str):
       if '.npy' in uncert[0].lower():
         uncert = np.load(uncert[0])
       elif '.npz' in uncert[0].lower():
