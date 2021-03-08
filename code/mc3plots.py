@@ -56,7 +56,8 @@ def mc3plots(output,   burnin,   thinning, nchains, uniform, molfit,
         if molfit[imol]+'_' in out_spec.split()[j] and \
            stepsize[-len(molfit):][imol] > 0:
           molind.append(j)
-    allstack[-len(molfit):, :] += \
+    if molind != []:
+      allstack[-len(molfit):, :] += \
                                np.log10(uniform[molind]).reshape(len(molind),1)
 
   # Slice only params that are varied (remove static params)
