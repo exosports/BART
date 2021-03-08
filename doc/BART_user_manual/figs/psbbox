@@ -1,0 +1,127 @@
+#! /bin/sh
+
+# psbbox
+# calculates the BoundingBox for a PostScript file
+# optionally prints it, fixes it in the file, or puts it in a .bb file
+
+# CURRENTLY WORKS ON SINGLE-PAGE FILES ONLY!
+# TO DO: use mpage to separate out all the pages in each file,
+# calculate the boxes, and reassemble with mpage again
+
+# Joe Harrington <jh@alum.mit.edu> Sat Mar 17 13:22:36 EST 2001
+# version 0.2
+# Usage:
+# psbbox [-fix] [-file] [-noprint] <file>...
+
+fix=0
+file=0
+print=1
+exitstat=0
+
+while [ "$*" != "" ]; do
+  if [ "$1" = "-fix" ]; then
+    fix=1
+  elif [ "$1" = "-file" ]; then
+    file=1
+  elif [ "$1" = "-noprint" ]; then
+    print=0
+  elif [ "$1" = "--help" ]; then
+    echo 'psbbox [-fix] [-file] [-noprint] <file>...'
+  elif [ "$1" = "--version" ]; then
+    echo 'psbbox version 0.02 2001-Mar-17'
+  else
+    psfiles=$psfiles" "$1
+  fi
+  shift
+done
+
+for i in $psfiles; do
+  base=`basename $i .gz`
+  reader=cat
+  writer=cat
+  if [ $base != $i ]; then
+    reader=zcat
+    writer=gzip
+  fi
+
+  $reader $i \
+    | gs -q -dNOPAUSE -dBATCH -sDEVICE=bbox -f - \
+    > ${base}.bb$$ 2>&1
+
+  grep %%BoundingBox: ${base}.bb$$ > /dev/null
+  if [ $? = 1 ]; then
+    echo "psbbox: $i: BoundingBox not computed by Ghostscript." 1>&2
+    echo "        Make sure there is a \"showpage\"." 1>&2
+    exitstat=1
+  fi
+
+  # print what we got
+  if [ $print = 1 ]; then
+    cat ${base}.bb$$
+  fi
+
+  # fix the bounding box in the file if wanted
+  if [ $fix = 1 ]; then
+    # correct info
+    bbox=`grep %%BoundingBox: ${base}.bb$$ | head -1`
+    hbox=`grep %%HiResBoundingBox: ${base}.bb$$ | head -1`
+    # ghostscript doesn't produce a PageBoundingBox
+    pbox=`echo $bbox | sed s/%%BoundingBox/%%PageBoundingBox/`
+
+    # locations in the file (read only once in case it's big)
+    $reader $i | egrep -n '%%.*BoundingBox:' > ${base}.obb$$
+    bbno=`grep      %%BoundingBox: ${base}.obb$$ | head -1 | sed 's/:.*//'`
+    hbno=`grep %%HiResBoundingBox: ${base}.obb$$ | head -1 | sed 's/:.*//'`
+    pbno=`grep  %%PageBoundingBox: ${base}.obb$$ | head -1 | sed 's/:.*//'`
+
+    # sed commands and default locations for new lines
+    bcmd=c
+    hcmd=c
+    pcmd=c
+    if [ "$bbno" = "" ]; then
+      bbno=2
+      bcmd=i
+    fi
+    if [ "$hbno" = "" ]; then
+      hbno=`expr $bbno + 1`
+      hcmd=i
+    fi
+
+    # Don't add a PageBoundingBox unless there already is one.  If you
+    # can figure out how to do this in a single sed command line that
+    # doesn't add at least a blank line (rather than the repetition in
+    # the conditional below), please tell me.
+    if [ "$pbno" = "" ]; then
+      $reader $i \
+        | sed -e "$bbno $bcmd \\
+$bbox" \
+	      -e "$hbno $hcmd \\
+$hbox" \
+      | $writer \
+      > $i.tmp
+    else
+      $reader $i \
+        | sed -e "$bbno $bcmd \\
+$bbox" \
+	      -e "$hbno $hcmd \\
+$hbox" \
+	      -e "$pbno $pcmd \\
+$pbox" \
+      | $writer \
+      > $i.tmp
+    fi
+    if [ $? = 0 ]; then
+      mv $i.tmp $i
+    fi
+  fi
+
+  # create a .bb file if wanted
+  if [ $file = 1 ]; then
+    cp -p ${base}.bb$$ ${base}.bb
+  fi
+
+  # clean up
+  rm -f ${base}.bb$$ ${base}.obb$$
+done
+
+exit $exitstat

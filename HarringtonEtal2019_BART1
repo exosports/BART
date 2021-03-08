@@ -1,0 +1,7 @@
+The three BART papers have been submitted to the AAS journals and are currently under review.  The Reproducible Research Compendium for paper 1 (Harrington et al.) is located at:
+https://github.com/exosports/HarringtonEtal2019_BART1
+The paper erroneously give the URL as the URL of this file, but putting the repo here would have meant that anyone pulling the BART repo would have downloaded the 18GB compendium.
+On acceptance, the final compendium (with changes due to the review) will be uploaded to Zenodo.org, a permanent archive.
+
+--jh--
+Joe Harrington

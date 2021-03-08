@@ -1,0 +1,13 @@
+The files in the 'demo' folder correspond to the quick demo shown in the
+project's front page (https://github.com/exosports/BART).
+
+The BART_example.cfg is an example configuration file to run the BART code.
+Note that the demo config file does NOT contain all the possible variables
+that a full BART run can have.  Use the BART_example.cfg file for a
+real-life run.
+
+See the project's User and Code documentation
+  https://exosports.github.io/BART/doc/BART_User_Manual.html
+  https://exosports.github.io/transit/doc/Transit_User_Manual.html
+  https://exosports.github.io/transit/doc/Transit_Code_Manual.html
+for more details about how to run BART and the specific files and variables.

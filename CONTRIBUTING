@@ -1,0 +1,114 @@
+		      HOW TO CONTRIBUTE TO BART
+
+Thanks for your interest in improving BART!
+
+Before doing anything, please make yourself known to us and see
+whether someone else is already working on the improvement you
+suggest.
+
+MAILING LISTS
+
+We hold discusions on two email lists:
+
+bart-user@physics.ucf.edu  - user support and feature requests
+bart-devel@physics.ucf.edu - for people contributing code, docs, data, etc.
+
+Please send messages to the right list.  You need to be a member to
+post, to prevent spam.  Both are public lists with archives available
+and searchable here:
+
+https://physics.ucf.edu/mailman/listinfo/bart-user
+https://physics.ucf.edu/mailman/listinfo/bart-devel
+
+You can sign up for the mailing lists there.  They are Mailman lists,
+so they can be delivered as a daily digest or as individual messages,
+at your choice.  You can also read and search the archives there.
+
+ABOUT THE CONTRIBUTORS' SOFTWARE LICENSING AGREEMENT
+
+Software licensing can be a nightmare.  When you type a keystroke, you
+create a copyright.  You don't have to file anything.  You don't have
+to notify anyone.  This means that if a software project accepts code
+from others, the code has a patchwork of copyright ownership that
+quickly makes it impossible to distribute or license, for fear that a
+contributor will want to charge for or lay some restriction on his or
+her contributions.  In particular, the license under which the code is
+released can effectively never be changed without every contributor's
+consent.  So, it's critical to get that consent in advance.
+
+Anyone who contributes to BART in any way thus must agree to our
+CONTRIBUTORS' SOFTWARE LICENSING AGREEMENT (CSLA).  This agreement
+signs over all rights to the contribution to the project.  The project
+leadership then has the flexibility to change the license in the
+future, as things develop in the technical and political realms.
+
+Historically, software developers have frequently found such changes
+necessary.  For example, we are initially releasing under an unusual
+Reproducible Research (RR) license.  But, what if the community
+flat-out rejects this idea, and refuses to use BART?  In that case, we
+might consider softening some of its terms or eliminating it entirely,
+but we could not do that unless everyone had agreed in advance to
+allow us to.  That's what the CSLA is about.
+
+To agree to the CSLA, you must include in your pull request the
+statement:
+
+"I agree to the CONTRIBUTORS' SOFTWARE LICENSING AGREEMENT."
+
+MAKING CHANGES
+
+Talk about your proposed change on bart-user@physics.ucf.edu, see if
+it's being worked on, how others think it should be done, etc.
+Depending on the change, this might just be a short conversation.
+
+If it's agreed that the change would contribute to BART, make a new
+Issue on the github site.
+
+Read and agree publicly to the CONTRIBUTORS' SOFTWARE LICENSING
+AGREEMENT.  Yes, this is 100% required for us to accept your change.
+The Agreement explains why.
+
+If you are not a BART-Devel member, fork the repo.
+
+If you are a BART-Devel member, make a branch or work in an existing
+branch.  DO NOT WORK IN MASTER!  If working in an existing branch,
+talk to others working there before changing anything.  It's best to
+make different branches for different purposes.
+
+Make your changes.  Please use only the best programming style and be
+consistent with the code you are changing.  Ask if you have questions,
+as some of the code is necessarily complex.
+
+Document your changes.  Write plenty of comments (likely MORE than
+exist in the surrounding code; explain what the old behavior was, why
+you changed it, and how it works).  Change/add to the text in the
+relevant LaTeX documents as well, and compile them.
+
+Test your changes, by running tests you write and include in your
+eventual pull request and by running the Short Tests and checking
+their output.  Proceed only when tests pass.  Some changes will change
+the expected test output, so you will need to modify the test in a way
+that doesn't use your modification (e.g., use some a priori
+calculation).  It's fine to make short test (tiny wavelength regions,
+few MCMC steps, etc.) to make them run faster.
+
+Put your name, affiliation, contact info, and a BRIEF description of
+your change in the CONTRIBUTORS file.
+
+Email bart-devel@physics.ucf.edu to get feedback on your change.
+
+Issue a pull request when it's time, which might be after someone's
+looked at your change and given initial feedback.
+
+Because of the risk of harming ongoing work, ONLY CORE CONTRIBUTORS
+MAY MERGE INTO MASTER!  Pull requests may or may not be merged
+immediately, depending on the nature of the change.  DO NOT CLICK
+"This pull request can be automatically merged" unless you are a core
+developer.
+
+Currently, the Core Contributors are:
+
+Patricio Cubillos
+Jasmina Blecic
+
+Thanks for contributing to BART!

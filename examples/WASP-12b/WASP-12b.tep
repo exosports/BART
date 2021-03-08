@@ -1,0 +1,110 @@
+# Spitzer Space Telescope Exoplanetary Secondary Eclipse and Transit Data
+# Format version 4, Sat Jul 24 01:09:46 EDT 2010
+# See format rules at bottom.
+
+# parameter     value         uncert    unit            origin/reference        comment
+
+planetname      WASP-12b      -1        -               -                       # no spaces
+
+# Star
+startype        F9V           -1        -               Hebb2009APJ693.1920H    # S stellar class, e.g., G0V, no spaces
+Ts              6300          150       K               Hebb2009APJ693.1920H    # S stellar surface temperature
+Rs              1.57          0.07      Rsun            Hebb2009APJ693.1920H    # S stellar radius
+Kmag           10.188         0.020     -               Hebb2009APJ693.1920H    # S stellar K magnitude
+FsSpitzCh1     24.458         -1        mJy             starpet                 # S stellar flux, IRAC1
+FsSpitzCh2     15.482         -1        mJy             starpet                 # S stellar flux, IRAC2
+FsSpitzCh3      9.7606        -1        mJy             starpet                 # S stellar flux, IRAC3
+FsSpitzCh4      5.2730        -1        mJy             starpet                 # S stellar flux, IRAC4
+FsSpitzCh5      1.515         -1        mJy             starpet                 # S stellar flux, IRS blue peakup
+FsSpitzCh6      0.616         -1        mJy             starpet                 # S stellar flux, MIPS24
+feh             -1            -1        -               -                       #   stellar metallicity, [Fe/H]
+mh              0.30          0.10      -               Hebb2009APJ693.1920H    #   stellar metallicity, [M/H]
+loggstar        4.17          0.03      cgs             Hebb2009APJ693.1920H    #   stellar log(g)
+Ms              1.35          0.14      Msun            Hebb2009APJ693.1920H    #   stellar Mass
+epoch           2000          -1        yr              SIMBAD                  #   epoch of RA and DEC
+RA             06:30:32.794   -1        hh:mm:ss.sss    SIMBAD                  # A right ascension
+DEC            29:40:20.29    -1        dd:mm:ss.sss    SIMBAD                  # A declination
+pmRA           -0.7           1.3       mas/yr          SIMBAD                  # A proper motion in RA
+pmDEC          -7.8           1.0       mas/yr          SIMBAD                  # A proper motion in DEC
+
+# Planet (only one of Rp, RpRs, or RpRssq, give what you fit):
+Rp              1.79           0.09     Rjup            Hebb2009APJ693.1920H    # S planetary radius
+RpRs            -1            -1        -               -                       # S Rp/Rs if fit sep. from Rs and Rp
+RpRssq          0.0138       0.0002     -               Hebb2009APJ693.1920H    # S (Rp/Rs)^2 ditto
+Mp              1.41          0.10      Mjup            Hebb2009APJ693.1920H    #   planetary mass
+
+# Orbit - NEED UNCERTS on period, Ttrans, eclphase (or e and omega, or ecosomega and esinomega):
+period          1.091423    0.000003    days            Hebb2009APJ693.1920H    # A orbit period
+Ttrans    2454508.9761       0.0002     BJD             Hebb2009APJ693.1920H    # A transit ephemeris time
+transdur        0.122         0.001     days            Hebb2009APJ693.1920H    # A transit duration, T4-T1
+translimbtime   -1            -1        sec             -                       # A limb-crossing time, T2-T1
+impactpar       0.36          0.06      -               Hebb2009APJ693.1920H    #   impact parameter
+a               0.0229        0.0008    AU              Hebb2009APJ693.1920H    # S semimajor axis
+i              83.1           1.3       deg             Hebb2009APJ693.1920H    #   inclination
+e               0.049         0.015     -               Hebb2009APJ693.1920H    #   eccentricity - adopted 0 -> uncert=0
+omega           -74            12       deg             Hebb2009APJ693.1920H    #   longitude of pericenter
+ecosomega       -1            -1        -               -                       #   
+esinomega       -1            -1        -               -                       #   
+
+# these are calculated if set to -1
+eclphase        -1            -1        -               -                       # A eclipse phase (0=1=transit)
+ecldur          -1            -1        sec             -                       # S eclipse duration, T4-T1
+ecllimbtime     -1            -1        sec             -                       # S limb-crossing time, T2-T1
+
+# Radial Velocity parameters
+RVK             0.226         0.004     km/sec          Hebb2009APJ693.1920H    #   reflex RV semiamplitude
+RVgamma        19.0845        0.002     km/sec          Hebb2009APJ693.1920H    #   system RV
+RVgammadot      -1            -1        m/sec/yr        -                       #   system RV derivative
+RVvsinI         2.2           1.5       km/sec          Hebb2009APJ693.1920H    #   stellar rotation velocity
+RVlambda        -1            -1        deg             -                       #   spin-orbit alignment angle
+
+# Information you want us to have!
+status          1                  -1        - -     # 0=candidate, 1=confirmed, 2=announced
+announcedate    2009-05-20         -1        - -     # (estimated) date of announcement
+public          1                  -1        - -     # can we discuss it openly? 1=yes, 0=no
+submitter       Chris_Campo        -1        - -     # important no spaces!
+email           ccampo@gmail.com   -1        - -     # your email
+date            2011-03-22         -1        - -     # the date in ISO format
+time            11:17:40           -1        - -     # the time in 24-hour format
+
+# Fill this in and email as attachment to
+# Joe Harrington <jh@physics.ucf.edu>
+
+# Name the file: planetname-yyyy-mm-dd-nn.tep
+# nn is a serial number and may also include an apended comment (no
+# dashes), as in -01circ, -02ecc, etc.
+# Please be precise about capitalization, etc.: WASP-12b-2008-02-23-02.tep
+# NOT wasp12b_2008-02-23-02.tep, or files will list out of order.
+
+# Several computer program will read this, so it is important to
+# follow the value format, especially no spaces in strings and include
+# placeholder dash for empty column.
+
+# Several humans will read this, so it is important to keep the
+# columns lined up, etc.
+
+# Put longer comments at the bottom, above this instruction section.
+
+# If your model is producing the results, for concepts that have more
+# than one set of variables (e.g., e/omega or eclphase;
+# Rp/RpRs/RpRssq), quote all that are directly fit by your model.
+# It's ok to give ones that are calculated from fit values, as well.
+
+# Reference examples (no spaces!):
+# starpet
+# WASP_FIT
+# HAT_FIT
+# SIMBAD
+# Street2010arXiv:1234.567890
+# Hellier2009ApJ712:34
+
+# If values from papers, set units in their column.  Don't convert values. 
+# If values from your model, use our default units if possible.
+# If value is assumed, set uncertainty to 0.
+# If uncertainty exists but is not known, leave as -1.
+
+# Don't touch column 1.  Use spaces, not tabs.
+# Fill in columns 2, 3, 4, 5: 'S' items needed for S/N calc, 'A' needed for AOR.
+# Replace blanks with underscores, not dashes, in string values.
+# Everything after a "#" is a comment.
+# Put -1 (-91 for dec) if you don't know or don't want to say just yet.

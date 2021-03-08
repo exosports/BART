@@ -1,0 +1,18 @@
+# Commands from the User Manual to run this demo
+# $topdir is the directory that contains the BART and run directories
+# This example assumes that the run directory is parallel to BART
+
+wget --user=HITRAN --password=getdata -N https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Compressed-files/06_hit12.zip 
+unzip 06_hit12.zip
+
+cp $topdir/BART/examples/demo/pyline_demo.cfg .  
+$topdir/BART/modules/transit/pylineread/src/pylineread.py -c pyline_demo.cfg
+
+cp $topdir/BART/examples/demo/transit_demo.cfg .
+$topdir/BART/modules/transit/transit/transit -c transit_demo.cfg --justOpacity
+
+cp $topdir/BART/examples/demo/BART_eclipse.cfg .
+$topdir/BART/BART.py -c BART_eclipse.cfg
+cp $topdir/BART/examples/demo/BART_transit.cfg .
+$topdir/BART/BART.py -c BART_transit.cfg
+

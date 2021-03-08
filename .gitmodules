@@ -1,0 +1,10 @@
+[submodule "modules/MCcubed"]
+	path = modules/MCcubed
+	url = https://github.com/mdhimes/mc3
+    branch = mpi
+[submodule "modules/TEA"]
+	path = modules/TEA
+	url = https://github.com/dzesmin/TEA
+[submodule "modules/transit"]
+	path = modules/transit
+	url = https://github.com/exosports/transit
