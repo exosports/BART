@@ -110,7 +110,7 @@ def main(comm):
                      dest="cloudtop",   type=float, default=None)
   group.add_argument("--scattering",           action="store",
                      help="Rayleigh scattering [default: %(default)s]",
-                     dest="scattering", type=float, default=None)
+                     dest="scattering", type=str, default=None)
   group.add_argument("--solution",                    action="store",
                      help="Solution geometry [default: %(default)s]",
                      dest="solution", type=str,       default="None",
@@ -353,7 +353,10 @@ def main(comm):
       trm.set_cloudtop(params[nPT+nradfit])
 
     if nray == 1:
-      trm.set_scattering(params[nPT+nradfit+ncloud])
+      if 'polar' in scattering:
+        trm.set_scattering(2, 0.0)
+      else:
+        trm.set_scattering(1, params[nPT+nradfit+ncloud])
 
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
