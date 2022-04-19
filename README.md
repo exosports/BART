@@ -24,7 +24,7 @@ planetary atmospheres.
 * Madison Stemm (UCF)
 * Andrew Foster (UCF)
 * Ryan Challener (UCF)
-* Michael Himes (UCF)
+* Michael D. Himes (UCF)
 
 With support from:
 * Thomas J. Loredo (Cornell)
@@ -118,10 +118,10 @@ $topdir/BART/BART.py -c BART_transit.cfg
 ### Be Kind:
 
 A number of graduate and undergraduate-student dreams and hopes have been sacrificed on the making of this project.  Please, be kind and aknowledge their effort by citing the articles asociated to this project:
-
-  [Cubillos et al. 2016: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling](), in preparation.  
-  [Blecic et al. 2016: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling](), in preparation.  
-  [Harrington et al. 2016: The Bayesian Atmospheric Radiative-Transifer Code for Exoplanet Modeling](), in preparation.  
+  [Harrington et al. 2022. An Open-source Bayesian Atmospheric Radiative Transfer (BART) Code. I. Design, Tests, and Application to Exoplanet HD 189733b. Planet. Sci. J. 3 80.](https://iopscience.iop.org/article/10.3847/PSJ/ac3513)
+  [Cubillos et al. 2022. An Open-source Bayesian Atmospheric Radiative Transfer (BART) Code. II. The Transit Radiative Transfer Module and Retrieval of HAT-P-11b. Planet. Sci. J. 3 81.](https://iopscience.iop.org/article/10.3847/PSJ/ac348b)
+  [Blecic et al. 2022. An Open-source Bayesian Atmospheric Radiative Transfer (BART) Code. III. Initialization, Atmospheric Profile Generator, Post-processing Routines. Planet. Sci. J. 3 82.](https://iopscience.iop.org/article/10.3847/PSJ/ac3515)
+Thanks!
 
 ### License:
 
