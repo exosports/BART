@@ -151,7 +151,8 @@ def main(comm):
             'line'        : pt.PT_line, 
             'madhu_noinv' : pt.PT_NoInversion,
             'madhu_inv'   : pt.PT_Inversion,
-            'adiabatic'   : pt.PT_adiabatic}
+            'adiabatic'   : pt.PT_adiabatic,
+            'piette'      : pt.PT_piette}
 
   # Extract necessary values from the TEP file:
   tep = rd.File(tepfile)

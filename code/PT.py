@@ -749,6 +749,68 @@ def PT_adiabatic(p, T0, gamma, logp0):
      return T
 
 
+def PT_piette(p, T0, dTbot_32, dT32_10, dT10_0, dT0_1, dT1_01, dT01_001, dT001_top):
+    '''
+    Non-inverted atmospheric profile based on the "SPT" model of 
+    Piette & Madhusudhan (2020), modified to work on arbitrary pressure grids.
+
+    Inputs
+    ------
+    p: 1D float ndarray
+        Atmospheric pressure profile (in bar).
+    T0: float
+        Temperature at pressure layer closest to 3.2 bar. Reference temperature 
+        for the other params.
+    dTbot_32: float
+        Temperature difference between the bottom of the atmosphere and the 
+        pressure layer closest to 32 bar
+    dT32_10: float
+        Temperature difference between the pressure layer closest to 32 bar and 
+        the pressure layer closest to 10 bar
+    dT10_0: float
+        Temperature difference between the pressure layer closest to 10 bar and 
+        the pressure layer closest to 3.2 bar
+    dT0_1: float
+        Temperature difference between the pressure layer closest to 3.2 bar and
+        the pressure layer closest to 1 bar
+    dT1_01: float
+        Temperature difference between the pressure layer closest to 1 bar and 
+        the pressure layer closest to 0.1 bar
+    dT01_001: float
+        Temperature difference between the pressure layer closest to 100 mbar 
+        and the pressure layer closest to 10 mbar
+    dT001_top: float
+        Temperature difference between the layer closest to 10 mbar and the 
+        top of the atmosphere
+    '''
+    T = np.zeros(p.shape)
+    # Indices of pressure layers
+    ilaytop = np.argmin(p)
+    ilay001 = np.argmin(np.abs(p - 0.01))
+    ilay01  = np.argmin(np.abs(p - 0.1))
+    ilay1   = np.argmin(np.abs(p - 1))
+    ilay0   = np.argmin(np.abs(p - 3.2))
+    ilay10  = np.argmin(np.abs(p - 10))
+    ilay32  = np.argmin(np.abs(p - 32))
+    ilaybot = np.argmax(p)
+    # Temperatures at those layers
+    T[ilay0]   = T0
+    T[ilay10]  = T0         + dT10_0
+    T[ilay32]  = T[ilay10]  + dT32_10
+    T[ilaybot] = T[ilay32]  + dTbot_32
+    T[ilay1]   = T0         - dT0_1
+    T[ilay01]  = T[ilay1]   - dT1_01
+    T[ilay001] = T[ilay01]  - dT01_001
+    T[ilaytop] = T[ilay001] - dT001_top
+    # Linear spline interpolate
+    ilays = np.array([ilaytop, ilay001, ilay01, ilay1, ilay0, ilay10, ilay32, ilaybot])
+    rep = si.splrep(np.log10(p[ilays]), T[ilays], k=1)
+    T   = si.splev(np.log10(p), rep)
+    # Gaussian smoothing - sigma is 0.3 dex, Piette & Madhusudhan (2020)
+    sig = 0.3 / np.abs(np.log10(p)[0] - np.log10(p)[1])
+    return gaussian_filter1d(T, sigma=sig, mode='nearest')
+
+
 def PT_generator(p, free_params, PTfunc, PTargs=None):
   '''
   Wrapper to generate an inverted or non-inverted temperature and pressure
