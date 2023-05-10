@@ -1,0 +1,14 @@
+# Ignore these files in this repository:
+*.o
+*.o.d
+*.swp
+*.pyc
+
+# Latex output files:
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.log
+*.out
+*.toc
