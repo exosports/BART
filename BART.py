@@ -155,9 +155,21 @@ def main():
            help="Reference pressure level (bar) corresponding to the pressure"
                 " at the planet radius [default: %(default)s]",
            type=float, action="store", default=0.1)
+  group.add_argument("--cloudtype", dest="cloudtype",
+           help="Cloud opacity model [default: %(default)s]",
+           type=str, action="store", default="None")
   group.add_argument("--cloudtop",           action="store",
            help="Cloud deck top pressure [default: %(default)s]",
                      dest="cloudtop",   type=float, default=None)
+  group.add_argument("--refwl", dest="refwl",
+           help="Reference wavelength for P19 model",
+           type=float, action="store", default=-1)
+  group.add_argument("--refwn", dest="refwn",
+           help="Reference wavenumber for P19 model",
+           type=float, action="store", default=-1)
+  group.add_argument("--sigma", dest="sigma",
+           help="Scattering opacity at refwn for P19 model",
+           type=float, action="store", default=-1)
   group.add_argument("--scattering",           action="store",
            help="Rayleigh scattering [default: %(default)s]",
                      dest="scattering", type=float, default=None)
@@ -309,8 +321,12 @@ def main():
   abun_file   = args.abun_file
   solar_times = args.solar_times
   COswap      = args.COswap
-  cloud    = args.cloudtop
-  rayleigh = args.scattering
+  cloudtype   = args.cloudtype
+  cloud       = args.cloudtop
+  refwl       = args.refwl
+  refwn       = args.refwn
+  sigma       = args.sigma
+  rayleigh    = args.scattering
 
   PTtype = args.PTtype
   PTinit = args.PTinit
@@ -364,6 +380,27 @@ def main():
     print("The specified 'PTtype' is not valid. Options are 'line', " + \
           "'madhu_noinv', 'madhu_inv', 'iso', 'adiabatic', or 'piette'. Please try again.")
     sys.exit()
+  
+  # List of valid cloud models
+  cloudmodels = ["None", "ext", "opa", "B17", "F18", "P19"]
+
+  # Check that the user gave a valid cloud model
+  if cloudtype not in cloudmodels:
+    print("The specified cloud type is not valid. Options are 'None', " + \
+          "'ext', 'opa', 'B17', 'F18', and 'P19'. Please try again.")
+    sys.exit()
+  
+  # P19 requires some values to be provided
+  if cloudtype == "P19":
+    if refwl < 0 and refwn < 0:
+      print("The 'P19' cloud model requires a reference wavelength " + \
+            "or wavenumber. Please set 'refwl' or 'refwn' and try again.")
+      sys.exit()
+    if sigma < 0:
+      print("The 'P19' cloud model requires the scattering opacity " + \
+            "at the reference wavelength to be provided. Please set 'sigma'" + \
+            "and try again.")
+      sys.exit()
 
   # Check that out_spec and uniform are valid specifications
   if uniform is not None and len(uniform) != len(out_spec.split()):
@@ -611,7 +648,7 @@ def main():
   
     # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
     bf.callTransit(atmfile, tep_name, MCfile,  stepsize, molfit, 
-                   cloud, rayleigh,
+                   cloudtype, rayleigh,
                    solution, refpress, tconfig, date_dir, burnin, 
                    abun_basic, PTtype, PTfunc[PTtype], 
                    tint, tint_type, filters, fext=fext)
@@ -645,7 +682,7 @@ def main():
 
     # Make a plot of MCMC profiles with contribution functions/transmittance
     bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, 
-                   cloud, rayleigh,
+                   cloudtype, rayleigh,
                    solution, refpress, tconfig, date_dir, burnin, 
                    abun_basic, PTtype, PTfunc[PTtype], 
                    tint, tint_type, filters, ctf, fext=fext)
