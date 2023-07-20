@@ -803,6 +803,7 @@ def PT_piette(p, T0, dTbot_32, dT32_10, dT10_0, dT0_1, dT1_01, dT01_001, dT001_t
     T[ilay001] = T[ilay01]  - dT01_001
     T[ilaytop] = T[ilay001] - dT001_top
     # Linear spline interpolate
+    import scipy.interpolate as si
     ilays = np.array([ilaytop, ilay001, ilay01, ilay1, ilay0, ilay10, ilay32, ilaybot])
     rep = si.splrep(np.log10(p[ilays]), T[ilays], k=1)
     T   = si.splev(np.log10(p), rep)
