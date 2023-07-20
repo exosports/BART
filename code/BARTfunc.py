@@ -402,13 +402,13 @@ def main(comm):
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
     #### FOR DEBUGGING PURPOSES; REMOVE THIS LATER!
-    baz = 0
-    while os.path.exists("spec_"+str(baz)+".txt"):
-        baz += 1
-    with open("spec_"+str(baz)+".txt", "w") as foo:
-        foo.write(str(params)+"\n")
-        for bar in spectrum:
-            foo.write(str(bar)+"\n")
+    #baz = 0
+    #while os.path.exists("spec_"+str(baz)+".txt"):
+    #    baz += 1
+    #with open("spec_"+str(baz)+".txt", "w") as foo:
+    #    foo.write(str(params)+"\n")
+    #    for bar in spectrum:
+    #        foo.write(str(bar)+"\n")
     ####
 
     # Check for energy balance (read tep in case not read prior)
