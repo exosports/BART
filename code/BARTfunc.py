@@ -108,9 +108,12 @@ def main(comm):
   group.add_argument("--cloudtype", dest="cloudtype",
                      help="Cloud opacity model [default: %(default)s]",
                      type=str, action="store", default="None")
-  group.add_argument("--cloudtop",           action="store",
-                     help="Cloud deck top pressure [default: %(default)s]",
-                     dest="cloudtop",   type=float, default=None)
+#  group.add_argument("--cloudtop",           action="store",
+#                     help="Cloud deck top pressure [default: %(default)s]",
+#                     dest="cloudtop",   type=float, default=None)
+  group.add_argument("--cloud", dest="cloud",
+                     help="Cloud model parameters",
+                     type=mu.parray, action="store", default=None)
   group.add_argument("--refwl", dest="refwl",
                      help="Reference wavelength for P19 model",
                      type=float, action="store", default=-1)
@@ -154,7 +157,7 @@ def main(comm):
   Tmin       = args2.Tmin
   Tmax       = args2.Tmax
   cloudtype  = args2.cloudtype
-  cloudtop   = args2.cloudtop
+  cloud      = args2.cloud
   refwl      = args2.refwl
   refwn      = args2.refwn
   sigma      = args2.sigma
@@ -170,16 +173,8 @@ def main(comm):
             'adiabatic'   : pt.PT_adiabatic,
             'piette'      : pt.PT_piette}
 
-  # Dictionary of cloud models to determine ncloud
-  cloudmodels = {"None" : 0,
-                 "ext"  : 1,
-                 "opa"  : 2,
-                 "B17"  : 3,
-                 "F18"  : 6, # Cloudtop/cloudbot will usually be fixed though
-                 "P19"  : 3} # Refwn and sigma are always fixed
-
   # If refwn not set, use refwl to set it
-  if cloudtype == "F18":
+  if cloudtype == "P19":
     if refwn < 0 and refwl > 0:
       refwn = 1e4/refwl # Assumes cm-1 and microns respectively
                         # FINDME: Handle units with wlfct/wnfct?
@@ -203,7 +198,10 @@ def main(comm):
   # Number of fitting parameters:
   nfree   = len(params)                 # Total number of free parameters
   nmolfit = len(molfit)                 # Number of molecular free parameters
-  ncloud  = int(cloudmodels[cloudtype]) # Number of free cloud parameters
+  if cloud is not None:
+    ncloud = len(cloud)                 # Number of free cloud parameters
+  else:
+    ncloud = 0
   nray    = int(scattering is not None)
   nradfit = int(solution == 'transit')  # 1 for transit, 0 for eclipse
   nPT     = nfree - nmolfit - ncloud - nray - nradfit   # Number of PT pars
@@ -403,6 +401,15 @@ def main(comm):
 
     # Let transit calculate the model spectrum:
     spectrum = trm.run_transit(profiles.flatten(), nwave)
+    #### FOR DEBUGGING PURPOSES; REMOVE THIS LATER!
+    baz = 0
+    while os.path.exists("spec_"+str(baz)+".txt"):
+        baz += 1
+    with open("spec_"+str(baz)+".txt", "w") as foo:
+        foo.write(str(params)+"\n")
+        for bar in spectrum:
+            foo.write(str(bar)+"\n")
+    ####
 
     # Check for energy balance (read tep in case not read prior)
     if ebalance:

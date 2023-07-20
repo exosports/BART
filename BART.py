@@ -158,9 +158,12 @@ def main():
   group.add_argument("--cloudtype", dest="cloudtype",
            help="Cloud opacity model [default: %(default)s]",
            type=str, action="store", default="None")
-  group.add_argument("--cloudtop",           action="store",
-           help="Cloud deck top pressure [default: %(default)s]",
-                     dest="cloudtop",   type=float, default=None)
+#  group.add_argument("--cloudtop",           action="store",
+#           help="Cloud deck top pressure [default: %(default)s]",
+#                     dest="cloudtop",   type=float, default=None)
+  group.add_argument("--cloud", dest="cloud",
+           help="Cloud model parameters",
+           type=mu.parray, action="store", default=None)
   group.add_argument("--refwl", dest="refwl",
            help="Reference wavelength for P19 model",
            type=float, action="store", default=-1)
@@ -322,7 +325,7 @@ def main():
   solar_times = args.solar_times
   COswap      = args.COswap
   cloudtype   = args.cloudtype
-  cloud       = args.cloudtop
+  cloud       = args.cloud
   refwl       = args.refwl
   refwn       = args.refwn
   sigma       = args.sigma
@@ -401,6 +404,21 @@ def main():
             "at the reference wavelength to be provided. Please set 'sigma'" + \
             "and try again.")
       sys.exit()
+  
+  # Format cloud parameters for input into Transit
+  if cloudtype == "ext":
+    cloud = [cloudtype, 100, cloud[0], cloud[0]+10]
+  elif cloudtype == "opa":
+    cloud = [cloudtype, cloud[0], cloud[1], cloud[1]+10]
+  elif cloudtype == "B17":
+    cloud = [cloudtype, cloud[0], cloud[1], cloud[1]+10, cloud[2]]
+  elif cloudtype == "F18":
+    cloud = [cloudtype, cloud[0], cloud[1], cloud[2], cloud[3], cloud[4], cloud[5]]
+  elif cloudtype == "P19":
+    if refwn < 0 and refwl > 0:
+      refwn = 1e4/refwl
+    cloud = [cloudtype, cloud[0], cloud[1], cloud[1]+10, cloud[2], sigma, refwn]
+
 
   # Check that out_spec and uniform are valid specifications
   if uniform is not None and len(uniform) != len(out_spec.split()):
@@ -648,7 +666,7 @@ def main():
   
     # Call bestFit submodule: make new bestFit_tconfig.cfg, run best-fit Transit
     bf.callTransit(atmfile, tep_name, MCfile,  stepsize, molfit, 
-                   cloudtype, rayleigh,
+                   cloud, rayleigh,
                    solution, refpress, tconfig, date_dir, burnin, 
                    abun_basic, PTtype, PTfunc[PTtype], 
                    tint, tint_type, filters, fext=fext)
@@ -682,7 +700,7 @@ def main():
 
     # Make a plot of MCMC profiles with contribution functions/transmittance
     bf.callTransit(atmfile, tep_name, MCfile, stepsize, molfit, 
-                   cloudtype, rayleigh,
+                   cloud, rayleigh,
                    solution, refpress, tconfig, date_dir, burnin, 
                    abun_basic, PTtype, PTfunc[PTtype], 
                    tint, tint_type, filters, ctf, fext=fext)

@@ -268,8 +268,7 @@ def write_atmfile(atmfile, abun_file, molfit, T_line, abun_fact, date_dir,
     fout.close()
 
 
-def bestFit_tconfig(tconfig, date_dir, radius=None, cloudtop=None, cloudtype=None,
-                    cloudParams=None, scattering=None):
+def bestFit_tconfig(tconfig, date_dir, radius=None, cloud=None, scattering=None):
   '''
   Write best-fit config file for best-fit Transit run
   '''
@@ -286,8 +285,10 @@ def bestFit_tconfig(tconfig, date_dir, radius=None, cloudtop=None, cloudtype=Non
       if  lines[i].startswith("refradius ") and radius is not None:
           lines[i] = 'refradius {}\n'.format(str(radius))
 
-      if  lines[i].startswith("cloudtop ") and cloudtop is not None:
-          lines[i] = 'cloudtop {}\n'.format(str(cloudtop))
+      #if  lines[i].startswith("cloudtop ") and cloudtop is not None:
+      #    lines[i] = 'cloudtop {}\n'.format(str(cloudtop))
+      if  lines[i].startswith("cloud ") and cloud is not None:
+          lines[i] = 'cloud {}\n'.format(",".join(str(i) for i in cloud))
       if  lines[i].startswith("scattering ") and scattering is not None:
           lines[i] = 'scattering {}\n'.format(str(scattering))
 
@@ -298,7 +299,7 @@ def bestFit_tconfig(tconfig, date_dir, radius=None, cloudtop=None, cloudtype=Non
   f.close()
 
 
-def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  cloudtype, rayleigh, solution, p0, 
+def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  cloud, rayleigh, solution, p0, 
                 tconfig, date_dir, burnin, abun_file, PTtype,  PTfunc, 
                 T_int, T_int_type, filters, ctf=None, fext='.png', fs=15):
     """
@@ -370,12 +371,16 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  cloudtype, raylei
     allParams    = bestP
 
     # Dictionary of cloud models to determine ncloud
-    cloudmodels = {"None" : 0,
-                   "ext"  : 1,
-                   "opa"  : 2,
-                   "B17"  : 3,
-                   "F18"  : 6, # Cloudtop/cloudbot will usually be fixed though
-                   "P19"  : 3} # Refwn and sigma are always fixed
+    if cloud is not None:
+        cloudtype = cloud[0]
+    else:
+        cloudtype = None
+    cloudmodels = {None  : 0,
+                   "ext" : 1,
+                   "opa" : 2,
+                   "B17" : 3,
+                   "F18" : 6, # Cloudtop/cloudbot will usually be fixed though
+                   "P19" : 3} # Refwn and sigma are always fixed
     
     # get PTparams and abundances factors
     nparams   = len(allParams)
@@ -406,28 +411,49 @@ def callTransit(atmfile, tepfile,  MCfile, stepsize,  molfit,  cloudtype, raylei
     # Update R0, if needed:
     if nradfit:
         Rp = allParams[nPTparams]
-    if cloud != "None":
-        cloudtop = allParams[nPTparams+nradfit]
-    else:
-        cloudtop = None
     if rayleigh is not None:
         scattering = allParams[nPTparams+nradfit+ncloud]
     else:
         scattering = None
-
+    
+    # Update cloud information
+    # Order is different between BART and transit
+    if cloud is not None:
+        cloudparams = allParams[nPTparams+nradfit:nPTparams+nradfit+ncloud]
+        if cloudtype == "ext":
+            cloud[2] = cloudparams[0]
+            cloud[3] = cloudparams[0]+10
+        elif cloudtype == "opa":
+            cloud[1] = cloudparams[1]
+            cloud[2] = cloudparams[0]
+            cloud[3] = cloudparams[0]+10
+        elif cloudtype == "B17":
+            cloud[1] = cloudparams[1]
+            cloud[2] = cloudparams[0]
+            cloud[3] = cloudparams[0]+10
+            cloud[4] = cloudparams[2]
+        elif cloudtype == "F18":
+            cloud[1] = cloudparams[2]
+            cloud[2] = cloudparams[0]
+            cloud[3] = cloudparams[1]
+            cloud[4] = cloudparams[3]
+            cloud[5] = cloudparams[4]
+            cloud[6] = cloudparams[5]
+        elif cloudtype == "P19":
+            cloud[1] = cloudparams[1]
+            cloud[2] = cloudparams[0]
+            cloud[3] = cloudparams[0]+10
+            cloud[4] = cloudparams[2]
     # write best-fit atmospheric file
     write_atmfile(atmfile, abun_file, molfit, best_T,
                   allParams[nPTparams+nradfit+ncloud+nray:], date_dir, p0, Rp, grav)
 
     # write new bestFit Transit config
-    cloudParams = allParams[nPTparams+nradfit:nPTparams+nradfit+ncloud]
     if solution == 'transit':
         bestFit_tconfig(tconfig, date_dir, allParams[nPTparams],
-                        cloudtop=cloudtop, cloudtype=cloudtype,
-                        cloudParams=cloudParams, scattering=scattering)
+                        cloud=cloud, scattering=scattering)
     else:
-        bestFit_tconfig(tconfig, date_dir, cloudtype=cloudtype, 
-                        cloudtop=cloudtop, cloudParams=cloudParams,
+        bestFit_tconfig(tconfig, date_dir, cloud=cloud,
                         scattering=scattering)
 
     # Call Transit with the best-fit tconfig

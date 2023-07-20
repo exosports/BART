@@ -65,7 +65,36 @@ def makeTransit(cfile, tepfile, shareOpacity):
 
   # Keyword for the atmospheric file is different in transit:
   tcfile.write("atm {:s}\n".format(Bconfig.get(section, "atmfile")))
-
+  
+  # Format for the cloud is different in transit
+  if "cloudtype" in args:
+    cloudtype = Bconfig.get(section, "cloudtype")
+    cloud = mu.parray(Bconfig.get(section, "cloud"))
+    if cloudtype == "ext":
+      cloud = [cloudtype, 100, cloud[0], cloud[0]+10]
+    elif cloudtype == "opa":
+      cloud = [cloudtype, cloud[0], cloud[1], cloud[1]+10]
+    elif cloudtype == "B17":
+      cloud = [cloudtype, cloud[0], cloud[1], cloud[1]+10, cloud[2]]
+    elif cloudtype == "F18":
+      cloud = [cloudtype, cloud[0], cloud[1], cloud[2], cloud[3], cloud[4], cloud[5]]
+    elif cloudtype == "P19":
+      sigma = float(Bconfig.get(section, "sigma"))
+      try:
+        refwl = float(Bconfig.get(section, "refwl"))
+      except:
+        refwl = -1
+      try:
+        refwn = float(Bconfig.get(section, "refwn"))
+      except:
+        refwn = -1
+      if refwn < 0 and refwl > 0:
+        refwn = 1e4/refwl
+      cloud = [cloudtype, cloud[0], cloud[1], cloud[1]+10, cloud[2], sigma, refwn]
+    else:
+      raise ValueError("Invalid cloud type")
+    tcfile.write("cloud "+",".join(str(i) for i in cloud)+"\n")
+  
   # Default molfile path:
   if "molfile" not in args:
     tcfile.write("molfile {:s}\n".format(
